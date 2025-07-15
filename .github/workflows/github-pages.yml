@@ -1,4 +1,4 @@
-name: main
+name: update and deploy
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
     - cron:  '0 0 1 * *'
 
 jobs:
-  build:
+  update:
     runs-on: ubuntu-latest
 
     steps:
@@ -36,8 +36,13 @@ jobs:
         name: camera-data.csv
         path: dist/result.csv
 
+  deploy:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    permissions:
+      contents: read
+      pages: write
+    needs: update
+    steps:
     - name: Deploy
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist
+      uses: actions/deploy-pages@v4
