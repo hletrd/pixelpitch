@@ -244,10 +244,10 @@ def match_sensors(
     return sorted(matches)
 
 
-def load_csv() -> Optional[str]:
+def load_csv(output_dir: Path) -> Optional[str]:
     """Load the previous CSV."""
-    if os.path.exists("camera-data.csv"):
-        return Path("camera-data.csv").read_text(encoding="utf-8")
+    if os.path.exists(output_dir / "camera-data.csv"):
+        return (output_dir / "camera-data.csv").read_text(encoding="utf-8")
 
     return None
 
@@ -693,7 +693,7 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
 def render_html(output_dir: Path) -> None:
     """Render all HTML files."""
     print("Loading previous CSV artifact...")
-    previous_csv = load_csv()
+    previous_csv = load_csv(output_dir)
     existing_specs = parse_existing_csv(previous_csv) if previous_csv else []
 
     print("Fetching camera data...")
