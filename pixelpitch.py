@@ -51,7 +51,7 @@ YEAR_RE = re.compile(
 )
 NAME_RE = re.compile(r'data-name="(.+?)"')
 ADDITIONAL_FILTER_RE = re.compile(
-    r'<div class="productlist__additionalfilter">\s+(.+?)\s+</div>'
+    r'<div class="productlist__additionalfilter">\s+([\d\.]+)\s+</div>'
 )
 
 # from http://en.wikipedia.org/wiki/Image_sensor_format
