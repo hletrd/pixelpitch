@@ -672,7 +672,7 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
 def render_html(output_dir: Path) -> None:
     """Render all HTML files."""
     print("Loading previous CSV artifact...")
-    previous_csv = load_csv(output_dir)
+    previous_csv = load_csv()
     existing_specs = parse_existing_csv(previous_csv) if previous_csv else []
 
     print("Fetching camera data...")
