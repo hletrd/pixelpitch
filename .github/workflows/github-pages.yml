@@ -13,7 +13,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  actions: read
+  actions: write
 
 jobs:
   update:
@@ -42,10 +42,8 @@ jobs:
         name: camera-data.csv
         path: dist/result.csv
 
-  deploy:
-    runs-on: ubuntu-latest
-    environment: github-pages
-    needs: update
-    steps:
     - name: Deploy
       uses: actions/deploy-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: dist
