@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://hletrd.github.io/pixelpitch/sitemap.xml

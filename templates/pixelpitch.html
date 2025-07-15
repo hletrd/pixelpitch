@@ -1,0 +1,317 @@
+{% extends "index.html" %}
+
+{% macro table(specs, without_pitch=False) %}
+<div class="table-responsive">
+  <table class="table table-hover table-striped" id="table_with{% if without_pitch %}out{% endif %}_pitch">
+    <thead>
+      <tr>
+        <th scope="col">
+          Name&emsp;<i class="bi bi-arrow-down-up text-muted"></i>
+        </th>
+        <th scope="col">
+          Sensor Size&emsp;<i class="bi bi-arrow-down-up text-muted"></i>
+        </th>
+        <th scope="col">
+          Resolution&emsp;<i class="bi bi-arrow-down-up text-muted"></i>
+        </th>
+        {% if not without_pitch %}
+        <th scope="col">
+          Pixel Pitch&emsp;<i class="bi bi-arrow-down-up text-muted"></i>
+        </th>
+        {% endif %}
+				{# TODO
+        <th scope="col">
+          Assumed Sensor&emsp;<i class="bi bi-arrow-down-up text-muted"></i>
+        </th>
+				#}
+        <th scope="col">
+          Year&emsp;<i class="bi bi-arrow-down-up text-muted"></i>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for spec in specs %}
+      <tr>
+        <td>
+          <a href="https://duckduckgo.com/?q={{ spec.spec.name|urlencode }}"
+             class="text-decoration-none" target="_blank" rel="noopener">
+            {{ spec.spec.name }}
+            <i class="bi bi-box-arrow-up-right ms-1 text-muted"></i>
+          </a>
+        </td>
+        <td>
+          {% if spec.size %}
+            {{ spec.size[0]|round(1) }} × {{ spec.size[1]|round(1) }} mm
+          {% else %}
+            <span class="text-muted">unknown</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if spec.spec.mpix %}
+            {{ spec.spec.mpix|round(1) }} MP
+          {% else %}
+            <span class="text-muted">unknown</span>
+          {% endif %}
+        </td>
+        {% if not without_pitch %}
+        <td>
+          {% if spec.pitch %}
+            {{ spec.pitch|round(1) }} µm
+          {% else %}
+            <span class="text-muted">unknown</span>
+          {% endif %}
+        </td>
+        {% endif %}
+				{# TODO
+        <td>
+          {% if spec.matched_sensors %}
+            {% for sensor in spec.matched_sensors %}
+              <span class="badge bg-secondary me-1">{{ sensor }}</span>
+            {% endfor %}
+          {% else %}
+            <span class="text-muted">unknown</span>
+          {% endif %}
+        </td>
+				#}
+        <td>
+          {% if spec.spec.year %}
+            {{ spec.spec.year }}
+          {% else %}
+            <span class="text-muted">unknown</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="mb-4">
+      <h1 class="display-6 mb-3">
+        {{ title }}
+      </h1>
+
+      <div class="alert alert-light border" role="alert">
+        <div class="row align-items-center">
+          <div class="col-md-9">
+            <p class="mb-2">
+              All camera data was retrieved from <a href="http://geizhals.at" target="_blank" rel="noopener">geizhals.at</a>.
+              Note that sensor size and <a href="about.html">pixel pitch</a> may not be fully accurate in all cases.
+            </p>
+            <small class="text-muted">
+              As geizhals.at is a shopping site, duplicate entries of the same camera may exist although care was taken to filter those out.
+              Currently, only cameras are displayed which are sold by at least one shop on geizhals.at.
+            </small>
+          </div>
+          <div class="col-md-3 text-md-end">
+            <p class="mb-0">
+              <small class="text-muted">
+                <i class="bi bi-clock me-1"></i>Last update: {{ date|formatdate }}
+              </small>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <h2 class="h4 mb-0">
+            Camera Data
+          </h2>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-primary btn-sm" id="create_plot" type="button">
+            <i class="bi bi-graph-up me-1"></i>Create Box Plot
+          </button>
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-funnel me-1"></i>Filter
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#" onclick="filterTable('all')">All Cameras</a></li>
+              <li><a class="dropdown-item" href="#" onclick="filterTable('known')">Known Pixel Pitch Only</a></li>
+              <li><a class="dropdown-item" href="#" onclick="filterTable('unknown')">Unknown Pixel Pitch Only</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="pitch_plot" class="mb-4" style="height: 400px; display: none;"></div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        {{ table(specs|selectattr('pitch')) }}
+      </div>
+    </div>
+
+    {% set specs_nopitch = specs|rejectattr('pitch')|sort(attribute='spec.name') %}
+    {% if specs_nopitch %}
+    <div class="mt-5">
+      <h2 class="h4 mb-3">
+        Cameras with Unknown Pixel Pitch
+      </h2>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+          {{ table(specs_nopitch, without_pitch=True) }}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  $(function(){
+    $('.table').tablesorter({
+      theme: 'bootstrap',
+      headerTemplate: '{content} {icon}',
+      widgets: ["uitheme", "zebra"],
+      sortInitialOrder: 'desc',
+      sortRestart: true,
+      headers: {
+        0: { sorter: "text" },
+        1: { sorter: "text" },
+        2: { sorter: "digit" },
+        3: { sorter: "digit" },
+        4: { sorter: "digit" }
+      }
+    });
+
+    window.filterTable = function(type) {
+      const tableWithPitch = $('#table_with_pitch');
+      const tableWithoutPitch = $('#table_without_pitch');
+
+      switch(type) {
+        case 'all':
+          tableWithPitch.closest('.card').show();
+          tableWithoutPitch.closest('.mt-5').show();
+          break;
+        case 'known':
+          tableWithPitch.closest('.card').show();
+          tableWithoutPitch.closest('.mt-5').hide();
+          break;
+        case 'unknown':
+          tableWithPitch.closest('.card').hide();
+          tableWithoutPitch.closest('.mt-5').show();
+          break;
+      }
+    };
+
+    $('#create_plot').click(function() {
+      const button = $(this);
+      const plotDiv = $('#pitch_plot');
+
+      button.prop('disabled', true).html('<i class="bi bi-arrow-clockwise spinner-border spinner-border-sm me-1"></i>Creating Plot...');
+
+      const data = [];
+      $("#table_with_pitch tbody tr").each(function(i, el) {
+        const row = $(el);
+        const name = row.find('td:first-child a').text().trim();
+        const pitchText = row.find('td:nth-child(4)').text().trim();
+        const yearText = row.find('td:nth-child(5)').text().trim();
+
+        const pitchMatch = pitchText.match(/([\d.]+)\s*µm/);
+        const yearMatch = yearText.match(/\d{4}/);
+
+        if (pitchMatch && yearMatch && pitchText !== 'unknown' && yearText !== 'unknown') {
+          const pitch = parseFloat(pitchMatch[1]);
+          const year = parseInt(yearMatch[0]);
+
+          if (!isNaN(year) && !isNaN(pitch) && year >= 2000 && year <= new Date().getFullYear()) {
+            data.push({ name, year, value: pitch });
+          }
+        }
+      });
+
+      if (data.length === 0) {
+        button.prop('disabled', false).html('<i class="bi bi-graph-up me-1"></i>Create Box Plot');
+        alert('No valid data found for plotting.');
+        return;
+      }
+
+      plotDiv.empty().show();
+
+      const margin = {top: 20, right: 30, bottom: 40, left: 50};
+      const width = plotDiv.width() - margin.left - margin.right;
+      const height = 350 - margin.top - margin.bottom;
+
+      const svg = d3.select("#pitch_plot")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const yearGroups = d3.group(data, d => d.year);
+      const years = Array.from(yearGroups.keys()).sort();
+
+      const xScale = d3.scaleBand()
+        .domain(years)
+        .range([0, width])
+        .padding(0.1);
+
+      const yScale = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.value))
+        .nice()
+        .range([height, 0]);
+
+      svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale))
+        .append("text")
+        .attr("x", width / 2)
+        .attr("y", 35)
+        .style("text-anchor", "middle")
+        .style("fill", "currentColor")
+        .text("Year");
+
+      svg.append("g")
+        .call(d3.axisLeft(yScale))
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", -35)
+        .attr("x", -height / 2)
+        .style("text-anchor", "middle")
+        .style("fill", "currentColor")
+        .text("Pixel Pitch (µm)");
+
+      svg.selectAll(".dot")
+        .data(data)
+        .enter().append("circle")
+        .attr("class", "dot")
+        .attr("cx", d => xScale(d.year) + xScale.bandwidth() / 2)
+        .attr("cy", d => yScale(d.value))
+        .attr("r", 3)
+        .style("fill", "var(--bs-primary)")
+        .style("opacity", 0.7)
+        .append("title")
+        .text(d => `${d.name}: ${d.value}µm (${d.year})`);
+
+      button.prop('disabled', false).html('<i class="bi bi-eye-slash me-1"></i>Hide Plot');
+      button.off('click').on('click', function() {
+        plotDiv.hide();
+        button.html('<i class="bi bi-graph-up me-1"></i>Create Box Plot');
+        button.off('click').on('click', arguments.callee.caller);
+      });
+    });
+  });
+</script>
+<style>
+	.table th {
+		cursor: pointer;
+	}
+	.table {
+		margin-bottom: 0;
+	}
+</style>
+{% endblock %}

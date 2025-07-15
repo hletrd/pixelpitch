@@ -1,0 +1,68 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col mx-auto">
+    <div class="mb-5">
+      <h1 class="display-6 mb-4">
+        About Pixel Pitch
+      </h1>
+
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Pixel Pitch</h5>
+          <p class="card-text lead fs-6">
+            The pixel pitch is the physical distance from one pixel to the next and is given in microns (µm).
+            It is equal to the size of a pixel; however the actual area that captures light may be slightly smaller, since photodiodes are the only light-sensitive elements on the modern [active pixel CMOS sensors](https://en.wikipedia.org/wiki/Active_pixel_sensor).
+            Because some cameras, such as Sony A7S III, use internal <a href="https://landingfield.wordpress.com/2021/09/03/sony-a7s-iii-has-a-2x2-pixel-binning-imx510-bsi-sensor/" target="_blank">2x2 pixel binning</a> without exposing it, the pixel pitch listed here may not correspond to the true (physical) pixel pitch.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        <h2 class="h3 mb-4">
+          Articles
+        </h2>
+
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">
+                  Digital Cameras: Does Pixel Size Matter?
+                </h5>
+                <p class="card-text">
+                  by Roger N. Clark
+                </p>
+                <a href="http://www.clarkvision.com/articles/does.pixel.size.matter/"
+                   class="btn btn-outline-primary" target="_blank" rel="noopener">
+                   <i class="bi bi-link-45deg me-2"></i> Read Article
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">
+                  Size Matters, Especially with Pixels
+                </h5>
+                <p class="card-text">
+                  by Reed Hoffmann
+                </p>
+                <a href="http://reedhoffmann.com/size-matter-especially-with-pixels/"
+                   class="btn btn-outline-primary" target="_blank" rel="noopener">
+                   <i class="bi bi-link-45deg me-2"></i> Read Article
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

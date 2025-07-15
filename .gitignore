@@ -1,9 +1,5 @@
-/*.egg-info
-/build
-/dist
-/.project
-/.pydevproject
-/*.html
-*.pyc
-/.mypy_cache
-/.vscode
+dist
+.venv
+.DS_Store
+__pycache__
+*.py[cod]

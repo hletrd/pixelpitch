@@ -1,0 +1,215 @@
+{
+  "IMX071": {
+    "megapixels": [
+      24.0
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX094": {
+    "comment": "A7R",
+    "megapixels": [
+      36.0
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX128": {
+    "comment": "D600, D610, D750",
+    "megapixels": [
+      24.0
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX157": {
+    "comment": "A7, A7M2",
+    "megapixels": [
+      24.0
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX161": {
+    "megapixels": [
+      51.4
+    ],
+    "sensor_height_mm": 33.0,
+    "sensor_width_mm": 44.0
+  },
+  "IMX183": {
+    "megapixels": [
+      20.0
+    ],
+    "sensor_height_mm": 8.8,
+    "sensor_width_mm": 13.2
+  },
+  "IMX184": {
+    "megapixels": [
+      12.0
+    ],
+    "sensor_height_mm": 8.8,
+    "sensor_width_mm": 13.2
+  },
+  "IMX193": {
+    "megapixels": [
+      24.0
+    ],
+    "sensor_height_mm": 15.7,
+    "sensor_width_mm": 23.5
+  },
+  "IMX210": {
+    "megapixels": [
+      24.0
+    ],
+    "sensor_height_mm": 15.7,
+    "sensor_width_mm": 23.5
+  },
+  "IMX211": {
+    "megapixels": [
+      101.0
+    ],
+    "sensor_height_mm": 40.0,
+    "sensor_width_mm": 53.3
+  },
+  "IMX235": {
+    "comment": "A7S, A7S2",
+    "megapixels": [
+      12.2
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX251": {
+    "comment": "A7R2, A7R3",
+    "megapixels": [
+      42.4
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX271": {
+    "megapixels": [
+      24.3
+    ],
+    "sensor_height_mm": 15.7,
+    "sensor_width_mm": 23.5
+  },
+  "IMX283": {
+    "megapixels": [
+      20.0,
+      20.3
+    ],
+    "sensor_height_mm": 8.8,
+    "sensor_width_mm": 13.2
+  },
+  "IMX284": {
+    "megapixels": [
+      24.0
+    ],
+    "sensor_height_mm": 15.7,
+    "sensor_width_mm": 23.5
+  },
+  "IMX309": {
+    "megapixels": [
+      45.4
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX310": {
+    "megapixels": [
+      24.0
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX321": {
+    "megapixels": [
+      20.7
+    ],
+    "sensor_height_mm": 15.7,
+    "sensor_width_mm": 23.5
+  },
+  "IMX366": {
+    "megapixels": [
+      44.2
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX383": {
+    "megapixels": [
+      20.0
+    ],
+    "sensor_height_mm": 8.8,
+    "sensor_width_mm": 13.2
+  },
+  "IMX410": {
+    "megapixels": [
+      24.2,
+      24.6
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX411": {
+    "megapixels": [
+      151.4
+    ],
+    "sensor_height_mm": 40.0,
+    "sensor_width_mm": 53.4
+  },
+  "IMX451": {
+    "comment": "A7R4",
+    "megapixels": [
+      61.0
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX455": {
+    "megapixels": [
+      61.2,
+      61.0,
+      60.3
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX461": {
+    "megapixels": [
+      102.0
+    ],
+    "sensor_height_mm": 33.0,
+    "sensor_width_mm": 44.0
+  },
+  "IMX510": {
+    "megapixels": [
+      12.0
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX571": {
+    "megapixels": [
+      26.0
+    ],
+    "sensor_height_mm": 15.7,
+    "sensor_width_mm": 23.5
+  },
+  "IMX609": {
+    "megapixels": [
+      45.7
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  },
+  "IMX610": {
+    "megapixels": [
+      50.1
+    ],
+    "sensor_height_mm": 24.0,
+    "sensor_width_mm": 36.0
+  }
+}

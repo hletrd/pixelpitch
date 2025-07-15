@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pixel Pitch - {% block title %}{{ title | default('Camera Sensor Pixel Pitch List') }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}{% if page == 'all' %}Comprehensive database of camera sensor pixel pitch measurements.{% elif page == 'dslr' %}List of DSLR camera sensor pixel pitch.{% elif page == 'mirrorless' %}List of mirrorless camera sensor pixel pitch.{% elif page == 'rangefinder' %}List of rangefinder camera sensor pixel pitch.{% elif page == 'fixedlens' %}List of fixed-lens camera sensor pixel pitch.{% elif page == 'about' %}Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.{% endif %}{% endblock %}">
+  <meta name="keywords" content="{% block keywords %}camera sensor, pixel pitch, sensor size, megapixels, DSLR, mirrorless, photography, camera specifications, sensor dimensions, image quality{% if page == 'dslr' %}, DSLR cameras{% elif page == 'mirrorless' %}, mirrorless cameras{% elif page == 'rangefinder' %}, rangefinder cameras{% elif page == 'fixedlens' %}, fixed lens cameras{% endif %}{% endblock %}">
+  <meta name="author" content="Jiyong Youn">
+  <meta name="robots" content="index, follow">
+  <meta name="googlebot" content="index, follow">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Camera Sensor Pixel Pitch Database">
+  <meta property="og:title" content="{% block og_title %}{{ title | default('Camera Sensor Pixel Pitch List') }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{% if page == 'all' %}Comprehensive database of camera sensor pixel pitch measurements.{% elif page == 'dslr' %}List of DSLR camera sensor pixel pitch.{% elif page == 'mirrorless' %}List of mirrorless camera sensor pixel pitch.{% elif page == 'rangefinder' %}List of rangefinder camera sensor pixel pitch.{% elif page == 'fixedlens' %}List of fixed-lens camera sensor pixel pitch.{% elif page == 'about' %}Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.{% endif %}{% endblock %}">
+  <meta property="og:url" content="{% block og_url %}https://hletrd.github.io/pixelpitch/{% if page != 'all' %}{{ page }}.html{% endif %}{% endblock %}">
+  <meta property="og:image" content="https://hletrd.github.io/pixelpitch/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Camera Sensor Pixel Pitch Database">
+  <meta property="og:locale" content="en_US">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% block twitter_title %}{{ title | default('Camera Sensor Pixel Pitch List') }}{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}{% if page == 'all' %}Comprehensive database of camera sensor pixel pitch measurements.{% elif page == 'dslr' %}List of DSLR camera sensor pixel pitch.{% elif page == 'mirrorless' %}List of mirrorless camera sensor pixel pitch.{% elif page == 'rangefinder' %}List of rangefinder camera sensor pixel pitch.{% elif page == 'fixedlens' %}List of fixed-lens camera sensor pixel pitch.{% elif page == 'about' %}Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.{% endif %}{% endblock %}">
+  <meta name="twitter:image" content="https://hletrd.github.io/pixelpitch/twitter-card.png">
+  <meta name="twitter:image:alt" content="Camera Sensor Pixel Pitch Database">
+
+  <meta name="theme-color" content="#0d6efd">
+  <meta name="msapplication-TileColor" content="#0d6efd">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Pixel Pitch">
+
+  <link rel="canonical" href="{% block canonical %}https://hletrd.github.io/pixelpitch/{% if page != 'all' %}{{ page }}.html{% endif %}{% endblock %}">
+
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="manifest" href="site.webmanifest">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": "Camera Sensor Pixel Pitch Database",
+    "description": "Comprehensive database of camera sensor specifications including pixel pitch measurements, sensor dimensions, and megapixel counts for DSLR, mirrorless, rangefinder, and fixed-lens cameras.",
+    "url": "https://hletrd.github.io/pixelpitch/",
+    "creator": {
+      "@type": "Person",
+      "name": "Jiyong Youn",
+      "url": "https://github.com/hletrd"
+    },
+    "dateModified": "{{ date.isoformat() if date else '2025-07-15' }}",
+    "license": "https://github.com/hletrd/pixelpitch/blob/master/LICENSE",
+    "keywords": ["camera", "sensor", "pixel pitch", "photography", "specifications", "DSLR", "mirrorless"],
+    "distribution": {
+      "@type": "DataDownload",
+      "encodingFormat": "text/csv",
+      "contentUrl": "https://hletrd.github.io/pixelpitch/result.csv"
+    },
+    "spatialCoverage": "Global",
+    "temporalCoverage": "2025/{{ date.year if date else '2025' }}"
+  }
+  </script>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+  <style>
+    :root {
+      --bs-body-bg: #ffffff;
+      --bs-body-color: #212529;
+      --bs-border-color: #dee2e6;
+      --github-bg: #f8f9fa;
+      --github-color: #212529;
+    }
+
+    [data-bs-theme="dark"] {
+      --bs-body-bg: #0d1117;
+      --bs-body-color: #e6edf3;
+      --bs-border-color: #30363d;
+      --github-bg: #21262d;
+      --github-color: #e6edf3;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-bs-theme="light"]) {
+        --bs-body-bg: #0d1117;
+        --bs-body-color: #e6edf3;
+        --bs-border-color: #30363d;
+        --github-bg: #21262d;
+        --github-color: #e6edf3;
+      }
+    }
+
+    body {
+      padding-top: 76px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .github-corner {
+      position: fixed;
+      top: 56px;
+      right: 0;
+      z-index: 1020;
+      background: var(--github-bg);
+      color: var(--github-color);
+      border: 1px solid var(--bs-border-color);
+      border-top: none;
+      border-right: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0 0 0 0.375rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .github-corner:hover {
+      background: var(--bs-primary);
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .navbar-brand {
+      font-weight: 600;
+    }
+
+    .table-responsive {
+      border-radius: 0.375rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .table th {
+      background: var(--bs-secondary-bg);
+      border-color: var(--bs-border-color);
+      font-weight: 600;
+    }
+
+    .table td {
+      border-color: var(--bs-border-color);
+    }
+
+    .table-hover tbody tr:hover {
+      background-color: var(--bs-tertiary-bg);
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding: 2rem 0;
+      border-top: 1px solid var(--bs-border-color);
+      color: var(--bs-secondary-color);
+    }
+
+    .btn-outline-secondary {
+      --bs-btn-border-color: var(--bs-border-color);
+    }
+
+    #pitch_plot {
+      background: var(--bs-body-bg);
+      border: 1px solid var(--bs-border-color);
+      border-radius: 0.375rem;
+    }
+
+    .theme-toggle {
+      border: none;
+      background: none;
+      color: var(--bs-navbar-color);
+      font-size: 1.25rem;
+    }
+
+    .theme-toggle:hover {
+      color: var(--bs-navbar-hover-color);
+    }
+
+    .theme-toggle:focus {
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+  <a href="https://github.com/hletrd/pixelpitch" class="github-corner" title="Fork me on GitHub">
+    <i class="bi bi-github"></i> Fork me on GitHub
+  </a>
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">
+        Pixel Pitch
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link{% if page == 'all' %} active{% endif %}" href="index.html">
+              All Cameras
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if page == 'dslr' %} active{% endif %}" href="dslr.html">
+              DSLR
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if page == 'mirrorless' %} active{% endif %}" href="mirrorless.html">
+              Mirrorless
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if page == 'rangefinder' %} active{% endif %}" href="rangefinder.html">
+              Rangefinder
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if page == 'fixedlens' %} active{% endif %}" href="fixedlens.html">
+              Fixed-lens
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if page == 'about' %} active{% endif %}" href="about.html">
+              About Pixel Pitch
+            </a>
+          </li>
+        </ul>
+
+        <button class="theme-toggle btn" type="button" aria-label="Toggle theme" title="Toggle light/dark theme">
+          <i class="bi bi-sun-fill d-none" id="theme-icon-light"></i>
+          <i class="bi bi-moon-stars-fill d-none" id="theme-icon-dark"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="row">
+      <div class="col-12">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </main>
+
+  <footer class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <p class="mb-0">
+          &copy; Jiyong Youn 2025, based on <a href="https://letmaik.github.io/pixelpitch/" target="_blank">Maik Riechert's work</a> from 2014, with help from <a href="https://getbootstrap.com/" target="_blank">Bootstrap</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tablesorter@2.31.3/dist/js/jquery.tablesorter.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tablesorter@2.31.3/dist/js/jquery.tablesorter.widgets.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <script>
+    (() => {
+      'use strict'
+
+      const getStoredTheme = () => localStorage.getItem('theme')
+      const setStoredTheme = theme => localStorage.setItem('theme', theme)
+
+      const getPreferredTheme = () => {
+        const storedTheme = getStoredTheme()
+        if (storedTheme) {
+          return storedTheme
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      }
+
+      const setTheme = theme => {
+        document.documentElement.setAttribute('data-bs-theme', theme)
+      }
+
+      const showActiveTheme = (theme, focus = false) => {
+        const themeSwitcher = document.querySelector('.theme-toggle')
+        const iconLight = document.querySelector('#theme-icon-light')
+        const iconDark = document.querySelector('#theme-icon-dark')
+
+        if (!themeSwitcher) {return}
+
+        iconLight.classList.add('d-none')
+        iconDark.classList.add('d-none')
+
+        if (theme === 'light') {
+          iconLight.classList.remove('d-none')
+          themeSwitcher.setAttribute('aria-label', 'Switch to dark theme')
+          themeSwitcher.setAttribute('title', 'Switch to dark theme')
+        } else {
+          iconDark.classList.remove('d-none')
+          themeSwitcher.setAttribute('aria-label', 'Switch to light theme')
+          themeSwitcher.setAttribute('title', 'Switch to light theme')
+        }
+
+        if (focus) {
+          themeSwitcher.focus()
+        }
+      }
+
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        const storedTheme = getStoredTheme()
+        if (storedTheme !== 'light' && storedTheme !== 'dark') {
+          setTheme(getPreferredTheme())
+        }
+      })
+
+      window.addEventListener('DOMContentLoaded', () => {
+        const storedTheme = getStoredTheme()
+        const themeToUse = storedTheme || getPreferredTheme()
+        setTheme(themeToUse)
+        showActiveTheme(themeToUse)
+
+        document.querySelector('.theme-toggle').addEventListener('click', () => {
+          const currentTheme = getStoredTheme() || getPreferredTheme()
+          let newTheme
+
+          if (currentTheme === 'light') {
+            newTheme = 'dark'
+          } else {
+            newTheme = 'light'
+          }
+
+          setStoredTheme(newTheme)
+          setTheme(newTheme)
+          showActiveTheme(newTheme, true)
+        })
+      })
+    })()
+  </script>
+
+  {% block js %}{% endblock %}
+</body>
+</html>
