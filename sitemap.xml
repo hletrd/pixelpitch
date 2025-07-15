@@ -37,7 +37,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://hletrd.github.io/pixelpitch/result.csv</loc>
+    <loc>https://hletrd.github.io/pixelpitch/camera-data.csv</loc>
     <lastmod>2025-07-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

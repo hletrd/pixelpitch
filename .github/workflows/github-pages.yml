@@ -26,7 +26,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: camera-data.csv
-        path: result.csv
+        path: ./
       continue-on-error: true
 
     - name: Set up Python
@@ -47,7 +47,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: camera-data.csv
-        path: dist/result.csv
+        path: dist/camera-data.csv
 
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3

@@ -242,8 +242,8 @@ def match_sensors(
 
 def load_csv() -> Optional[str]:
     """Load the previous CSV."""
-    if os.path.exists("result.csv"):
-        return Path("result.csv").read_text(encoding="utf-8")
+    if os.path.exists("camera-data.csv"):
+        return Path("camera-data.csv").read_text(encoding="utf-8")
 
     return None
 
@@ -770,7 +770,7 @@ def render_html(output_dir: Path) -> None:
         env.get_template("about.html").render(page="about"), encoding="utf-8"
     )
 
-    write_csv(specs_all, output_dir / "result.csv")
+    write_csv(specs_all, output_dir / "camera-data.csv")
 
     static_seo_files = ["robots.txt"]
     for filename in static_seo_files:
@@ -786,7 +786,7 @@ def render_html(output_dir: Path) -> None:
     (output_dir / "sitemap.xml").write_text(sitemap_content, encoding="utf-8")
 
     print(f"HTML files written to {output_dir}")
-    print(f'CSV file written to {output_dir / "result.csv"}')
+    print(f'CSV file written to {output_dir / "camera-data.csv"}')
     print(f"SEO files copied to {output_dir}")
 
 
