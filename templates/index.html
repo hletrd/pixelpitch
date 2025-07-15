@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pixel Pitch - {% block title %}{{ title | default('Camera Sensor Pixel Pitch List') }}{% endblock %}</title>
-  <meta name="description" content="{% block description %}{% if page == 'all' %}Comprehensive database of camera sensor pixel pitch measurements.{% elif page == 'dslr' %}List of DSLR camera sensor pixel pitch.{% elif page == 'mirrorless' %}List of mirrorless camera sensor pixel pitch.{% elif page == 'rangefinder' %}List of rangefinder camera sensor pixel pitch.{% elif page == 'fixedlens' %}List of fixed-lens camera sensor pixel pitch.{% elif page == 'about' %}Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.{% endif %}{% endblock %}">
-  <meta name="keywords" content="{% block keywords %}camera sensor, pixel pitch, sensor size, megapixels, DSLR, mirrorless, photography, camera specifications, sensor dimensions, image quality{% if page == 'dslr' %}, DSLR cameras{% elif page == 'mirrorless' %}, mirrorless cameras{% elif page == 'rangefinder' %}, rangefinder cameras{% elif page == 'fixedlens' %}, fixed lens cameras{% endif %}{% endblock %}">
+  <meta name="description" content="{% block description %}{% if page == 'all' %}Comprehensive database of camera sensor pixel pitch measurements.{% elif page == 'dslr' %}List of DSLR camera sensor pixel pitch.{% elif page == 'mirrorless' %}List of mirrorless camera sensor pixel pitch.{% elif page == 'rangefinder' %}List of rangefinder camera sensor pixel pitch.{% elif page == 'fixedlens' %}List of fixed-lens camera sensor pixel pitch.{% elif page == 'camcorder' %}List of camcorder sensor pixel pitch.{% elif page == 'actioncam' %}List of actioncam sensor pixel pitch.{% elif page == 'about' %}Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.{% endif %}{% endblock %}">
+  <meta name="keywords" content="{% block keywords %}camera sensor, pixel pitch, sensor size, megapixels, DSLR, mirrorless, photography, camera specifications, sensor dimensions, image quality{% if page == 'dslr' %}, DSLR cameras{% elif page == 'mirrorless' %}, mirrorless cameras{% elif page == 'rangefinder' %}, rangefinder cameras{% elif page == 'fixedlens' %}, fixed lens cameras{% elif page == 'camcorder' %}, camcorders{% elif page == 'actioncam' %}, actioncams{% endif %}{% endblock %}">
   <meta name="author" content="Jiyong Youn">
   <meta name="robots" content="index, follow">
   <meta name="googlebot" content="index, follow">
@@ -13,7 +13,7 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Camera Sensor Pixel Pitch Database">
   <meta property="og:title" content="{% block og_title %}{{ title | default('Camera Sensor Pixel Pitch List') }}{% endblock %}">
-  <meta property="og:description" content="{% block og_description %}{% if page == 'all' %}Comprehensive database of camera sensor pixel pitch measurements.{% elif page == 'dslr' %}List of DSLR camera sensor pixel pitch.{% elif page == 'mirrorless' %}List of mirrorless camera sensor pixel pitch.{% elif page == 'rangefinder' %}List of rangefinder camera sensor pixel pitch.{% elif page == 'fixedlens' %}List of fixed-lens camera sensor pixel pitch.{% elif page == 'about' %}Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.{% endif %}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{% if page == 'all' %}Comprehensive database of camera sensor pixel pitch measurements.{% elif page == 'dslr' %}List of DSLR camera sensor pixel pitch.{% elif page == 'mirrorless' %}List of mirrorless camera sensor pixel pitch.{% elif page == 'rangefinder' %}List of rangefinder camera sensor pixel pitch.{% elif page == 'fixedlens' %}List of fixed-lens camera sensor pixel pitch.{% elif page == 'camcorder' %}List of camcorder sensor pixel pitch.{% elif page == 'actioncam' %}List of actioncam sensor pixel pitch.{% elif page == 'about' %}Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.{% endif %}{% endblock %}">
   <meta property="og:url" content="{% block og_url %}https://hletrd.github.io/pixelpitch/{% if page != 'all' %}{{ page }}.html{% endif %}{% endblock %}">
   <meta property="og:image" content="https://hletrd.github.io/pixelpitch/og-image.png">
   <meta property="og:image:width" content="1200">
@@ -23,7 +23,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{% block twitter_title %}{{ title | default('Camera Sensor Pixel Pitch List') }}{% endblock %}">
-  <meta name="twitter:description" content="{% block twitter_description %}{% if page == 'all' %}Comprehensive database of camera sensor pixel pitch measurements.{% elif page == 'dslr' %}List of DSLR camera sensor pixel pitch.{% elif page == 'mirrorless' %}List of mirrorless camera sensor pixel pitch.{% elif page == 'rangefinder' %}List of rangefinder camera sensor pixel pitch.{% elif page == 'fixedlens' %}List of fixed-lens camera sensor pixel pitch.{% elif page == 'about' %}Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.{% endif %}{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}{% if page == 'all' %}Comprehensive database of camera sensor pixel pitch measurements.{% elif page == 'dslr' %}List of DSLR camera sensor pixel pitch.{% elif page == 'mirrorless' %}List of mirrorless camera sensor pixel pitch.{% elif page == 'rangefinder' %}List of rangefinder camera sensor pixel pitch.{% elif page == 'fixedlens' %}List of fixed-lens camera sensor pixel pitch.{% elif page == 'camcorder' %}List of camcorder sensor pixel pitch.{% elif page == 'actioncam' %}List of actioncam sensor pixel pitch.{% elif page == 'about' %}Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.{% endif %}{% endblock %}">
   <meta name="twitter:image" content="https://hletrd.github.io/pixelpitch/twitter-card.png">
   <meta name="twitter:image:alt" content="Camera Sensor Pixel Pitch Database">
 
@@ -46,7 +46,7 @@
     "@context": "https://schema.org",
     "@type": "Dataset",
     "name": "Camera Sensor Pixel Pitch Database",
-    "description": "Comprehensive database of camera sensor specifications including pixel pitch measurements, sensor dimensions, and megapixel counts for DSLR, mirrorless, rangefinder, and fixed-lens cameras.",
+    "description": "Comprehensive database of camera sensor specifications including pixel pitch measurements, sensor dimensions, and megapixel counts for DSLR, mirrorless, rangefinder, fixed-lens, camcorder, and actioncams.",
     "url": "https://hletrd.github.io/pixelpitch/",
     "creator": {
       "@type": "Person",
@@ -219,6 +219,16 @@
           <li class="nav-item">
             <a class="nav-link{% if page == 'fixedlens' %} active{% endif %}" href="fixedlens.html">
               Fixed-lens
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if page == 'camcorder' %} active{% endif %}" href="camcorder.html">
+              Camcorder
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if page == 'actioncam' %} active{% endif %}" href="actioncam.html">
+              Action cam
             </a>
           </li>
           <li class="nav-item">

@@ -33,6 +33,8 @@ FIXED_URL = "https://geizhals.eu/?cat=dcam&hloc=at&hloc=de&hloc=pl&hloc=uk&hloc=
 DSLR_URL = "https://geizhals.eu/?cat=dcamsp&xf=1480_Spiegelreflex+(DSLR)&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=166&fcols=5761&fcols=3378&sort=artikel&bl1_id=1000"
 MIRRORLESS_URL = "https://geizhals.eu/?cat=dcamsp&xf=1480_Spiegellos+(DSLM)&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=166&fcols=5761&fcols=3378&sort=artikel&bl1_id=1000"
 RANGEFINDER_URL = "https://geizhals.eu/?cat=dcamsp&xf=1480_Messsucher&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=166&fcols=5761&fcols=3378&sort=artikel&bl1_id=1000"
+CAMCORDER_URL = "https://geizhals.eu/?cat=dvcam&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=205&fcols=195&fcols=3373&sort=artikel&bl1_id=1000"
+ACTIONCAM_URL = "https://geizhals.eu/?cat=dvcamac&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=5023&fcols=5025&fcols=5036&sort=artikel&bl1_id=1000"
 
 SIZE_RE = re.compile(r"\s([\d\.]+)x([\d\.]+)mm")
 TYPE_RE = re.compile(
@@ -90,6 +92,7 @@ EXTRAS = [
     "anthrazit",
     "mit Objektiv",
     "Gehäuse",
+    "Body",
 ]
 EXTRAS_RE = re.compile("|".join(EXTRAS))
 PARENS_RE = re.compile(r"\(.+\)$")
@@ -584,9 +587,21 @@ def get_rangefinder() -> list[SpecDerived]:
     return derive_specs(extract_specs(entries, "rangefinder"), use_size_table=False)
 
 
+def get_camcorder() -> list[SpecDerived]:
+    """Get Camcorder camera specifications."""
+    entries = extract_entries(CAMCORDER_URL)
+    return derive_specs(extract_specs(entries, "camcorder"), use_size_table=False)
+
+
+def get_actioncam() -> list[SpecDerived]:
+    """Get Actioncam camera specifications."""
+    entries = extract_entries(ACTIONCAM_URL)
+    return derive_specs(extract_specs(entries, "actioncam"), use_size_table=False)
+
+
 def get_all() -> list[SpecDerived]:
     """Get all camera specifications."""
-    return get_fixed() + get_dslrs() + get_mirrorless() + get_rangefinder()
+    return get_fixed() + get_dslrs() + get_mirrorless() + get_rangefinder() + get_camcorder() + get_actioncam()
 
 
 def sorted_by(
@@ -686,7 +701,9 @@ def render_html(output_dir: Path) -> None:
     specs_dslr = get_dslrs()
     specs_mirrorless = get_mirrorless()
     specs_rangefinder = get_rangefinder()
-    new_specs_all = specs_fixedlens + specs_dslr + specs_mirrorless + specs_rangefinder
+    specs_camcorder = get_camcorder()
+    specs_actioncam = get_actioncam()
+    new_specs_all = specs_fixedlens + specs_dslr + specs_mirrorless + specs_rangefinder + specs_camcorder + specs_actioncam
 
     specs_all = merge_camera_data(new_specs_all, existing_specs)
 
@@ -719,6 +736,22 @@ def render_html(output_dir: Path) -> None:
             s
             for s in specs_all
             if s.spec.name in {spec.spec.name for spec in specs_rangefinder}
+        ],
+        "pitch",
+    )
+    specs_camcorder = sorted_by(
+        [
+            s
+            for s in specs_all
+            if s.spec.name in {spec.spec.name for spec in specs_camcorder}
+        ],
+        "pitch",
+    )
+    specs_actioncam = sorted_by(
+        [
+            s
+            for s in specs_all
+            if s.spec.name in {spec.spec.name for spec in specs_actioncam}
         ],
         "pitch",
     )
@@ -762,6 +795,26 @@ def render_html(output_dir: Path) -> None:
             title="Rangefinder Cameras",
             specs=specs_rangefinder,
             page="rangefinder",
+            date=date,
+        ),
+        encoding="utf-8",
+    )
+
+    (output_dir / "camcorder.html").write_text(
+        template.render(
+            title="Camcorder Cameras",
+            specs=specs_camcorder,
+            page="camcorder",
+            date=date,
+        ),
+        encoding="utf-8",
+    )
+
+    (output_dir / "actioncam.html").write_text(
+        template.render(
+            title="Actioncam Cameras",
+            specs=specs_actioncam,
+            page="actioncam",
             date=date,
         ),
         encoding="utf-8",

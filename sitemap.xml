@@ -31,6 +31,18 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://hletrd.github.io/pixelpitch/camcorder.html</loc>
+    <lastmod>2025-07-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://hletrd.github.io/pixelpitch/actioncam.html</loc>
+    <lastmod>2025-07-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://hletrd.github.io/pixelpitch/about.html</loc>
     <lastmod>2025-07-15</lastmod>
     <changefreq>weekly</changefreq>
