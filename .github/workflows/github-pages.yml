@@ -22,13 +22,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Download previous CSV artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: camera-data.csv
-        path: ./
-      continue-on-error: true
-
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -43,11 +36,13 @@ jobs:
       run: |
         python pixelpitch.py
 
-    - name: Upload CSV artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: camera-data.csv
-        path: dist/camera-data.csv
+    - name: Commit and push camera data
+      run: |
+        git config --local user.email "hletrd@users.noreply.github.com"
+        git config --local user.name "GitHub Action"
+        git add -f dist/camera-data.csv
+        git commit -m "Update camera-data.csv [skip ci]" || exit 0
+        git push
 
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3

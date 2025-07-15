@@ -1,4 +1,6 @@
-dist
+dist/*.html
+dist/robots.txt
+dist/sitemap.xml
 .venv
 .DS_Store
 __pycache__
