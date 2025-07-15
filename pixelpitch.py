@@ -481,7 +481,7 @@ def extract_specs(entries: list[str], category: str) -> list[Spec]:
         else:
             size = None
 
-        mpix_match = mpix_match.group(1).replace("-", "")
+        mpix_match = mpix_match.group(1).replace("-", "") if mpix_match else None
         pitch = float(pitch_match.group(1)) if pitch_match else None
         mpix = float(mpix_match) if mpix_match else None
         year = int(year_match.group(1)) if year_match else None
