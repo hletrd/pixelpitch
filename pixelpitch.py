@@ -50,6 +50,9 @@ YEAR_RE = re.compile(
     r'<div class="productlist__additionalfilter">\s+([\d]{4})\s+</div>'
 )
 NAME_RE = re.compile(r'data-name="(.+?)"')
+ADDITIONAL_FILTER_RE = re.compile(
+    r'<div class="productlist__additionalfilter">\s+(.+?)\s+</div>'
+)
 
 # from http://en.wikipedia.org/wiki/Image_sensor_format
 TYPE_SIZE: dict[str, Tuple[float, float]] = {
@@ -461,7 +464,10 @@ def extract_specs(entries: list[str], category: str) -> list[Spec]:
         type_match = TYPE_RE.search(entry)
         size_match = SIZE_RE.search(entry)
         pitch_match = PITCH_RE.search(entry)
-        mpix_match = MPIX_RE.search(entry)
+        if category == "camcorder" or category == "actioncam":
+            mpix_match = ADDITIONAL_FILTER_RE.search(entry)
+        else:
+            mpix_match = MPIX_RE.search(entry)
         year_match = YEAR_RE.search(entry)
 
         name = html.unescape(name_match.group(1))
@@ -512,7 +518,15 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
             years = [s.year for s in grouped_specs if s.year]
             year = min(years) if years else None
             rest.append(
-                Spec(unified_name, ref.category, ref.type, ref.size, ref.pitch, ref.mpix, year)
+                Spec(
+                    unified_name,
+                    ref.category,
+                    ref.type,
+                    ref.size,
+                    ref.pitch,
+                    ref.mpix,
+                    year,
+                )
             )
         else:
             rest.extend(grouped_specs)
@@ -523,7 +537,9 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
         match = PARENS_RE.search(name)
         if match:
             name = name[: match.start()].strip()
-        return Spec(name, spec.category, spec.type, spec.size, spec.pitch, spec.mpix, spec.year)
+        return Spec(
+            name, spec.category, spec.type, spec.size, spec.pitch, spec.mpix, spec.year
+        )
 
     rest = list(map(remove_parens, rest))
     return rest
@@ -601,7 +617,14 @@ def get_actioncam() -> list[SpecDerived]:
 
 def get_all() -> list[SpecDerived]:
     """Get all camera specifications."""
-    return get_fixed() + get_dslrs() + get_mirrorless() + get_rangefinder() + get_camcorder() + get_actioncam()
+    return (
+        get_fixed()
+        + get_dslrs()
+        + get_mirrorless()
+        + get_rangefinder()
+        + get_camcorder()
+        + get_actioncam()
+    )
 
 
 def sorted_by(
@@ -703,7 +726,14 @@ def render_html(output_dir: Path) -> None:
     specs_rangefinder = get_rangefinder()
     specs_camcorder = get_camcorder()
     specs_actioncam = get_actioncam()
-    new_specs_all = specs_fixedlens + specs_dslr + specs_mirrorless + specs_rangefinder + specs_camcorder + specs_actioncam
+    new_specs_all = (
+        specs_fixedlens
+        + specs_dslr
+        + specs_mirrorless
+        + specs_rangefinder
+        + specs_camcorder
+        + specs_actioncam
+    )
 
     specs_all = merge_camera_data(new_specs_all, existing_specs)
 
