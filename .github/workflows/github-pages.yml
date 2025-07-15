@@ -9,6 +9,12 @@ on:
   schedule:
     - cron:  '0 0 1 * *'
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: read
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -39,9 +45,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: github-pages
-    permissions:
-      contents: read
-      pages: write
     needs: update
     steps:
     - name: Deploy
