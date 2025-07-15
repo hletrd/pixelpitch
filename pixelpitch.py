@@ -98,6 +98,7 @@ PARENS_RE = re.compile(r"\(.+\)$")
 @dataclass
 class Spec:
     name: str
+    category: str
     type: Optional[str]
     size: Optional[Tuple[float, float]]
     pitch: Optional[float]
@@ -288,46 +289,50 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
             if has_id and len(values) >= 10:
                 record_id = int(values[0]) if values[0] else None
                 name = values[1]
-                type_str = values[2] if values[2] else None
-                width_str = values[3]
-                height_str = values[4]
-                area_str = values[5]
-                mpix_str = values[6]
-                pitch_str = values[7]
-                year_str = values[8]
-                sensors_str = values[9] if len(values) > 9 else ""
+                category = values[2]
+                type_str = values[3] if values[3] else None
+                width_str = values[4]
+                height_str = values[5]
+                area_str = values[6]
+                mpix_str = values[7]
+                pitch_str = values[8]
+                year_str = values[9]
+                sensors_str = values[10] if len(values) > 10 else ""
             elif has_id and len(values) >= 9:
                 record_id = int(values[0]) if values[0] else None
                 name = values[1]
-                type_str = values[2] if values[2] else None
-                width_str = values[3]
-                height_str = values[4]
-                area_str = values[5]
-                mpix_str = values[6]
-                pitch_str = values[7]
-                year_str = values[8]
+                category = values[2]
+                type_str = values[3] if values[3] else None
+                width_str = values[4]
+                height_str = values[5]
+                area_str = values[6]
+                mpix_str = values[7]
+                pitch_str = values[8]
+                year_str = values[9]
                 sensors_str = ""
             elif not has_id and len(values) >= 9:
                 record_id = None
                 name = values[0]
-                type_str = values[1] if values[1] else None
-                width_str = values[2]
-                height_str = values[3]
-                area_str = values[4]
-                mpix_str = values[5]
-                pitch_str = values[6]
-                year_str = values[7]
+                category = values[1]
+                type_str = values[2] if values[2] else None
+                width_str = values[3]
+                height_str = values[4]
+                area_str = values[5]
+                mpix_str = values[6]
+                pitch_str = values[7]
+                year_str = values[8]
                 sensors_str = values[8] if len(values) > 8 else ""
             elif not has_id and len(values) >= 8:
                 record_id = None
                 name = values[0]
-                type_str = values[1] if values[1] else None
-                width_str = values[2]
-                height_str = values[3]
-                area_str = values[4]
-                mpix_str = values[5]
-                pitch_str = values[6]
-                year_str = values[7]
+                category = values[1]
+                type_str = values[2] if values[2] else None
+                width_str = values[3]
+                height_str = values[4]
+                area_str = values[5]
+                mpix_str = values[6]
+                pitch_str = values[7]
+                year_str = values[8]
                 sensors_str = ""
             else:
                 continue
@@ -347,7 +352,7 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
             year = int(year_str) if year_str else None
             matched_sensors = sensors_str.split(";") if sensors_str else []
 
-            spec = Spec(name, type_str, size, pitch, mpix, year)
+            spec = Spec(name, category, type_str, size, pitch, mpix, year)
             derived = SpecDerived(spec, size, area, pitch, matched_sensors, record_id)
             specs.append(derived)
 
@@ -441,7 +446,7 @@ def extract_entries(url: str) -> list[str]:
     return entries
 
 
-def extract_specs(entries: list[str]) -> list[Spec]:
+def extract_specs(entries: list[str], category: str) -> list[Spec]:
     """Extract camera specifications from HTML entries."""
     specs = []
 
@@ -471,7 +476,7 @@ def extract_specs(entries: list[str]) -> list[Spec]:
         mpix = float(mpix_match.group(1)) if mpix_match else None
         year = int(year_match.group(1)) if year_match else None
 
-        specs.append(Spec(name, typ, size, pitch, mpix, year))
+        specs.append(Spec(name, category, typ, size, pitch, mpix, year))
 
     specs = deduplicate_specs(specs)
     return specs
@@ -504,7 +509,7 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
             years = [s.year for s in grouped_specs if s.year]
             year = min(years) if years else None
             rest.append(
-                Spec(unified_name, ref.type, ref.size, ref.pitch, ref.mpix, year)
+                Spec(unified_name, ref.category, ref.type, ref.size, ref.pitch, ref.mpix, year)
             )
         else:
             rest.extend(grouped_specs)
@@ -515,7 +520,7 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
         match = PARENS_RE.search(name)
         if match:
             name = name[: match.start()].strip()
-        return Spec(name, spec.type, spec.size, spec.pitch, spec.mpix, spec.year)
+        return Spec(name, spec.category, spec.type, spec.size, spec.pitch, spec.mpix, spec.year)
 
     rest = list(map(remove_parens, rest))
     return rest
@@ -558,25 +563,25 @@ def derive_specs(specs: list[Spec], use_size_table: bool = False) -> list[SpecDe
 def get_fixed() -> list[SpecDerived]:
     """Get fixed-lens camera specifications."""
     entries = extract_entries(FIXED_URL)
-    return derive_specs(extract_specs(entries), use_size_table=True)
+    return derive_specs(extract_specs(entries, "fixed"), use_size_table=True)
 
 
 def get_dslrs() -> list[SpecDerived]:
     """Get DSLR camera specifications."""
     entries = extract_entries(DSLR_URL)
-    return derive_specs(extract_specs(entries), use_size_table=False)
+    return derive_specs(extract_specs(entries, "dslr"), use_size_table=False)
 
 
 def get_mirrorless() -> list[SpecDerived]:
     """Get Mirrorless camera specifications."""
     entries = extract_entries(MIRRORLESS_URL)
-    return derive_specs(extract_specs(entries), use_size_table=False)
+    return derive_specs(extract_specs(entries, "mirrorless"), use_size_table=False)
 
 
 def get_rangefinder() -> list[SpecDerived]:
     """Get Rangefinder camera specifications."""
     entries = extract_entries(RANGEFINDER_URL)
-    return derive_specs(extract_specs(entries), use_size_table=False)
+    return derive_specs(extract_specs(entries, "rangefinder"), use_size_table=False)
 
 
 def get_all() -> list[SpecDerived]:
@@ -640,7 +645,7 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
 
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(
-            "id,name,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+            "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
             "megapixels,pixel_pitch_um,year,matched_sensors\n"
         )
 
@@ -648,6 +653,7 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
             spec = derived.spec
 
             id_str = str(derived.id) if derived.id is not None else ""
+            category_str = spec.category or ""
             type_str = spec.type or ""
             width_str = f"{derived.size[0]:.2f}" if derived.size else ""
             height_str = f"{derived.size[1]:.2f}" if derived.size else ""
@@ -664,7 +670,7 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
                 name_escaped = f'"{name_escaped}"'
 
             f.write(
-                f"{id_str},{name_escaped},{type_str},{width_str},{height_str},"
+                f"{id_str},{name_escaped},{category_str},{type_str},{width_str},{height_str},"
                 f"{area_str},{mpix_str},{pitch_str},{year_str},{sensors_str}\n"
             )
 
