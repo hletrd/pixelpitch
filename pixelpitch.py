@@ -51,7 +51,7 @@ YEAR_RE = re.compile(
 )
 NAME_RE = re.compile(r'data-name="(.+?)"')
 ADDITIONAL_FILTER_RE = re.compile(
-    r'<div class="productlist__additionalfilter">\s+([\d\.]+)\s+</div>'
+    r'<div class="productlist__additionalfilter">\s+([\d\.\-]+)\s+</div>'
 )
 
 # from http://en.wikipedia.org/wiki/Image_sensor_format
@@ -481,8 +481,9 @@ def extract_specs(entries: list[str], category: str) -> list[Spec]:
         else:
             size = None
 
+        mpix_match = mpix_match.group(1).replace("-", "")
         pitch = float(pitch_match.group(1)) if pitch_match else None
-        mpix = float(mpix_match.group(1)) if mpix_match else None
+        mpix = float(mpix_match) if mpix_match else None
         year = int(year_match.group(1)) if year_match else None
 
         specs.append(Spec(name, category, typ, size, pitch, mpix, year))
