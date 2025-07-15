@@ -240,78 +240,12 @@ def match_sensors(
     return sorted(matches)
 
 
-def get_github_repo_info() -> Optional[Tuple[str, str]]:
-    """Get GitHub repository owner and name from environment or git."""
-    github_repo = os.environ.get("GITHUB_REPOSITORY")
-    if github_repo and "/" in github_repo:
-        return tuple(github_repo.split("/", 1))
+def load_csv() -> Optional[str]:
+    """Load the previous CSV."""
+    if os.path.exists("result.csv"):
+        return Path("result.csv").read_text(encoding="utf-8")
 
     return None
-
-
-def load_csv(output_dir: Path) -> Optional[str]:
-    """Load the previous CSV."""
-    if os.path.exists(output_dir / "result.csv"):
-        return (output_dir / "result.csv").read_text(encoding="utf-8")
-
-    repo_info = get_github_repo_info()
-    if not repo_info:
-        print("Could not determine GitHub repository info")
-        return None
-
-    owner, repo = repo_info
-    print(f"Looking for previous artifacts in {owner}/{repo}")
-
-    token = os.environ.get("GITHUB_TOKEN")
-    headers = {"Accept": "application/vnd.github.v3+json"}
-    if token:
-        headers["Authorization"] = f"token {token}"
-
-    try:
-        workflows_url = f"https://api.github.com/repos/{owner}/{repo}/actions/runs"
-        params = {"status": "completed", "conclusion": "success", "per_page": 10}
-
-        response = requests.get(workflows_url, headers=headers, params=params)
-        response.raise_for_status()
-        runs = response.json()["workflow_runs"]
-
-        for run in runs:
-            artifacts_url = run["artifacts_url"]
-            artifacts_response = requests.get(artifacts_url, headers=headers)
-            artifacts_response.raise_for_status()
-            artifacts = artifacts_response.json()["artifacts"]
-
-            csv_artifact = None
-            for artifact in artifacts:
-                if artifact["name"] == "camera-data.csv":
-                    csv_artifact = artifact
-                    break
-
-            if csv_artifact:
-                print(f"Found CSV artifact from run {run['id']}")
-
-                download_url = csv_artifact["archive_download_url"]
-                download_response = requests.get(download_url, headers=headers)
-                download_response.raise_for_status()
-
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    zip_path = Path(temp_dir) / "artifact.zip"
-                    zip_path.write_bytes(download_response.content)
-
-                    with zipfile.ZipFile(zip_path, "r") as zip_file:
-                        zip_file.extractall(temp_dir)
-                        csv_path = Path(temp_dir) / "camera-data.csv"
-                        if csv_path.exists():
-                            return csv_path.read_text(encoding="utf-8")
-
-                break
-
-        print("No previous CSV artifact found")
-        return None
-
-    except Exception as e:
-        print(f"Error downloading previous CSV: {e}")
-        return None
 
 
 def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
