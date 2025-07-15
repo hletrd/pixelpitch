@@ -1,1282 +1,1285 @@
 id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors
-0,Mustek GSmart mini 3,fixed,,,,,2.1,,2002,
-1,Casio Exilim EX-Z3,fixed,1/2.5,5.76,4.29,24.71,3.2,2.78,2003,
-2,Trust 820 LCD Powercam Zoom,fixed,,,,,4.0,,2003,
-3,Canon PowerShot G7,fixed,1/2.5,7.20,5.30,38.16,10.0,2.00,2006,
-4,Mustek DV535A,camcorder,1/0.4,50.80,38.10,,,,2007,
-5,Mustek DV536,camcorder,1/0.4,50.80,38.10,,,,2007,
-6,Ricoh Caplio GX100,fixed,1/2.5,7.20,5.30,38.16,10.1,1.90,2007,
-7,Canon EOS 1D Mark III,dslr,,28.10,18.70,525.47,10.1,7.21,2007,
-8,Canon EOS 1D Mark III Body,dslr,,28.10,18.70,525.47,10.1,7.21,2007,
-9,Canon EOS 1Ds Mark III,dslr,,36.00,24.00,864.00,21.1,6.40,2007,
-10,Canon EOS 1Ds Mark III Body,dslr,,36.00,24.00,864.00,21.1,6.40,2007,
-11,Casio Exilim EX-F1,fixed,1/1.8,7.18,5.32,38.20,6.0,2.52,2008,
-12,Casio Exilim EX-Z80,fixed,1/2.5,5.76,4.29,24.71,8.1,1.75,2008,
-13,Canon EOS 450D,dslr,,22.20,14.80,328.56,12.2,5.20,2008,
-14,Disney Pix Digitalkameras,fixed,,,,,0.3,,2008,
-15,Sigma SD15,dslr,,20.70,13.80,285.66,14.0,7.80,2008,
-16,Sony PMW-EX1R,camcorder,,,,,,,2008,
-17,Sony PMW-EX3,camcorder,,,,,,,2008,
-18,Technaxx HD Pocket DV,camcorder,1/0.4,50.80,38.10,,,,2009,
-19,Casio Exilim EX-FC100,fixed,1/2.3,6.17,4.55,28.07,9.1,1.76,2009,
-20,Casio Exilim EX-H10,fixed,1/2.3,6.17,4.55,28.07,12.1,1.52,2009,
-21,Nikon Coolpix S225,fixed,1/2.5,6.20,4.50,27.90,10.0,1.70,2009,
-22,Rollei Compactline 110,fixed,1/2.5,5.80,4.30,24.94,10.0,1.60,2009,
-23,Rollei Compactline 130,fixed,1/2.5,5.80,4.30,24.94,10.0,1.60,2009,
-24,Canon EOS 7D,dslr,,22.30,14.90,332.27,18.0,4.30,2009,
-25,Canon EOS 7D Body,dslr,,22.30,14.90,332.27,18.0,4.30,2009,
-26,Oregon Scientific ATC 9K Action Cam,actioncam,1/0.7,29.03,21.77,,,,2010,
-27,Casio Exilim EX-ZR10,fixed,1/2.3,6.17,4.55,28.07,12.1,1.52,2010,
-28,Pentax Optio I-10,fixed,1/2.3,6.20,4.50,27.90,12.0,1.50,2010,
-29,Rollei Powerflex 3D,fixed,1/2.5,5.80,4.30,24.94,5.0,2.20,2010,
-30,Sony Cyber-shot DSC-HX5V,fixed,1/2.5,8.50,6.40,54.40,10.2,2.30,2010,
-31,Minox DC9011WP,fixed,,,,,9.0,,2010,
-32,Nikon D3100,dslr,,23.10,15.40,355.74,14.2,5.00,2010,
-33,Olympus PEN E-P2,mirrorless,,17.30,13.00,224.90,12.3,4.30,2010,
-34,Rollei Sportsline 50,fixed,,,,,5.0,,2010,
-35,Rollei Sportsline 60,fixed,,,,,5.0,,2010,
-36,Sony NEX-FS100,camcorder,1/0.3,67.73,50.80,,,,2011,
-37,AgfaPhoto eClipse EXPLORER,camcorder,1/0.4,50.80,38.10,,,,2011,
-38,Fujifilm FinePix X100 Limited Edition,fixed,1/0.6,23.60,15.80,373.28,12.3,5.50,2011,
-39,Casio Exilim EX-H30,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2011,
-40,Casio Exilim EX-ZR100,fixed,1/2.3,6.17,4.55,28.07,12.1,1.52,2011,
-41,Casio Exilim EX-ZS15,fixed,1/2.3,6.17,4.55,28.07,14.1,1.41,2011,
-42,Casio Exilim EX-ZS5,fixed,1/2.3,6.17,4.55,28.07,14.1,1.41,2011,
-43,Rollei Powerflex 400,fixed,1/2.3,6.20,4.50,27.90,14.0,1.40,2011,
-44,Rollei Powerflex 460,fixed,1/2.3,6.20,4.50,27.90,14.0,1.40,2011,
-45,Samsung WB710,fixed,1/2.3,6.20,4.50,27.90,14.2,1.40,2011,
-46,SeaLife DC1400,fixed,1/2.3,6.20,4.50,27.90,14.0,1.40,2011,
-47,Sony Cyber-shot DSC-W550,fixed,1/2.3,6.20,4.50,27.90,14.1,1.40,2011,
-48,Nikon Coolpix L23,fixed,1/2.5,7.00,5.30,37.10,10.1,1.90,2011,
-49,Albrecht DV300GP,actioncam,,,,,,,2011,
-50,Canon EOS 1D X,dslr,,36.00,24.00,864.00,18.1,6.91,2011,
-51,Canon EOS 1D X Body,dslr,,36.00,24.00,864.00,18.1,6.91,2011,
-52,Midland Action XTC100,actioncam,,,,,,,2011,
-53,Olympus PEN E-P3,mirrorless,,17.30,13.00,224.90,12.3,4.30,2011,
-54,Olympus PEN E-PL3,mirrorless,,17.30,13.00,224.90,12.3,4.30,2011,
-55,Panasonic Lumix DMC-GF3,mirrorless,,17.30,13.00,224.90,12.1,4.31,2011,
-56,Panasonic Lumix DMC-GX1,mirrorless,,17.30,13.00,224.90,16.0,3.80,2011,
-57,Sony Cyber-shot DSC-RX1,fixed,1/0.5,35.80,23.80,851.64,24.3,5.90,2012,IMX071;IMX128;IMX157;IMX310;IMX410
-58,Leica X2,fixed,1/0.6,23.60,15.70,370.52,16.2,4.80,2012,
-59,Sony Cyber-shot DSC-RX100,fixed,1/1,13.20,8.80,116.16,20.2,2.40,2012,IMX183;IMX283;IMX383
-60,Canon PowerShot A2300,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2012,
-61,Casio Exilim EX-H50,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2012,
-62,Casio Exilim EX-N1 Casual,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2012,
-63,Casio Exilim EX-ZR1000,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2012,
-64,Casio Exilim EX-ZR200,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2012,
-65,Casio Exilim EX-ZR300,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2012,
-66,Fujifilm FinePix T400,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2012,
-67,Panasonic Lumix DMC-LX7,fixed,1/2.3,7.60,5.70,43.32,10.1,2.10,2012,
-68,Rollei Powerflex 210HD,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2012,
-69,Samsung ST76,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2012,
-70,Nikon Coolpix S01,fixed,1/2.5,7.00,5.30,37.10,10.1,1.90,2012,
-71,Canon Legria HF M52,camcorder,1/3,6.77,5.08,,,,2012,
-72,Liquid Image EGO,actioncam,1/3,6.77,5.08,,,,2012,
-73,Canon EOS 5D Mark III,dslr,,36.00,24.00,864.00,22.3,6.22,2012,
-74,Canon EOS 5D Mark III Body,dslr,,36.00,24.00,864.00,22.3,6.22,2012,
-75,Canon EOS 6D,dslr,,36.00,24.00,864.00,20.2,6.60,2012,
-76,Canon EOS M,mirrorless,,22.30,14.90,332.27,18.0,4.30,2012,
-77,Dörr Snapshot Mini Black,fixed,,,,,5.0,,2012,
-78,Easypix W1024,fixed,,,,,10.0,,2012,
-79,Fujifilm X-E1,mirrorless,,23.60,15.60,368.16,16.3,4.80,2012,
-80,Fujifilm X-Pro1,mirrorless,,23.60,15.60,368.16,16.3,4.80,2012,
-81,Leica M-E Typ 220,rangefinder,,35.80,23.90,855.62,18.0,6.89,2012,
-82,Minox ACX 100 HD Action Cam,actioncam,,,,,,,2012,
-83,Minox DCC Leica 5.1,fixed,,,,,5.1,,2012,
-84,Nikon D3200,dslr,,23.20,15.40,357.28,24.2,3.90,2012,IMX193;IMX210;IMX271;IMX284
-85,Nikon D5200,dslr,,23.60,15.60,368.16,24.1,3.90,2012,IMX193;IMX210;IMX271;IMX284
-86,Olympus OM-D E-M5,mirrorless,,17.30,13.00,224.90,16.1,3.80,2012,
-87,Olympus PEN E-PM2,mirrorless,,17.30,13.00,224.90,17.2,3.80,2012,
-88,Oregon Scientific ATC Mini Action Cam,actioncam,,,,,,,2012,
-89,Panasonic Lumix DMC-G5,mirrorless,,17.30,13.00,224.90,16.1,3.80,2012,
-90,Panasonic Lumix DMC-GF5,mirrorless,,17.30,13.00,224.90,12.1,4.31,2012,
-91,Sigma SD1 Merrill,dslr,,24.00,16.00,384.00,14.8,5.10,2012,
-92,Sony Alpha NEX-6,mirrorless,,23.50,15.60,366.60,16.1,4.80,2012,
-93,Sony Cyber-shot DSC-RX1R,fixed,1/0.5,35.80,23.90,855.62,24.3,5.90,2013,IMX071;IMX128;IMX157;IMX310;IMX410
-94,Nikon Coolpix A,fixed,1/0.6,23.60,15.60,368.16,16.2,4.77,2013,
-95,Sony Cyber-shot DSC-RX10,fixed,1/1,13.20,8.80,116.16,20.2,2.40,2013,IMX183;IMX283;IMX383
-96,Sony Cyber-shot DSC-RX100 II,fixed,1/1,13.20,8.80,116.16,20.2,2.40,2013,IMX183;IMX283;IMX383
-97,Fujifilm FinePix HS35EXR,fixed,1/2,6.40,4.80,30.72,16.0,1.40,2013,
-98,Lytro Lichtfeldkamera 16GB,fixed,1/2,6.50,4.50,29.25,1.2,4.90,2013,
-99,Casio Exilim EX-ZR400,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2013,
-100,Casio Exilim EX-ZR410,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2013,
-101,Casio Exilim EX-ZR700,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2013,
-102,Casio Exilim EX-ZR710,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2013,
-103,Fujifilm FinePix S4700,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2013,
-104,Nikon Coolpix S3500,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2013,
-105,Nilox F-60,actioncam,1/2.3,8.83,6.63,,,,2013,
-106,Olympus TG-830,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2013,
-107,Panasonic HC-V720,camcorder,1/2.3,8.83,6.63,,,,2013,
-108,Panasonic HC-X920,camcorder,1/2.3,8.83,6.63,,,,2013,
-109,Panasonic Lumix DMC-FZ72,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2013,
-110,Panasonic Lumix DMC-LZ30,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2013,
-111,Sony Cyber-shot DSC-H200,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2013,
-112,Sony Cyber-shot DSC-HX300,fixed,1/2.3,6.20,4.50,27.90,20.4,1.20,2013,
-113,Liquid Image Torque HD,actioncam,1/2.5,8.13,6.10,,,,2013,
-114,iSHOXS ISAW A2,actioncam,1/3,6.77,5.08,,,,2013,
-115,Bushnell Trophy Cam HD Max,fixed,,,,,8.0,,2013,
-116,Canon EOS 70D,dslr,,22.50,15.00,337.50,20.2,4.10,2013,
-117,Fujifilm X-A1,mirrorless,,23.60,15.60,368.16,16.3,4.75,2013,
-118,Fujifilm X-E2,mirrorless,,23.60,15.60,368.16,16.3,4.80,2013,
-119,Fujifilm X-M1,mirrorless,,23.60,15.60,368.16,16.3,4.80,2013,
-120,Minox DCC 14.0,fixed,,,,,14.0,,2013,
-121,Nikon 1 S1,mirrorless,,13.20,8.80,116.16,10.1,3.39,2013,
-122,Nikon D610,dslr,,35.90,24.00,861.60,24.7,5.91,2013,IMX071;IMX128;IMX157;IMX310;IMX410
-123,Nikon D7100,dslr,,23.50,15.60,366.60,24.1,3.90,2013,IMX193;IMX210;IMX271;IMX284
-124,Nikon Df,dslr,,36.00,23.90,860.40,16.2,7.30,2013,
-125,Olympus OM-D E-M1,mirrorless,,17.30,13.00,224.90,16.3,3.80,2013,
-126,Panasonic Lumix DMC-GF6,mirrorless,,17.30,13.00,224.90,16.0,3.80,2013,
-127,Samsung NX310,mirrorless,,23.50,15.70,368.95,20.3,4.30,2013,IMX321
-128,Samsung WB110,fixed,,,,,20.2,,2013,
-129,Sony Alpha 7K,mirrorless,,35.80,23.90,855.62,24.3,5.93,2013,IMX071;IMX128;IMX157;IMX310;IMX410
-130,Sony Alpha 7R,mirrorless,,35.80,23.90,855.62,36.4,4.85,2013,IMX094
-131,Sony Alpha 7R Body,mirrorless,,35.80,23.90,855.62,36.4,4.85,2013,IMX094
-132,VTech Kidizoom Connect,fixed,,,,,2.0,,2013,
-133,VTech Kidizoom Touch,fixed,,,,,2.0,,2013,
-134,Denver AC-5000W,actioncam,1/0.5,40.64,30.48,,,,2014,
-135,Denver ACT-1302T,actioncam,1/0.5,40.64,30.48,,,,2014,
-136,Trevi Go 2200 HD Scuba Sport Camera,actioncam,1/0.5,40.64,30.48,,,,2014,
-137,Fujifilm FinePix X100T,fixed,1/0.6,23.60,15.80,373.28,16.3,4.80,2014,
-138,Sigma dp1 Quattro,fixed,1/0.6,23.50,15.70,368.95,29.0,3.60,2014,
-139,Sigma dp2 Quattro,fixed,1/0.6,23.50,15.70,368.95,29.0,3.60,2014,
-140,Sigma dp3 Quattro,fixed,1/0.6,23.50,15.70,368.95,29.0,3.60,2014,
-141,Canon PowerShot G1 X Mark II,fixed,1/0.7,18.70,14.00,261.80,13.1,4.47,2014,
-142,Panasonic Lumix DMC-LX100,fixed,1/0.7,17.10,11.80,201.78,12.8,4.00,2014,
-143,Denver ACT-1301,actioncam,1/0.8,25.40,19.05,,,,2014,
-144,Panasonic Lumix DMC-FZ1000,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2014,
-145,Sony Cyber-shot DSC-RX100 III,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2014,IMX183;IMX283;IMX383
-146,Blackmagic Design Studio Camera HD,camcorder,1/1.3,12.50,7.00,,,,2014,
-147,Canon Digital Ixus 145,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2014,
-148,Canon Digital Ixus 150,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2014,
-149,Canon PowerShot S200,fixed,1/2.3,7.60,5.70,43.32,10.1,2.10,2014,
-150,Canon PowerShot SX60 HS,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2014,
-151,Canon PowerShot SX600 HS,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2014,
-152,Canon PowerShot SX700 HS,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2014,
-153,Fujifilm FinePix S9400W,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2014,
-154,JVC GY-HM170E,camcorder,1/2.3,8.83,6.63,,,,2014,
-155,JVC GY-HM200E,camcorder,1/2.3,8.83,6.63,,,,2014,
-156,Olympus TG-3,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2014,
-157,Panasonic HC-V750,camcorder,1/2.3,8.83,6.63,,,,2014,
-158,Sony Cyber-shot DSC-H300,fixed,1/2.3,6.17,4.55,28.07,20.1,1.18,2014,
-159,Sony Cyber-shot DSC-HX400V,fixed,1/2.3,6.20,4.50,27.90,20.4,1.20,2014,
-160,Sony Cyber-shot DSC-HX60,fixed,1/2.3,6.20,4.50,27.90,20.4,1.20,2014,
-161,Sony Cyber-shot DSC-HX60V,fixed,1/2.3,6.20,4.50,27.90,20.4,1.20,2014,
-162,Sony Cyber-shot DSC-W800,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2014,
-163,Sony Cyber-shot DSC-W810,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2014,
-164,Sony Cyber-shot DSC-W830,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2014,
-165,Sony Cyber-shot DSC-WX220,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2014,
-166,Sony Cyber-shot DSC-WX350,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2014,
-167,Denver ACT-5020TW,actioncam,1/3,6.77,5.08,,,,2014,
-168,Sony HDR-PJ810E,camcorder,1/4,5.08,3.81,,,,2014,
-169,Canon EOS 1200D,dslr,,22.30,14.90,332.27,18.0,4.30,2014,
-170,Easypix W1400 Active,fixed,,,,,14.0,,2014,
-171,Fujifilm X-T1,mirrorless,,23.60,15.60,368.16,16.3,4.75,2014,
-172,GoPro HERO,actioncam,,,,,,,2014,
-173,GoPro HERO4 Black Edition,actioncam,,,,,,,2014,
-174,GoPro HERO4 Silver Edition,actioncam,,,,,,,2014,
-175,Minox Wildkamera DTC 400 Slim,fixed,,,,,3.0,,2014,
-176,Nikon 1 J4,mirrorless,,13.20,8.80,116.16,18.4,2.50,2014,
-177,Nikon D750,dslr,,35.90,24.00,861.60,24.3,6.00,2014,IMX071;IMX128;IMX157;IMX310;IMX410
-178,Nikon D750 Body,dslr,,35.90,24.00,861.60,24.3,6.00,2014,IMX071;IMX128;IMX157;IMX310;IMX410
-179,Nikon D810,dslr,,35.90,24.00,861.60,36.3,4.87,2014,IMX094
-180,Olympus OM-D E-M10,mirrorless,,17.30,13.00,224.90,16.1,3.80,2014,
-181,Olympus PEN E-PL7,mirrorless,,17.30,13.00,224.90,16.1,3.80,2014,
-182,Oregon Scientific ATC Chameleon,actioncam,,,,,,,2014,
-183,Panasonic Lumix DMC-GH4,mirrorless,,17.30,13.00,224.90,16.0,3.80,2014,
-184,Pentax 645Z,dslr,,43.80,32.80,1436.64,51.4,5.30,2014,IMX161
-185,Pentax K-S1,dslr,,23.50,15.60,366.60,20.1,4.30,2014,IMX321
-186,Ricoh Theta,fixed,,,,,,,2014,
-187,Ricoh Theta m15,fixed,,,,,,,2014,
-188,Rollei AddEye,fixed,,,,,8.0,,2014,
-189,Sony Alpha 5000,mirrorless,,23.20,15.40,357.28,20.1,4.20,2014,IMX321
-190,Sony Alpha 5100,mirrorless,,23.50,15.60,366.60,24.3,3.90,2014,IMX193;IMX210;IMX271;IMX284
-191,Sony Alpha 6000,mirrorless,,23.50,15.60,366.60,24.3,3.88,2014,IMX193;IMX210;IMX271;IMX284
-192,Sony Alpha 7 II,mirrorless,,35.80,23.90,855.62,24.3,5.93,2014,IMX071;IMX128;IMX157;IMX310;IMX410
-193,Sony Alpha 7S Body,mirrorless,,35.60,23.80,847.28,12.2,8.40,2014,IMX235;IMX510
-194,Technaxx Video Sunglasses TX-25,actioncam,,,,,,,2014,
-195,Somikon DV-812.HD,camcorder,1/0.4,50.80,38.10,,,,2015,
-196,Denver ACT-8030W,actioncam,1/0.5,40.64,30.48,,,,2015,
-197,Leica Q Typ 116,fixed,1/0.5,36.00,24.00,864.00,24.2,6.00,2015,IMX071;IMX128;IMX157;IMX310;IMX410
-198,Sony Cyber-shot DSC-RX1R II,fixed,1/0.5,35.90,24.00,861.60,42.4,4.50,2015,IMX251;IMX366
-199,Blackmagic Design URSA Mini 4.6K EF-Mount,camcorder,1/0.6,25.30,14.60,,,,2015,
-200,Blackmagic Design URSA Mini 4K EF-Mount,camcorder,1/0.6,21.10,11.90,,,,2015,
-201,Ricoh GR II,fixed,1/0.6,23.70,15.70,372.09,16.2,4.80,2015,
-202,Sigma dp0 Quattro,fixed,1/0.6,23.50,15.70,368.95,29.0,3.60,2015,
-203,Vivitar DVR783HD,actioncam,1/0.6,33.87,25.40,,,,2015,
-204,VTech Kidizoom Action Cam,actioncam,1/0.7,29.03,21.77,,,,2015,
-205,TomTom Bandit,actioncam,1/0.8,25.40,19.05,,,,2015,
-206,Canon PowerShot G3 X,fixed,1/1,20.30,15.20,308.56,20.2,3.90,2015,
-207,Canon PowerShot G5 X,fixed,1/1,20.30,15.20,308.56,20.2,3.90,2015,
-208,Canon PowerShot G9 X,fixed,1/1,20.30,15.20,308.56,20.2,3.90,2015,
-209,Kodak PixPro SP360-4K,actioncam,1/1,20.32,15.24,,,,2015,
-210,Sony Cyber-shot DSC-RX10 II,fixed,1/1,13.20,8.80,116.16,20.2,2.40,2015,IMX183;IMX283;IMX383
-211,Sony Cyber-shot DSC-RX100 IV,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2015,IMX183;IMX283;IMX383
-212,Blackmagic Design Micro Cinema Camera Micro-Four-Thirds Mount,camcorder,1/1.3,12.50,7.00,,,,2015,
-213,Canon Digital Ixus 160,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2015,
-214,Canon PowerShot SX530 HS,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2015,
-215,Canon PowerShot SX710 HS,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2015,
-216,DJI Osmo,camcorder,1/2.3,8.83,6.63,,,,2015,
-217,Fujifilm XQ2,fixed,1/2.3,8.80,6.60,58.08,12.0,2.20,2015,
-218,Kodak Friendly Zoom FZ151,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2015,
-219,Nikon Coolpix L840,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2015,
-220,Panasonic HC-WX979,camcorder,1/2.3,8.83,6.63,,,,2015,
-221,Panasonic Lumix DMC-FT30,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2015,
-222,Panasonic Lumix DMC-SZ10,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2015,
-223,Panasonic Lumix DMC-TZ57,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2015,
-224,Panasonic Lumix DMC-TZ58,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2015,
-225,Ricoh Theta S,fixed,1/2.3,6.20,4.50,27.90,14.0,1.40,2015,
-226,Sony Cyber-shot DSC-HX90,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2015,
-227,Sony Cyber-shot DSC-HX90V,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2015,
-228,Sony Cyber-shot DSC-WX500,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2015,
-229,Sony FDR-X1000VR Remote Kit,actioncam,1/2.3,8.83,6.63,,,,2015,
-230,SJCAM SJ4000,actioncam,1/3,6.77,5.08,,,,2015,
-231,SJCAM SJ4000 Wifi,actioncam,1/3,6.77,5.08,,,,2015,
-232,Zoom Q8,camcorder,1/3,6.77,5.08,,,,2015,
-233,Bushnell NatureView HD Essential,fixed,,,,,12.0,,2015,
-234,Bushnell NatureView HD Live View,fixed,,,,,14.0,,2015,
-235,Canon EOS 5Ds Body,dslr,,36.00,24.00,864.00,50.6,4.10,2015,IMX610
-236,Canon EOS 5Ds R Body,dslr,,36.00,24.00,864.00,50.6,4.10,2015,IMX610
-237,Canon EOS 750D,dslr,,22.30,14.90,332.27,24.2,3.70,2015,
-238,Canon EOS M10,mirrorless,,22.30,14.90,332.27,18.0,4.30,2015,
-239,Canon EOS M3,mirrorless,,22.30,14.90,332.27,24.2,3.70,2015,
-240,Denver HSC-5003,fixed,,,,,5.0,,2015,
-241,Denver Wildkamera WCT-5003,fixed,,,,,5.0,,2015,
-242,Dörr Wild Snap IR X42,fixed,,,,,8.0,,2015,
-243,Fujifilm X-A2,mirrorless,,23.60,15.60,368.16,16.3,4.80,2015,
-244,GoPro HERO+,actioncam,,,,,,,2015,
-245,GoPro HERO4 Session,actioncam,,,,,,,2015,
-246,LTL Acorn 5210A,fixed,,,,,12.0,,2015,
-247,Medion Life S47018,actioncam,,,,,,,2015,
-248,Nikon D5500,dslr,,23.60,15.60,368.16,24.2,3.90,2015,IMX193;IMX210;IMX271;IMX284
-249,Nikon D7200,dslr,,23.50,15.60,366.60,24.2,3.90,2015,IMX193;IMX210;IMX271;IMX284
-250,Nikon D810A,dslr,,35.90,24.00,861.60,36.3,4.90,2015,IMX094
-251,Olympus OM-D E-M10 Mark II,mirrorless,,17.30,13.00,224.90,16.1,3.80,2015,
-252,Panasonic Lumix DMC-G70,mirrorless,,17.30,13.00,224.90,16.0,3.75,2015,
-253,Panasonic Lumix DMC-GF7,mirrorless,,17.30,13.00,224.90,16.0,3.80,2015,
-254,Panasonic Lumix DMC-GH4R,mirrorless,,17.30,13.00,224.90,16.0,3.80,2015,
-255,Polaroid IE126,fixed,,,,,18.0,,2015,
-256,Polaroid IF045,fixed,,,,,14.0,,2015,
-257,Polaroid Snap,fixed,,,,,10.0,,2015,
-258,Rollei Sportsline 100,fixed,,,,,20.0,,2015,
-259,Samsung NX3300,mirrorless,,23.50,15.70,368.95,20.3,4.30,2015,IMX321
-260,Sony Alpha 68,mirrorless,,23.50,15.60,366.60,24.0,3.90,2015,IMX193;IMX210;IMX271;IMX284
-261,Sony Alpha 7R II Body,mirrorless,,35.90,24.00,861.60,42.4,4.50,2015,IMX251;IMX366
-262,Sony Alpha 7S II,mirrorless,,35.60,23.80,847.28,12.2,8.33,2015,IMX235;IMX510
-263,Sony Alpha 7S II Body,mirrorless,,35.60,23.80,847.28,12.2,8.33,2015,IMX235;IMX510
-264,Technaxx Nature Cam TX-09,fixed,,,,,5.0,,2015,
-265,Technaxx Nature Cam TX-44,fixed,,,,,2.0,,2015,
-266,VTech Kidizoom Duo,fixed,,,,,2.0,,2015,
-267,Z Cam E1,camcorder,1/0.4,50.80,38.10,,,,2016,
-268,ACME VR05,actioncam,1/0.5,40.64,30.48,,,,2016,
-269,Canon ME200S-SH,camcorder,1/0.5,36.00,24.00,,,,2016,
-270,Easypix GoXtreme Adventure Action Camera,actioncam,1/0.5,40.64,30.48,,,,2016,
-271,Easypix GoXtreme Black Hawk 4K,actioncam,1/0.5,40.64,30.48,,,,2016,
-272,Rollei Actioncam 300 Plus,actioncam,1/0.5,40.64,30.48,,,,2016,
-273,Leica X-U Typ 113,fixed,1/0.6,23.60,15.70,370.52,16.2,4.80,2016,
-274,DJI Osmo RAW Combo,camcorder,1/0.7,17.30,13.00,,,,2016,
-275,Canon PowerShot G7 X Mark II,fixed,1/1,20.32,15.24,309.68,20.1,3.93,2016,
-276,Kodak PixPro SP360-4K Aqua Sport Pack,actioncam,1/1,20.32,15.24,,,,2016,
-277,Kodak PixPro SP360-4K Doppelpackung,actioncam,1/1,20.32,15.24,,,,2016,
-278,Kodak PixPro SP360-4K Extreme Pack,actioncam,1/1,20.32,15.24,,,,2016,
-279,Panasonic AG-UX90,camcorder,1/1,20.32,15.24,,,,2016,
-280,Panasonic Lumix DMC-FZ2000,fixed,1/1,20.32,15.24,309.68,20.1,3.93,2016,
-281,Panasonic Lumix DMC-LX15,fixed,1/1,20.32,15.24,309.68,20.1,3.93,2016,
-282,Panasonic Lumix DMC-TZ100,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2016,
-283,Panasonic Lumix DMC-TZ101,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2016,
-284,SeaLife DC2000,fixed,1/1,20.30,15.20,308.56,20.0,3.90,2016,
-285,Sony Cyber-shot DSC-RX10 III,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2016,IMX183;IMX283;IMX383
-286,Sony Cyber-shot DSC-RX100 V,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2016,IMX183;IMX283;IMX383
-287,Sony PXW-Z150,camcorder,1/1,20.32,15.24,,,,2016,
-288,Canon Digital Ixus 175,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2016,
-289,Canon Digital Ixus 182,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2016,
-290,Canon Digital Ixus 285 HS,fixed,1/2.3,6.17,4.55,28.07,20.2,1.18,2016,
-291,Canon PowerShot SX420 IS,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2016,
-292,Canon PowerShot SX540 HS,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2016,
-293,Canon PowerShot SX620 HS,fixed,1/2.3,6.17,4.55,28.07,20.2,1.18,2016,
-294,Canon PowerShot SX720 HS,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2016,
-295,Casio Exilim EX-FR100,fixed,1/2.3,6.17,4.55,28.07,10.2,1.66,2016,
-296,Kodak Astro Zoom AZ421,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2016,
-297,Kodak Astro Zoom AZ422,fixed,1/2.3,6.17,4.55,28.07,20.0,1.18,2016,
-298,Kodak Astro Zoom AZ525,fixed,1/2.3,6.20,4.50,27.90,16.4,1.30,2016,
-299,Kodak Friendly Zoom FZ152,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2016,
-300,Kodak Friendly Zoom FZ201,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2016,
-301,Nikon Coolpix A10,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2016,
-302,Nikon Coolpix A100,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2016,
-303,Nikon Coolpix A300,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2016,
-304,Nikon Coolpix A900,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2016,
-305,Nikon Coolpix B500,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2016,
-306,Nikon Coolpix W100,fixed,1/2.3,6.60,4.90,32.34,13.2,1.60,2016,
-307,Panasonic HC-VX989,camcorder,1/2.3,8.83,6.63,,,,2016,
-308,Panasonic HC-VXF999,camcorder,1/2.3,8.83,6.63,,,,2016,
-309,Panasonic Lumix DMC-TZ80,fixed,1/2.3,6.17,4.55,28.07,18.1,1.25,2016,
-310,Panasonic Lumix DMC-TZ81,fixed,1/2.3,6.20,4.50,27.90,18.1,1.20,2016,
-311,RICOH WG-M2,actioncam,1/2.3,8.83,6.63,,,,2016,
-312,Sony Cyber-shot DSC-HX80,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2016,
-313,Polaroid iZone,fixed,1/4,4.50,3.40,15.30,18.0,0.90,2016,
-314,Panasonic HC-V380,camcorder,1/5.8,3.50,2.63,,,,2016,
-315,Nilox Mini Up,actioncam,1/6,3.39,2.54,,,,2016,
-316,Canon EOS 1300D,dslr,,22.30,14.90,332.27,18.0,4.30,2016,
-317,Canon EOS 1D X Mark II,dslr,,35.90,23.90,858.01,20.2,6.52,2016,
-318,Canon EOS 1D X Mark II Body,dslr,,35.90,23.90,858.01,20.2,6.52,2016,
-319,Canon EOS 5D Mark IV,dslr,,36.00,24.00,864.00,30.4,5.33,2016,
-320,Canon EOS 5D Mark IV Body,dslr,,36.00,24.00,864.00,30.4,5.33,2016,
-321,Canon EOS 760D,dslr,,22.30,14.90,332.27,24.2,3.70,2016,
-322,Canon EOS 80D,dslr,,22.30,14.90,332.27,24.2,3.71,2016,
-323,Canon EOS 80D Body,dslr,,22.30,14.90,332.27,24.2,3.71,2016,
-324,Canon EOS M5,mirrorless,,22.30,14.90,332.27,24.2,3.71,2016,
-325,Canon EOS M5 Body,mirrorless,,22.30,14.90,332.27,24.2,3.71,2016,
-326,Carat WK 1001,fixed,,,,,5.0,,2016,
-327,Dörr SnapShot Limited Black 5.0,fixed,,,,,5.0,,2016,
-328,Fujifilm X-A3,mirrorless,,23.60,15.60,368.16,24.2,3.90,2016,IMX193;IMX210;IMX271;IMX284
-329,Fujifilm X-E2S,mirrorless,,23.60,15.60,368.16,16.3,4.80,2016,
-330,Fujifilm X-Pro2,mirrorless,,23.60,15.60,368.16,24.3,3.90,2016,IMX193;IMX210;IMX271;IMX284
-331,GoPro HERO Session,actioncam,,,,,,,2016,
-332,Hasselblad H6D-100c,dslr,,53.40,40.00,2136.00,100.1,4.62,2016,IMX211
-333,Hasselblad H6D-100c Body,dslr,,53.40,40.00,2136.00,100.1,4.62,2016,IMX211
-334,Hasselblad X1D-50c Body,mirrorless,,43.80,32.90,1441.02,51.3,5.30,2016,IMX161
-335,Kodak Astro Zoom AZ365,fixed,,,,,16.2,,2016,
-336,Leica TL Typ 701,mirrorless,,23.60,15.70,370.52,16.3,4.77,2016,
-337,Lexibook Minions,fixed,,,,,1.2,,2016,
-338,Lexibook Star Wars,fixed,,,,,1.3,,2016,
-339,LG 360 CAM,fixed,,,,,13.0,,2016,
-340,Medion Life S43044,fixed,,,,,14.0,,2016,
-341,Nikon D3400,dslr,,23.50,15.60,366.60,24.2,3.90,2016,IMX193;IMX210;IMX271;IMX284
-342,Nikon D500,dslr,,23.50,15.70,368.95,20.9,4.20,2016,IMX321
-343,Nikon D5300,dslr,,23.60,15.60,368.16,24.2,3.90,2016,IMX193;IMX210;IMX271;IMX284
-344,Nikon D5600,dslr,,23.50,15.60,366.60,24.2,3.89,2016,IMX193;IMX210;IMX271;IMX284
-345,Olympus OM-D E-M1 Mark II,mirrorless,,17.30,13.00,224.90,20.4,3.30,2016,
-346,Olympus PEN E-PL8,mirrorless,,17.30,13.00,224.90,16.1,3.80,2016,
-347,Panasonic Lumix DMC-G81,mirrorless,,17.30,13.00,224.90,16.0,3.75,2016,
-348,Panasonic Lumix DMC-G81 Body,mirrorless,,17.30,13.00,224.90,16.0,3.80,2016,
-349,Panasonic Lumix DMC-GX80,mirrorless,,17.30,13.00,224.90,16.0,3.75,2016,
-350,Panono Explorer Edition,fixed,,,,,108.0,,2016,
-351,Pentax K-1,dslr,,35.90,24.00,861.60,36.4,4.90,2016,IMX094
-352,Pentax K-70,dslr,,23.50,15.60,366.60,24.2,3.90,2016,IMX193;IMX210;IMX271;IMX284
-353,Polaroid iS525,fixed,,,,,16.0,,2016,
-354,Polaroid iX5038,fixed,,,,,20.0,,2016,
-355,Polaroid Snap Touch,fixed,,,,,13.0,,2016,
-356,Samsung Gear 360,fixed,,,,,15.0,,2016,
-357,Sigma sd Quattro,mirrorless,,23.50,15.50,364.25,19.6,4.30,2016,
-358,Sigma sd Quattro Body,mirrorless,,23.50,15.50,364.25,19.6,4.30,2016,
-359,Sony Alpha 6300,mirrorless,,23.50,15.60,366.60,24.2,3.89,2016,IMX193;IMX210;IMX271;IMX284
-360,Sony Alpha 6500,mirrorless,,23.50,15.60,366.60,24.2,3.89,2016,IMX193;IMX210;IMX271;IMX284
-361,Stealth Cam GX45NG,fixed,,,,,12.0,,2016,
-362,Transcend DrivePro,actioncam,,,,,,,2016,
-363,VTech Kidizoom Selfie Cam,fixed,,,,,0.3,,2016,
-364,Jamara Camara Full HD Pro Wifi V2,actioncam,1/0.5,40.64,30.48,,,,2017,
-365,König CSAC300,actioncam,1/0.5,40.64,30.48,,,,2017,
-366,König CSACWG100,actioncam,1/0.5,40.64,30.48,,,,2017,
-367,Rollei Actioncam 525,actioncam,1/0.5,40.64,30.48,,,,2017,
-368,Canon EOS C200,camcorder,1/0.6,24.90,18.70,,,,2017,
-369,Canon PowerShot G1 X Mark III,fixed,1/0.6,22.30,14.90,332.27,24.2,3.70,2017,
-370,Easypix Panox MX200,actioncam,1/0.6,33.87,25.40,,,,2017,
-371,Fujifilm FinePix X100F,fixed,1/0.6,23.60,15.60,368.16,24.3,3.90,2017,IMX193;IMX210;IMX271;IMX284
-372,Panasonic AU-EVA1,camcorder,1/0.6,25.50,15.60,,,,2017,
-373,Braun Champion 360,actioncam,1/1,20.32,15.24,,,,2017,
-374,Camlink CL-AC360,actioncam,1/1,20.32,15.24,,,,2017,
-375,Canon PowerShot G7 X Mark II Premium Kit,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2017,
-376,Canon PowerShot G9 X Mark II,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2017,
-377,Denver ACV-8305W,actioncam,1/1,20.32,15.24,,,,2017,
-378,Sony Cyber-shot DSC-RX0,fixed,1/1,13.20,8.80,116.16,15.3,2.76,2017,
-379,Sony Cyber-shot DSC-RX10 IV,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2017,IMX183;IMX283;IMX383
-380,Sony HXR-NX80,camcorder,1/1,20.32,15.24,,,,2017,
-381,Sony PXW-Z90,camcorder,1/1,20.32,15.24,,,,2017,
-382,Goclever DVR Extreme WiFi,actioncam,1/1.4,14.51,10.89,,,,2017,
-383,Canon Digital Ixus 185,fixed,1/2.3,6.17,4.55,28.07,20.0,1.18,2017,
-384,Canon Digital Ixus 190,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2017,
-385,Canon PowerShot SX430 IS,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2017,
-386,Canon PowerShot SX432 IS,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2017,
-387,Canon PowerShot SX730 HS,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2017,
-388,Fujifilm FinePix XP120,fixed,1/2.3,6.20,4.50,27.90,16.4,1.30,2017,
-389,Fujifilm FinePix XP120 hell,fixed,1/2.3,6.20,4.50,27.90,16.4,1.30,2017,
-390,Kodak Astro Zoom AZ252,fixed,1/2.3,6.17,4.55,28.07,16.2,1.32,2017,
-391,Kodak Astro Zoom AZ401,fixed,1/2.3,6.17,4.55,28.07,16.2,1.32,2017,
-392,Kodak Astro Zoom AZ527,fixed,1/2.3,6.20,4.50,27.90,20.7,1.20,2017,
-393,Kodak Astro Zoom AZ652,fixed,1/2.3,6.20,4.50,27.90,20.7,1.20,2017,
-394,Kodak Friendly Zoom FZ102,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2017,
-395,Kodak Friendly Zoom FZ43,fixed,1/2.3,6.17,4.55,28.07,16.2,1.32,2017,
-396,Kodak Sport Camera WP1,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2017,
-397,Minox ACX 300,actioncam,1/2.3,8.83,6.63,,,,2017,
-398,Nikon Coolpix W300,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2017,
-399,Panasonic Lumix DC-FZ82,fixed,1/2.3,6.17,4.55,28.07,18.1,1.25,2017,
-400,Panasonic Lumix DC-TZ90,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2017,
-401,Panasonic Lumix DC-TZ91,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2017,
-402,Praktica Luxmedia WP240,fixed,1/2.3,6.20,4.50,27.90,20.2,1.20,2017,
-403,Praktica Luxmedia Z212,fixed,1/2.3,6.20,4.50,27.90,20.2,1.20,2017,
-404,Ricoh WG-50,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2017,
-405,Canon XA15,camcorder,1/2.8,7.26,5.44,,,,2017,
-406,Panasonic AJ-PX230,camcorder,1/3,6.77,5.08,,,,2017,
-407,Fujifilm Instax Square SQ10,fixed,1/5,5.10,3.80,19.38,10.0,1.40,2017,
-408,Canon EOS 200D,dslr,,22.30,14.90,332.27,24.2,3.71,2017,
-409,Canon EOS 6D Mark II,dslr,,35.90,24.00,861.60,26.2,5.73,2017,
-410,Canon EOS 6D Mark II Body,dslr,,35.90,24.00,861.60,26.2,5.73,2017,
-411,Canon EOS 77D,dslr,,22.30,14.90,332.27,24.2,3.71,2017,
-412,Canon EOS 77D Body,dslr,,22.30,14.90,332.27,24.2,3.71,2017,
-413,Canon EOS 7D Mark II,dslr,,22.40,15.00,336.00,20.2,4.10,2017,
-414,Canon EOS 800D,dslr,,22.30,14.90,332.27,24.2,3.70,2017,
-415,Canon EOS 800D Body,dslr,,22.30,14.90,332.27,24.2,3.70,2017,
-416,Canon EOS M100,mirrorless,,22.30,14.90,332.27,24.2,3.70,2017,
-417,Canon EOS M6,mirrorless,,22.30,14.90,332.27,24.2,3.70,2017,
-418,Denver Wildkamera WCT-3004,fixed,,,,,3.0,,2017,
-419,Dörr SnapShot Limited Black 8MP,fixed,,,,,8.0,,2017,
-420,Dörr Snapshot Mini 12MP HD,fixed,,,,,12.0,,2017,
-421,Dörr Snapshot Mini Black 12MP,fixed,,,,,12.0,,2017,
-422,Easypix W1627,fixed,,,,,5.0,,2017,
-423,Fujifilm GFX 50S Body,mirrorless,,43.80,32.90,1441.02,51.4,5.30,2017,IMX161
-424,Fujifilm X-E3,mirrorless,,23.50,15.60,366.60,24.3,3.90,2017,IMX193;IMX210;IMX271;IMX284
-425,Fujifilm X-T20,mirrorless,,23.60,15.60,368.16,24.3,3.90,2017,IMX193;IMX210;IMX271;IMX284
-426,Hasselblad X1D-50c,mirrorless,,43.80,32.90,1441.02,51.3,5.30,2017,IMX161
-427,Kodak Astro Zoom AZ901,fixed,,,,,20.0,,2017,
-428,Kodak MiniShot,fixed,,,,,10.0,,2017,
-429,Kodak PixPro 4KVR360,actioncam,,,,,,,2017,
-430,Leica CL Typ 7323,mirrorless,,23.60,15.70,370.52,24.3,3.90,2017,IMX193;IMX210;IMX271;IMX284
-431,Leica TL2 Typ 5370,mirrorless,,23.60,15.70,370.52,24.3,3.90,2017,IMX193;IMX210;IMX271;IMX284
-432,Minox Wildkamera DTC 390,fixed,,,,,5.0,,2017,
-433,Minox Wildkamera DTC 550,fixed,,,,,5.0,,2017,
-434,Nikon D5,dslr,,35.90,23.90,858.01,20.8,6.42,2017,
-435,Nikon D7500,dslr,,23.50,15.70,368.95,20.9,4.20,2017,IMX321
-436,Nikon D850,dslr,,35.90,23.90,858.01,45.7,4.33,2017,IMX309;IMX366;IMX609
-437,Olympus OM-D E-M10 Mark III,mirrorless,,17.30,13.00,224.90,16.1,3.74,2017,
-438,Olympus OM-D E-M5 Mark II,mirrorless,,17.30,13.00,224.90,16.1,3.74,2017,
-439,Panasonic Lumix DC-G9,mirrorless,,17.30,13.00,224.90,20.3,3.33,2017,
-440,Panasonic Lumix DC-G9 Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2017,
-441,Panasonic Lumix DC-GH5,mirrorless,,17.30,13.00,224.90,20.3,3.33,2017,
-442,Panasonic Lumix DC-GH5 Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2017,
-443,Panasonic Lumix DC-GX800,mirrorless,,17.30,13.00,224.90,16.0,3.80,2017,
-444,Pentax KP,dslr,,23.50,15.60,366.60,24.3,3.88,2017,IMX193;IMX210;IMX271;IMX284
-445,Polaroid Pop,fixed,,,,,20.0,,2017,
-446,Samsung Gear 360,fixed,,,,,8.4,,2017,
-447,SecaCam HomeVista,fixed,,,,,5.0,,2017,
-448,Sony Alpha 7R III,mirrorless,,35.90,24.00,861.60,42.4,4.51,2017,IMX251;IMX366
-449,Sony Alpha 7R III Body,mirrorless,,35.90,24.00,861.60,42.4,4.51,2017,IMX251;IMX366
-450,Sony Alpha 9,mirrorless,,35.60,23.80,847.28,24.2,5.92,2017,IMX071;IMX128;IMX157;IMX310;IMX410
-451,Sony Alpha 9 Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2017,IMX071;IMX128;IMX157;IMX310;IMX410
-452,VTech Kidizoom Flix,fixed,,,,,0.3,,2017,
-453,VTech Star Wars Stormtrooper,fixed,,,,,0.3,,2017,
-454,Akaso Brave 4,actioncam,1/0.5,40.64,30.48,,,,2018,
-455,Akaso EK7000,actioncam,1/0.5,40.64,30.48,,,,2018,
-456,Easypix GoXtreme Black Hawk+ 4K,actioncam,1/0.5,40.64,30.48,,,,2018,
-457,GoPro HERO7 Silver,actioncam,1/0.5,40.64,30.48,,,,2018,
-458,Grundig HD 720P,actioncam,1/0.5,40.64,30.48,,,,2018,
-459,Kitvision Escape 4KW,actioncam,1/0.5,40.64,30.48,,,,2018,
-460,Zeiss ZX1,fixed,1/0.5,36.00,24.00,864.00,37.4,4.80,2018,IMX094
-461,Fujifilm XF10,fixed,1/0.6,23.50,15.70,368.95,24.2,3.90,2018,IMX193;IMX210;IMX271;IMX284
-462,Blackmagic Design Pocket Cinema Camera 4K Micro-Four-Thirds Mount,camcorder,1/0.7,19.00,10.00,,,,2018,
-463,Leica D-Lux 7,fixed,1/0.7,17.10,11.80,201.78,17.0,3.40,2018,
-464,Panasonic Lumix DMC-LX100 II,fixed,1/0.7,17.10,11.80,201.78,17.0,3.40,2018,
-465,Z Cam E2,camcorder,1/0.7,19.00,13.00,,,,2018,
-466,Canon XF705,camcorder,1/1,20.32,15.24,,,,2018,
-467,Leica C-Lux,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2018,
-468,Panasonic Lumix DC-TZ200,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2018,
-469,Panasonic Lumix DC-TZ202,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2018,
-470,SeaLife DC2000 Pro Duo Set,fixed,1/1,20.30,15.20,308.56,20.0,3.90,2018,
-471,SeaLife DC2000 Pro Flash Set,fixed,1/1,20.30,15.20,308.56,20.0,3.90,2018,
-472,SeaLife DC2000 Pro Light Set,fixed,1/1,20.30,15.20,308.56,20.0,3.90,2018,
-473,Sony Cyber-shot DSC-RX100 VA,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2018,IMX183;IMX283;IMX383
-474,Sony Cyber-shot DSC-RX100 VI,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2018,IMX183;IMX283;IMX383
-475,Blackmagic Design URSA Broadcast,camcorder,1/1.1,13.10,7.30,,,,2018,
-476,Sony PXW-Z280,camcorder,1/2,10.16,7.62,,,,2018,
-477,Canon PowerShot SX70 HS,fixed,1/2.3,6.17,4.55,28.07,20.3,1.18,2018,
-478,Canon PowerShot SX740 HS,fixed,1/2.3,6.17,4.55,28.07,20.3,1.18,2018,
-479,DJI Osmo Pocket,camcorder,1/2.3,8.83,6.63,,,,2018,
-480,Feiyu Tech Summon+,camcorder,1/2.3,8.83,6.63,,,,2018,
-481,Fujifilm FinePix XP130,fixed,1/2.3,6.20,4.50,27.90,16.4,1.30,2018,
-482,JVC GY-HM180E,camcorder,1/2.3,8.83,6.63,,,,2018,
-483,JVC GY-HM250E,camcorder,1/2.3,8.83,6.63,,,,2018,
-484,Kodak Astro Zoom AZ521,fixed,1/2.3,6.20,4.50,27.90,16.4,1.30,2018,
-485,Kodak Friendly Zoom FZ101,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2018,
-486,Nikon Coolpix P1000,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2018,
-487,Panasonic Lumix DC-FT7,fixed,1/2.3,6.17,4.55,28.07,20.4,1.17,2018,
-488,Panasonic Lumix DMC-FZ330,fixed,1/2.3,6.17,4.55,28.07,12.1,1.52,2018,
-489,Ricoh WG-60,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2018,
-490,SJCAM SJ8 Air,actioncam,1/2.3,8.83,6.63,,,,2018,
-491,SJCAM SJ8 Plus,actioncam,1/2.3,8.83,6.63,,,,2018,
-492,SJCAM SJ8 Pro,actioncam,1/2.3,8.83,6.63,,,,2018,
-493,Sony Cyber-shot DSC-HX95,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2018,
-494,Sony Cyber-shot DSC-HX99,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2018,
-495,Minox Wildkamera DTC 1100,fixed,1/2.5,5.80,4.30,24.94,5.0,2.20,2018,
-496,Panasonic HC-V808,camcorder,1/2.5,8.13,6.10,,,,2018,
-497,Panasonic HC-VXF11,camcorder,1/2.5,8.13,6.10,,,,2018,
-498,Sony PXW-Z190,camcorder,1/3,6.77,5.08,,,,2018,
-499,Panasonic HC-MDH3,camcorder,1/3.1,6.55,4.92,,,,2018,
-500,Rollei Actioncam 372,actioncam,1/4,5.08,3.81,,,,2018,
-501,Fujifilm instax Square SQ20,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2018,
-502,Akaso V50,actioncam,,,,,,,2018,
-503,Braun Scouting Cam Black 700 Phone,fixed,,,,,5.0,,2018,
-504,Braun Scouting Cam Black300,fixed,,,,,5.0,,2018,
-505,Braun Scouting Cam Black700,fixed,,,,,5.0,,2018,
-506,Canon EOS 2000D,dslr,,22.30,14.90,332.27,24.1,3.71,2018,
-507,Canon EOS 2000D Body,dslr,,22.30,14.90,332.27,24.1,3.71,2018,
-508,Canon EOS 4000D,dslr,,22.30,14.90,332.27,18.0,4.30,2018,
-509,Canon EOS 4000D Body,dslr,,22.30,14.90,332.27,18.0,4.30,2018,
-510,Canon EOS M50,mirrorless,,22.30,14.90,332.27,24.1,3.71,2018,
-511,Canon EOS R,mirrorless,,36.00,24.00,864.00,30.3,5.40,2018,
-512,Denver HSM-5003,fixed,,,,,5.0,,2018,
-513,Denver Wildkamera WCM-8010,fixed,,,,,8.0,,2018,
-514,Denver Wildkamera WCT-8010,fixed,,,,,8.0,,2018,
-515,Easypix KiddyPix Galaxy,fixed,,,,,1.3,,2018,
-516,Easypix KiddyPix Mystery,fixed,,,,,1.3,,2018,
-517,Fujifilm GFX 50R,mirrorless,,43.80,32.90,1441.02,51.4,5.29,2018,IMX161
-518,Fujifilm GFX 50R Body,mirrorless,,43.80,32.90,1441.02,51.4,5.29,2018,IMX161
-519,Fujifilm X-A5,mirrorless,,23.50,15.70,368.95,24.2,3.90,2018,IMX193;IMX210;IMX271;IMX284
-520,Fujifilm X-T3,mirrorless,,23.50,15.60,366.60,26.1,3.80,2018,IMX571
-521,HP Sprocket 2in1 Camera/Printer,fixed,,,,,5.0,,2018,
-522,Insta360 Pro 2,actioncam,,,,,,,2018,
-523,Kandao QooCam,fixed,,,,,,,2018,
-524,Kodak Printomatic,fixed,,,,,10.0,,2018,
-525,Nikon D3500,dslr,,23.50,15.60,366.60,24.2,3.90,2018,IMX193;IMX210;IMX271;IMX284
-526,Nikon Z 6,mirrorless,,35.90,23.90,858.01,24.5,5.92,2018,IMX071;IMX128;IMX157;IMX310;IMX410
-527,Nikon Z 6 Body,mirrorless,,35.90,23.90,858.01,24.5,6.00,2018,IMX071;IMX128;IMX157;IMX310;IMX410
-528,Nikon Z 6 mit Bajonettadapter FTZ,mirrorless,,35.90,23.90,858.01,24.5,6.00,2018,IMX071;IMX128;IMX157;IMX310;IMX410
-529,Nikon Z 7,mirrorless,,35.90,23.90,858.01,45.7,4.33,2018,IMX309;IMX366;IMX609
-530,Nikon Z 7 mit Bajonettadapter FTZ,mirrorless,,35.90,23.90,858.01,45.7,4.33,2018,IMX309;IMX366;IMX609
-531,Olympus PEN E-PL9,mirrorless,,17.30,13.00,224.90,16.1,3.80,2018,
-532,Panasonic Lumix DC-GH5S,mirrorless,,17.30,13.00,224.90,10.3,4.67,2018,
-533,Panasonic Lumix DC-GH5S Body,mirrorless,,17.30,13.00,224.90,10.3,4.67,2018,
-534,Panasonic Lumix DC-GX9,mirrorless,,17.30,13.00,224.90,20.3,3.30,2018,
-535,Panasonic Lumix DMC-G80,mirrorless,,17.30,13.00,224.90,16.0,3.75,2018,
-536,Panasonic Lumix DMC-G80 Body,mirrorless,,17.30,13.00,224.90,16.0,3.80,2018,
-537,Pentax K-1 II,dslr,,35.90,24.00,861.60,36.4,4.87,2018,IMX094
-538,Polaroid Mint 2-in-1 Instant Digital Camera,fixed,,,,,16.0,,2018,
-539,Sony Alpha 7 III,mirrorless,,35.60,23.80,847.28,24.2,5.92,2018,IMX071;IMX128;IMX157;IMX310;IMX410
-540,VTech Kidizoom Duo 5.0,fixed,,,,,5.0,,2018,
-541,VTech Kidizoom Duo 5.0 mit Tasche,fixed,,,,,5.0,,2018,
-542,VTech Kidizoom Touch 5.0,fixed,,,,,5.0,,2018,
-543,Sony PXW-FX9,camcorder,1/0.3,67.73,50.80,,,,2019,
-544,Sony PXW-FX9K,camcorder,1/0.3,67.73,50.80,,,,2019,
-545,Akaso EK7000 Pro,actioncam,1/0.5,40.64,30.48,,,,2019,
-546,Akaso V50 Elite,actioncam,1/0.5,40.64,30.48,,,,2019,
-547,Akaso V50 Pro,actioncam,1/0.5,40.64,30.48,,,,2019,
-548,Canon EOS C500 Mark II EF,camcorder,1/0.5,38.10,20.10,,,,2019,
-549,Canon EOS C500 Mark II PL,camcorder,1/0.5,38.10,20.10,,,,2019,
-550,Leica Q2 Typ 4889,fixed,1/0.5,36.00,24.00,864.00,47.3,4.27,2019,IMX309;IMX609
-551,Rollei Actioncam 4s Plus,actioncam,1/0.5,40.64,30.48,,,,2019,
-552,Rollei Actioncam 5s Plus,actioncam,1/0.5,40.64,30.48,,,,2019,
-553,Z Cam E2-F6,camcorder,1/0.5,37.10,24.80,,,,2019,
-554,Z Cam E2-F8,camcorder,1/0.5,36.00,24.00,,,,2019,
-555,Blackmagic Design Pocket Cinema Camera 6K EF-Mount,camcorder,1/0.6,23.10,13.00,,,,2019,
-556,RICOH GR III,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2019,IMX193;IMX210;IMX271;IMX284
-557,Z Cam E2-S6,camcorder,1/0.6,23.40,15.70,,,,2019,
-558,Z Cam E2C,camcorder,1/0.7,17.60,13.10,,,,2019,
-559,Canon PowerShot G5 X Mark II,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2019,
-560,Canon PowerShot G7 X Mark III,fixed,1/1,20.32,15.24,309.68,20.1,3.93,2019,
-561,Canon XA50,camcorder,1/1,20.32,15.24,,,,2019,
-562,Canon XA55,camcorder,1/1,20.32,15.24,,,,2019,
-563,Leica V-Lux 5,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2019,
-564,Panasonic AG-CX350,camcorder,1/1,20.32,15.24,,,,2019,
-565,Panasonic Lumix DC-FZ1000 II,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2019,
-566,RICOH Theta Z1,fixed,1/1,20.32,15.24,309.68,20.0,3.93,2019,
-567,Sony Cyber-shot DSC-RX0 II,fixed,1/1,13.20,8.80,116.16,15.3,2.76,2019,
-568,Sony Cyber-shot DSC-RX100 III Set,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2019,IMX183;IMX283;IMX383
-569,Sony Cyber-shot DSC-RX100 VII,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2019,IMX183;IMX283;IMX383
-570,Fujifilm FinePix XP140,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2019,
-571,Kodak WPZ2,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2019,
-572,Nikon Coolpix A1000,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2019,
-573,Nikon Coolpix W150,fixed,1/2.3,6.60,4.90,32.34,13.2,1.60,2019,
-574,Nikon Coolpix W150 Flowers,fixed,1/2.3,6.60,4.90,32.34,13.2,1.60,2019,
-575,Nikon Coolpix W150 Hawaii,fixed,1/2.3,6.60,4.90,32.34,13.2,1.60,2019,
-576,Nikon Coolpix W300 Holiday Kit,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2019,
-577,Olympus TG-6,fixed,1/2.3,6.17,4.55,28.07,12.0,1.53,2019,
-578,Panasonic Lumix DC-TZ95,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2019,
-579,Panasonic Lumix DC-TZ96,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2019,
-580,Philips VoiceTracer,actioncam,1/2.3,8.83,6.63,,,,2019,
-581,Ricoh G900,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2019,
-582,RICOH G900SE,fixed,1/2.3,6.17,4.55,28.07,20.0,1.18,2019,
-583,RICOH Theta SC2,fixed,1/2.3,6.17,4.55,28.07,12.0,1.53,2019,
-584,Ricoh WG-6,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2019,
-585,Rollei Actioncam 9s Plus,actioncam,1/2.5,8.13,6.10,,,,2019,
-586,Technaxx Nature Cam TX-69,fixed,1/2.5,5.76,4.29,24.71,5.0,2.22,2019,
-587,Motorola VerveCam+,actioncam,1/3,6.77,5.08,,,,2019,
-588,Fujifilm instax mini LiPlay blush,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2019,
-589,Fujifilm instax mini LiPlay elegant black,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2019,
-590,Fujifilm instax mini LiPlay stone white,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2019,
-591,Berger & Schröter 16MP Wildkamera,fixed,,,,,,,2019,
-592,Braun Scouting Cam Black 500 Mini,fixed,,,,,5.0,,2019,
-593,Bushnell Surveillance Camera WIFI,fixed,,,,,6.0,,2019,
-594,Canon EOS 250D,dslr,,22.30,14.90,332.27,24.1,3.71,2019,
-595,Canon EOS 90D,dslr,,22.30,14.80,330.04,32.5,3.19,2019,
-596,Canon EOS 90D Body,dslr,,22.30,14.80,330.04,32.5,3.19,2019,
-597,Canon EOS M200,mirrorless,,22.30,14.90,332.27,24.1,3.70,2019,
-598,Canon EOS M6 Mark II,mirrorless,,22.30,14.90,332.27,32.5,3.20,2019,
-599,Canon EOS R,mirrorless,,36.00,24.00,864.00,30.3,5.34,2019,
-600,Canon EOS R Body,mirrorless,,36.00,24.00,864.00,30.3,5.34,2019,
-601,Canon EOS Ra Body,mirrorless,,36.00,24.00,864.00,30.3,5.40,2019,
-602,Canon EOS RP,mirrorless,,35.90,24.00,861.60,26.2,5.73,2019,
-603,Canon EOS RP Body,mirrorless,,35.90,24.00,861.60,26.2,5.73,2019,
-604,Canon Zoemini C,fixed,,,,,5.0,,2019,
-605,Canon Zoemini S,fixed,,,,,8.0,,2019,
-606,Canon Zoemini S rose,fixed,,,,,8.0,,2019,
-607,Denver KCA-1310 Kinderkamera,fixed,,,,,1.3,,2019,
-608,Denver Wildkamera WCS-5020,fixed,,,,,5.0,,2019,
-609,Denver Wildkamera WCT-8020W,fixed,,,,,8.0,,2019,
-610,Dörr SnapShot Extra Black 12.0i HD,fixed,,,,,3.0,,2019,
-611,Dörr SnapShot Limited 5.0 S,fixed,,,,,,,2019,
-612,Dörr SnapShot Limited Black 5.0 S,fixed,,,,,,,2019,
-613,Easypix KiddyPix Blizz,fixed,,,,,2.0,,2019,
-614,Fujifilm GFX 100,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2019,IMX461
-615,Fujifilm GFX 100 Body,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2019,IMX461
-616,Fujifilm X-A7,mirrorless,,23.50,15.70,368.95,24.2,3.90,2019,IMX193;IMX210;IMX271;IMX284
-617,Fujifilm X-A7 dunkel,mirrorless,,23.50,15.70,368.95,24.2,3.90,2019,IMX193;IMX210;IMX271;IMX284
-618,Fujifilm X-Pro3,mirrorless,,23.50,15.60,366.60,26.1,3.80,2019,IMX571
-619,Fujifilm X-Pro3 Dura,mirrorless,,23.50,15.60,366.60,26.1,3.80,2019,IMX571
-620,Fujifilm X-T30,mirrorless,,23.50,15.60,366.60,26.1,3.80,2019,IMX571
-621,GoPro Max,actioncam,,,,,,,2019,
-622,Hasselblad X1D II 50c Body,mirrorless,,43.80,32.90,1441.02,50.0,5.30,2019,IMX161
-623,Insta360 Go,actioncam,,,,,,,2019,
-624,Insta360 Titan,actioncam,,,,,,,2019,
-625,Kodak Smile,fixed,,,,,10.0,,2019,
-626,Leica SL Typ 601,mirrorless,,36.00,24.00,864.00,24.0,6.00,2019,IMX071;IMX128;IMX157;IMX310;IMX410
-627,Leica SL2 Typ 2998,mirrorless,,36.00,24.00,864.00,47.3,4.27,2019,IMX309;IMX609
-628,Nikon Z 50,mirrorless,,23.50,15.70,368.95,20.9,4.20,2019,IMX321
-629,Nikon Z 50 Body,mirrorless,,23.50,15.70,368.95,20.9,4.20,2019,IMX321
-630,Nikon Z 50 mit Bajonettadapter FTZ,mirrorless,,23.50,15.70,368.95,20.9,4.20,2019,IMX321
-631,Nikon Z 6 mit Bajonettadapter FTZ und Speicherkarte,mirrorless,,35.90,23.90,858.01,24.5,5.92,2019,IMX071;IMX128;IMX157;IMX310;IMX410
-632,Nikon Z 6 mit Essential Movie Kit,mirrorless,,35.90,23.90,858.01,24.5,6.00,2019,IMX071;IMX128;IMX157;IMX310;IMX410
-633,Olympus OM-D E-M1X,mirrorless,,17.30,13.00,224.90,20.4,3.30,2019,
-634,Olympus OM-D E-M5 Mark III,mirrorless,,17.30,13.00,224.90,20.4,3.32,2019,
-635,Olympus PEN E-PL10,mirrorless,,17.30,13.00,224.90,16.1,3.80,2019,
-636,Panasonic Lumix DC-G90,mirrorless,,17.30,13.00,224.90,20.3,3.33,2019,
-637,Panasonic Lumix DC-G90 Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2019,
-638,Panasonic Lumix DC-G91,mirrorless,,17.30,13.00,224.90,20.3,3.33,2019,
-639,Panasonic Lumix DC-G91 Body,mirrorless,,17.30,13.00,224.90,20.3,3.30,2019,
-640,Panasonic Lumix DC-GX880,mirrorless,,17.30,13.00,224.90,16.0,3.80,2019,
-641,Panasonic Lumix DC-S1,mirrorless,,36.00,24.00,864.00,24.2,5.98,2019,IMX071;IMX128;IMX157;IMX310;IMX410
-642,Panasonic Lumix DC-S1 Body,mirrorless,,36.00,24.00,864.00,24.2,5.98,2019,IMX071;IMX128;IMX157;IMX310;IMX410
-643,Panasonic Lumix DC-S1H,mirrorless,,35.60,23.80,847.28,24.2,5.92,2019,IMX071;IMX128;IMX157;IMX310;IMX410
-644,Panasonic Lumix DC-S1H Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2019,IMX071;IMX128;IMX157;IMX310;IMX410
-645,Panasonic Lumix DC-S1R,mirrorless,,36.00,24.00,864.00,47.3,4.27,2019,IMX309;IMX609
-646,Panasonic Lumix DC-S1R Body,mirrorless,,36.00,24.00,864.00,47.3,4.27,2019,IMX309;IMX609
-647,Phase One IQ4 150MP,mirrorless,,53.40,40.00,2136.00,151.0,3.76,2019,IMX411
-648,Phase One IQ4 150MP Achromatic,mirrorless,,53.40,40.00,2136.00,151.0,3.76,2019,IMX411
-649,Phase One IQ4 150MP Achromatic Body,mirrorless,,53.40,40.00,2136.00,151.0,3.76,2019,IMX411
-650,Phase One IQ4 150MP Body,mirrorless,,53.40,40.00,2136.00,151.0,3.76,2019,IMX411
-651,Polaroid IX828N,fixed,,,,,8.0,,2019,
-652,Rollei Sportsline 60 Plus,fixed,,,,,8.0,,2019,
-653,SecaCam Wild-Vision,fixed,,,,,5.0,,2019,
-654,Sigma fp,mirrorless,,35.90,23.90,858.01,24.6,5.91,2019,IMX071;IMX128;IMX157;IMX310;IMX410
-655,Sigma fp Body,mirrorless,,35.90,23.90,858.01,24.6,5.91,2019,IMX071;IMX128;IMX157;IMX310;IMX410
-656,Sony Alpha 6100,mirrorless,,23.50,15.60,366.60,24.2,3.89,2019,IMX193;IMX210;IMX271;IMX284
-657,Sony Alpha 6400,mirrorless,,23.50,15.60,366.60,24.2,3.89,2019,IMX193;IMX210;IMX271;IMX284
-658,Sony Alpha 6600,mirrorless,,23.50,15.60,366.60,24.2,3.89,2019,IMX193;IMX210;IMX271;IMX284
-659,Sony Alpha 6600 Body,mirrorless,,23.50,15.60,366.60,24.2,3.89,2019,IMX193;IMX210;IMX271;IMX284
-660,Sony Alpha 7R IV,mirrorless,,35.70,23.80,849.66,61.0,3.73,2019,IMX451;IMX455
-661,Sony Alpha 7R IV Body,mirrorless,,35.70,23.80,849.66,61.0,3.73,2019,IMX451;IMX455
-662,Sony Alpha 9 II,mirrorless,,35.60,23.80,847.28,24.2,5.92,2019,IMX071;IMX128;IMX157;IMX310;IMX410
-663,Sony Alpha 9 II Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2019,IMX071;IMX128;IMX157;IMX310;IMX410
-664,Veho Muvi Micro HD10L,actioncam,,,,,,,2019,
-665,Veho Muvi Micro HD10X,actioncam,,,,,,,2019,
-666,Veho Muvi Micro HDZ Pro,actioncam,,,,,,,2019,
-667,Z Cam K1 Pro,camcorder,,,,,,,2019,
-668,Akaso Brave 6 Plus,actioncam,1/0.5,40.64,30.48,,,,2020,
-669,Akaso Brave 7 LE,actioncam,1/0.5,40.64,30.48,,,,2020,
-670,Apeman A70,actioncam,1/0.5,40.64,30.48,,,,2020,
-671,Denver ACT-5051W,actioncam,1/0.5,40.64,30.48,,,,2020,
-672,Ferguson eXtreme action CAM,actioncam,1/0.5,40.64,30.48,,,,2020,
-673,GoPro HERO9 Black,actioncam,1/0.5,40.64,30.48,,,,2020,
-674,ki-tec ATA890,actioncam,1/0.5,40.64,30.48,,,,2020,
-675,Leica Q2 Monochrom,fixed,1/0.5,36.00,24.00,864.00,47.3,4.27,2020,IMX309;IMX609
-676,Sony ILME-FX6V,camcorder,1/0.5,36.00,24.00,,,,2020,
-677,Victure AC700,actioncam,1/0.5,40.64,30.48,,,,2020,
-678,Blackmagic Design URSA Mini Pro 12K,camcorder,1/0.6,27.00,14.30,,,,2020,
-679,Blackmagic Design URSA Mini Pro 4.6K G2 EF-Mount,camcorder,1/0.6,25.30,14.30,,,,2020,
-680,Canon EOS C300 Mark III,camcorder,1/0.6,26.20,13.80,,,,2020,
-681,Canon EOS C70 RF,camcorder,1/0.6,26.20,13.80,,,,2020,
-682,Fujifilm FinePix X100V,fixed,1/0.6,23.50,15.60,366.60,26.1,3.70,2020,IMX571
-683,RICOH GR III Street Edition,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2020,IMX193;IMX210;IMX271;IMX284
-684,RICOH GR III Street Edition Special Limited,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2020,IMX193;IMX210;IMX271;IMX284
-685,Panasonic Lumix DC-BGH1,camcorder,1/0.7,17.30,13.00,,,,2020,
-686,Z Cam E2-M4,camcorder,1/0.7,19.00,13.00,,,,2020,
-687,"Insta360 One R 1"" Edition",actioncam,1/1,20.32,15.24,,,,2020,
-688,Sony Vlog-Kamera ZV-1,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2020,IMX183;IMX283;IMX383
-689,DJI Pocket 2 Kreativ Combo,camcorder,1/1.7,11.95,8.96,,,,2020,
-690,Kandao QooCam 8K Enterprise,fixed,1/1.7,7.60,5.70,,,,2020,
-691,Insta360 One X2,actioncam,1/2.3,8.83,6.63,,,,2020,
-692,Nikon Coolpix P950,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2020,
-693,RICOH WG-70,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2020,
-694,Feiyu Tech Pocket,camcorder,1/2.5,8.13,6.10,,,,2020,
-695,Panasonic AG-CX10,camcorder,1/2.5,8.13,6.10,,,,2020,
-696,Panasonic HC-X1500,camcorder,1/2.5,8.13,6.10,,,,2020,
-697,Panasonic HC-X2000,camcorder,1/2.5,8.13,6.10,,,,2020,
-698,Sony AX43,camcorder,1/2.5,8.13,6.10,,,,2020,
-699,Canon PowerShot Zoom,fixed,1/3,4.80,3.60,17.28,12.1,1.20,2020,
-700,Apeman H45 Trail Camera,fixed,1/3.2,5.10,3.80,19.38,5.0,2.00,2020,
-701,Technaxx Mini Nature Wild Cam TX-117,fixed,1/4,5.08,3.81,19.35,2.0,3.11,2020,
-702,Technaxx Mini Nature Wild Cam TX-69,fixed,1/4,5.10,3.80,19.38,2.0,3.10,2020,
-703,AgfaPhoto Realipix Square S,fixed,,,,,10.0,,2020,
-704,AgfaPhoto Realkids Cam,fixed,,,,,1.0,,2020,
-705,AgfaPhoto Realkids Cam 2,fixed,,,,,1.0,,2020,
-706,Berger & Schröter X-trail HD 3.0C Wildkamera,fixed,,,,,5.0,,2020,
-707,Berger & Schröter X-trail Wildkamera,fixed,,,,,5.0,,2020,
-708,Braun Scouting Cam Black800 WiFi,fixed,,,,,8.0,,2020,
-709,"Bresser Überwachungskamera, Wildkamera",fixed,,,,,16.0,,2020,
-710,Bresser Wildkamera 5MP mit Bewegungssensor,fixed,,,,,2.0,,2020,
-711,Canon EOS 1D X Mark III,dslr,,36.00,24.00,864.00,20.1,6.56,2020,
-712,Canon EOS 1D X Mark III Body,dslr,,36.00,24.00,864.00,20.1,6.56,2020,
-713,Canon EOS 850D,dslr,,22.30,14.90,332.27,24.2,3.71,2020,
-714,Canon EOS 850D Body,dslr,,22.30,14.90,332.27,24.2,3.71,2020,
-715,Canon EOS M50 Mark II,mirrorless,,22.30,14.90,332.27,24.1,3.70,2020,
-716,Canon EOS R,mirrorless,,36.00,24.00,864.00,30.3,5.34,2020,
-717,Canon EOS R5,mirrorless,,36.00,24.00,864.00,45.0,4.38,2020,IMX309;IMX366;IMX609
-718,Canon EOS R5 Body,mirrorless,,36.00,24.00,864.00,45.0,4.38,2020,IMX309;IMX366;IMX609
-719,Canon EOS R6,mirrorless,,36.00,24.00,864.00,20.1,6.56,2020,
-720,Canon EOS R6 Body,mirrorless,,36.00,24.00,864.00,20.1,6.56,2020,
-721,Denver KCA-1320 Kinderkamera,fixed,,,,,1.3,,2020,
-722,Dörr SnapShot Multi Mobil 3G,fixed,,,,,3.0,,2020,
-723,Easypix KiddyPix Robozz,fixed,,,,,1.3,,2020,
-724,Easypix W3048 Edge iceblue,fixed,,,,,13.0,,2020,
-725,Easypix W3048 Edge yellow,fixed,,,,,13.0,,2020,
-726,Fujifilm GFX 100 IR,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2020,IMX461
-727,Fujifilm GFX 100 IR Body,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2020,IMX461
-728,Fujifilm X-S10,mirrorless,,23.50,15.60,366.60,26.1,3.75,2020,IMX571
-729,Fujifilm X-T200,mirrorless,,23.50,15.70,368.95,24.2,3.90,2020,IMX193;IMX210;IMX271;IMX284
-730,Fujifilm X-T200 dunkel,mirrorless,,23.50,15.70,368.95,24.2,3.90,2020,IMX193;IMX210;IMX271;IMX284
-731,Fujifilm X-T4,mirrorless,,23.50,15.60,366.60,26.1,3.75,2020,IMX571
-732,Insta360 One R 4K Wide Angle Edition,actioncam,,,,,,,2020,
-733,Insta360 One R Twin Edition,actioncam,,,,,,,2020,
-734,Kodak Mini Shot 2 Combo,fixed,,,,,10.0,,2020,
-735,Kodak Mini Shot 2 Combo Retro,fixed,,,,,10.0,,2020,
-736,Kodak Mini Shot 3 Combo,fixed,,,,,10.0,,2020,
-737,Kodak Mini Shot 3 Combo Retro,fixed,,,,,10.0,,2020,
-738,Leica M10-R Typ 6376,rangefinder,,36.00,24.00,864.00,40.0,4.65,2020,
-739,Leica S3 Body,dslr,,45.00,30.00,1350.00,64.0,4.60,2020,
-740,Leica SL2-S Typ 9584,mirrorless,,36.00,24.00,864.00,24.6,5.93,2020,IMX071;IMX128;IMX157;IMX310;IMX410
-741,Minox Wildkamera DTC 1200 4G,fixed,,,,,,,2020,
-742,Minox Wildkamera DTC 460,fixed,,,,,,,2020,
-743,Nikon D6,dslr,,35.90,23.90,858.01,20.8,6.42,2020,
-744,Nikon D6 Body,dslr,,35.90,23.90,858.01,20.8,6.42,2020,
-745,Nikon D780,dslr,,35.90,23.90,858.01,24.5,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
-746,Nikon D780 Body,dslr,,35.90,23.90,858.01,24.5,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
-747,Nikon Z 5,mirrorless,,35.90,23.90,858.01,24.3,5.94,2020,IMX071;IMX128;IMX157;IMX310;IMX410
-748,Nikon Z 5 Body,mirrorless,,35.90,23.90,858.01,24.3,5.94,2020,IMX071;IMX128;IMX157;IMX310;IMX410
-749,Nikon Z 6II,mirrorless,,35.90,23.90,858.01,24.5,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
-750,Nikon Z 6II Body,mirrorless,,35.90,23.90,858.01,24.5,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
-751,Nikon Z 6II mit Bajonettadapter FTZ,mirrorless,,35.90,23.90,858.01,24.5,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
-752,Nikon Z 7II,mirrorless,,35.90,23.90,858.01,45.7,4.33,2020,IMX309;IMX366;IMX609
-753,Nikon Z 7II Body,mirrorless,,35.90,23.90,858.01,45.7,4.33,2020,IMX309;IMX366;IMX609
-754,Nikon Z 7II mit Bajonettadapter FTZ,mirrorless,,35.90,23.90,858.01,45.7,4.33,2020,IMX309;IMX366;IMX609
-755,Olympus OM-D E-M1 Mark III,mirrorless,,17.30,13.00,224.90,20.4,3.32,2020,
-756,Olympus OM-D E-M1 Mark III Body,mirrorless,,17.30,13.00,224.90,20.4,3.32,2020,
-757,Olympus OM-D E-M10 Mark IV,mirrorless,,17.30,13.00,224.90,20.3,3.33,2020,
-758,Panasonic Lumix DC-G100,mirrorless,,17.30,13.00,224.90,20.3,3.33,2020,
-759,Panasonic Lumix DC-G100 Body,mirrorless,,17.30,13.00,224.90,20.3,3.30,2020,
-760,Panasonic Lumix DC-G110,mirrorless,,17.30,13.00,224.90,20.3,3.33,2020,
-761,Panasonic Lumix DC-G110 Body,mirrorless,,17.30,13.00,224.90,20.3,3.30,2020,
-762,Panasonic Lumix DC-S5,mirrorless,,35.60,23.80,847.28,24.2,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
-763,Panasonic Lumix DC-S5 Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
-764,PremiumBlue WC-1601 Wildkamera,fixed,,,,,5.0,,2020,
-765,Sony Alpha 7C,mirrorless,,35.60,23.80,847.28,24.2,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
-766,Sony Alpha 7S III,mirrorless,,35.60,23.80,847.28,12.1,8.37,2020,IMX235;IMX510
-767,Sony Alpha 7S III Body,mirrorless,,35.60,23.80,847.28,12.1,8.37,2020,IMX235;IMX510
-768,VTech Kidizoom Duo DX,fixed,,,,,5.0,,2020,
-769,VTech Kidizoom Duo DX mit Tasche,fixed,,,,,5.0,,2020,
-770,VTech Kidizoom Kid 2,fixed,,,,,2.0,,2020,
-771,VTech Kidizoom Video Studio HD,fixed,,,,,2.0,,2020,
-772,Willfine 2.6C,fixed,,,,,,,2020,
-773,Willfine 2.9L,fixed,,,,,,,2020,
-774,Willfine 4.8CS,fixed,,,,,,,2020,
-775,Gudsen Moza Moin Camera,camcorder,1/0.4,50.80,38.10,,,,2021,
-776,AgfaPhoto AC5000,actioncam,1/0.5,40.64,30.48,,,,2021,
-777,Akaso Brave 7,actioncam,1/0.5,40.64,30.48,,,,2021,
-778,Apexcam 4K Action,actioncam,1/0.5,40.64,30.48,,,,2021,
-779,Brinno BARD BAC2000 Creative Camera Kit,camcorder,1/0.5,40.64,30.48,,,,2021,
-780,Brinno BCC2000,camcorder,1/0.5,40.64,30.48,,,,2021,
-781,Brinno TLC2000,camcorder,1/0.5,40.64,30.48,,,,2021,
-782,Brinno TLC2020,camcorder,1/0.5,40.64,30.48,,,,2021,
-783,DJI Ronin 4D-6K,camcorder,1/0.5,35.70,18.80,,,,2021,
-784,DJI Ronin 4D-8K,camcorder,1/0.5,36.00,19.00,,,,2021,
-785,Easypix GoXtreme Impulse,actioncam,1/0.5,40.64,30.48,,,,2021,
-786,Easypix GoXtreme Rebel,actioncam,1/0.5,40.64,30.48,,,,2021,
-787,Easypix GoXtreme Vision+,actioncam,1/0.5,40.64,30.48,,,,2021,
-788,Lamax W9.1,actioncam,1/0.5,40.64,30.48,,,,2021,
-789,Leica Q2 Typ 4889 Reporter,fixed,1/0.5,36.00,24.00,864.00,47.3,4.27,2021,IMX309;IMX609
-790,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2021,
-791,Panasonic Lumix DC-BS1H,camcorder,1/0.5,35.60,23.80,,,,2021,
-792,Sony ILME-FX3,camcorder,1/0.5,35.60,23.80,,,,2021,
-793,Blackmagic Design Pocket Cinema Camera 6K Pro EF-Mount,camcorder,1/0.6,23.10,13.00,,,,2021,
-794,RICOH GR IIIx,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2021,IMX193;IMX210;IMX271;IMX284
-795,Canon XF605,camcorder,1/1,20.32,15.24,,,,2021,
-796,DJI Action 2 Dual-Screen Combo,actioncam,1/1.7,11.95,8.96,,,,2021,
-797,DJI Action 2 Power Combo,actioncam,1/1.7,11.95,8.96,,,,2021,
-798,Canon PowerShot PX Essential Kit,fixed,1/2.3,6.17,4.55,28.07,11.7,1.55,2021,
-799,GoPro HERO10 Black,actioncam,1/2.3,8.83,6.63,,,,2021,
-800,Technaxx Zeitraffer-Kamera TX-164,fixed,1/2.7,5.37,4.04,21.69,2.0,3.29,2021,
-801,Technaxx Nature Wild Cam TX-125,fixed,1/3.2,4.54,3.42,15.53,8.0,1.39,2021,
-802,Technaxx Nature Wild Cam TX-160,fixed,1/3.2,4.54,3.42,15.53,8.0,1.39,2021,
-803,Fujifilm instax mini Evo,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2021,
-804,AgfaPhoto Realipix Mini S,fixed,,,,,10.0,,2021,
-805,BolyGuard BG310-M,fixed,,,,,3.0,,2021,
-806,Braun Scouting Cam Black1300,fixed,,,,,13.0,,2021,
-807,Braun Scouting Cam Black800 Mini,fixed,,,,,8.0,,2021,
-808,Braun Scouting Cam Black820 Dual Sensor,fixed,,,,,8.0,,2021,
-809,Canon EOS R3,mirrorless,,36.00,24.00,864.00,24.1,5.99,2021,IMX071;IMX128;IMX157;IMX310;IMX410
-810,Canon EOS R3 Body,mirrorless,,36.00,24.00,864.00,24.1,5.99,2021,IMX071;IMX128;IMX157;IMX310;IMX410
-811,Canon Zoemini S2 aquamarin,fixed,,,,,8.0,,2021,
-812,Canon Zoemini S2 perl,fixed,,,,,8.0,,2021,
-813,Canon Zoemini S2 rose,fixed,,,,,8.0,,2021,
-814,Fujifilm GFX 100S,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2021,IMX461
-815,Fujifilm GFX 100S Body,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2021,IMX461
-816,Fujifilm GFX 50S II,mirrorless,,43.80,32.90,1441.02,51.4,5.29,2021,IMX161
-817,Fujifilm GFX 50S II Body,mirrorless,,43.80,32.90,1441.02,51.4,5.29,2021,IMX161
-818,Fujifilm X-E4,mirrorless,,23.50,15.60,366.60,26.1,3.80,2021,IMX571
-819,Fujifilm X-T30 II,mirrorless,,23.50,15.60,366.60,26.1,3.75,2021,IMX571
-820,GYAM 4G MMS/SMS/SMTP/FTP Wildkamera,fixed,,,,,16.0,,2021,
-821,Hasselblad X1D II 50c,mirrorless,,43.80,32.90,1441.02,50.0,5.30,2021,IMX161
-822,Insta360 Go 2 32GB,actioncam,,,,,,,2021,
-823,Mevo Start,camcorder,,,,,,,2021,
-824,Nikon Z 5 mit Bajonettadapter FTZ,mirrorless,,35.90,23.90,858.01,24.3,5.94,2021,IMX071;IMX128;IMX157;IMX310;IMX410
-825,Nikon Z 6II mit Essential Film Kit,mirrorless,,35.90,23.90,858.01,24.5,5.92,2021,IMX071;IMX128;IMX157;IMX310;IMX410
-826,Nikon Z 9,mirrorless,,35.90,23.90,858.01,45.7,4.33,2021,IMX309;IMX366;IMX609
-827,Nikon Z 9 Body,mirrorless,,35.90,23.90,858.01,45.7,4.33,2021,IMX309;IMX366;IMX609
-828,Nikon Z fc,mirrorless,,23.50,15.70,368.95,20.9,4.20,2021,IMX321
-829,Olympus PEN E-P7,mirrorless,,17.30,13.00,224.90,20.3,3.33,2021,
-830,Panasonic Lumix DC-GH5 II,mirrorless,,17.30,13.00,224.90,20.3,3.33,2021,
-831,Panasonic Lumix DC-GH5 II Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2021,
-832,Pentax K-3 III,dslr,,23.30,15.50,361.15,25.7,3.75,2021,IMX571
-833,Sigma fp L,mirrorless,,36.00,24.00,864.00,61.0,3.76,2021,IMX451;IMX455
-834,Sigma fp L Body,mirrorless,,36.00,24.00,864.00,61.0,3.76,2021,IMX451;IMX455
-835,Sigma fp L mit EVF-11 Sucher,mirrorless,,36.00,24.00,864.00,61.0,3.76,2021,IMX451;IMX455
-836,Sony Alpha 1,mirrorless,,35.60,24.00,854.40,50.1,4.13,2021,IMX610
-837,Sony Alpha 1 Body,mirrorless,,35.60,24.00,854.40,50.1,4.13,2021,IMX610
-838,Sony Alpha 7 IV,mirrorless,,35.60,23.80,847.28,33.0,5.07,2021,
-839,Sony Alpha 7 IV Body,mirrorless,,35.60,23.80,847.28,33.0,5.07,2021,
-840,Sony Alpha 7R III Body,mirrorless,,35.90,24.00,861.60,42.4,4.51,2021,IMX251;IMX366
-841,Sony Alpha 7R IV,mirrorless,,35.70,23.80,849.66,61.0,3.73,2021,IMX451;IMX455
-842,Sony Alpha 7R IV Body,mirrorless,,35.70,23.80,849.66,61.0,3.73,2021,IMX451;IMX455
-843,Sony ZV-E10,mirrorless,,23.50,15.60,366.60,24.2,3.89,2021,IMX193;IMX210;IMX271;IMX284
-844,Sony ZV-E10 Body,mirrorless,,23.50,15.60,366.60,24.2,3.89,2021,IMX193;IMX210;IMX271;IMX284
-845,Spypoint LINK-MICRO-S-LTE,fixed,,,,,10.0,,2021,
-846,Suntekcam HC-801LTE,fixed,,,,,5.0,,2021,
-847,VTech Kidizoom Print Cam,fixed,,,,,2.0,,2021,
-848,Lamax W10.1,actioncam,1/0.5,40.64,30.48,,,,2022,
-849,Sony ILME-FR7,camcorder,1/0.5,35.60,23.80,,,,2022,
-850,Blackmagic Design Pocket Cinema Camera 6K G2 EF-Mount,camcorder,1/0.6,23.10,13.00,,,,2022,
-851,RICOH GR IIIx Urban Edition,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2022,IMX193;IMX210;IMX271;IMX284
-852,Sony ILME-FX30,camcorder,1/0.6,23.30,15.50,,,,2022,
-853,Sony ILME-FX30 inkl. XLR Handgriff,camcorder,1/0.6,23.30,15.50,,,,2022,
-854,Z Cam E2-S6G EF,camcorder,1/0.6,23.40,15.70,,,,2022,
-855,Canon XA70,camcorder,1/1,20.32,15.24,,,,2022,
-856,Canon XA75,camcorder,1/1,20.32,15.24,,,,2022,
-857,"Insta360 One RS 1"" 360° Edition",actioncam,1/1,20.32,15.24,,,,2022,
-858,"Insta360 One RS 1"" Edition",actioncam,1/1,20.32,15.24,,,,2022,
-859,Panasonic HC-X2,camcorder,1/1,20.32,15.24,,,,2022,
-860,Panasonic HC-X20,camcorder,1/1,20.32,15.24,,,,2022,
-861,Sony Vlog-Kamera ZV-1F,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2022,IMX183;IMX283;IMX383
-862,DJI Osmo Action 3 Adventure Combo,actioncam,1/1.7,11.95,8.96,,,,2022,
-863,DJI Osmo Action 3 Standard Combo,actioncam,1/1.7,11.95,8.96,,,,2022,
-864,GoPro HERO11 Black,actioncam,1/1.9,10.69,8.02,,,,2022,
-865,GoPro HERO11 Black Bundle,actioncam,1/1.9,10.69,8.02,,,,2022,
-866,GoPro HERO11 Black Creator Edition,actioncam,1/1.9,10.69,8.02,,,,2022,
-867,GoPro HERO11 Black Mini,actioncam,1/1.9,10.69,8.02,,,,2022,
-868,Akaso Brave 8,actioncam,1/2,10.16,7.62,,,,2022,
-869,Insta360 One RS 4K,actioncam,1/2,10.16,7.62,,,,2022,
-870,Insta360 One RS Twin Edition,actioncam,1/2,10.16,7.62,,,,2022,
-871,Insta360 X3,actioncam,1/2,10.16,7.62,,,,2022,
-872,RICOH Theta X,fixed,1/2,6.40,4.80,30.72,48.0,0.80,2022,
-873,Canon Legria HF G70,camcorder,1/2.3,8.83,6.63,,,,2022,
-874,Canon XA60,camcorder,1/2.3,8.83,6.63,,,,2022,
-875,Canon XA65,camcorder,1/2.3,8.83,6.63,,,,2022,
-876,GoPro HERO10 Black Hard Bundle,actioncam,1/2.3,8.83,6.63,,,,2022,
-877,Kodak Friendly Zoom FZ45,fixed,1/2.3,6.17,4.55,28.07,16.2,1.32,2022,
-878,Kodak Friendly Zoom FZ55,fixed,1/2.3,6.17,4.55,28.07,16.2,1.32,2022,
-879,Panasonic HC-V785,camcorder,1/2.3,8.83,6.63,,,,2022,
-880,RICOH WG-80,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2022,
-881,SeaLife Micro 3.0,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2022,
-882,SeaLife Micro 3.0 Pro 3000 Set,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2022,
-883,SeaLife Reefmaster RM-4K,actioncam,1/2.3,8.83,6.63,,,,2022,
-884,SeaLife Reefmaster RM-4K Pro 2000 Set,actioncam,1/2.3,8.83,6.63,,,,2022,
-885,Zoom Q8n-4K,camcorder,1/2.3,8.83,6.63,,,,2022,
-886,Technaxx Birdcam TX-165,fixed,1/3.2,4.54,3.42,15.53,8.0,1.39,2022,
-887,Braun Scouting Cam Black1300 WiFi,fixed,,,,,13.0,,2022,
-888,Braun Scouting Cam Black400 WiFi Solar,fixed,,,,,4.0,,2022,
-889,Braun Scouting Cam Black550,fixed,,,,,5.0,,2022,
-890,Canon EOS R10,mirrorless,,22.30,14.90,332.27,24.2,3.71,2022,
-891,Canon EOS R10 Body,mirrorless,,22.30,14.90,332.27,24.2,3.71,2022,
-892,Canon EOS R5,mirrorless,,36.00,24.00,864.00,45.0,4.38,2022,IMX309;IMX366;IMX609
-893,Canon EOS R5 C,mirrorless,,36.00,24.00,864.00,45.0,4.38,2022,IMX309;IMX366;IMX609
-894,Canon EOS R5 C Body,mirrorless,,36.00,24.00,864.00,45.0,4.38,2022,IMX309;IMX366;IMX609
-895,Canon EOS R6 Mark II,mirrorless,,35.90,23.90,858.01,24.2,5.95,2022,IMX071;IMX128;IMX157;IMX310;IMX410
-896,Canon EOS R6 Mark II Body,mirrorless,,35.90,23.90,858.01,24.2,5.95,2022,IMX071;IMX128;IMX157;IMX310;IMX410
-897,Canon EOS R7,mirrorless,,22.30,14.80,330.04,32.5,3.19,2022,
-898,Canon EOS R7 Body,mirrorless,,22.30,14.80,330.04,32.5,3.19,2022,
-899,Denver KCA-1330 Kinderkamera,fixed,,,,,,,2022,
-900,Fujifilm X-H2,mirrorless,,23.50,15.60,366.60,40.2,3.02,2022,
-901,Fujifilm X-H2 Body,mirrorless,,23.50,15.60,366.60,40.2,3.02,2022,
-902,Fujifilm X-H2S,mirrorless,,23.50,15.60,366.60,26.2,3.74,2022,IMX571
-903,Fujifilm X-H2S Body,mirrorless,,23.50,15.60,366.60,26.2,3.74,2022,IMX571
-904,Fujifilm X-T5,mirrorless,,23.50,15.70,368.95,40.2,3.03,2022,
-905,GardePro E8 WiFi,fixed,,,,,32.0,,2022,
-906,Hasselblad X2D 100C,mirrorless,,43.80,32.90,1441.02,100.0,3.80,2022,IMX461
-907,Hasselblad X2D 100C Body,mirrorless,,43.80,32.90,1441.02,100.0,3.80,2022,IMX461
-908,Leica M11 Typ 2416,rangefinder,,36.00,24.00,864.00,60.3,3.79,2022,IMX451;IMX455
-909,Little Tikes Tobi 2 Director's Camera,fixed,,,,,5.0,,2022,
-910,Nedis Wildlife Kamera,fixed,,,,,3.0,,2022,
-911,Nikon Z 30,mirrorless,,23.50,15.70,368.95,20.9,4.20,2022,IMX321
-912,Nikon Z 30 Body,mirrorless,,23.50,15.70,368.95,20.9,4.20,2022,IMX321
-913,Olympus OM-D E-M10 Mark III S,mirrorless,,17.30,13.00,224.90,16.1,3.74,2022,
-914,OM System OM-1,mirrorless,,17.30,13.00,224.90,20.4,3.32,2022,
-915,OM System OM-1 Body,mirrorless,,17.30,13.00,224.90,20.4,3.32,2022,
-916,OM System OM-5,mirrorless,,17.30,13.00,224.90,20.4,3.32,2022,
-917,Panasonic Lumix DC-GH6,mirrorless,,17.30,13.00,224.90,25.2,2.99,2022,
-918,Panasonic Lumix DC-GH6 Body,mirrorless,,17.30,13.00,224.90,25.2,2.99,2022,
-919,Pentax KF,dslr,,23.50,15.60,366.60,24.2,3.89,2022,IMX193;IMX210;IMX271;IMX284
-920,Seissiger Special-Cam Classic,fixed,,,,,12.0,,2022,
-921,Sony Alpha 7R V,mirrorless,,35.70,23.80,849.66,61.0,3.73,2022,IMX451;IMX455
-922,Sony Alpha 7R V Body,mirrorless,,35.70,23.80,849.66,61.0,3.73,2022,IMX451;IMX455
-923,Vmotal GDC80X2,fixed,,,,,,,2022,
-924,Vosker V150,fixed,,,,,,,2022,
-925,Vosker V200,fixed,,,,,,,2022,
-926,Blackmagic Design Cinema Camera 6K,camcorder,1/0.5,36.00,24.00,,,,2023,
-927,Denver ACK-8062W,actioncam,1/0.5,40.64,30.48,,,,2023,
-928,Exp,actioncam,1/0.5,40.64,30.48,,,,2023,
-929,Lamax X3.1 Atlas,actioncam,1/0.5,40.64,30.48,,,,2023,
-930,"Leica Q2 Typ 4889 Disney ""100 Years of Wonder""",fixed,1/0.5,36.00,24.00,864.00,47.3,4.27,2023,IMX309;IMX609
-931,Leica Q2 Typ 4889 Disney 100 Years of Wonder,fixed,1/0.5,36.00,24.00,864.00,47.3,4.27,2023,IMX309;IMX609
-932,Leica Q3 Typ 6506,fixed,1/0.5,36.00,24.00,864.00,60.3,3.79,2023,IMX451;IMX455
-933,Blackmagic Design Studio Camera 6K Pro,camcorder,1/0.6,23.10,13.00,,,,2023,
-934,RICOH GR III Diary Edition,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2023,IMX193;IMX210;IMX271;IMX284
-935,Blackmagic Design Micro Studio Camera 4K G2,camcorder,1/0.7,17.80,10.00,,,,2023,
-936,Blackmagic Design Studio Camera 4K Plus,camcorder,1/0.7,17.80,10.00,,,,2023,
-937,Blackmagic Design Studio Camera 4K Plus G2,camcorder,1/0.7,17.80,10.00,,,,2023,
-938,Blackmagic Design Studio Camera 4K Pro,camcorder,1/0.7,17.80,10.00,,,,2023,
-939,Blackmagic Design Studio Camera 4K Pro G2,camcorder,1/0.7,17.80,10.00,,,,2023,
-940,SJCAM C200 Pro,actioncam,1/0.8,25.40,19.05,,,,2023,
-941,Canon PowerShot V10 Advanced Vlogging Kit,fixed,1/1,20.32,15.24,309.68,13.1,4.86,2023,
-942,Canon PowerShot V10 Vlogging Kit,fixed,1/1,20.32,15.24,309.68,13.1,4.86,2023,
-943,Canon PowerShot V10 Vlogging Starter Kit,fixed,1/1,20.32,15.24,309.68,13.1,4.86,2023,
-944,DJI Osmo Pocket 3,camcorder,1/1,20.32,15.24,,,,2023,
-945,DJI Osmo Pocket 3 Kreativ Combo,camcorder,1/1,20.32,15.24,,,,2023,
-946,Sony Vlog-Kamera ZV-1 II,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2023,IMX183;IMX283;IMX383
-947,DJI Osmo Action 4 Adventure Combo,actioncam,1/1.3,15.63,11.72,,,,2023,
-948,DJI Osmo Action 4 Standard Combo,actioncam,1/1.3,15.63,11.72,,,,2023,
-949,Insta360 Ace Pro,actioncam,1/1.3,15.63,11.72,,,,2023,
-950,DJI Osmo Action 4 Rennradsport Combo,actioncam,1/1.7,11.95,8.96,,,,2023,
-951,GoPro HERO11 Black Ultimate Bundle,actioncam,1/1.9,10.69,8.02,,,,2023,
-952,GoPro HERO12 Black,actioncam,1/1.9,10.69,8.02,,,,2023,
-953,GoPro HERO12 Black Creator Edition,actioncam,1/1.9,10.69,8.02,,,,2023,
-954,GoPro HERO12 Black Zubehörpaket,actioncam,1/1.9,10.69,8.02,,,,2023,
-955,Kandao QooCam EGO 3D,actioncam,1/2,10.16,7.62,,,,2023,
-956,Kodak Astro Zoom AZ255,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2023,
-957,Kodak Astro Zoom AZ425,fixed,1/2.3,6.17,4.55,28.07,20.7,1.17,2023,
-958,OM System TG-7,fixed,1/2.3,6.17,4.55,28.07,12.0,1.53,2023,
-959,Pentax WG-90,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2023,
-960,Rollei Action One,actioncam,1/2.3,8.83,6.63,,,,2023,
-961,Sony AX43A,camcorder,1/2.5,8.13,6.10,,,,2023,
-962,SJCAM C200,actioncam,1/2.8,7.26,5.44,,,,2023,
-963,SJCAM C300,actioncam,1/2.8,7.26,5.44,,,,2023,
-964,SJCAM C300 Pocket,actioncam,1/2.8,7.26,5.44,,,,2023,
-965,Easypix GoXtreme Enduro Black,actioncam,1/3.2,6.35,4.76,,,,2023,
-966,Fujifilm instax Pal Gem Black,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
-967,Fujifilm instax Pal Lavender Blue,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
-968,Fujifilm instax Pal Milky White,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
-969,Fujifilm instax Pal Pistachio Green,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
-970,Fujifilm instax Pal Powder Pink,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
-971,Leica SOFORT 2,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
-972,Berger & Schröter 4G LTE Cloud Wildkamera,fixed,,,,,4.0,,2023,
-973,Braun Scouting Cam Black200 Mini,fixed,,,,,2.0,,2023,
-974,Braun Scouting Cam Black200 WiFi Mini,fixed,,,,,2.0,,2023,
-975,Braun Scouting Cam Black200A Mini,fixed,,,,,2.0,,2023,
-976,Bushnell Core DS-4K,fixed,,,,,32.0,,2023,
-977,Bushnell Core S-4K,fixed,,,,,23.0,,2023,
-978,Canon EOS R100,mirrorless,,22.30,14.90,332.27,24.1,3.71,2023,
-979,Canon EOS R100 Body,mirrorless,,22.30,14.90,332.27,24.1,3.71,2023,
-980,Canon EOS R50,mirrorless,,22.30,14.90,332.27,24.2,3.71,2023,
-981,Canon EOS R8,mirrorless,,35.90,23.90,858.01,24.2,5.95,2023,IMX071;IMX128;IMX157;IMX310;IMX410
-982,Canon EOS R8 Body,mirrorless,,35.90,23.90,858.01,24.2,5.95,2023,IMX071;IMX128;IMX157;IMX310;IMX410
-983,Denver Wildkamera WCL-8040,fixed,,,,,8.0,,2023,
-984,Dörr SnapShot Cloud 4G,fixed,,,,,5.0,,2023,
-985,Easypix W2024,fixed,,,,,5.0,,2023,
-986,Easypix W3048 Edge violet,fixed,,,,,13.0,,2023,
-987,Folgtek Wildkamera,fixed,,,,,,,2023,
-988,Fujifilm GFX 100 II,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2023,IMX461
-989,Fujifilm GFX 100 II Body,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2023,IMX461
-990,Fujifilm X-S20,mirrorless,,23.50,15.60,366.60,26.1,3.75,2023,IMX571
-991,Fujifilm X-S20 Body,mirrorless,,23.50,15.60,366.60,26.1,3.75,2023,IMX571
-992,Insta360 Go 3 128GB,actioncam,,,,,,,2023,
-993,Insta360 Go 3 32GB,actioncam,,,,,,,2023,
-994,Insta360 Go 3 64GB,actioncam,,,,,,,2023,
-995,JoyFan H1 Wildkamera,fixed,,,,,1.0,,2023,
-996,Leica M11 Monochrom Typ 2416,rangefinder,,36.00,24.00,864.00,60.3,3.79,2023,IMX451;IMX455
-997,Leica M11-P Typ 2416,rangefinder,,36.00,24.00,864.00,60.3,3.79,2023,IMX451;IMX455
-998,Nikon Z 8,mirrorless,,35.90,23.90,858.01,45.7,4.33,2023,IMX309;IMX366;IMX609
-999,Nikon Z 8 Body,mirrorless,,35.90,23.90,858.01,45.7,4.33,2023,IMX309;IMX366;IMX609
-1000,Nikon Z f,mirrorless,,35.90,23.90,858.01,24.5,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
-1001,Nikon Z f Body,mirrorless,,35.90,23.90,858.01,24.5,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
-1002,Panasonic Lumix DC-G9II,mirrorless,,17.30,13.00,224.90,25.2,2.99,2023,
-1003,Panasonic Lumix DC-G9II Body,mirrorless,,17.30,13.00,224.90,25.2,2.99,2023,
-1004,Panasonic Lumix DC-S5II,mirrorless,,35.60,23.80,847.28,24.2,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
-1005,Panasonic Lumix DC-S5II Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
-1006,Panasonic Lumix DC-S5IIX,mirrorless,,35.60,23.80,847.28,24.2,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
-1007,Panasonic Lumix DC-S5IIX Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
-1008,Pentax K-3 III Monochrome,dslr,,23.30,15.50,361.15,25.7,3.75,2023,IMX571
-1009,Seissiger Special-Cam Supersim,fixed,,,,,12.0,,2023,
-1010,SJCAM C100+,actioncam,,,,,,,2023,
-1011,Sony Alpha 6700,mirrorless,,23.30,15.50,361.15,26.0,3.73,2023,IMX571
-1012,Sony Alpha 6700 Body,mirrorless,,23.30,15.50,361.15,26.0,3.73,2023,IMX571
-1013,Sony Alpha 7C II,mirrorless,,35.90,23.90,858.01,33.0,5.10,2023,
-1014,Sony Alpha 7CR,mirrorless,,35.70,23.80,849.66,61.0,3.73,2023,IMX451;IMX455
-1015,Sony Alpha 9 III,mirrorless,,35.60,23.80,847.28,24.6,5.87,2023,IMX071;IMX128;IMX157;IMX310;IMX410
-1016,Sony Alpha 9 III Body,mirrorless,,35.60,23.80,847.28,24.6,5.87,2023,IMX071;IMX128;IMX157;IMX310;IMX410
-1017,Sony ZV-E1,mirrorless,,35.60,23.80,847.28,12.1,8.37,2023,IMX235;IMX510
-1018,Sony ZV-E1 Body,mirrorless,,35.60,23.80,847.28,12.1,8.37,2023,IMX235;IMX510
-1019,Spypoint FLEX,fixed,,,,,33.0,,2023,
-1020,Spypoint LINK-MICRO-LTE,fixed,,,,,10.0,,2023,
-1021,VTech Kidizoom Duo Pro,fixed,,,,,2.0,,2023,
-1022,VTech Kidizoom Duo Pro mit Tasche,fixed,,,,,2.0,,2023,
-1023,AgfaPhoto Realimove CC2700,camcorder,1/0.3,67.73,50.80,,,,2024,
-1024,Camworld Videokamera 5K,camcorder,1/0.3,67.73,50.80,,,,2024,
-1025,Easypix WDV5630,camcorder,1/0.3,67.73,50.80,,,,2024,
-1026,Rollei Movieline UHD5mWaterpro,camcorder,1/0.3,67.73,50.80,,,,2024,
-1027,SJCAM SJ20,actioncam,1/0.4,50.80,38.10,,,,2024,
-1028,AgfaPhoto AC7000,actioncam,1/0.5,40.64,30.48,,,,2024,
-1029,AgfaPhoto AC9000,actioncam,1/0.5,40.64,30.48,,,,2024,
-1030,Blackmagic Design PYXIS 6K EF-Mount,camcorder,1/0.5,36.00,24.00,,,,2024,
-1031,Blackmagic Design PYXIS 6K L-Mount,camcorder,1/0.5,36.00,24.00,,,,2024,
-1032,Blackmagic Design PYXIS 6K PL-Mount,camcorder,1/0.5,36.00,24.00,,,,2024,
-1033,Canon EOS C400,camcorder,1/0.5,38.40,20.20,,,,2024,
-1034,Canon EOS C80,camcorder,1/0.5,36.00,19.00,,,,2024,
-1035,Leica Q3 43 Typ 6506,fixed,1/0.5,36.00,24.00,864.00,60.3,3.79,2024,IMX451;IMX455
-1036,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
-1037,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
-1038,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
-1039,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
-1040,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
-1041,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
-1042,Fujifilm FinePix X100VI,fixed,1/0.6,23.50,15.60,366.60,40.2,3.02,2024,
-1043,GoPro HERO,actioncam,1/0.6,33.87,25.40,,,,2024,
-1044,RICOH GR III HDF,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2024,IMX193;IMX210;IMX271;IMX284
-1045,RICOH GR IIIx HDF,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2024,IMX193;IMX210;IMX271;IMX284
-1046,Brinno BCC300-C,camcorder,1/0.7,29.03,21.77,,,,2024,
-1047,Brinno BCC300-M,camcorder,1/0.7,29.03,21.77,,,,2024,
-1048,Brinno TLC300,camcorder,1/0.7,29.03,21.77,,,,2024,
-1049,Leica D-Lux 8,fixed,1/0.7,17.10,11.80,201.78,17.0,3.45,2024,
-1050,Sony HXR-NX800,camcorder,1/1,20.32,15.24,,,,2024,
-1051,Sony PXW-Z200,camcorder,1/1,13.20,8.80,,,,2024,
-1052,DJI Osmo Action 5 Pro Adventure Combo,actioncam,1/1.3,15.63,11.72,,,,2024,
-1053,DJI Osmo Action 5 Pro Standard Combo,actioncam,1/1.3,15.63,11.72,,,,2024,
-1054,Insta360 Ace Pro 2,actioncam,1/1.3,15.63,11.72,,,,2024,
-1055,Insta360 Ace Pro 2 Doppel Akku Bundle,actioncam,1/1.3,15.63,11.72,,,,2024,
-1056,Kandao QooCam 3 Ultra 8K,fixed,1/1.7,7.60,5.70,,,,2024,
-1057,GoPro HERO13 Black,actioncam,1/1.9,10.69,8.02,,,,2024,
-1058,GoPro HERO13 Black Creator Edition,actioncam,1/1.9,10.69,8.02,,,,2024,
-1059,GoPro HERO13 Black Lens Mod Ultraweit Bundle,actioncam,1/1.9,10.69,8.02,,,,2024,
-1060,GoPro HERO13 Black mit Zubehör Bundle,actioncam,1/1.9,10.69,8.02,,,,2024,
-1061,Insta360 X4,actioncam,1/2,10.16,7.62,,,,2024,
-1062,Kodak Astro Zoom AZ405,fixed,1/2.3,6.17,4.55,28.07,20.7,1.17,2024,
-1063,Kodak Astro Zoom AZ528,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2024,
-1064,Panasonic Lumix DC-FZ82D,fixed,1/2.3,6.17,4.55,28.07,18.1,1.25,2024,
-1065,Panasonic Lumix DMC-TZ99,fixed,1/2.3,6.17,4.55,28.07,20.3,1.18,2024,
-1066,Pentax WG-1000,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2024,
-1067,Pentax WG-1000 olive,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2024,
-1068,Pentax WG-8,fixed,1/2.3,6.17,4.55,28.07,20.0,1.18,2024,
-1069,RICOH G900SE II,fixed,1/2.3,6.17,4.55,28.07,20.0,1.18,2024,
-1070,Panasonic HC-V900,camcorder,1/2.5,8.13,6.10,,,,2024,
-1071,Panasonic HC-VX3,camcorder,1/2.5,8.13,6.10,,,,2024,
-1072,Easypix Black Manta 5K,actioncam,1/2.8,7.26,5.44,,,,2024,
-1073,Rollei Action One Lite,actioncam,1/2.8,7.26,5.44,,,,2024,
-1074,Rollei Powerflex 10x Optical Zoom,fixed,1/2.8,7.26,5.44,39.50,8.5,2.16,2024,
-1075,Akaso Brave 4 Pro,actioncam,1/2.9,7.01,5.26,,,,2024,
-1076,Rollei Actioncam 9s Cube,actioncam,1/2.9,7.01,5.26,,,,2024,
-1077,Canon PowerShot Zoom Enhanced Edition,fixed,1/3,4.80,3.60,17.28,12.1,1.20,2024,
-1078,Canon PowerShot Zoom Essential Kit,fixed,1/3,4.80,3.60,17.28,12.1,1.20,2024,
-1079,Fujifilm instax mini Evo 90th Anniversary,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2024,
-1080,Fujifilm instax mini Evo 90th Anniversary dunkel,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2024,
-1081,Fujifilm instax mini Evo USB-C,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2024,
-1082,Fujifilm instax mini LiPlay deep,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2024,
-1083,Fujifilm instax mini LiPlay matcha green,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2024,
-1084,Fujifilm instax mini LiPlay misty white,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2024,
-1085,AgfaPhoto Realishot DC5200,fixed,,,,,,,2024,
-1086,AgfaPhoto Realishot DC5500,fixed,,,,,5.0,,2024,
-1087,AgfaPhoto Realishot DC8200,fixed,,,,,8.0,,2024,
-1088,AgfaPhoto Realishot DC9200,fixed,,,,,,,2024,
-1089,AgfaPhoto Realishot WP8000,fixed,,,,,8.0,,2024,
-1090,Camouflage EZ BirdFeed 1,fixed,,,,,,,2024,
-1091,Canon EOS R1,mirrorless,,36.00,24.00,864.00,24.2,5.98,2024,IMX071;IMX128;IMX157;IMX310;IMX410
-1092,Canon EOS R1 Body,mirrorless,,36.00,24.00,864.00,24.2,5.98,2024,IMX071;IMX128;IMX157;IMX310;IMX410
-1093,Canon EOS R5 Mark II,mirrorless,,36.00,24.00,864.00,45.0,4.38,2024,IMX309;IMX366;IMX609
-1094,Canon EOS R5 Mark II Body,mirrorless,,36.00,24.00,864.00,45.0,4.38,2024,IMX309;IMX366;IMX609
-1095,Denver DCA-4811,fixed,,,,,5.0,,2024,
-1096,Denver DCA-4818,fixed,,,,,5.0,,2024,
-1097,Denver KCA-1340BU,fixed,,,,,8.0,,2024,
-1098,Denver KCA-1340RO Rose,fixed,,,,,8.0,,2024,
-1099,Denver KPC-1370,fixed,,,,,,,2024,
-1100,Denver Wildkamera WCT-5002,fixed,,,,,5.0,,2024,
-1101,Denver Wildkamera WCT-8016,fixed,,,,,8.0,,2024,
-1102,Denver Wildkamera WCT-8026W,fixed,,,,,8.0,,2024,
-1103,Easypix Aquapix W3027 Wave Marine Blue,fixed,,,,,5.0,,2024,
-1104,Easypix Aquapix W3027 Wave Sunset Orange,fixed,,,,,5.0,,2024,
-1105,Easypix GoXtreme Reef,fixed,,,,,8.0,,2024,
-1106,Fujifilm GFX 100S II,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2024,IMX461
-1107,Fujifilm GFX 100S II Body,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2024,IMX461
-1108,Fujifilm X-M5,mirrorless,,23.50,15.70,368.95,26.1,3.76,2024,IMX571
-1109,Fujifilm X-T50,mirrorless,,23.50,15.70,368.95,40.2,3.03,2024,
-1110,GardePro A3S,fixed,,,,,,,2024,
-1111,Hasselblad 907X 100C,mirrorless,,43.80,32.90,1441.02,100.0,3.80,2024,IMX461
-1112,Hasselblad 907X 100C Body,mirrorless,,43.80,32.90,1441.02,100.0,3.80,2024,IMX461
-1113,Hasselblad 907X 50C,mirrorless,,43.80,32.90,1441.02,50.0,5.37,2024,IMX161
-1114,Hasselblad 907X 50C Body,mirrorless,,43.80,32.90,1441.02,50.0,5.37,2024,IMX161
-1115,Hoppstar Artist blush,fixed,,,,,5.0,,2024,
-1116,Hoppstar Artist laurel,fixed,,,,,5.0,,2024,
-1117,Hoppstar Artist oat,fixed,,,,,5.0,,2024,
-1118,Hoppstar Expert blush,fixed,,,,,3.0,,2024,
-1119,Hoppstar Expert citron,fixed,,,,,3.0,,2024,
-1120,Hoppstar Expert laurel,fixed,,,,,3.0,,2024,
-1121,Hoppstar Expert yale,fixed,,,,,3.0,,2024,
-1122,Hoppstar Rookie blossom,fixed,,,,,3.0,,2024,
-1123,Hoppstar Rookie blush,fixed,,,,,3.0,,2024,
-1124,Hoppstar Rookie honey,fixed,,,,,3.0,,2024,
-1125,Hoppstar Rookie moss,fixed,,,,,3.0,,2024,
-1126,Hoppstar Rookie oat,fixed,,,,,3.0,,2024,
-1127,Hoppstar Rookie yale,fixed,,,,,3.0,,2024,
-1128,Insta360 Go 3S 128GB Standard,actioncam,,,,,,,2024,
-1129,Insta360 Go 3S 64GB,actioncam,,,,,,,2024,
-1130,Kidywolf Kidycam,fixed,,,,,8.0,,2024,
-1131,Kidywolf Kidyprint,fixed,,,,,8.0,,2024,
-1132,Kodak Smile+,fixed,,,,,5.0,,2024,
-1133,Kodak Smile+ fuchsie,fixed,,,,,5.0,,2024,
-1134,Leica M11-D Typ 2221,rangefinder,,36.00,24.00,864.00,60.3,3.79,2024,IMX451;IMX455
-1135,Leica M11-D Typ 2221 Body,rangefinder,,36.00,24.00,864.00,60.3,3.79,2024,IMX451;IMX455
-1136,Leica SL3 Typ 5404,mirrorless,,36.00,24.00,864.00,60.3,3.79,2024,IMX451;IMX455
-1137,Nedis Fahrradkamera,actioncam,,,,,,,2024,
-1138,Nikon Z 50II,mirrorless,,23.50,15.70,368.95,20.9,4.20,2024,IMX321
-1139,Nikon Z 50II Body,mirrorless,,23.50,15.70,368.95,20.9,4.20,2024,IMX321
-1140,Nikon Z 6III,mirrorless,,35.90,23.90,858.01,24.5,5.92,2024,IMX071;IMX128;IMX157;IMX310;IMX410
-1141,Nikon Z 6III Body,mirrorless,,35.90,23.90,858.01,24.5,5.92,2024,IMX071;IMX128;IMX157;IMX310;IMX410
-1142,Oaxis myFirst Camera 10,fixed,,,,,5.0,,2024,
-1143,Oaxis myFirst Camera 2,fixed,,,,,8.0,,2024,
-1144,Oaxis myFirst Camera 3,fixed,,,,,,,2024,
-1145,Oaxis myFirst Camera Insta 2,fixed,,,,,3.0,,2024,
-1146,Oaxis myFirst Camera Insta Wi,fixed,,,,,,,2024,
-1147,Oaxis myFirst Camera Insta Wi türkis,fixed,,,,,,,2024,
-1148,OM System OM-1 Mark II,mirrorless,,17.30,13.00,224.90,20.4,3.32,2024,
-1149,OM System OM-1 Mark II Body,mirrorless,,17.30,13.00,224.90,20.4,3.32,2024,
-1150,Panasonic Lumix DC-G100D,mirrorless,,17.30,13.00,224.90,20.3,3.33,2024,
-1151,Panasonic Lumix DC-G100D Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2024,
-1152,Panasonic Lumix DC-G97,mirrorless,,17.30,13.00,224.90,20.3,3.33,2024,
-1153,Panasonic Lumix DC-G97 Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2024,
-1154,Panasonic Lumix DC-GH7,mirrorless,,17.30,13.00,224.90,25.2,2.99,2024,
-1155,Panasonic Lumix DC-GH7 Body,mirrorless,,17.30,13.00,224.90,25.2,2.99,2024,
-1156,Panasonic Lumix DC-S5D,mirrorless,,35.60,23.80,847.28,24.2,5.92,2024,IMX071;IMX128;IMX157;IMX310;IMX410
-1157,Panasonic Lumix DC-S9,mirrorless,,35.60,23.80,847.28,24.2,5.92,2024,IMX071;IMX128;IMX157;IMX310;IMX410
-1158,Phase One IQ4 100MP,mirrorless,,53.40,40.00,2136.00,101.0,4.60,2024,IMX211
-1159,Phase One IQ4 100MP Body,mirrorless,,53.40,40.00,2136.00,101.0,4.60,2024,IMX211
-1160,Rollei Compactline 10x,fixed,,,,,20.0,,2024,
-1161,Rollei Compactline 880,fixed,,,,,18.0,,2024,
-1162,Rollei Compactline Mini,fixed,,,,,8.0,,2024,
-1163,Rollei D2Pro,fixed,,,,,20.0,,2024,
-1164,Rollei Sportsline Fun,fixed,,,,,5.0,,2024,
-1165,ShinePick Fotoapparat Kinder,fixed,,,,,8.0,,2024,
-1166,Somikon Kinder-Full-HD-Digitalkamera,fixed,,,,,1.3,,2024,
-1167,Sony Alpha 1 II,mirrorless,,35.90,24.00,861.60,50.1,4.15,2024,IMX610
-1168,Sony Alpha 1 II Body,mirrorless,,35.90,24.00,861.60,50.1,4.15,2024,IMX610
-1169,Sony ZV-E10 II,mirrorless,,23.30,15.50,361.15,26.0,3.73,2024,IMX571
-1170,Sony ZV-E10 II Body,mirrorless,,23.30,15.50,361.15,26.0,3.73,2024,IMX571
-1171,VTech Kidizoom Kid 4,fixed,,,,,2.0,,2024,
-1172,Zeiss Secacam 5 Wide Angle Wildkamera,fixed,,,,,5.0,,2024,
-1173,Zeiss Secacam 5 Wildkamera,fixed,,,,,5.0,,2024,
-1174,Zeiss Secacam 7 Wildkamera,fixed,,,,,5.0,,2024,
-1175,Blackmagic Design PYXIS 12K EF-Mount,camcorder,1/0.5,36.00,24.00,,,,2025,
-1176,Blackmagic Design PYXIS 12K L-Mount,camcorder,1/0.5,36.00,24.00,,,,2025,
-1177,Blackmagic Design PYXIS 12K PL-Mount,camcorder,1/0.5,36.00,24.00,,,,2025,
-1178,Easypix GoXtreme Vision DUO,actioncam,1/0.5,40.64,30.48,,,,2025,
-1179,Fujifilm GFX 100RF,fixed,1/0.5,43.80,32.90,1441.02,102.0,3.76,2025,IMX461
-1180,Sony ILME-FX2,camcorder,1/0.5,35.90,23.90,,,,2025,
-1181,Sony ILME-FX2 mit XLR-Griffeinheit,camcorder,1/0.5,35.90,23.90,,,,2025,
-1182,Sony ILME-FX3a,camcorder,1/0.5,35.60,23.80,,,,2025,
-1183,Surfola SF230 Unterwasserkamera Actionkamera,actioncam,1/0.5,40.64,30.48,,,,2025,
-1184,Canon PowerShot V1,fixed,1/0.7,29.03,21.77,631.99,22.3,5.32,2025,
-1185,Leica D-Lux 8 100 Years of Leica,fixed,1/0.7,17.10,11.80,201.78,17.0,3.45,2025,
-1186,Fujifilm X half X-HF1,fixed,1/1,13.30,8.80,117.04,17.7,2.57,2025,
-1187,Panasonic AG-CX370,camcorder,1/1,20.32,15.24,,,,2025,
-1188,Sony Cyber-shot DSC-RX100 VII A,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2025,IMX183;IMX283;IMX383
-1189,Sony Vlog-Kamera ZV-1A,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2025,IMX183;IMX283;IMX383
-1190,DJI Osmo Action 4 Essential-Combo,actioncam,1/1.3,15.63,11.72,,,,2025,
-1191,DJI Osmo Action 5 Pro Essential Combo,actioncam,1/1.3,15.63,11.72,,,,2025,
-1192,Insta360 X5 Essentials Bundle,actioncam,1/1.3,15.63,11.72,,,,2025,
-1193,Insta360 X5 Motorrad Bundle,actioncam,1/1.3,15.63,11.72,,,,2025,
-1194,Insta360 X5 Standard Bundle,actioncam,1/1.3,15.63,11.72,,,,2025,
-1195,GoPro HERO13 Black in Forest Green Limited Edition,actioncam,1/1.9,10.69,8.02,,,,2025,
-1196,GoPro HERO13 Black Polar White,actioncam,1/1.9,10.69,8.02,,,,2025,
-1197,Insta360 X3 All-Purpose Kit Starter-Bundle,actioncam,1/2,10.16,7.62,,,,2025,
-1198,Insta360 X3 Baustellen Bundle,actioncam,1/2,10.16,7.62,,,,2025,
-1199,Insta360 X3 Creator Kit,actioncam,1/2,10.16,7.62,,,,2025,
-1200,Insta360 X3 Motorrad Kit,actioncam,1/2,10.16,7.62,,,,2025,
-1201,Insta360 X3 Snow Kit,actioncam,1/2,10.16,7.62,,,,2025,
-1202,Insta360 X4 Adventure Bundle,actioncam,1/2,10.16,7.62,,,,2025,
-1203,Insta360 X4 Ausdauer Bundle,actioncam,1/2,10.16,7.62,,,,2025,
-1204,Insta360 X4 Ausdauer Bundle ohne SD-Karte,actioncam,1/2,10.16,7.62,,,,2025,
-1205,Insta360 X4 Baustellen Bundle,actioncam,1/2,10.16,7.62,,,,2025,
-1206,Insta360 X4 Explorer Bundle,actioncam,1/2,10.16,7.62,,,,2025,
-1207,Insta360 X4 Motorrad Bundle,actioncam,1/2,10.16,7.62,,,,2025,
-1208,Insta360 X4 Ski Bundle,actioncam,1/2,10.16,7.62,,,,2025,
-1209,Insta360 X4 Snowboard Bundle,actioncam,1/2,10.16,7.62,,,,2025,
-1210,Insta360 X4 Unsichtbares Tauch Bundle,actioncam,1/2,10.16,7.62,,,,2025,
-1211,Canon PowerShot SX740 HS Lite Edition,fixed,1/2.3,6.17,4.55,28.07,20.3,1.18,2025,
-1212,DJI Osmo Zenmuse X3 Gimbal und Kamera,camcorder,1/2.3,8.83,6.63,,,,2025,
-1213,Nikon Coolpix P1100,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2025,
-1214,AgfaPhoto Realimove MC3X,camcorder,1/2.5,8.13,6.10,,,,2025,
-1215,Panasonic AG-CX18,camcorder,1/2.5,8.13,6.10,,,,2025,
-1216,Panasonic AG-CX20,camcorder,1/2.5,8.13,6.10,,,,2025,
-1217,Panasonic HC-X1200,camcorder,1/2.5,8.13,6.10,,,,2025,
-1218,Panasonic HC-X1600,camcorder,1/2.5,8.13,6.10,,,,2025,
-1219,Rollei Powerflex 10x Retro,fixed,1/2.8,7.26,5.44,39.50,64.0,0.79,2025,
-1220,AgfaPhoto Realimove AC9500,actioncam,1/2.9,7.01,5.26,,,,2025,
-1221,AgfaPhoto Realishot WP9500,fixed,1/3,4.80,3.60,17.28,13.0,1.15,2025,
-1222,Fujifilm Wide Evo,fixed,1/3,4.80,3.60,,,,2025,
-1223,AgfaPhoto Realishot C130,fixed,1/3.1,6.55,4.92,32.22,13.0,1.57,2025,
-1224,Leica SOFORT 2 100 YEARS OF LEICA Jubiläumsedition,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2025,
-1225,Leica SOFORT 2 Burton Edition,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2025,
-1226,AgfaPhoto Realishot DC5100,fixed,,,,,2.0,,2025,
-1227,Braun Scouting Cam Black1320 Wifi Solar 4K DS,fixed,,,,,13.0,,2025,
-1228,Braun Scouting Cam Black300 Wifi Solar 4K Mini,fixed,,,,,3.0,,2025,
-1229,Braun Scouting Cam Black400 Dual Wifi,fixed,,,,,4.0,,2025,
-1230,Braun Scouting Cam Black400 Wifi 4K,fixed,,,,,4.0,,2025,
-1231,Braun Scouting Cam Black400 Wifi 8K,fixed,,,,,4.0,,2025,
-1232,Braun Scouting Cam Black500 4K,fixed,,,,,5.0,,2025,
-1233,Braun Scouting Cam Black575,fixed,,,,,5.0,,2025,
-1234,Canon EOS R50 V,mirrorless,,22.30,14.90,332.27,24.2,3.71,2025,
-1235,Canon EOS R50 V Body,mirrorless,,22.30,14.90,332.27,24.2,3.71,2025,
-1236,Denver Wildkamera WCT-5001,fixed,,,,,5.0,,2025,
-1237,Easypix Aquapix W3027 Wave Gelb,fixed,,,,,5.0,,2025,
-1238,Easypix Aquapix W3027 Wave Iceblue,fixed,,,,,5.0,,2025,
-1239,Easypix Aquapix W3027 Wave Pink,fixed,,,,,5.0,,2025,
-1240,Easypix PowerPro VX6430,fixed,,,,,8.0,,2025,
-1241,Easypix V48 Pocket,fixed,,,,,8.0,,2025,
-1242,Easypix V64 Flip,fixed,,,,,,,2025,
-1243,Fujifilm X-E5,mirrorless,,23.50,15.70,368.95,40.2,3.03,2025,
-1244,Fujifilm X-H2S,mirrorless,,23.50,15.60,366.60,26.2,3.74,2025,IMX571
-1245,GoPro Max,actioncam,,,,,,,2025,
-1246,Hoppstar Artist blossom,fixed,,,,,5.0,,2025,
-1247,Hoppstar Artist denim,fixed,,,,,5.0,,2025,
-1248,Hoppstar Artist Memo,fixed,,,,,5.0,,2025,
-1249,Insta360 Go 3S Standalone Camera 128GB,actioncam,,,,,,,2025,
-1250,Leica M11-P Typ 2416 Safari,rangefinder,,36.00,24.00,864.00,60.3,3.79,2025,IMX451;IMX455
-1251,Leica M11-P Typ 2416 Safari Body,rangefinder,,36.00,24.00,864.00,60.3,3.79,2025,IMX451;IMX455
-1252,Leica SL3-S Typ 4506,mirrorless,,36.00,24.00,864.00,24.6,5.93,2025,IMX071;IMX128;IMX157;IMX310;IMX410
-1253,Nedis Wildlife Kamera,fixed,,,,,4.0,,2025,
-1254,Nikon Z 5II,mirrorless,,35.90,23.90,858.01,24.5,5.92,2025,IMX071;IMX128;IMX157;IMX310;IMX410
-1255,Nikon Z 5II Body,mirrorless,,35.90,23.90,858.01,24.5,5.92,2025,IMX071;IMX128;IMX157;IMX310;IMX410
-1256,OM System OM-3,mirrorless,,17.30,13.00,224.90,20.4,3.32,2025,
-1257,OM System OM-3 Body,mirrorless,,17.30,13.00,224.90,20.4,3.32,2025,
-1258,OM System OM-5 Mark II,mirrorless,,17.30,13.00,224.90,20.4,3.32,2025,
-1259,OM System OM-5 Mark II sand,mirrorless,,17.30,13.00,224.90,20.4,3.32,2025,
-1260,Panasonic Lumix DC-S1II,mirrorless,,35.80,23.80,852.04,24.1,5.95,2025,IMX071;IMX128;IMX157;IMX310;IMX410
-1261,Panasonic Lumix DC-S1II Body,mirrorless,,35.80,23.80,852.04,24.1,5.95,2025,IMX071;IMX128;IMX157;IMX310;IMX410
-1262,Panasonic Lumix DC-S1IIE,mirrorless,,35.80,23.80,852.04,24.2,5.93,2025,IMX071;IMX128;IMX157;IMX310;IMX410
-1263,Panasonic Lumix DC-S1IIE Body,mirrorless,,35.80,23.80,852.04,24.2,5.93,2025,IMX071;IMX128;IMX157;IMX310;IMX410
-1264,Panasonic Lumix DC-S1R II,mirrorless,,36.00,24.00,864.00,44.3,4.42,2025,IMX251;IMX309;IMX366;IMX609
-1265,Panasonic Lumix DC-S1R II Body,mirrorless,,36.00,24.00,864.00,44.3,4.42,2025,IMX251;IMX309;IMX366;IMX609
-1266,Rollei Compactline Dual Screen,fixed,,,,,64.0,,2025,
-1267,Rollei Compactline Pocket,fixed,,,,,5.0,,2025,
-1268,Sigma BF,mirrorless,,35.90,23.90,858.01,24.6,5.91,2025,IMX071;IMX128;IMX157;IMX310;IMX410
-1269,Sigma BF Body,mirrorless,,35.90,23.90,858.01,24.6,5.91,2025,IMX071;IMX128;IMX157;IMX310;IMX410
-1270,Sony Alpha 6400 A,mirrorless,,23.50,15.60,366.60,24.2,3.89,2025,IMX193;IMX210;IMX271;IMX284
-1271,Wolfang WDC02,fixed,,,,,,,2025,
-1272,Yashica City 100,fixed,,,,,,,2025,
-1273,Yashica City 200,fixed,,,,,,,2025,
-1274,Yashica DZ-100 Hello Kitty,fixed,,,,,5.0,,2025,
-1275,Yashica Mini Hello Kitty,fixed,,,,,3.0,,2025,
-1276,Yashica x Peanuts DP-100 Blue Sky,fixed,,,,,5.0,,2025,
-1277,Yashica x Peanuts DP-100 Sage,fixed,,,,,5.0,,2025,
-1278,Yashica x Peanuts Mini Cream,fixed,,,,,3.0,,2025,
-1279,Zeiss Secacam 3 Wildkamera,fixed,,,,,3.0,,2025,
-1280,AgfaPhoto Realishot DC8300,fixed,,,,,,,,
+1126,Sony Alpha 7S Body,mirrorless,,35.60,23.80,847.28,12.2,8.40,2014,IMX235;IMX510
+1130,Sony Alpha 7S III Body,mirrorless,,35.60,23.80,847.28,12.1,8.37,2020,IMX235;IMX510
+1205,Sony ZV-E1 Body,mirrorless,,35.60,23.80,847.28,12.1,8.37,2023,IMX235;IMX510
+1129,Sony Alpha 7S III,mirrorless,,35.60,23.80,847.28,12.1,8.37,2020,IMX235;IMX510
+1204,Sony ZV-E1,mirrorless,,35.60,23.80,847.28,12.1,8.37,2023,IMX235;IMX510
+1127,Sony Alpha 7S II,mirrorless,,35.60,23.80,847.28,12.2,8.33,2015,IMX235;IMX510
+1128,Sony Alpha 7S II Body,mirrorless,,35.60,23.80,847.28,12.2,8.33,2015,IMX235;IMX510
+1075,Sigma SD15,dslr,,20.70,13.80,285.66,14.0,7.80,2008,
+748,Nikon Df,dslr,,36.00,23.90,860.40,16.2,7.30,2013,
+115,Canon EOS 1D Mark III,dslr,,28.10,18.70,525.47,10.1,7.21,2007,
+116,Canon EOS 1D Mark III Body,dslr,,28.10,18.70,525.47,10.1,7.21,2007,
+118,Canon EOS 1D X Body,dslr,,36.00,24.00,864.00,18.1,6.91,2011,
+117,Canon EOS 1D X,dslr,,36.00,24.00,864.00,18.1,6.91,2011,
+634,Leica M-E Typ 220,rangefinder,,35.80,23.90,855.62,18.0,6.89,2012,
+138,Canon EOS 6D,dslr,,36.00,24.00,864.00,20.2,6.60,2012,
+122,Canon EOS 1D X Mark III Body,dslr,,36.00,24.00,864.00,20.1,6.56,2020,
+198,Canon EOS R6 Body,mirrorless,,36.00,24.00,864.00,20.1,6.56,2020,
+121,Canon EOS 1D X Mark III,dslr,,36.00,24.00,864.00,20.1,6.56,2020,
+197,Canon EOS R6,mirrorless,,36.00,24.00,864.00,20.1,6.56,2020,
+120,Canon EOS 1D X Mark II Body,dslr,,35.90,23.90,858.01,20.2,6.52,2016,
+119,Canon EOS 1D X Mark II,dslr,,35.90,23.90,858.01,20.2,6.52,2016,
+729,Nikon D5,dslr,,35.90,23.90,858.01,20.8,6.42,2017,
+735,Nikon D6,dslr,,35.90,23.90,858.01,20.8,6.42,2020,
+736,Nikon D6 Body,dslr,,35.90,23.90,858.01,20.8,6.42,2020,
+124,Canon EOS 1Ds Mark III Body,dslr,,36.00,24.00,864.00,21.1,6.40,2007,
+123,Canon EOS 1Ds Mark III,dslr,,36.00,24.00,864.00,21.1,6.40,2007,
+132,Canon EOS 5D Mark III,dslr,,36.00,24.00,864.00,22.3,6.22,2012,
+133,Canon EOS 5D Mark III Body,dslr,,36.00,24.00,864.00,22.3,6.22,2012,
+643,Leica Q Typ 116,fixed,1/0.5,36.00,24.00,864.00,24.2,6.00,2015,IMX071;IMX128;IMX157;IMX310;IMX410
+652,Leica SL Typ 601,mirrorless,,36.00,24.00,864.00,24.0,6.00,2019,IMX071;IMX128;IMX157;IMX310;IMX410
+740,Nikon D750,dslr,,35.90,24.00,861.60,24.3,6.00,2014,IMX071;IMX128;IMX157;IMX310;IMX410
+741,Nikon D750 Body,dslr,,35.90,24.00,861.60,24.3,6.00,2014,IMX071;IMX128;IMX157;IMX310;IMX410
+762,Nikon Z 6 Body,mirrorless,,35.90,23.90,858.01,24.5,6.00,2018,IMX071;IMX128;IMX157;IMX310;IMX410
+763,Nikon Z 6 mit Bajonettadapter FTZ,mirrorless,,35.90,23.90,858.01,24.5,6.00,2018,IMX071;IMX128;IMX157;IMX310;IMX410
+765,Nikon Z 6 mit Essential Movie Kit,mirrorless,,35.90,23.90,858.01,24.5,6.00,2019,IMX071;IMX128;IMX157;IMX310;IMX410
+186,Canon EOS R3 Body,mirrorless,,36.00,24.00,864.00,24.1,5.99,2021,IMX071;IMX128;IMX157;IMX310;IMX410
+185,Canon EOS R3,mirrorless,,36.00,24.00,864.00,24.1,5.99,2021,IMX071;IMX128;IMX157;IMX310;IMX410
+180,Canon EOS R1 Body,mirrorless,,36.00,24.00,864.00,24.2,5.98,2024,IMX071;IMX128;IMX157;IMX310;IMX410
+893,Panasonic Lumix DC-S1 Body,mirrorless,,36.00,24.00,864.00,24.2,5.98,2019,IMX071;IMX128;IMX157;IMX310;IMX410
+179,Canon EOS R1,mirrorless,,36.00,24.00,864.00,24.2,5.98,2024,IMX071;IMX128;IMX157;IMX310;IMX410
+892,Panasonic Lumix DC-S1,mirrorless,,36.00,24.00,864.00,24.2,5.98,2019,IMX071;IMX128;IMX157;IMX310;IMX410
+199,Canon EOS R6 Mark II,mirrorless,,35.90,23.90,858.01,24.2,5.95,2022,IMX071;IMX128;IMX157;IMX310;IMX410
+203,Canon EOS R8,mirrorless,,35.90,23.90,858.01,24.2,5.95,2023,IMX071;IMX128;IMX157;IMX310;IMX410
+200,Canon EOS R6 Mark II Body,mirrorless,,35.90,23.90,858.01,24.2,5.95,2022,IMX071;IMX128;IMX157;IMX310;IMX410
+204,Canon EOS R8 Body,mirrorless,,35.90,23.90,858.01,24.2,5.95,2023,IMX071;IMX128;IMX157;IMX310;IMX410
+897,Panasonic Lumix DC-S1II Body,mirrorless,,35.80,23.80,852.04,24.1,5.95,2025,IMX071;IMX128;IMX157;IMX310;IMX410
+896,Panasonic Lumix DC-S1II,mirrorless,,35.80,23.80,852.04,24.1,5.95,2025,IMX071;IMX128;IMX157;IMX310;IMX410
+751,Nikon Z 5,mirrorless,,35.90,23.90,858.01,24.3,5.94,2020,IMX071;IMX128;IMX157;IMX310;IMX410
+753,Nikon Z 5 mit Bajonettadapter FTZ,mirrorless,,35.90,23.90,858.01,24.3,5.94,2021,IMX071;IMX128;IMX157;IMX310;IMX410
+752,Nikon Z 5 Body,mirrorless,,35.90,23.90,858.01,24.3,5.94,2020,IMX071;IMX128;IMX157;IMX310;IMX410
+1106,Sony Alpha 7 II,mirrorless,,35.80,23.90,855.62,24.3,5.93,2014,IMX071;IMX128;IMX157;IMX310;IMX410
+1113,Sony Alpha 7K,mirrorless,,35.80,23.90,855.62,24.3,5.93,2013,IMX071;IMX128;IMX157;IMX310;IMX410
+898,Panasonic Lumix DC-S1IIE,mirrorless,,35.80,23.80,852.04,24.2,5.93,2025,IMX071;IMX128;IMX157;IMX310;IMX410
+899,Panasonic Lumix DC-S1IIE Body,mirrorless,,35.80,23.80,852.04,24.2,5.93,2025,IMX071;IMX128;IMX157;IMX310;IMX410
+654,Leica SL2-S Typ 9584,mirrorless,,36.00,24.00,864.00,24.6,5.93,2020,IMX071;IMX128;IMX157;IMX310;IMX410
+656,Leica SL3-S Typ 4506,mirrorless,,36.00,24.00,864.00,24.6,5.93,2025,IMX071;IMX128;IMX157;IMX310;IMX410
+744,Nikon D780 Body,dslr,,35.90,23.90,858.01,24.5,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
+760,Nikon Z 5II Body,mirrorless,,35.90,23.90,858.01,24.5,5.92,2025,IMX071;IMX128;IMX157;IMX310;IMX410
+767,Nikon Z 6II Body,mirrorless,,35.90,23.90,858.01,24.5,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
+771,Nikon Z 6III Body,mirrorless,,35.90,23.90,858.01,24.5,5.92,2024,IMX071;IMX128;IMX157;IMX310;IMX410
+782,Nikon Z f Body,mirrorless,,35.90,23.90,858.01,24.5,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
+895,Panasonic Lumix DC-S1H Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2019,IMX071;IMX128;IMX157;IMX310;IMX410
+905,Panasonic Lumix DC-S5 Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
+908,Panasonic Lumix DC-S5II Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
+910,Panasonic Lumix DC-S5IIX Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
+1132,Sony Alpha 9 Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2017,IMX071;IMX128;IMX157;IMX310;IMX410
+1134,Sony Alpha 9 II Body,mirrorless,,35.60,23.80,847.28,24.2,5.92,2019,IMX071;IMX128;IMX157;IMX310;IMX410
+743,Nikon D780,dslr,,35.90,23.90,858.01,24.5,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
+759,Nikon Z 5II,mirrorless,,35.90,23.90,858.01,24.5,5.92,2025,IMX071;IMX128;IMX157;IMX310;IMX410
+761,Nikon Z 6,mirrorless,,35.90,23.90,858.01,24.5,5.92,2018,IMX071;IMX128;IMX157;IMX310;IMX410
+764,Nikon Z 6 mit Bajonettadapter FTZ und Speicherkarte,mirrorless,,35.90,23.90,858.01,24.5,5.92,2019,IMX071;IMX128;IMX157;IMX310;IMX410
+766,Nikon Z 6II,mirrorless,,35.90,23.90,858.01,24.5,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
+768,Nikon Z 6II mit Bajonettadapter FTZ,mirrorless,,35.90,23.90,858.01,24.5,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
+769,Nikon Z 6II mit Essential Film Kit,mirrorless,,35.90,23.90,858.01,24.5,5.92,2021,IMX071;IMX128;IMX157;IMX310;IMX410
+770,Nikon Z 6III,mirrorless,,35.90,23.90,858.01,24.5,5.92,2024,IMX071;IMX128;IMX157;IMX310;IMX410
+781,Nikon Z f,mirrorless,,35.90,23.90,858.01,24.5,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
+894,Panasonic Lumix DC-S1H,mirrorless,,35.60,23.80,847.28,24.2,5.92,2019,IMX071;IMX128;IMX157;IMX310;IMX410
+904,Panasonic Lumix DC-S5,mirrorless,,35.60,23.80,847.28,24.2,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
+906,Panasonic Lumix DC-S5D,mirrorless,,35.60,23.80,847.28,24.2,5.92,2024,IMX071;IMX128;IMX157;IMX310;IMX410
+907,Panasonic Lumix DC-S5II,mirrorless,,35.60,23.80,847.28,24.2,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
+909,Panasonic Lumix DC-S5IIX,mirrorless,,35.60,23.80,847.28,24.2,5.92,2023,IMX071;IMX128;IMX157;IMX310;IMX410
+911,Panasonic Lumix DC-S9,mirrorless,,35.60,23.80,847.28,24.2,5.92,2024,IMX071;IMX128;IMX157;IMX310;IMX410
+1107,Sony Alpha 7 III,mirrorless,,35.60,23.80,847.28,24.2,5.92,2018,IMX071;IMX128;IMX157;IMX310;IMX410
+1110,Sony Alpha 7C,mirrorless,,35.60,23.80,847.28,24.2,5.92,2020,IMX071;IMX128;IMX157;IMX310;IMX410
+1131,Sony Alpha 9,mirrorless,,35.60,23.80,847.28,24.2,5.92,2017,IMX071;IMX128;IMX157;IMX310;IMX410
+1133,Sony Alpha 9 II,mirrorless,,35.60,23.80,847.28,24.2,5.92,2019,IMX071;IMX128;IMX157;IMX310;IMX410
+1062,Sigma BF Body,mirrorless,,35.90,23.90,858.01,24.6,5.91,2025,IMX071;IMX128;IMX157;IMX310;IMX410
+1068,Sigma fp Body,mirrorless,,35.90,23.90,858.01,24.6,5.91,2019,IMX071;IMX128;IMX157;IMX310;IMX410
+737,Nikon D610,dslr,,35.90,24.00,861.60,24.7,5.91,2013,IMX071;IMX128;IMX157;IMX310;IMX410
+1061,Sigma BF,mirrorless,,35.90,23.90,858.01,24.6,5.91,2025,IMX071;IMX128;IMX157;IMX310;IMX410
+1067,Sigma fp,mirrorless,,35.90,23.90,858.01,24.6,5.91,2019,IMX071;IMX128;IMX157;IMX310;IMX410
+1154,Sony Cyber-shot DSC-RX1,fixed,1/0.5,35.80,23.80,851.64,24.3,5.90,2012,IMX071;IMX128;IMX157;IMX310;IMX410
+1169,Sony Cyber-shot DSC-RX1R,fixed,1/0.5,35.80,23.90,855.62,24.3,5.90,2013,IMX071;IMX128;IMX157;IMX310;IMX410
+1136,Sony Alpha 9 III Body,mirrorless,,35.60,23.80,847.28,24.6,5.87,2023,IMX071;IMX128;IMX157;IMX310;IMX410
+1135,Sony Alpha 9 III,mirrorless,,35.60,23.80,847.28,24.6,5.87,2023,IMX071;IMX128;IMX157;IMX310;IMX410
+139,Canon EOS 6D Mark II,dslr,,35.90,24.00,861.60,26.2,5.73,2017,
+206,Canon EOS RP,mirrorless,,35.90,24.00,861.60,26.2,5.73,2019,
+140,Canon EOS 6D Mark II Body,dslr,,35.90,24.00,861.60,26.2,5.73,2017,
+207,Canon EOS RP Body,mirrorless,,35.90,24.00,861.60,26.2,5.73,2019,
+384,Fujifilm FinePix X100 Limited Edition,fixed,1/0.6,23.60,15.80,373.28,12.3,5.50,2011,
+176,Canon EOS R,mirrorless,,36.00,24.00,864.00,30.3,5.40,2018,
+205,Canon EOS Ra Body,mirrorless,,36.00,24.00,864.00,30.3,5.40,2019,
+502,Hasselblad 907X 50C Body,mirrorless,,43.80,32.90,1441.02,50.0,5.37,2024,IMX161
+501,Hasselblad 907X 50C,mirrorless,,43.80,32.90,1441.02,50.0,5.37,2024,IMX161
+177,Canon EOS R,mirrorless,,36.00,24.00,864.00,30.3,5.34,2020,
+178,Canon EOS R Body,mirrorless,,36.00,24.00,864.00,30.3,5.34,2019,
+175,Canon EOS R,mirrorless,,36.00,24.00,864.00,30.3,5.34,2019,
+134,Canon EOS 5D Mark IV,dslr,,36.00,24.00,864.00,30.4,5.33,2016,
+135,Canon EOS 5D Mark IV Body,dslr,,36.00,24.00,864.00,30.4,5.33,2016,
+240,Canon PowerShot V1,fixed,1/0.7,29.03,21.77,631.99,22.3,5.32,2025,
+507,Hasselblad X1D-50c,mirrorless,,43.80,32.90,1441.02,51.3,5.30,2017,IMX161
+406,Fujifilm GFX 50S Body,mirrorless,,43.80,32.90,1441.02,51.4,5.30,2017,IMX161
+505,Hasselblad X1D II 50c,mirrorless,,43.80,32.90,1441.02,50.0,5.30,2021,IMX161
+506,Hasselblad X1D II 50c Body,mirrorless,,43.80,32.90,1441.02,50.0,5.30,2019,IMX161
+508,Hasselblad X1D-50c Body,mirrorless,,43.80,32.90,1441.02,51.3,5.30,2016,IMX161
+951,Pentax 645Z,dslr,,43.80,32.80,1436.64,51.4,5.30,2014,IMX161
+404,Fujifilm GFX 50R,mirrorless,,43.80,32.90,1441.02,51.4,5.29,2018,IMX161
+407,Fujifilm GFX 50S II,mirrorless,,43.80,32.90,1441.02,51.4,5.29,2021,IMX161
+405,Fujifilm GFX 50R Body,mirrorless,,43.80,32.90,1441.02,51.4,5.29,2018,IMX161
+408,Fujifilm GFX 50S II Body,mirrorless,,43.80,32.90,1441.02,51.4,5.29,2021,IMX161
+131,Canon EOS 450D,dslr,,22.20,14.80,328.56,12.2,5.20,2008,
+1074,Sigma SD1 Merrill,dslr,,24.00,16.00,384.00,14.8,5.10,2012,
+1111,Sony Alpha 7C II,mirrorless,,35.90,23.90,858.01,33.0,5.10,2023,
+1109,Sony Alpha 7 IV Body,mirrorless,,35.60,23.80,847.28,33.0,5.07,2021,
+1108,Sony Alpha 7 IV,mirrorless,,35.60,23.80,847.28,33.0,5.07,2021,
+725,Nikon D3100,dslr,,23.10,15.40,355.74,14.2,5.00,2010,
+672,Lytro Lichtfeldkamera 16GB,fixed,1/2,6.50,4.50,29.25,1.2,4.90,2013,
+746,Nikon D810A,dslr,,35.90,24.00,861.60,36.3,4.90,2015,IMX094
+952,Pentax K-1,dslr,,35.90,24.00,861.60,36.4,4.90,2016,IMX094
+745,Nikon D810,dslr,,35.90,24.00,861.60,36.3,4.87,2014,IMX094
+953,Pentax K-1 II,dslr,,35.90,24.00,861.60,36.4,4.87,2018,IMX094
+241,Canon PowerShot V10 Advanced Vlogging Kit,fixed,1/1,20.32,15.24,309.68,13.1,4.86,2023,
+242,Canon PowerShot V10 Vlogging Kit,fixed,1/1,20.32,15.24,309.68,13.1,4.86,2023,
+243,Canon PowerShot V10 Vlogging Starter Kit,fixed,1/1,20.32,15.24,309.68,13.1,4.86,2023,
+1115,Sony Alpha 7R Body,mirrorless,,35.80,23.90,855.62,36.4,4.85,2013,IMX094
+1114,Sony Alpha 7R,mirrorless,,35.80,23.90,855.62,36.4,4.85,2013,IMX094
+386,Fujifilm FinePix X100T,fixed,1/0.6,23.60,15.80,373.28,16.3,4.80,2014,
+429,Fujifilm X-A2,mirrorless,,23.60,15.60,368.16,16.3,4.80,2015,
+434,Fujifilm X-E1,mirrorless,,23.60,15.60,368.16,16.3,4.80,2012,
+435,Fujifilm X-E2,mirrorless,,23.60,15.60,368.16,16.3,4.80,2013,
+436,Fujifilm X-E2S,mirrorless,,23.60,15.60,368.16,16.3,4.80,2016,
+445,Fujifilm X-M1,mirrorless,,23.60,15.60,368.16,16.3,4.80,2013,
+447,Fujifilm X-Pro1,mirrorless,,23.60,15.60,368.16,16.3,4.80,2012,
+663,Leica X-U Typ 113,fixed,1/0.6,23.60,15.70,370.52,16.2,4.80,2016,
+664,Leica X2,fixed,1/0.6,23.60,15.70,370.52,16.2,4.80,2012,
+989,Ricoh GR II,fixed,1/0.6,23.70,15.70,372.09,16.2,4.80,2015,
+1137,Sony Alpha NEX-6,mirrorless,,23.50,15.60,366.60,16.1,4.80,2012,
+1281,Zeiss ZX1,fixed,1/0.5,36.00,24.00,864.00,37.4,4.80,2018,IMX094
+660,Leica TL Typ 701,mirrorless,,23.60,15.70,370.52,16.3,4.77,2016,
+704,Nikon Coolpix A,fixed,1/0.6,23.60,15.60,368.16,16.2,4.77,2013,
+428,Fujifilm X-A1,mirrorless,,23.60,15.60,368.16,16.3,4.75,2013,
+454,Fujifilm X-T1,mirrorless,,23.60,15.60,368.16,16.3,4.75,2014,
+883,Panasonic Lumix DC-GH5S,mirrorless,,17.30,13.00,224.90,10.3,4.67,2018,
+884,Panasonic Lumix DC-GH5S Body,mirrorless,,17.30,13.00,224.90,10.3,4.67,2018,
+635,Leica M10-R Typ 6376,rangefinder,,36.00,24.00,864.00,40.0,4.65,2020,
+504,Hasselblad H6D-100c Body,dslr,,53.40,40.00,2136.00,100.1,4.62,2016,IMX211
+503,Hasselblad H6D-100c,dslr,,53.40,40.00,2136.00,100.1,4.62,2016,IMX211
+651,Leica S3 Body,dslr,,45.00,30.00,1350.00,64.0,4.60,2020,
+966,Phase One IQ4 100MP Body,mirrorless,,53.40,40.00,2136.00,101.0,4.60,2024,IMX211
+965,Phase One IQ4 100MP,mirrorless,,53.40,40.00,2136.00,101.0,4.60,2024,IMX211
+1118,Sony Alpha 7R III Body,mirrorless,,35.90,24.00,861.60,42.4,4.51,2017,IMX251;IMX366
+1119,Sony Alpha 7R III Body,mirrorless,,35.90,24.00,861.60,42.4,4.51,2021,IMX251;IMX366
+1117,Sony Alpha 7R III,mirrorless,,35.90,24.00,861.60,42.4,4.51,2017,IMX251;IMX366
+1116,Sony Alpha 7R II Body,mirrorless,,35.90,24.00,861.60,42.4,4.50,2015,IMX251;IMX366
+1170,Sony Cyber-shot DSC-RX1R II,fixed,1/0.5,35.90,24.00,861.60,42.4,4.50,2015,IMX251;IMX366
+212,Canon PowerShot G1 X Mark II,fixed,1/0.7,18.70,14.00,261.80,13.1,4.47,2014,
+903,Panasonic Lumix DC-S1R II Body,mirrorless,,36.00,24.00,864.00,44.3,4.42,2025,IMX251;IMX309;IMX366;IMX609
+902,Panasonic Lumix DC-S1R II,mirrorless,,36.00,24.00,864.00,44.3,4.42,2025,IMX251;IMX309;IMX366;IMX609
+187,Canon EOS R5,mirrorless,,36.00,24.00,864.00,45.0,4.38,2020,IMX309;IMX366;IMX609
+190,Canon EOS R5 C,mirrorless,,36.00,24.00,864.00,45.0,4.38,2022,IMX309;IMX366;IMX609
+192,Canon EOS R5 Mark II,mirrorless,,36.00,24.00,864.00,45.0,4.38,2024,IMX309;IMX366;IMX609
+188,Canon EOS R5,mirrorless,,36.00,24.00,864.00,45.0,4.38,2022,IMX309;IMX366;IMX609
+189,Canon EOS R5 Body,mirrorless,,36.00,24.00,864.00,45.0,4.38,2020,IMX309;IMX366;IMX609
+191,Canon EOS R5 C Body,mirrorless,,36.00,24.00,864.00,45.0,4.38,2022,IMX309;IMX366;IMX609
+193,Canon EOS R5 Mark II Body,mirrorless,,36.00,24.00,864.00,45.0,4.38,2024,IMX309;IMX366;IMX609
+747,Nikon D850,dslr,,35.90,23.90,858.01,45.7,4.33,2017,IMX309;IMX366;IMX609
+772,Nikon Z 7,mirrorless,,35.90,23.90,858.01,45.7,4.33,2018,IMX309;IMX366;IMX609
+773,Nikon Z 7 mit Bajonettadapter FTZ,mirrorless,,35.90,23.90,858.01,45.7,4.33,2018,IMX309;IMX366;IMX609
+774,Nikon Z 7II,mirrorless,,35.90,23.90,858.01,45.7,4.33,2020,IMX309;IMX366;IMX609
+776,Nikon Z 7II mit Bajonettadapter FTZ,mirrorless,,35.90,23.90,858.01,45.7,4.33,2020,IMX309;IMX366;IMX609
+777,Nikon Z 8,mirrorless,,35.90,23.90,858.01,45.7,4.33,2023,IMX309;IMX366;IMX609
+779,Nikon Z 9,mirrorless,,35.90,23.90,858.01,45.7,4.33,2021,IMX309;IMX366;IMX609
+775,Nikon Z 7II Body,mirrorless,,35.90,23.90,858.01,45.7,4.33,2020,IMX309;IMX366;IMX609
+778,Nikon Z 8 Body,mirrorless,,35.90,23.90,858.01,45.7,4.33,2023,IMX309;IMX366;IMX609
+780,Nikon Z 9 Body,mirrorless,,35.90,23.90,858.01,45.7,4.33,2021,IMX309;IMX366;IMX609
+929,Panasonic Lumix DMC-GF3,mirrorless,,17.30,13.00,224.90,12.1,4.31,2011,
+930,Panasonic Lumix DMC-GF5,mirrorless,,17.30,13.00,224.90,12.1,4.31,2012,
+113,Canon EOS 1200D,dslr,,22.30,14.90,332.27,18.0,4.30,2014,
+130,Canon EOS 4000D Body,dslr,,22.30,14.90,332.27,18.0,4.30,2018,
+147,Canon EOS 7D Body,dslr,,22.30,14.90,332.27,18.0,4.30,2009,
+164,Canon EOS M,mirrorless,,22.30,14.90,332.27,18.0,4.30,2012,
+165,Canon EOS M10,mirrorless,,22.30,14.90,332.27,18.0,4.30,2015,
+805,Olympus PEN E-P2,mirrorless,,17.30,13.00,224.90,12.3,4.30,2010,
+806,Olympus PEN E-P3,mirrorless,,17.30,13.00,224.90,12.3,4.30,2011,
+809,Olympus PEN E-PL3,mirrorless,,17.30,13.00,224.90,12.3,4.30,2011,
+957,Pentax K-S1,dslr,,23.50,15.60,366.60,20.1,4.30,2014,IMX321
+1042,Samsung NX310,mirrorless,,23.50,15.70,368.95,20.3,4.30,2013,IMX321
+1043,Samsung NX3300,mirrorless,,23.50,15.70,368.95,20.3,4.30,2015,IMX321
+1072,Sigma sd Quattro,mirrorless,,23.50,15.50,364.25,19.6,4.30,2016,
+1073,Sigma sd Quattro Body,mirrorless,,23.50,15.50,364.25,19.6,4.30,2016,
+114,Canon EOS 1300D,dslr,,22.30,14.90,332.27,18.0,4.30,2016,
+129,Canon EOS 4000D,dslr,,22.30,14.90,332.27,18.0,4.30,2018,
+146,Canon EOS 7D,dslr,,22.30,14.90,332.27,18.0,4.30,2009,
+644,Leica Q2 Monochrom,fixed,1/0.5,36.00,24.00,864.00,47.3,4.27,2020,IMX309;IMX609
+645,Leica Q2 Typ 4889,fixed,1/0.5,36.00,24.00,864.00,47.3,4.27,2019,IMX309;IMX609
+646,"Leica Q2 Typ 4889 Disney ""100 Years of Wonder""",fixed,1/0.5,36.00,24.00,864.00,47.3,4.27,2023,IMX309;IMX609
+648,Leica Q2 Typ 4889 Reporter,fixed,1/0.5,36.00,24.00,864.00,47.3,4.27,2021,IMX309;IMX609
+653,Leica SL2 Typ 2998,mirrorless,,36.00,24.00,864.00,47.3,4.27,2019,IMX309;IMX609
+900,Panasonic Lumix DC-S1R,mirrorless,,36.00,24.00,864.00,47.3,4.27,2019,IMX309;IMX609
+647,Leica Q2 Typ 4889 Disney 100 Years of Wonder,fixed,1/0.5,36.00,24.00,864.00,47.3,4.27,2023,IMX309;IMX609
+901,Panasonic Lumix DC-S1R Body,mirrorless,,36.00,24.00,864.00,47.3,4.27,2019,IMX309;IMX609
+742,Nikon D7500,dslr,,23.50,15.70,368.95,20.9,4.20,2017,IMX321
+749,Nikon Z 30,mirrorless,,23.50,15.70,368.95,20.9,4.20,2022,IMX321
+754,Nikon Z 50,mirrorless,,23.50,15.70,368.95,20.9,4.20,2019,IMX321
+756,Nikon Z 50 mit Bajonettadapter FTZ,mirrorless,,23.50,15.70,368.95,20.9,4.20,2019,IMX321
+757,Nikon Z 50II,mirrorless,,23.50,15.70,368.95,20.9,4.20,2024,IMX321
+783,Nikon Z fc,mirrorless,,23.50,15.70,368.95,20.9,4.20,2021,IMX321
+730,Nikon D500,dslr,,23.50,15.70,368.95,20.9,4.20,2016,IMX321
+750,Nikon Z 30 Body,mirrorless,,23.50,15.70,368.95,20.9,4.20,2022,IMX321
+755,Nikon Z 50 Body,mirrorless,,23.50,15.70,368.95,20.9,4.20,2019,IMX321
+758,Nikon Z 50II Body,mirrorless,,23.50,15.70,368.95,20.9,4.20,2024,IMX321
+1093,Sony Alpha 5000,mirrorless,,23.20,15.40,357.28,20.1,4.20,2014,IMX321
+1092,Sony Alpha 1 II Body,mirrorless,,35.90,24.00,861.60,50.1,4.15,2024,IMX610
+1091,Sony Alpha 1 II,mirrorless,,35.90,24.00,861.60,50.1,4.15,2024,IMX610
+1090,Sony Alpha 1 Body,mirrorless,,35.60,24.00,854.40,50.1,4.13,2021,IMX610
+1089,Sony Alpha 1,mirrorless,,35.60,24.00,854.40,50.1,4.13,2021,IMX610
+136,Canon EOS 5Ds Body,dslr,,36.00,24.00,864.00,50.6,4.10,2015,IMX610
+137,Canon EOS 5Ds R Body,dslr,,36.00,24.00,864.00,50.6,4.10,2015,IMX610
+141,Canon EOS 70D,dslr,,22.50,15.00,337.50,20.2,4.10,2013,
+148,Canon EOS 7D Mark II,dslr,,22.40,15.00,336.00,20.2,4.10,2017,
+937,Panasonic Lumix DMC-LX100,fixed,1/0.7,17.10,11.80,201.78,12.8,4.00,2014,
+1003,RICOH Theta Z1,fixed,1/1,20.32,15.24,309.68,20.0,3.93,2019,
+218,Canon PowerShot G7 X Mark II,fixed,1/1,20.32,15.24,309.68,20.1,3.93,2016,
+220,Canon PowerShot G7 X Mark III,fixed,1/1,20.32,15.24,309.68,20.1,3.93,2019,
+920,Panasonic Lumix DMC-FZ2000,fixed,1/1,20.32,15.24,309.68,20.1,3.93,2016,
+939,Panasonic Lumix DMC-LX15,fixed,1/1,20.32,15.24,309.68,20.1,3.93,2016,
+738,Nikon D7100,dslr,,23.50,15.60,366.60,24.1,3.90,2013,IMX193;IMX210;IMX271;IMX284
+214,Canon PowerShot G3 X,fixed,1/1,20.30,15.20,308.56,20.2,3.90,2015,
+215,Canon PowerShot G5 X,fixed,1/1,20.30,15.20,308.56,20.2,3.90,2015,
+216,Canon PowerShot G5 X Mark II,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2019,
+219,Canon PowerShot G7 X Mark II Premium Kit,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2017,
+221,Canon PowerShot G9 X,fixed,1/1,20.30,15.20,308.56,20.2,3.90,2015,
+222,Canon PowerShot G9 X Mark II,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2017,
+385,Fujifilm FinePix X100F,fixed,1/0.6,23.60,15.60,368.16,24.3,3.90,2017,IMX193;IMX210;IMX271;IMX284
+430,Fujifilm X-A3,mirrorless,,23.60,15.60,368.16,24.2,3.90,2016,IMX193;IMX210;IMX271;IMX284
+431,Fujifilm X-A5,mirrorless,,23.50,15.70,368.95,24.2,3.90,2018,IMX193;IMX210;IMX271;IMX284
+432,Fujifilm X-A7,mirrorless,,23.50,15.70,368.95,24.2,3.90,2019,IMX193;IMX210;IMX271;IMX284
+433,Fujifilm X-A7 dunkel,mirrorless,,23.50,15.70,368.95,24.2,3.90,2019,IMX193;IMX210;IMX271;IMX284
+437,Fujifilm X-E3,mirrorless,,23.50,15.60,366.60,24.3,3.90,2017,IMX193;IMX210;IMX271;IMX284
+448,Fujifilm X-Pro2,mirrorless,,23.60,15.60,368.16,24.3,3.90,2016,IMX193;IMX210;IMX271;IMX284
+455,Fujifilm X-T20,mirrorless,,23.60,15.60,368.16,24.3,3.90,2017,IMX193;IMX210;IMX271;IMX284
+456,Fujifilm X-T200,mirrorless,,23.50,15.70,368.95,24.2,3.90,2020,IMX193;IMX210;IMX271;IMX284
+457,Fujifilm X-T200 dunkel,mirrorless,,23.50,15.70,368.95,24.2,3.90,2020,IMX193;IMX210;IMX271;IMX284
+464,Fujifilm XF10,fixed,1/0.6,23.50,15.70,368.95,24.2,3.90,2018,IMX193;IMX210;IMX271;IMX284
+629,Leica C-Lux,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2018,
+630,Leica CL Typ 7323,mirrorless,,23.60,15.70,370.52,24.3,3.90,2017,IMX193;IMX210;IMX271;IMX284
+661,Leica TL2 Typ 5370,mirrorless,,23.60,15.70,370.52,24.3,3.90,2017,IMX193;IMX210;IMX271;IMX284
+662,Leica V-Lux 5,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2019,
+726,Nikon D3200,dslr,,23.20,15.40,357.28,24.2,3.90,2012,IMX193;IMX210;IMX271;IMX284
+727,Nikon D3400,dslr,,23.50,15.60,366.60,24.2,3.90,2016,IMX193;IMX210;IMX271;IMX284
+728,Nikon D3500,dslr,,23.50,15.60,366.60,24.2,3.90,2018,IMX193;IMX210;IMX271;IMX284
+731,Nikon D5200,dslr,,23.60,15.60,368.16,24.1,3.90,2012,IMX193;IMX210;IMX271;IMX284
+732,Nikon D5300,dslr,,23.60,15.60,368.16,24.2,3.90,2016,IMX193;IMX210;IMX271;IMX284
+733,Nikon D5500,dslr,,23.60,15.60,368.16,24.2,3.90,2015,IMX193;IMX210;IMX271;IMX284
+739,Nikon D7200,dslr,,23.50,15.60,366.60,24.2,3.90,2015,IMX193;IMX210;IMX271;IMX284
+860,Panasonic Lumix DC-FZ1000 II,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2019,
+912,Panasonic Lumix DC-TZ200,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2018,
+913,Panasonic Lumix DC-TZ202,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2018,
+919,Panasonic Lumix DMC-FZ1000,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2014,
+943,Panasonic Lumix DMC-TZ100,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2016,
+944,Panasonic Lumix DMC-TZ101,fixed,1/1,20.30,15.20,308.56,20.1,3.90,2016,
+956,Pentax K-70,dslr,,23.50,15.60,366.60,24.2,3.90,2016,IMX193;IMX210;IMX271;IMX284
+1048,SeaLife DC2000,fixed,1/1,20.30,15.20,308.56,20.0,3.90,2016,
+1049,SeaLife DC2000 Pro Duo Set,fixed,1/1,20.30,15.20,308.56,20.0,3.90,2018,
+1050,SeaLife DC2000 Pro Flash Set,fixed,1/1,20.30,15.20,308.56,20.0,3.90,2018,
+1051,SeaLife DC2000 Pro Light Set,fixed,1/1,20.30,15.20,308.56,20.0,3.90,2018,
+1094,Sony Alpha 5100,mirrorless,,23.50,15.60,366.60,24.3,3.90,2014,IMX193;IMX210;IMX271;IMX284
+1105,Sony Alpha 68,mirrorless,,23.50,15.60,366.60,24.0,3.90,2015,IMX193;IMX210;IMX271;IMX284
+734,Nikon D5600,dslr,,23.50,15.60,366.60,24.2,3.89,2016,IMX193;IMX210;IMX271;IMX284
+1096,Sony Alpha 6100,mirrorless,,23.50,15.60,366.60,24.2,3.89,2019,IMX193;IMX210;IMX271;IMX284
+1097,Sony Alpha 6300,mirrorless,,23.50,15.60,366.60,24.2,3.89,2016,IMX193;IMX210;IMX271;IMX284
+1098,Sony Alpha 6400,mirrorless,,23.50,15.60,366.60,24.2,3.89,2019,IMX193;IMX210;IMX271;IMX284
+1099,Sony Alpha 6400 A,mirrorless,,23.50,15.60,366.60,24.2,3.89,2025,IMX193;IMX210;IMX271;IMX284
+1100,Sony Alpha 6500,mirrorless,,23.50,15.60,366.60,24.2,3.89,2016,IMX193;IMX210;IMX271;IMX284
+1101,Sony Alpha 6600,mirrorless,,23.50,15.60,366.60,24.2,3.89,2019,IMX193;IMX210;IMX271;IMX284
+1206,Sony ZV-E10,mirrorless,,23.50,15.60,366.60,24.2,3.89,2021,IMX193;IMX210;IMX271;IMX284
+1102,Sony Alpha 6600 Body,mirrorless,,23.50,15.60,366.60,24.2,3.89,2019,IMX193;IMX210;IMX271;IMX284
+1207,Sony ZV-E10 Body,mirrorless,,23.50,15.60,366.60,24.2,3.89,2021,IMX193;IMX210;IMX271;IMX284
+958,Pentax KF,dslr,,23.50,15.60,366.60,24.2,3.89,2022,IMX193;IMX210;IMX271;IMX284
+990,RICOH GR III,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2019,IMX193;IMX210;IMX271;IMX284
+991,RICOH GR III Diary Edition,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2023,IMX193;IMX210;IMX271;IMX284
+992,RICOH GR III HDF,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2024,IMX193;IMX210;IMX271;IMX284
+993,RICOH GR III Street Edition,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2020,IMX193;IMX210;IMX271;IMX284
+994,RICOH GR III Street Edition Special Limited,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2020,IMX193;IMX210;IMX271;IMX284
+995,RICOH GR IIIx,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2021,IMX193;IMX210;IMX271;IMX284
+996,RICOH GR IIIx HDF,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2024,IMX193;IMX210;IMX271;IMX284
+997,RICOH GR IIIx Urban Edition,fixed,1/0.6,23.50,15.60,366.60,24.2,3.89,2022,IMX193;IMX210;IMX271;IMX284
+959,Pentax KP,dslr,,23.50,15.60,366.60,24.3,3.88,2017,IMX193;IMX210;IMX271;IMX284
+1095,Sony Alpha 6000,mirrorless,,23.50,15.60,366.60,24.3,3.88,2014,IMX193;IMX210;IMX271;IMX284
+438,Fujifilm X-E4,mirrorless,,23.50,15.60,366.60,26.1,3.80,2021,IMX571
+449,Fujifilm X-Pro3,mirrorless,,23.50,15.60,366.60,26.1,3.80,2019,IMX571
+450,Fujifilm X-Pro3 Dura,mirrorless,,23.50,15.60,366.60,26.1,3.80,2019,IMX571
+458,Fujifilm X-T3,mirrorless,,23.50,15.60,366.60,26.1,3.80,2018,IMX571
+459,Fujifilm X-T30,mirrorless,,23.50,15.60,366.60,26.1,3.80,2019,IMX571
+500,Hasselblad 907X 100C Body,mirrorless,,43.80,32.90,1441.02,100.0,3.80,2024,IMX461
+510,Hasselblad X2D 100C Body,mirrorless,,43.80,32.90,1441.02,100.0,3.80,2022,IMX461
+792,Olympus OM-D E-M1,mirrorless,,17.30,13.00,224.90,16.3,3.80,2013,
+796,Olympus OM-D E-M10,mirrorless,,17.30,13.00,224.90,16.1,3.80,2014,
+797,Olympus OM-D E-M10 Mark II,mirrorless,,17.30,13.00,224.90,16.1,3.80,2015,
+802,Olympus OM-D E-M5,mirrorless,,17.30,13.00,224.90,16.1,3.80,2012,
+808,Olympus PEN E-PL10,mirrorless,,17.30,13.00,224.90,16.1,3.80,2019,
+810,Olympus PEN E-PL7,mirrorless,,17.30,13.00,224.90,16.1,3.80,2014,
+811,Olympus PEN E-PL8,mirrorless,,17.30,13.00,224.90,16.1,3.80,2016,
+812,Olympus PEN E-PL9,mirrorless,,17.30,13.00,224.90,16.1,3.80,2018,
+813,Olympus PEN E-PM2,mirrorless,,17.30,13.00,224.90,17.2,3.80,2012,
+889,Panasonic Lumix DC-GX800,mirrorless,,17.30,13.00,224.90,16.0,3.80,2017,
+890,Panasonic Lumix DC-GX880,mirrorless,,17.30,13.00,224.90,16.0,3.80,2019,
+923,Panasonic Lumix DMC-G5,mirrorless,,17.30,13.00,224.90,16.1,3.80,2012,
+926,Panasonic Lumix DMC-G80 Body,mirrorless,,17.30,13.00,224.90,16.0,3.80,2018,
+928,Panasonic Lumix DMC-G81 Body,mirrorless,,17.30,13.00,224.90,16.0,3.80,2016,
+931,Panasonic Lumix DMC-GF6,mirrorless,,17.30,13.00,224.90,16.0,3.80,2013,
+932,Panasonic Lumix DMC-GF7,mirrorless,,17.30,13.00,224.90,16.0,3.80,2015,
+933,Panasonic Lumix DMC-GH4,mirrorless,,17.30,13.00,224.90,16.0,3.80,2014,
+934,Panasonic Lumix DMC-GH4R,mirrorless,,17.30,13.00,224.90,16.0,3.80,2015,
+935,Panasonic Lumix DMC-GX1,mirrorless,,17.30,13.00,224.90,16.0,3.80,2011,
+499,Hasselblad 907X 100C,mirrorless,,43.80,32.90,1441.02,100.0,3.80,2024,IMX461
+509,Hasselblad X2D 100C,mirrorless,,43.80,32.90,1441.02,100.0,3.80,2022,IMX461
+639,Leica M11-D Typ 2221 Body,rangefinder,,36.00,24.00,864.00,60.3,3.79,2024,IMX451;IMX455
+642,Leica M11-P Typ 2416 Safari Body,rangefinder,,36.00,24.00,864.00,60.3,3.79,2025,IMX451;IMX455
+636,Leica M11 Monochrom Typ 2416,rangefinder,,36.00,24.00,864.00,60.3,3.79,2023,IMX451;IMX455
+637,Leica M11 Typ 2416,rangefinder,,36.00,24.00,864.00,60.3,3.79,2022,IMX451;IMX455
+638,Leica M11-D Typ 2221,rangefinder,,36.00,24.00,864.00,60.3,3.79,2024,IMX451;IMX455
+640,Leica M11-P Typ 2416,rangefinder,,36.00,24.00,864.00,60.3,3.79,2023,IMX451;IMX455
+641,Leica M11-P Typ 2416 Safari,rangefinder,,36.00,24.00,864.00,60.3,3.79,2025,IMX451;IMX455
+649,Leica Q3 43 Typ 6506,fixed,1/0.5,36.00,24.00,864.00,60.3,3.79,2024,IMX451;IMX455
+650,Leica Q3 Typ 6506,fixed,1/0.5,36.00,24.00,864.00,60.3,3.79,2023,IMX451;IMX455
+655,Leica SL3 Typ 5404,mirrorless,,36.00,24.00,864.00,60.3,3.79,2024,IMX451;IMX455
+1069,Sigma fp L,mirrorless,,36.00,24.00,864.00,61.0,3.76,2021,IMX451;IMX455
+1071,Sigma fp L mit EVF-11 Sucher,mirrorless,,36.00,24.00,864.00,61.0,3.76,2021,IMX451;IMX455
+967,Phase One IQ4 150MP,mirrorless,,53.40,40.00,2136.00,151.0,3.76,2019,IMX411
+968,Phase One IQ4 150MP Achromatic,mirrorless,,53.40,40.00,2136.00,151.0,3.76,2019,IMX411
+394,Fujifilm GFX 100 Body,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2019,IMX461
+396,Fujifilm GFX 100 II Body,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2023,IMX461
+398,Fujifilm GFX 100 IR Body,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2020,IMX461
+401,Fujifilm GFX 100S Body,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2021,IMX461
+403,Fujifilm GFX 100S II Body,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2024,IMX461
+969,Phase One IQ4 150MP Achromatic Body,mirrorless,,53.40,40.00,2136.00,151.0,3.76,2019,IMX411
+970,Phase One IQ4 150MP Body,mirrorless,,53.40,40.00,2136.00,151.0,3.76,2019,IMX411
+1070,Sigma fp L Body,mirrorless,,36.00,24.00,864.00,61.0,3.76,2021,IMX451;IMX455
+446,Fujifilm X-M5,mirrorless,,23.50,15.70,368.95,26.1,3.76,2024,IMX571
+393,Fujifilm GFX 100,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2019,IMX461
+395,Fujifilm GFX 100 II,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2023,IMX461
+397,Fujifilm GFX 100 IR,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2020,IMX461
+399,Fujifilm GFX 100RF,fixed,1/0.5,43.80,32.90,1441.02,102.0,3.76,2025,IMX461
+400,Fujifilm GFX 100S,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2021,IMX461
+402,Fujifilm GFX 100S II,mirrorless,,43.80,32.90,1441.02,102.0,3.76,2024,IMX461
+453,Fujifilm X-S20 Body,mirrorless,,23.50,15.60,366.60,26.1,3.75,2023,IMX571
+924,Panasonic Lumix DMC-G70,mirrorless,,17.30,13.00,224.90,16.0,3.75,2015,
+925,Panasonic Lumix DMC-G80,mirrorless,,17.30,13.00,224.90,16.0,3.75,2018,
+927,Panasonic Lumix DMC-G81,mirrorless,,17.30,13.00,224.90,16.0,3.75,2016,
+936,Panasonic Lumix DMC-GX80,mirrorless,,17.30,13.00,224.90,16.0,3.75,2016,
+954,Pentax K-3 III,dslr,,23.30,15.50,361.15,25.7,3.75,2021,IMX571
+451,Fujifilm X-S10,mirrorless,,23.50,15.60,366.60,26.1,3.75,2020,IMX571
+452,Fujifilm X-S20,mirrorless,,23.50,15.60,366.60,26.1,3.75,2023,IMX571
+460,Fujifilm X-T30 II,mirrorless,,23.50,15.60,366.60,26.1,3.75,2021,IMX571
+461,Fujifilm X-T4,mirrorless,,23.50,15.60,366.60,26.1,3.75,2020,IMX571
+955,Pentax K-3 III Monochrome,dslr,,23.30,15.50,361.15,25.7,3.75,2023,IMX571
+442,Fujifilm X-H2S,mirrorless,,23.50,15.60,366.60,26.2,3.74,2022,IMX571
+443,Fujifilm X-H2S,mirrorless,,23.50,15.60,366.60,26.2,3.74,2025,IMX571
+444,Fujifilm X-H2S Body,mirrorless,,23.50,15.60,366.60,26.2,3.74,2022,IMX571
+798,Olympus OM-D E-M10 Mark III,mirrorless,,17.30,13.00,224.90,16.1,3.74,2017,
+799,Olympus OM-D E-M10 Mark III S,mirrorless,,17.30,13.00,224.90,16.1,3.74,2022,
+803,Olympus OM-D E-M5 Mark II,mirrorless,,17.30,13.00,224.90,16.1,3.74,2017,
+1112,Sony Alpha 7CR,mirrorless,,35.70,23.80,849.66,61.0,3.73,2023,IMX451;IMX455
+1120,Sony Alpha 7R IV,mirrorless,,35.70,23.80,849.66,61.0,3.73,2019,IMX451;IMX455
+1124,Sony Alpha 7R V,mirrorless,,35.70,23.80,849.66,61.0,3.73,2022,IMX451;IMX455
+1104,Sony Alpha 6700 Body,mirrorless,,23.30,15.50,361.15,26.0,3.73,2023,IMX571
+1121,Sony Alpha 7R IV,mirrorless,,35.70,23.80,849.66,61.0,3.73,2021,IMX451;IMX455
+1122,Sony Alpha 7R IV Body,mirrorless,,35.70,23.80,849.66,61.0,3.73,2019,IMX451;IMX455
+1123,Sony Alpha 7R IV Body,mirrorless,,35.70,23.80,849.66,61.0,3.73,2021,IMX451;IMX455
+1125,Sony Alpha 7R V Body,mirrorless,,35.70,23.80,849.66,61.0,3.73,2022,IMX451;IMX455
+1209,Sony ZV-E10 II Body,mirrorless,,23.30,15.50,361.15,26.0,3.73,2024,IMX571
+1103,Sony Alpha 6700,mirrorless,,23.30,15.50,361.15,26.0,3.73,2023,IMX571
+1208,Sony ZV-E10 II,mirrorless,,23.30,15.50,361.15,26.0,3.73,2024,IMX571
+125,Canon EOS 2000D,dslr,,22.30,14.90,332.27,24.1,3.71,2018,
+128,Canon EOS 250D,dslr,,22.30,14.90,332.27,24.1,3.71,2019,
+171,Canon EOS M50,mirrorless,,22.30,14.90,332.27,24.1,3.71,2018,
+183,Canon EOS R100,mirrorless,,22.30,14.90,332.27,24.1,3.71,2023,
+126,Canon EOS 2000D Body,dslr,,22.30,14.90,332.27,24.1,3.71,2018,
+145,Canon EOS 77D Body,dslr,,22.30,14.90,332.27,24.2,3.71,2017,
+152,Canon EOS 80D Body,dslr,,22.30,14.90,332.27,24.2,3.71,2016,
+154,Canon EOS 850D Body,dslr,,22.30,14.90,332.27,24.2,3.71,2020,
+170,Canon EOS M5 Body,mirrorless,,22.30,14.90,332.27,24.2,3.71,2016,
+182,Canon EOS R10 Body,mirrorless,,22.30,14.90,332.27,24.2,3.71,2022,
+184,Canon EOS R100 Body,mirrorless,,22.30,14.90,332.27,24.1,3.71,2023,
+196,Canon EOS R50 V Body,mirrorless,,22.30,14.90,332.27,24.2,3.71,2025,
+127,Canon EOS 200D,dslr,,22.30,14.90,332.27,24.2,3.71,2017,
+144,Canon EOS 77D,dslr,,22.30,14.90,332.27,24.2,3.71,2017,
+151,Canon EOS 80D,dslr,,22.30,14.90,332.27,24.2,3.71,2016,
+153,Canon EOS 850D,dslr,,22.30,14.90,332.27,24.2,3.71,2020,
+169,Canon EOS M5,mirrorless,,22.30,14.90,332.27,24.2,3.71,2016,
+181,Canon EOS R10,mirrorless,,22.30,14.90,332.27,24.2,3.71,2022,
+194,Canon EOS R50,mirrorless,,22.30,14.90,332.27,24.2,3.71,2023,
+195,Canon EOS R50 V,mirrorless,,22.30,14.90,332.27,24.2,3.71,2025,
+142,Canon EOS 750D,dslr,,22.30,14.90,332.27,24.2,3.70,2015,
+143,Canon EOS 760D,dslr,,22.30,14.90,332.27,24.2,3.70,2016,
+149,Canon EOS 800D,dslr,,22.30,14.90,332.27,24.2,3.70,2017,
+150,Canon EOS 800D Body,dslr,,22.30,14.90,332.27,24.2,3.70,2017,
+166,Canon EOS M100,mirrorless,,22.30,14.90,332.27,24.2,3.70,2017,
+167,Canon EOS M200,mirrorless,,22.30,14.90,332.27,24.1,3.70,2019,
+168,Canon EOS M3,mirrorless,,22.30,14.90,332.27,24.2,3.70,2015,
+172,Canon EOS M50 Mark II,mirrorless,,22.30,14.90,332.27,24.1,3.70,2020,
+173,Canon EOS M6,mirrorless,,22.30,14.90,332.27,24.2,3.70,2017,
+213,Canon PowerShot G1 X Mark III,fixed,1/0.6,22.30,14.90,332.27,24.2,3.70,2017,
+387,Fujifilm FinePix X100V,fixed,1/0.6,23.50,15.60,366.60,26.1,3.70,2020,IMX571
+1063,Sigma dp0 Quattro,fixed,1/0.6,23.50,15.70,368.95,29.0,3.60,2015,
+1064,Sigma dp1 Quattro,fixed,1/0.6,23.50,15.70,368.95,29.0,3.60,2014,
+1065,Sigma dp2 Quattro,fixed,1/0.6,23.50,15.70,368.95,29.0,3.60,2014,
+1066,Sigma dp3 Quattro,fixed,1/0.6,23.50,15.70,368.95,29.0,3.60,2014,
+632,Leica D-Lux 8,fixed,1/0.7,17.10,11.80,201.78,17.0,3.45,2024,
+633,Leica D-Lux 8 100 Years of Leica,fixed,1/0.7,17.10,11.80,201.78,17.0,3.45,2025,
+631,Leica D-Lux 7,fixed,1/0.7,17.10,11.80,201.78,17.0,3.40,2018,
+938,Panasonic Lumix DMC-LX100 II,fixed,1/0.7,17.10,11.80,201.78,17.0,3.40,2018,
+703,Nikon 1 S1,mirrorless,,13.20,8.80,116.16,10.1,3.39,2013,
+866,Panasonic Lumix DC-G100D Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2024,
+870,Panasonic Lumix DC-G9 Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2017,
+872,Panasonic Lumix DC-G90 Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2019,
+876,Panasonic Lumix DC-G97 Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2024,
+880,Panasonic Lumix DC-GH5 Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2017,
+882,Panasonic Lumix DC-GH5 II Body,mirrorless,,17.30,13.00,224.90,20.3,3.33,2021,
+800,Olympus OM-D E-M10 Mark IV,mirrorless,,17.30,13.00,224.90,20.3,3.33,2020,
+807,Olympus PEN E-P7,mirrorless,,17.30,13.00,224.90,20.3,3.33,2021,
+863,Panasonic Lumix DC-G100,mirrorless,,17.30,13.00,224.90,20.3,3.33,2020,
+865,Panasonic Lumix DC-G100D,mirrorless,,17.30,13.00,224.90,20.3,3.33,2024,
+867,Panasonic Lumix DC-G110,mirrorless,,17.30,13.00,224.90,20.3,3.33,2020,
+869,Panasonic Lumix DC-G9,mirrorless,,17.30,13.00,224.90,20.3,3.33,2017,
+871,Panasonic Lumix DC-G90,mirrorless,,17.30,13.00,224.90,20.3,3.33,2019,
+873,Panasonic Lumix DC-G91,mirrorless,,17.30,13.00,224.90,20.3,3.33,2019,
+875,Panasonic Lumix DC-G97,mirrorless,,17.30,13.00,224.90,20.3,3.33,2024,
+879,Panasonic Lumix DC-GH5,mirrorless,,17.30,13.00,224.90,20.3,3.33,2017,
+881,Panasonic Lumix DC-GH5 II,mirrorless,,17.30,13.00,224.90,20.3,3.33,2021,
+794,Olympus OM-D E-M1 Mark III,mirrorless,,17.30,13.00,224.90,20.4,3.32,2020,
+804,Olympus OM-D E-M5 Mark III,mirrorless,,17.30,13.00,224.90,20.4,3.32,2019,
+817,OM System OM-1,mirrorless,,17.30,13.00,224.90,20.4,3.32,2022,
+819,OM System OM-1 Mark II,mirrorless,,17.30,13.00,224.90,20.4,3.32,2024,
+821,OM System OM-3,mirrorless,,17.30,13.00,224.90,20.4,3.32,2025,
+823,OM System OM-5,mirrorless,,17.30,13.00,224.90,20.4,3.32,2022,
+824,OM System OM-5 Mark II,mirrorless,,17.30,13.00,224.90,20.4,3.32,2025,
+825,OM System OM-5 Mark II sand,mirrorless,,17.30,13.00,224.90,20.4,3.32,2025,
+795,Olympus OM-D E-M1 Mark III Body,mirrorless,,17.30,13.00,224.90,20.4,3.32,2020,
+818,OM System OM-1 Body,mirrorless,,17.30,13.00,224.90,20.4,3.32,2022,
+820,OM System OM-1 Mark II Body,mirrorless,,17.30,13.00,224.90,20.4,3.32,2024,
+822,OM System OM-3 Body,mirrorless,,17.30,13.00,224.90,20.4,3.32,2025,
+793,Olympus OM-D E-M1 Mark II,mirrorless,,17.30,13.00,224.90,20.4,3.30,2016,
+801,Olympus OM-D E-M1X,mirrorless,,17.30,13.00,224.90,20.4,3.30,2019,
+864,Panasonic Lumix DC-G100 Body,mirrorless,,17.30,13.00,224.90,20.3,3.30,2020,
+868,Panasonic Lumix DC-G110 Body,mirrorless,,17.30,13.00,224.90,20.3,3.30,2020,
+874,Panasonic Lumix DC-G91 Body,mirrorless,,17.30,13.00,224.90,20.3,3.30,2019,
+891,Panasonic Lumix DC-GX9,mirrorless,,17.30,13.00,224.90,20.3,3.30,2018,
+1226,Technaxx Zeitraffer-Kamera TX-164,fixed,1/2.7,5.37,4.04,21.69,2.0,3.29,2021,
+174,Canon EOS M6 Mark II,mirrorless,,22.30,14.90,332.27,32.5,3.20,2019,
+156,Canon EOS 90D Body,dslr,,22.30,14.80,330.04,32.5,3.19,2019,
+202,Canon EOS R7 Body,mirrorless,,22.30,14.80,330.04,32.5,3.19,2022,
+155,Canon EOS 90D,dslr,,22.30,14.80,330.04,32.5,3.19,2019,
+201,Canon EOS R7,mirrorless,,22.30,14.80,330.04,32.5,3.19,2022,
+1218,Technaxx Mini Nature Wild Cam TX-117,fixed,1/4,5.08,3.81,19.35,2.0,3.11,2020,
+1219,Technaxx Mini Nature Wild Cam TX-69,fixed,1/4,5.10,3.80,19.38,2.0,3.10,2020,
+439,Fujifilm X-E5,mirrorless,,23.50,15.70,368.95,40.2,3.03,2025,
+462,Fujifilm X-T5,mirrorless,,23.50,15.70,368.95,40.2,3.03,2022,
+463,Fujifilm X-T50,mirrorless,,23.50,15.70,368.95,40.2,3.03,2024,
+441,Fujifilm X-H2 Body,mirrorless,,23.50,15.60,366.60,40.2,3.02,2022,
+388,Fujifilm FinePix X100VI,fixed,1/0.6,23.50,15.60,366.60,40.2,3.02,2024,
+440,Fujifilm X-H2,mirrorless,,23.50,15.60,366.60,40.2,3.02,2022,
+878,Panasonic Lumix DC-G9II Body,mirrorless,,17.30,13.00,224.90,25.2,2.99,2023,
+886,Panasonic Lumix DC-GH6 Body,mirrorless,,17.30,13.00,224.90,25.2,2.99,2022,
+888,Panasonic Lumix DC-GH7 Body,mirrorless,,17.30,13.00,224.90,25.2,2.99,2024,
+885,Panasonic Lumix DC-GH6,mirrorless,,17.30,13.00,224.90,25.2,2.99,2022,
+887,Panasonic Lumix DC-GH7,mirrorless,,17.30,13.00,224.90,25.2,2.99,2024,
+877,Panasonic Lumix DC-G9II,mirrorless,,17.30,13.00,224.90,25.2,2.99,2023,
+270,Casio Exilim EX-Z3,fixed,1/2.5,5.76,4.29,24.71,3.2,2.78,2003,
+1152,Sony Cyber-shot DSC-RX0,fixed,1/1,13.20,8.80,116.16,15.3,2.76,2017,
+1153,Sony Cyber-shot DSC-RX0 II,fixed,1/1,13.20,8.80,116.16,15.3,2.76,2019,
+427,Fujifilm X half X-HF1,fixed,1/1,13.30,8.80,117.04,17.7,2.57,2025,
+263,Casio Exilim EX-F1,fixed,1/1.8,7.18,5.32,38.20,6.0,2.52,2008,
+702,Nikon 1 J4,mirrorless,,13.20,8.80,116.16,18.4,2.50,2014,
+1158,Sony Cyber-shot DSC-RX10 IV,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2017,IMX183;IMX283;IMX383
+1163,Sony Cyber-shot DSC-RX100 IV,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2015,IMX183;IMX283;IMX383
+1167,Sony Cyber-shot DSC-RX100 VII,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2019,IMX183;IMX283;IMX383
+1168,Sony Cyber-shot DSC-RX100 VII A,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2025,IMX183;IMX283;IMX383
+1200,Sony Vlog-Kamera ZV-1,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2020,IMX183;IMX283;IMX383
+1201,Sony Vlog-Kamera ZV-1 II,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2023,IMX183;IMX283;IMX383
+1202,Sony Vlog-Kamera ZV-1A,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2025,IMX183;IMX283;IMX383
+1203,Sony Vlog-Kamera ZV-1F,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2022,IMX183;IMX283;IMX383
+1155,Sony Cyber-shot DSC-RX10,fixed,1/1,13.20,8.80,116.16,20.2,2.40,2013,IMX183;IMX283;IMX383
+1157,Sony Cyber-shot DSC-RX10 III,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2016,IMX183;IMX283;IMX383
+1159,Sony Cyber-shot DSC-RX100,fixed,1/1,13.20,8.80,116.16,20.2,2.40,2012,IMX183;IMX283;IMX383
+1160,Sony Cyber-shot DSC-RX100 II,fixed,1/1,13.20,8.80,116.16,20.2,2.40,2013,IMX183;IMX283;IMX383
+1161,Sony Cyber-shot DSC-RX100 III,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2014,IMX183;IMX283;IMX383
+1162,Sony Cyber-shot DSC-RX100 III Set,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2019,IMX183;IMX283;IMX383
+1164,Sony Cyber-shot DSC-RX100 V,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2016,IMX183;IMX283;IMX383
+1165,Sony Cyber-shot DSC-RX100 VA,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2018,IMX183;IMX283;IMX383
+1166,Sony Cyber-shot DSC-RX100 VI,fixed,1/1,13.20,8.80,116.16,20.1,2.40,2018,IMX183;IMX283;IMX383
+1156,Sony Cyber-shot DSC-RX10 II,fixed,1/1,13.20,8.80,116.16,20.2,2.40,2015,IMX183;IMX283;IMX383
+1144,Sony Cyber-shot DSC-HX5V,fixed,1/2.5,8.50,6.40,54.40,10.2,2.30,2010,
+1222,Technaxx Nature Cam TX-69,fixed,1/2.5,5.76,4.29,24.71,5.0,2.22,2019,
+465,Fujifilm XQ2,fixed,1/2.3,8.80,6.60,58.08,12.0,2.20,2015,
+682,Minox Wildkamera DTC 1100,fixed,1/2.5,5.80,4.30,24.94,5.0,2.20,2018,
+1032,Rollei Powerflex 3D,fixed,1/2.5,5.80,4.30,24.94,5.0,2.20,2010,
+1029,Rollei Powerflex 10x Optical Zoom,fixed,1/2.8,7.26,5.44,39.50,8.5,2.16,2024,
+224,Canon PowerShot S200,fixed,1/2.3,7.60,5.70,43.32,10.1,2.10,2014,
+940,Panasonic Lumix DMC-LX7,fixed,1/2.3,7.60,5.70,43.32,10.1,2.10,2012,
+34,Apeman H45 Trail Camera,fixed,1/3.2,5.10,3.80,19.38,5.0,2.00,2020,
+217,Canon PowerShot G7,fixed,1/2.5,7.20,5.30,38.16,10.0,2.00,2006,
+711,Nikon Coolpix L23,fixed,1/2.5,7.00,5.30,37.10,10.1,1.90,2011,
+716,Nikon Coolpix S01,fixed,1/2.5,7.00,5.30,37.10,10.1,1.90,2012,
+985,Ricoh Caplio GX100,fixed,1/2.5,7.20,5.30,38.16,10.1,1.90,2007,
+413,Fujifilm instax mini LiPlay blush,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2019,
+414,Fujifilm instax mini LiPlay deep,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2024,
+415,Fujifilm instax mini LiPlay elegant black,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2019,
+416,Fujifilm instax mini LiPlay matcha green,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2024,
+417,Fujifilm instax mini LiPlay misty white,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2024,
+418,Fujifilm instax mini LiPlay stone white,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2019,
+425,Fujifilm instax Square SQ20,fixed,1/5,4.06,3.05,12.39,3.7,1.83,2018,
+264,Casio Exilim EX-FC100,fixed,1/2.3,6.17,4.55,28.07,9.1,1.76,2009,
+271,Casio Exilim EX-Z80,fixed,1/2.5,5.76,4.29,24.71,8.1,1.75,2008,
+717,Nikon Coolpix S225,fixed,1/2.5,6.20,4.50,27.90,10.0,1.70,2009,
+265,Casio Exilim EX-FR100,fixed,1/2.3,6.17,4.55,28.07,10.2,1.66,2016,
+719,Nikon Coolpix W100,fixed,1/2.3,6.60,4.90,32.34,13.2,1.60,2016,
+720,Nikon Coolpix W150,fixed,1/2.3,6.60,4.90,32.34,13.2,1.60,2019,
+721,Nikon Coolpix W150 Flowers,fixed,1/2.3,6.60,4.90,32.34,13.2,1.60,2019,
+722,Nikon Coolpix W150 Hawaii,fixed,1/2.3,6.60,4.90,32.34,13.2,1.60,2019,
+1021,Rollei Compactline 110,fixed,1/2.5,5.80,4.30,24.94,10.0,1.60,2009,
+1022,Rollei Compactline 130,fixed,1/2.5,5.80,4.30,24.94,10.0,1.60,2009,
+419,Fujifilm instax Pal Gem Black,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
+420,Fujifilm instax Pal Lavender Blue,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
+421,Fujifilm instax Pal Milky White,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
+422,Fujifilm instax Pal Pistachio Green,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
+423,Fujifilm instax Pal Powder Pink,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
+409,Fujifilm instax mini Evo,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2021,
+410,Fujifilm instax mini Evo 90th Anniversary,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2024,
+411,Fujifilm instax mini Evo 90th Anniversary dunkel,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2024,
+412,Fujifilm instax mini Evo USB-C,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2024,
+657,Leica SOFORT 2,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2023,
+658,Leica SOFORT 2 100 YEARS OF LEICA Jubiläumsedition,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2025,
+659,Leica SOFORT 2 Burton Edition,fixed,1/5,4.06,3.05,12.39,4.9,1.59,2025,
+10,AgfaPhoto Realishot C130,fixed,1/3.1,6.55,4.92,32.22,13.0,1.57,2025,
+223,Canon PowerShot PX Essential Kit,fixed,1/2.3,6.17,4.55,28.07,11.7,1.55,2021,
+815,Olympus TG-6,fixed,1/2.3,6.17,4.55,28.07,12.0,1.53,2019,
+826,OM System TG-7,fixed,1/2.3,6.17,4.55,28.07,12.0,1.53,2023,
+1001,RICOH Theta SC2,fixed,1/2.3,6.17,4.55,28.07,12.0,1.53,2019,
+266,Casio Exilim EX-H10,fixed,1/2.3,6.17,4.55,28.07,12.1,1.52,2009,
+272,Casio Exilim EX-ZR10,fixed,1/2.3,6.17,4.55,28.07,12.1,1.52,2010,
+273,Casio Exilim EX-ZR100,fixed,1/2.3,6.17,4.55,28.07,12.1,1.52,2011,
+921,Panasonic Lumix DMC-FZ330,fixed,1/2.3,6.17,4.55,28.07,12.1,1.52,2018,
+960,Pentax Optio I-10,fixed,1/2.3,6.20,4.50,27.90,12.0,1.50,2010,
+281,Casio Exilim EX-ZS15,fixed,1/2.3,6.17,4.55,28.07,14.1,1.41,2011,
+282,Casio Exilim EX-ZS5,fixed,1/2.3,6.17,4.55,28.07,14.1,1.41,2011,
+380,Fujifilm FinePix HS35EXR,fixed,1/2,6.40,4.80,30.72,16.0,1.40,2013,
+424,Fujifilm Instax Square SQ10,fixed,1/5,5.10,3.80,19.38,10.0,1.40,2017,
+1000,Ricoh Theta S,fixed,1/2.3,6.20,4.50,27.90,14.0,1.40,2015,
+1033,Rollei Powerflex 400,fixed,1/2.3,6.20,4.50,27.90,14.0,1.40,2011,
+1034,Rollei Powerflex 460,fixed,1/2.3,6.20,4.50,27.90,14.0,1.40,2011,
+1046,Samsung WB710,fixed,1/2.3,6.20,4.50,27.90,14.2,1.40,2011,
+1047,SeaLife DC1400,fixed,1/2.3,6.20,4.50,27.90,14.0,1.40,2011,
+1171,Sony Cyber-shot DSC-W550,fixed,1/2.3,6.20,4.50,27.90,14.1,1.40,2011,
+1216,Technaxx Birdcam TX-165,fixed,1/3.2,4.54,3.42,15.53,8.0,1.39,2022,
+1223,Technaxx Nature Wild Cam TX-125,fixed,1/3.2,4.54,3.42,15.53,8.0,1.39,2021,
+1224,Technaxx Nature Wild Cam TX-160,fixed,1/3.2,4.54,3.42,15.53,8.0,1.39,2021,
+712,Nikon Coolpix L840,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2015,
+713,Nikon Coolpix P1000,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2018,
+714,Nikon Coolpix P1100,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2025,
+715,Nikon Coolpix P950,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2020,
+946,Panasonic Lumix DMC-TZ58,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2015,
+964,Pentax WG-90,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2023,
+1007,RICOH WG-70,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2020,
+1008,RICOH WG-80,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2022,
+1052,SeaLife Micro 3.0,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2022,
+1053,SeaLife Micro 3.0 Pro 3000 Set,fixed,1/2.3,6.17,4.55,28.07,16.0,1.32,2022,
+267,Casio Exilim EX-H30,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2011,
+269,Casio Exilim EX-N1 Casual,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2012,
+274,Casio Exilim EX-ZR1000,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2012,
+275,Casio Exilim EX-ZR200,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2012,
+276,Casio Exilim EX-ZR300,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2012,
+277,Casio Exilim EX-ZR400,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2013,
+278,Casio Exilim EX-ZR410,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2013,
+279,Casio Exilim EX-ZR700,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2013,
+280,Casio Exilim EX-ZR710,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2013,
+591,Kodak Astro Zoom AZ421,fixed,1/2.3,6.17,4.55,28.07,16.1,1.32,2016,
+586,Kodak Astro Zoom AZ252,fixed,1/2.3,6.17,4.55,28.07,16.2,1.32,2017,
+589,Kodak Astro Zoom AZ401,fixed,1/2.3,6.17,4.55,28.07,16.2,1.32,2017,
+605,Kodak Friendly Zoom FZ43,fixed,1/2.3,6.17,4.55,28.07,16.2,1.32,2017,
+606,Kodak Friendly Zoom FZ45,fixed,1/2.3,6.17,4.55,28.07,16.2,1.32,2022,
+607,Kodak Friendly Zoom FZ55,fixed,1/2.3,6.17,4.55,28.07,16.2,1.32,2022,
+587,Kodak Astro Zoom AZ255,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2023,
+597,Kodak Astro Zoom AZ528,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2024,
+623,Kodak WPZ2,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2019,
+961,Pentax WG-1000,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2024,
+962,Pentax WG-1000 olive,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2024,
+392,Fujifilm FinePix XP140,fixed,1/2.3,6.17,4.55,28.07,16.4,1.31,2019,
+105,Canon Digital Ixus 145,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2014,
+106,Canon Digital Ixus 150,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2014,
+211,Canon PowerShot A2300,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2012,
+228,Canon PowerShot SX530 HS,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2015,
+230,Canon PowerShot SX60 HS,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2014,
+231,Canon PowerShot SX600 HS,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2014,
+234,Canon PowerShot SX700 HS,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2014,
+268,Casio Exilim EX-H50,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2012,
+381,Fujifilm FinePix S4700,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2013,
+382,Fujifilm FinePix S9400W,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2014,
+383,Fujifilm FinePix T400,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2012,
+389,Fujifilm FinePix XP120,fixed,1/2.3,6.20,4.50,27.90,16.4,1.30,2017,
+390,Fujifilm FinePix XP120 hell,fixed,1/2.3,6.20,4.50,27.90,16.4,1.30,2017,
+391,Fujifilm FinePix XP130,fixed,1/2.3,6.20,4.50,27.90,16.4,1.30,2018,
+594,Kodak Astro Zoom AZ521,fixed,1/2.3,6.20,4.50,27.90,16.4,1.30,2018,
+595,Kodak Astro Zoom AZ525,fixed,1/2.3,6.20,4.50,27.90,16.4,1.30,2016,
+600,Kodak Friendly Zoom FZ101,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2018,
+601,Kodak Friendly Zoom FZ102,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2017,
+602,Kodak Friendly Zoom FZ151,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2015,
+603,Kodak Friendly Zoom FZ152,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2016,
+604,Kodak Friendly Zoom FZ201,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2016,
+622,Kodak Sport Camera WP1,fixed,1/2.3,6.20,4.50,27.90,16.2,1.30,2017,
+705,Nikon Coolpix A10,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2016,
+707,Nikon Coolpix A1000,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2019,
+710,Nikon Coolpix B500,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2016,
+723,Nikon Coolpix W300,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2017,
+724,Nikon Coolpix W300 Holiday Kit,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2019,
+814,Olympus TG-3,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2014,
+816,Olympus TG-830,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2013,
+918,Panasonic Lumix DMC-FT30,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2015,
+922,Panasonic Lumix DMC-FZ72,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2013,
+941,Panasonic Lumix DMC-LZ30,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2013,
+942,Panasonic Lumix DMC-SZ10,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2015,
+945,Panasonic Lumix DMC-TZ57,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2015,
+1004,Ricoh WG-50,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2017,
+1006,Ricoh WG-60,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2018,
+1031,Rollei Powerflex 210HD,fixed,1/2.3,6.20,4.50,27.90,16.0,1.30,2012,
+1044,Samsung ST76,fixed,1/2.3,6.20,4.50,27.90,16.1,1.30,2012,
+861,Panasonic Lumix DC-FZ82,fixed,1/2.3,6.17,4.55,28.07,18.1,1.25,2017,
+862,Panasonic Lumix DC-FZ82D,fixed,1/2.3,6.17,4.55,28.07,18.1,1.25,2024,
+947,Panasonic Lumix DMC-TZ80,fixed,1/2.3,6.17,4.55,28.07,18.1,1.25,2016,
+107,Canon Digital Ixus 160,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2015,
+108,Canon Digital Ixus 175,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2016,
+109,Canon Digital Ixus 182,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2016,
+111,Canon Digital Ixus 190,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2017,
+225,Canon PowerShot SX420 IS,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2016,
+226,Canon PowerShot SX430 IS,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2017,
+227,Canon PowerShot SX432 IS,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2017,
+229,Canon PowerShot SX540 HS,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2016,
+235,Canon PowerShot SX710 HS,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2015,
+236,Canon PowerShot SX720 HS,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2016,
+237,Canon PowerShot SX730 HS,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2017,
+596,Kodak Astro Zoom AZ527,fixed,1/2.3,6.20,4.50,27.90,20.7,1.20,2017,
+598,Kodak Astro Zoom AZ652,fixed,1/2.3,6.20,4.50,27.90,20.7,1.20,2017,
+706,Nikon Coolpix A100,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2016,
+708,Nikon Coolpix A300,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2016,
+709,Nikon Coolpix A900,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2016,
+718,Nikon Coolpix S3500,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2013,
+914,Panasonic Lumix DC-TZ90,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2017,
+915,Panasonic Lumix DC-TZ91,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2017,
+916,Panasonic Lumix DC-TZ95,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2019,
+917,Panasonic Lumix DC-TZ96,fixed,1/2.3,6.20,4.50,27.90,20.3,1.20,2019,
+948,Panasonic Lumix DMC-TZ81,fixed,1/2.3,6.20,4.50,27.90,18.1,1.20,2016,
+982,Praktica Luxmedia WP240,fixed,1/2.3,6.20,4.50,27.90,20.2,1.20,2017,
+983,Praktica Luxmedia Z212,fixed,1/2.3,6.20,4.50,27.90,20.2,1.20,2017,
+986,Ricoh G900,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2019,
+1005,Ricoh WG-6,fixed,1/2.3,6.20,4.50,27.90,20.0,1.20,2019,
+1140,Sony Cyber-shot DSC-H200,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2013,
+1142,Sony Cyber-shot DSC-HX300,fixed,1/2.3,6.20,4.50,27.90,20.4,1.20,2013,
+1143,Sony Cyber-shot DSC-HX400V,fixed,1/2.3,6.20,4.50,27.90,20.4,1.20,2014,
+1145,Sony Cyber-shot DSC-HX60,fixed,1/2.3,6.20,4.50,27.90,20.4,1.20,2014,
+1146,Sony Cyber-shot DSC-HX60V,fixed,1/2.3,6.20,4.50,27.90,20.4,1.20,2014,
+1147,Sony Cyber-shot DSC-HX80,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2016,
+1148,Sony Cyber-shot DSC-HX90,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2015,
+1149,Sony Cyber-shot DSC-HX90V,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2015,
+1150,Sony Cyber-shot DSC-HX95,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2018,
+1151,Sony Cyber-shot DSC-HX99,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2018,
+1172,Sony Cyber-shot DSC-W800,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2014,
+1173,Sony Cyber-shot DSC-W810,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2014,
+1174,Sony Cyber-shot DSC-W830,fixed,1/2.3,6.20,4.50,27.90,20.1,1.20,2014,
+1175,Sony Cyber-shot DSC-WX220,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2014,
+1176,Sony Cyber-shot DSC-WX350,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2014,
+1177,Sony Cyber-shot DSC-WX500,fixed,1/2.3,6.20,4.50,27.90,18.2,1.20,2015,
+244,Canon PowerShot Zoom,fixed,1/3,4.80,3.60,17.28,12.1,1.20,2020,
+245,Canon PowerShot Zoom Enhanced Edition,fixed,1/3,4.80,3.60,17.28,12.1,1.20,2024,
+246,Canon PowerShot Zoom Essential Kit,fixed,1/3,4.80,3.60,17.28,12.1,1.20,2024,
+110,Canon Digital Ixus 185,fixed,1/2.3,6.17,4.55,28.07,20.0,1.18,2017,
+592,Kodak Astro Zoom AZ422,fixed,1/2.3,6.17,4.55,28.07,20.0,1.18,2016,
+963,Pentax WG-8,fixed,1/2.3,6.17,4.55,28.07,20.0,1.18,2024,
+987,RICOH G900SE,fixed,1/2.3,6.17,4.55,28.07,20.0,1.18,2019,
+988,RICOH G900SE II,fixed,1/2.3,6.17,4.55,28.07,20.0,1.18,2024,
+1141,Sony Cyber-shot DSC-H300,fixed,1/2.3,6.17,4.55,28.07,20.1,1.18,2014,
+112,Canon Digital Ixus 285 HS,fixed,1/2.3,6.17,4.55,28.07,20.2,1.18,2016,
+232,Canon PowerShot SX620 HS,fixed,1/2.3,6.17,4.55,28.07,20.2,1.18,2016,
+233,Canon PowerShot SX70 HS,fixed,1/2.3,6.17,4.55,28.07,20.3,1.18,2018,
+238,Canon PowerShot SX740 HS,fixed,1/2.3,6.17,4.55,28.07,20.3,1.18,2018,
+239,Canon PowerShot SX740 HS Lite Edition,fixed,1/2.3,6.17,4.55,28.07,20.3,1.18,2025,
+949,Panasonic Lumix DMC-TZ99,fixed,1/2.3,6.17,4.55,28.07,20.3,1.18,2024,
+859,Panasonic Lumix DC-FT7,fixed,1/2.3,6.17,4.55,28.07,20.4,1.17,2018,
+590,Kodak Astro Zoom AZ405,fixed,1/2.3,6.17,4.55,28.07,20.7,1.17,2024,
+593,Kodak Astro Zoom AZ425,fixed,1/2.3,6.17,4.55,28.07,20.7,1.17,2023,
+18,AgfaPhoto Realishot WP9500,fixed,1/3,4.80,3.60,17.28,13.0,1.15,2025,
+977,Polaroid iZone,fixed,1/4,4.50,3.40,15.30,18.0,0.90,2016,
+1002,RICOH Theta X,fixed,1/2,6.40,4.80,30.72,48.0,0.80,2022,
+1030,Rollei Powerflex 10x Retro,fixed,1/2.8,7.26,5.44,39.50,64.0,0.79,2025,
+0,ACME VR05,actioncam,1/0.5,40.64,30.48,,,,2016,
+1,AgfaPhoto AC5000,actioncam,1/0.5,40.64,30.48,,,,2021,
+2,AgfaPhoto AC7000,actioncam,1/0.5,40.64,30.48,,,,2024,
+3,AgfaPhoto AC9000,actioncam,1/0.5,40.64,30.48,,,,2024,
+4,AgfaPhoto eClipse EXPLORER,camcorder,1/0.4,50.80,38.10,,,,2011,
+5,AgfaPhoto Realimove AC9500,actioncam,1/2.9,7.01,5.26,,,,2025,
+6,AgfaPhoto Realimove CC2700,camcorder,1/0.3,67.73,50.80,,,,2024,
+7,AgfaPhoto Realimove MC3X,camcorder,1/2.5,8.13,6.10,,,,2025,
+8,AgfaPhoto Realipix Mini S,fixed,,,,,10.0,,2021,
+9,AgfaPhoto Realipix Square S,fixed,,,,,10.0,,2020,
+11,AgfaPhoto Realishot DC5100,fixed,,,,,2.0,,2025,
+12,AgfaPhoto Realishot DC5200,fixed,,,,,,,2024,
+13,AgfaPhoto Realishot DC5500,fixed,,,,,5.0,,2024,
+14,AgfaPhoto Realishot DC8200,fixed,,,,,8.0,,2024,
+15,AgfaPhoto Realishot DC8300,fixed,,,,,,,,
+16,AgfaPhoto Realishot DC9200,fixed,,,,,,,2024,
+17,AgfaPhoto Realishot WP8000,fixed,,,,,8.0,,2024,
+19,AgfaPhoto Realkids Cam,fixed,,,,,1.0,,2020,
+20,AgfaPhoto Realkids Cam 2,fixed,,,,,1.0,,2020,
+21,Akaso Brave 4,actioncam,1/0.5,40.64,30.48,,,,2018,
+22,Akaso Brave 4 Pro,actioncam,1/2.9,7.01,5.26,,,,2024,
+23,Akaso Brave 6 Plus,actioncam,1/0.5,40.64,30.48,,,,2020,
+24,Akaso Brave 7,actioncam,1/0.5,40.64,30.48,,,,2021,
+25,Akaso Brave 7 LE,actioncam,1/0.5,40.64,30.48,,,,2020,
+26,Akaso Brave 8,actioncam,1/2,10.16,7.62,,,,2022,
+27,Akaso EK7000,actioncam,1/0.5,40.64,30.48,,,,2018,
+28,Akaso EK7000 Pro,actioncam,1/0.5,40.64,30.48,,,,2019,
+29,Akaso V50,actioncam,,,,,,,2018,
+30,Akaso V50 Elite,actioncam,1/0.5,40.64,30.48,,,,2019,
+31,Akaso V50 Pro,actioncam,1/0.5,40.64,30.48,,,,2019,
+32,Albrecht DV300GP,actioncam,,,,,,,2011,
+33,Apeman A70,actioncam,1/0.5,40.64,30.48,,,,2020,
+35,Apexcam 4K Action,actioncam,1/0.5,40.64,30.48,,,,2021,
+36,Berger & Schröter 16MP Wildkamera,fixed,,,,,,,2019,
+37,Berger & Schröter 4G LTE Cloud Wildkamera,fixed,,,,,4.0,,2023,
+38,Berger & Schröter X-trail HD 3.0C Wildkamera,fixed,,,,,5.0,,2020,
+39,Berger & Schröter X-trail Wildkamera,fixed,,,,,5.0,,2020,
+40,Blackmagic Design Cinema Camera 6K,camcorder,1/0.5,36.00,24.00,,,,2023,
+41,Blackmagic Design Micro Cinema Camera Micro-Four-Thirds Mount,camcorder,1/1.3,12.50,7.00,,,,2015,
+42,Blackmagic Design Micro Studio Camera 4K G2,camcorder,1/0.7,17.80,10.00,,,,2023,
+43,Blackmagic Design Pocket Cinema Camera 4K Micro-Four-Thirds Mount,camcorder,1/0.7,19.00,10.00,,,,2018,
+44,Blackmagic Design Pocket Cinema Camera 6K EF-Mount,camcorder,1/0.6,23.10,13.00,,,,2019,
+45,Blackmagic Design Pocket Cinema Camera 6K G2 EF-Mount,camcorder,1/0.6,23.10,13.00,,,,2022,
+46,Blackmagic Design Pocket Cinema Camera 6K Pro EF-Mount,camcorder,1/0.6,23.10,13.00,,,,2021,
+47,Blackmagic Design PYXIS 12K EF-Mount,camcorder,1/0.5,36.00,24.00,,,,2025,
+48,Blackmagic Design PYXIS 12K L-Mount,camcorder,1/0.5,36.00,24.00,,,,2025,
+49,Blackmagic Design PYXIS 12K PL-Mount,camcorder,1/0.5,36.00,24.00,,,,2025,
+50,Blackmagic Design PYXIS 6K EF-Mount,camcorder,1/0.5,36.00,24.00,,,,2024,
+51,Blackmagic Design PYXIS 6K L-Mount,camcorder,1/0.5,36.00,24.00,,,,2024,
+52,Blackmagic Design PYXIS 6K PL-Mount,camcorder,1/0.5,36.00,24.00,,,,2024,
+53,Blackmagic Design Studio Camera 4K Plus,camcorder,1/0.7,17.80,10.00,,,,2023,
+54,Blackmagic Design Studio Camera 4K Plus G2,camcorder,1/0.7,17.80,10.00,,,,2023,
+55,Blackmagic Design Studio Camera 4K Pro,camcorder,1/0.7,17.80,10.00,,,,2023,
+56,Blackmagic Design Studio Camera 4K Pro G2,camcorder,1/0.7,17.80,10.00,,,,2023,
+57,Blackmagic Design Studio Camera 6K Pro,camcorder,1/0.6,23.10,13.00,,,,2023,
+58,Blackmagic Design Studio Camera HD,camcorder,1/1.3,12.50,7.00,,,,2014,
+59,Blackmagic Design URSA Broadcast,camcorder,1/1.1,13.10,7.30,,,,2018,
+60,Blackmagic Design URSA Mini 4.6K EF-Mount,camcorder,1/0.6,25.30,14.60,,,,2015,
+61,Blackmagic Design URSA Mini 4K EF-Mount,camcorder,1/0.6,21.10,11.90,,,,2015,
+62,Blackmagic Design URSA Mini Pro 12K,camcorder,1/0.6,27.00,14.30,,,,2020,
+63,Blackmagic Design URSA Mini Pro 4.6K G2 EF-Mount,camcorder,1/0.6,25.30,14.30,,,,2020,
+64,BolyGuard BG310-M,fixed,,,,,3.0,,2021,
+65,Braun Champion 360,actioncam,1/1,20.32,15.24,,,,2017,
+66,Braun Scouting Cam Black 500 Mini,fixed,,,,,5.0,,2019,
+67,Braun Scouting Cam Black 700 Phone,fixed,,,,,5.0,,2018,
+68,Braun Scouting Cam Black1300,fixed,,,,,13.0,,2021,
+69,Braun Scouting Cam Black1300 WiFi,fixed,,,,,13.0,,2022,
+70,Braun Scouting Cam Black1320 Wifi Solar 4K DS,fixed,,,,,13.0,,2025,
+71,Braun Scouting Cam Black200 Mini,fixed,,,,,2.0,,2023,
+72,Braun Scouting Cam Black200 WiFi Mini,fixed,,,,,2.0,,2023,
+73,Braun Scouting Cam Black200A Mini,fixed,,,,,2.0,,2023,
+74,Braun Scouting Cam Black300,fixed,,,,,5.0,,2018,
+75,Braun Scouting Cam Black300 Wifi Solar 4K Mini,fixed,,,,,3.0,,2025,
+76,Braun Scouting Cam Black400 Dual Wifi,fixed,,,,,4.0,,2025,
+77,Braun Scouting Cam Black400 Wifi 4K,fixed,,,,,4.0,,2025,
+78,Braun Scouting Cam Black400 Wifi 8K,fixed,,,,,4.0,,2025,
+79,Braun Scouting Cam Black400 WiFi Solar,fixed,,,,,4.0,,2022,
+80,Braun Scouting Cam Black500 4K,fixed,,,,,5.0,,2025,
+81,Braun Scouting Cam Black550,fixed,,,,,5.0,,2022,
+82,Braun Scouting Cam Black575,fixed,,,,,5.0,,2025,
+83,Braun Scouting Cam Black700,fixed,,,,,5.0,,2018,
+84,Braun Scouting Cam Black800 Mini,fixed,,,,,8.0,,2021,
+85,Braun Scouting Cam Black800 WiFi,fixed,,,,,8.0,,2020,
+86,Braun Scouting Cam Black820 Dual Sensor,fixed,,,,,8.0,,2021,
+87,Bresser Wildkamera 5MP mit Bewegungssensor,fixed,,,,,2.0,,2020,
+88,"Bresser Überwachungskamera, Wildkamera",fixed,,,,,16.0,,2020,
+89,Brinno BARD BAC2000 Creative Camera Kit,camcorder,1/0.5,40.64,30.48,,,,2021,
+90,Brinno BCC2000,camcorder,1/0.5,40.64,30.48,,,,2021,
+91,Brinno BCC300-C,camcorder,1/0.7,29.03,21.77,,,,2024,
+92,Brinno BCC300-M,camcorder,1/0.7,29.03,21.77,,,,2024,
+93,Brinno TLC2000,camcorder,1/0.5,40.64,30.48,,,,2021,
+94,Brinno TLC2020,camcorder,1/0.5,40.64,30.48,,,,2021,
+95,Brinno TLC300,camcorder,1/0.7,29.03,21.77,,,,2024,
+96,Bushnell Core DS-4K,fixed,,,,,32.0,,2023,
+97,Bushnell Core S-4K,fixed,,,,,23.0,,2023,
+98,Bushnell NatureView HD Essential,fixed,,,,,12.0,,2015,
+99,Bushnell NatureView HD Live View,fixed,,,,,14.0,,2015,
+100,Bushnell Surveillance Camera WIFI,fixed,,,,,6.0,,2019,
+101,Bushnell Trophy Cam HD Max,fixed,,,,,8.0,,2013,
+102,Camlink CL-AC360,actioncam,1/1,20.32,15.24,,,,2017,
+103,Camouflage EZ BirdFeed 1,fixed,,,,,,,2024,
+104,Camworld Videokamera 5K,camcorder,1/0.3,67.73,50.80,,,,2024,
+157,Canon EOS C200,camcorder,1/0.6,24.90,18.70,,,,2017,
+158,Canon EOS C300 Mark III,camcorder,1/0.6,26.20,13.80,,,,2020,
+159,Canon EOS C400,camcorder,1/0.5,38.40,20.20,,,,2024,
+160,Canon EOS C500 Mark II EF,camcorder,1/0.5,38.10,20.10,,,,2019,
+161,Canon EOS C500 Mark II PL,camcorder,1/0.5,38.10,20.10,,,,2019,
+162,Canon EOS C70 RF,camcorder,1/0.6,26.20,13.80,,,,2020,
+163,Canon EOS C80,camcorder,1/0.5,36.00,19.00,,,,2024,
+208,Canon Legria HF G70,camcorder,1/2.3,8.83,6.63,,,,2022,
+209,Canon Legria HF M52,camcorder,1/3,6.77,5.08,,,,2012,
+210,Canon ME200S-SH,camcorder,1/0.5,36.00,24.00,,,,2016,
+247,Canon XA15,camcorder,1/2.8,7.26,5.44,,,,2017,
+248,Canon XA50,camcorder,1/1,20.32,15.24,,,,2019,
+249,Canon XA55,camcorder,1/1,20.32,15.24,,,,2019,
+250,Canon XA60,camcorder,1/2.3,8.83,6.63,,,,2022,
+251,Canon XA65,camcorder,1/2.3,8.83,6.63,,,,2022,
+252,Canon XA70,camcorder,1/1,20.32,15.24,,,,2022,
+253,Canon XA75,camcorder,1/1,20.32,15.24,,,,2022,
+254,Canon XF605,camcorder,1/1,20.32,15.24,,,,2021,
+255,Canon XF705,camcorder,1/1,20.32,15.24,,,,2018,
+256,Canon Zoemini C,fixed,,,,,5.0,,2019,
+257,Canon Zoemini S,fixed,,,,,8.0,,2019,
+258,Canon Zoemini S rose,fixed,,,,,8.0,,2019,
+259,Canon Zoemini S2 aquamarin,fixed,,,,,8.0,,2021,
+260,Canon Zoemini S2 perl,fixed,,,,,8.0,,2021,
+261,Canon Zoemini S2 rose,fixed,,,,,8.0,,2021,
+262,Carat WK 1001,fixed,,,,,5.0,,2016,
+283,Denver AC-5000W,actioncam,1/0.5,40.64,30.48,,,,2014,
+284,Denver ACK-8062W,actioncam,1/0.5,40.64,30.48,,,,2023,
+285,Denver ACT-1301,actioncam,1/0.8,25.40,19.05,,,,2014,
+286,Denver ACT-1302T,actioncam,1/0.5,40.64,30.48,,,,2014,
+287,Denver ACT-5020TW,actioncam,1/3,6.77,5.08,,,,2014,
+288,Denver ACT-5051W,actioncam,1/0.5,40.64,30.48,,,,2020,
+289,Denver ACT-8030W,actioncam,1/0.5,40.64,30.48,,,,2015,
+290,Denver ACV-8305W,actioncam,1/1,20.32,15.24,,,,2017,
+291,Denver DCA-4811,fixed,,,,,5.0,,2024,
+292,Denver DCA-4818,fixed,,,,,5.0,,2024,
+293,Denver HSC-5003,fixed,,,,,5.0,,2015,
+294,Denver HSM-5003,fixed,,,,,5.0,,2018,
+295,Denver KCA-1310 Kinderkamera,fixed,,,,,1.3,,2019,
+296,Denver KCA-1320 Kinderkamera,fixed,,,,,1.3,,2020,
+297,Denver KCA-1330 Kinderkamera,fixed,,,,,,,2022,
+298,Denver KCA-1340BU,fixed,,,,,8.0,,2024,
+299,Denver KCA-1340RO Rose,fixed,,,,,8.0,,2024,
+300,Denver KPC-1370,fixed,,,,,,,2024,
+301,Denver Wildkamera WCL-8040,fixed,,,,,8.0,,2023,
+302,Denver Wildkamera WCM-8010,fixed,,,,,8.0,,2018,
+303,Denver Wildkamera WCS-5020,fixed,,,,,5.0,,2019,
+304,Denver Wildkamera WCT-3004,fixed,,,,,3.0,,2017,
+305,Denver Wildkamera WCT-5001,fixed,,,,,5.0,,2025,
+306,Denver Wildkamera WCT-5002,fixed,,,,,5.0,,2024,
+307,Denver Wildkamera WCT-5003,fixed,,,,,5.0,,2015,
+308,Denver Wildkamera WCT-8010,fixed,,,,,8.0,,2018,
+309,Denver Wildkamera WCT-8016,fixed,,,,,8.0,,2024,
+310,Denver Wildkamera WCT-8020W,fixed,,,,,8.0,,2019,
+311,Denver Wildkamera WCT-8026W,fixed,,,,,8.0,,2024,
+312,Disney Pix Digitalkameras,fixed,,,,,0.3,,2008,
+313,DJI Action 2 Dual-Screen Combo,actioncam,1/1.7,11.95,8.96,,,,2021,
+314,DJI Action 2 Power Combo,actioncam,1/1.7,11.95,8.96,,,,2021,
+315,DJI Osmo,camcorder,1/2.3,8.83,6.63,,,,2015,
+316,DJI Osmo Action 3 Adventure Combo,actioncam,1/1.7,11.95,8.96,,,,2022,
+317,DJI Osmo Action 3 Standard Combo,actioncam,1/1.7,11.95,8.96,,,,2022,
+318,DJI Osmo Action 4 Adventure Combo,actioncam,1/1.3,15.63,11.72,,,,2023,
+319,DJI Osmo Action 4 Essential-Combo,actioncam,1/1.3,15.63,11.72,,,,2025,
+320,DJI Osmo Action 4 Rennradsport Combo,actioncam,1/1.7,11.95,8.96,,,,2023,
+321,DJI Osmo Action 4 Standard Combo,actioncam,1/1.3,15.63,11.72,,,,2023,
+322,DJI Osmo Action 5 Pro Adventure Combo,actioncam,1/1.3,15.63,11.72,,,,2024,
+323,DJI Osmo Action 5 Pro Essential Combo,actioncam,1/1.3,15.63,11.72,,,,2025,
+324,DJI Osmo Action 5 Pro Standard Combo,actioncam,1/1.3,15.63,11.72,,,,2024,
+325,DJI Osmo Pocket,camcorder,1/2.3,8.83,6.63,,,,2018,
+326,DJI Osmo Pocket 3,camcorder,1/1,20.32,15.24,,,,2023,
+327,DJI Osmo Pocket 3 Kreativ Combo,camcorder,1/1,20.32,15.24,,,,2023,
+328,DJI Osmo RAW Combo,camcorder,1/0.7,17.30,13.00,,,,2016,
+329,DJI Osmo Zenmuse X3 Gimbal und Kamera,camcorder,1/2.3,8.83,6.63,,,,2025,
+330,DJI Pocket 2 Kreativ Combo,camcorder,1/1.7,11.95,8.96,,,,2020,
+331,DJI Ronin 4D-6K,camcorder,1/0.5,35.70,18.80,,,,2021,
+332,DJI Ronin 4D-8K,camcorder,1/0.5,36.00,19.00,,,,2021,
+333,Dörr SnapShot Cloud 4G,fixed,,,,,5.0,,2023,
+334,Dörr SnapShot Extra Black 12.0i HD,fixed,,,,,3.0,,2019,
+335,Dörr SnapShot Limited 5.0 S,fixed,,,,,,,2019,
+336,Dörr SnapShot Limited Black 5.0,fixed,,,,,5.0,,2016,
+337,Dörr SnapShot Limited Black 5.0 S,fixed,,,,,,,2019,
+338,Dörr SnapShot Limited Black 8MP,fixed,,,,,8.0,,2017,
+339,Dörr Snapshot Mini 12MP HD,fixed,,,,,12.0,,2017,
+340,Dörr Snapshot Mini Black,fixed,,,,,5.0,,2012,
+341,Dörr Snapshot Mini Black 12MP,fixed,,,,,12.0,,2017,
+342,Dörr SnapShot Multi Mobil 3G,fixed,,,,,3.0,,2020,
+343,Dörr Wild Snap IR X42,fixed,,,,,8.0,,2015,
+344,Easypix Aquapix W3027 Wave Gelb,fixed,,,,,5.0,,2025,
+345,Easypix Aquapix W3027 Wave Iceblue,fixed,,,,,5.0,,2025,
+346,Easypix Aquapix W3027 Wave Marine Blue,fixed,,,,,5.0,,2024,
+347,Easypix Aquapix W3027 Wave Pink,fixed,,,,,5.0,,2025,
+348,Easypix Aquapix W3027 Wave Sunset Orange,fixed,,,,,5.0,,2024,
+349,Easypix Black Manta 5K,actioncam,1/2.8,7.26,5.44,,,,2024,
+350,Easypix GoXtreme Adventure Action Camera,actioncam,1/0.5,40.64,30.48,,,,2016,
+351,Easypix GoXtreme Black Hawk 4K,actioncam,1/0.5,40.64,30.48,,,,2016,
+352,Easypix GoXtreme Black Hawk+ 4K,actioncam,1/0.5,40.64,30.48,,,,2018,
+353,Easypix GoXtreme Enduro Black,actioncam,1/3.2,6.35,4.76,,,,2023,
+354,Easypix GoXtreme Impulse,actioncam,1/0.5,40.64,30.48,,,,2021,
+355,Easypix GoXtreme Rebel,actioncam,1/0.5,40.64,30.48,,,,2021,
+356,Easypix GoXtreme Reef,fixed,,,,,8.0,,2024,
+357,Easypix GoXtreme Vision DUO,actioncam,1/0.5,40.64,30.48,,,,2025,
+358,Easypix GoXtreme Vision+,actioncam,1/0.5,40.64,30.48,,,,2021,
+359,Easypix KiddyPix Blizz,fixed,,,,,2.0,,2019,
+360,Easypix KiddyPix Galaxy,fixed,,,,,1.3,,2018,
+361,Easypix KiddyPix Mystery,fixed,,,,,1.3,,2018,
+362,Easypix KiddyPix Robozz,fixed,,,,,1.3,,2020,
+363,Easypix Panox MX200,actioncam,1/0.6,33.87,25.40,,,,2017,
+364,Easypix PowerPro VX6430,fixed,,,,,8.0,,2025,
+365,Easypix V48 Pocket,fixed,,,,,8.0,,2025,
+366,Easypix V64 Flip,fixed,,,,,,,2025,
+367,Easypix W1024,fixed,,,,,10.0,,2012,
+368,Easypix W1400 Active,fixed,,,,,14.0,,2014,
+369,Easypix W1627,fixed,,,,,5.0,,2017,
+370,Easypix W2024,fixed,,,,,5.0,,2023,
+371,Easypix W3048 Edge iceblue,fixed,,,,,13.0,,2020,
+372,Easypix W3048 Edge violet,fixed,,,,,13.0,,2023,
+373,Easypix W3048 Edge yellow,fixed,,,,,13.0,,2020,
+374,Easypix WDV5630,camcorder,1/0.3,67.73,50.80,,,,2024,
+375,Exp,actioncam,1/0.5,40.64,30.48,,,,2023,
+376,Feiyu Tech Pocket,camcorder,1/2.5,8.13,6.10,,,,2020,
+377,Feiyu Tech Summon+,camcorder,1/2.3,8.83,6.63,,,,2018,
+378,Ferguson eXtreme action CAM,actioncam,1/0.5,40.64,30.48,,,,2020,
+379,Folgtek Wildkamera,fixed,,,,,,,2023,
+426,Fujifilm Wide Evo,fixed,1/3,4.80,3.60,,,,2025,
+466,GardePro A3S,fixed,,,,,,,2024,
+467,GardePro E8 WiFi,fixed,,,,,32.0,,2022,
+468,Goclever DVR Extreme WiFi,actioncam,1/1.4,14.51,10.89,,,,2017,
+469,GoPro HERO,actioncam,,,,,,,2014,
+470,GoPro HERO,actioncam,1/0.6,33.87,25.40,,,,2024,
+471,GoPro HERO Session,actioncam,,,,,,,2016,
+472,GoPro HERO+,actioncam,,,,,,,2015,
+473,GoPro HERO10 Black,actioncam,1/2.3,8.83,6.63,,,,2021,
+474,GoPro HERO10 Black Hard Bundle,actioncam,1/2.3,8.83,6.63,,,,2022,
+475,GoPro HERO11 Black,actioncam,1/1.9,10.69,8.02,,,,2022,
+476,GoPro HERO11 Black Bundle,actioncam,1/1.9,10.69,8.02,,,,2022,
+477,GoPro HERO11 Black Creator Edition,actioncam,1/1.9,10.69,8.02,,,,2022,
+478,GoPro HERO11 Black Mini,actioncam,1/1.9,10.69,8.02,,,,2022,
+479,GoPro HERO11 Black Ultimate Bundle,actioncam,1/1.9,10.69,8.02,,,,2023,
+480,GoPro HERO12 Black,actioncam,1/1.9,10.69,8.02,,,,2023,
+481,GoPro HERO12 Black Creator Edition,actioncam,1/1.9,10.69,8.02,,,,2023,
+482,GoPro HERO12 Black Zubehörpaket,actioncam,1/1.9,10.69,8.02,,,,2023,
+483,GoPro HERO13 Black,actioncam,1/1.9,10.69,8.02,,,,2024,
+484,GoPro HERO13 Black Creator Edition,actioncam,1/1.9,10.69,8.02,,,,2024,
+485,GoPro HERO13 Black in Forest Green Limited Edition,actioncam,1/1.9,10.69,8.02,,,,2025,
+486,GoPro HERO13 Black Lens Mod Ultraweit Bundle,actioncam,1/1.9,10.69,8.02,,,,2024,
+487,GoPro HERO13 Black mit Zubehör Bundle,actioncam,1/1.9,10.69,8.02,,,,2024,
+488,GoPro HERO13 Black Polar White,actioncam,1/1.9,10.69,8.02,,,,2025,
+489,GoPro HERO4 Black Edition,actioncam,,,,,,,2014,
+490,GoPro HERO4 Session,actioncam,,,,,,,2015,
+491,GoPro HERO4 Silver Edition,actioncam,,,,,,,2014,
+492,GoPro HERO7 Silver,actioncam,1/0.5,40.64,30.48,,,,2018,
+493,GoPro HERO9 Black,actioncam,1/0.5,40.64,30.48,,,,2020,
+494,GoPro Max,actioncam,,,,,,,2025,
+495,GoPro Max,actioncam,,,,,,,2019,
+496,Grundig HD 720P,actioncam,1/0.5,40.64,30.48,,,,2018,
+497,Gudsen Moza Moin Camera,camcorder,1/0.4,50.80,38.10,,,,2021,
+498,GYAM 4G MMS/SMS/SMTP/FTP Wildkamera,fixed,,,,,16.0,,2021,
+511,Hoppstar Artist blossom,fixed,,,,,5.0,,2025,
+512,Hoppstar Artist blush,fixed,,,,,5.0,,2024,
+513,Hoppstar Artist denim,fixed,,,,,5.0,,2025,
+514,Hoppstar Artist laurel,fixed,,,,,5.0,,2024,
+515,Hoppstar Artist Memo,fixed,,,,,5.0,,2025,
+516,Hoppstar Artist oat,fixed,,,,,5.0,,2024,
+517,Hoppstar Expert blush,fixed,,,,,3.0,,2024,
+518,Hoppstar Expert citron,fixed,,,,,3.0,,2024,
+519,Hoppstar Expert laurel,fixed,,,,,3.0,,2024,
+520,Hoppstar Expert yale,fixed,,,,,3.0,,2024,
+521,Hoppstar Rookie blossom,fixed,,,,,3.0,,2024,
+522,Hoppstar Rookie blush,fixed,,,,,3.0,,2024,
+523,Hoppstar Rookie honey,fixed,,,,,3.0,,2024,
+524,Hoppstar Rookie moss,fixed,,,,,3.0,,2024,
+525,Hoppstar Rookie oat,fixed,,,,,3.0,,2024,
+526,Hoppstar Rookie yale,fixed,,,,,3.0,,2024,
+527,HP Sprocket 2in1 Camera/Printer,fixed,,,,,5.0,,2018,
+528,Insta360 Ace Pro,actioncam,1/1.3,15.63,11.72,,,,2023,
+529,Insta360 Ace Pro 2,actioncam,1/1.3,15.63,11.72,,,,2024,
+530,Insta360 Ace Pro 2 Doppel Akku Bundle,actioncam,1/1.3,15.63,11.72,,,,2024,
+531,Insta360 Go,actioncam,,,,,,,2019,
+532,Insta360 Go 2 32GB,actioncam,,,,,,,2021,
+533,Insta360 Go 3 128GB,actioncam,,,,,,,2023,
+534,Insta360 Go 3 32GB,actioncam,,,,,,,2023,
+535,Insta360 Go 3 64GB,actioncam,,,,,,,2023,
+536,Insta360 Go 3S 128GB Standard,actioncam,,,,,,,2024,
+537,Insta360 Go 3S 64GB,actioncam,,,,,,,2024,
+538,Insta360 Go 3S Standalone Camera 128GB,actioncam,,,,,,,2025,
+539,Insta360 One R 1 Edition,actioncam,1/1,20.32,15.24,,,,2020,
+540,"Insta360 One R 1"" Edition",actioncam,1/1,20.32,15.24,,,,2020,
+541,Insta360 One R 4K Wide Angle Edition,actioncam,,,,,,,2020,
+542,Insta360 One R Twin Edition,actioncam,,,,,,,2020,
+543,Insta360 One RS 1 360° Edition,actioncam,1/1,20.32,15.24,,,,2022,
+544,Insta360 One RS 1 Edition,actioncam,1/1,20.32,15.24,,,,2022,
+545,"Insta360 One RS 1"" 360° Edition",actioncam,1/1,20.32,15.24,,,,2022,
+546,"Insta360 One RS 1"" Edition",actioncam,1/1,20.32,15.24,,,,2022,
+547,Insta360 One RS 4K,actioncam,1/2,10.16,7.62,,,,2022,
+548,Insta360 One RS Twin Edition,actioncam,1/2,10.16,7.62,,,,2022,
+549,Insta360 One X2,actioncam,1/2.3,8.83,6.63,,,,2020,
+550,Insta360 Pro 2,actioncam,,,,,,,2018,
+551,Insta360 Titan,actioncam,,,,,,,2019,
+552,Insta360 X3,actioncam,1/2,10.16,7.62,,,,2022,
+553,Insta360 X3 All-Purpose Kit Starter-Bundle,actioncam,1/2,10.16,7.62,,,,2025,
+554,Insta360 X3 Baustellen Bundle,actioncam,1/2,10.16,7.62,,,,2025,
+555,Insta360 X3 Creator Kit,actioncam,1/2,10.16,7.62,,,,2025,
+556,Insta360 X3 Motorrad Kit,actioncam,1/2,10.16,7.62,,,,2025,
+557,Insta360 X3 Snow Kit,actioncam,1/2,10.16,7.62,,,,2025,
+558,Insta360 X4,actioncam,1/2,10.16,7.62,,,,2024,
+559,Insta360 X4 Adventure Bundle,actioncam,1/2,10.16,7.62,,,,2025,
+560,Insta360 X4 Ausdauer Bundle,actioncam,1/2,10.16,7.62,,,,2025,
+561,Insta360 X4 Ausdauer Bundle ohne SD-Karte,actioncam,1/2,10.16,7.62,,,,2025,
+562,Insta360 X4 Baustellen Bundle,actioncam,1/2,10.16,7.62,,,,2025,
+563,Insta360 X4 Explorer Bundle,actioncam,1/2,10.16,7.62,,,,2025,
+564,Insta360 X4 Motorrad Bundle,actioncam,1/2,10.16,7.62,,,,2025,
+565,Insta360 X4 Ski Bundle,actioncam,1/2,10.16,7.62,,,,2025,
+566,Insta360 X4 Snowboard Bundle,actioncam,1/2,10.16,7.62,,,,2025,
+567,Insta360 X4 Unsichtbares Tauch Bundle,actioncam,1/2,10.16,7.62,,,,2025,
+568,Insta360 X5 Essentials Bundle,actioncam,1/1.3,15.63,11.72,,,,2025,
+569,Insta360 X5 Motorrad Bundle,actioncam,1/1.3,15.63,11.72,,,,2025,
+570,Insta360 X5 Standard Bundle,actioncam,1/1.3,15.63,11.72,,,,2025,
+571,iSHOXS ISAW A2,actioncam,1/3,6.77,5.08,,,,2013,
+572,Jamara Camara Full HD Pro Wifi V2,actioncam,1/0.5,40.64,30.48,,,,2017,
+573,JoyFan H1 Wildkamera,fixed,,,,,1.0,,2023,
+574,JVC GY-HM170E,camcorder,1/2.3,8.83,6.63,,,,2014,
+575,JVC GY-HM180E,camcorder,1/2.3,8.83,6.63,,,,2018,
+576,JVC GY-HM200E,camcorder,1/2.3,8.83,6.63,,,,2014,
+577,JVC GY-HM250E,camcorder,1/2.3,8.83,6.63,,,,2018,
+578,Kandao QooCam,fixed,,,,,,,2018,
+579,Kandao QooCam 3 Ultra 8K,fixed,1/1.7,7.60,5.70,,,,2024,
+580,Kandao QooCam 8K Enterprise,fixed,1/1.7,7.60,5.70,,,,2020,
+581,Kandao QooCam EGO 3D,actioncam,1/2,10.16,7.62,,,,2023,
+582,ki-tec ATA890,actioncam,1/0.5,40.64,30.48,,,,2020,
+583,Kidywolf Kidycam,fixed,,,,,8.0,,2024,
+584,Kidywolf Kidyprint,fixed,,,,,8.0,,2024,
+585,Kitvision Escape 4KW,actioncam,1/0.5,40.64,30.48,,,,2018,
+588,Kodak Astro Zoom AZ365,fixed,,,,,16.2,,2016,
+599,Kodak Astro Zoom AZ901,fixed,,,,,20.0,,2017,
+608,Kodak Mini Shot 2 Combo,fixed,,,,,10.0,,2020,
+609,Kodak Mini Shot 2 Combo Retro,fixed,,,,,10.0,,2020,
+610,Kodak Mini Shot 3 Combo,fixed,,,,,10.0,,2020,
+611,Kodak Mini Shot 3 Combo Retro,fixed,,,,,10.0,,2020,
+612,Kodak MiniShot,fixed,,,,,10.0,,2017,
+613,Kodak PixPro 4KVR360,actioncam,,,,,,,2017,
+614,Kodak PixPro SP360-4K,actioncam,1/1,20.32,15.24,,,,2015,
+615,Kodak PixPro SP360-4K Aqua Sport Pack,actioncam,1/1,20.32,15.24,,,,2016,
+616,Kodak PixPro SP360-4K Doppelpackung,actioncam,1/1,20.32,15.24,,,,2016,
+617,Kodak PixPro SP360-4K Extreme Pack,actioncam,1/1,20.32,15.24,,,,2016,
+618,Kodak Printomatic,fixed,,,,,10.0,,2018,
+619,Kodak Smile,fixed,,,,,10.0,,2019,
+620,Kodak Smile+,fixed,,,,,5.0,,2024,
+621,Kodak Smile+ fuchsie,fixed,,,,,5.0,,2024,
+624,König CSAC300,actioncam,1/0.5,40.64,30.48,,,,2017,
+625,König CSACWG100,actioncam,1/0.5,40.64,30.48,,,,2017,
+626,Lamax W10.1,actioncam,1/0.5,40.64,30.48,,,,2022,
+627,Lamax W9.1,actioncam,1/0.5,40.64,30.48,,,,2021,
+628,Lamax X3.1 Atlas,actioncam,1/0.5,40.64,30.48,,,,2023,
+665,Lexibook Minions,fixed,,,,,1.2,,2016,
+666,Lexibook Star Wars,fixed,,,,,1.3,,2016,
+667,LG 360 CAM,fixed,,,,,13.0,,2016,
+668,Liquid Image EGO,actioncam,1/3,6.77,5.08,,,,2012,
+669,Liquid Image Torque HD,actioncam,1/2.5,8.13,6.10,,,,2013,
+670,Little Tikes Tobi 2 Director's Camera,fixed,,,,,5.0,,2022,
+671,LTL Acorn 5210A,fixed,,,,,12.0,,2015,
+673,Medion Life S43044,fixed,,,,,14.0,,2016,
+674,Medion Life S47018,actioncam,,,,,,,2015,
+675,Mevo Start,camcorder,,,,,,,2021,
+676,Midland Action XTC100,actioncam,,,,,,,2011,
+677,Minox ACX 100 HD Action Cam,actioncam,,,,,,,2012,
+678,Minox ACX 300,actioncam,1/2.3,8.83,6.63,,,,2017,
+679,Minox DC9011WP,fixed,,,,,9.0,,2010,
+680,Minox DCC 14.0,fixed,,,,,14.0,,2013,
+681,Minox DCC Leica 5.1,fixed,,,,,5.1,,2012,
+683,Minox Wildkamera DTC 1200 4G,fixed,,,,,,,2020,
+684,Minox Wildkamera DTC 390,fixed,,,,,5.0,,2017,
+685,Minox Wildkamera DTC 400 Slim,fixed,,,,,3.0,,2014,
+686,Minox Wildkamera DTC 460,fixed,,,,,,,2020,
+687,Minox Wildkamera DTC 550,fixed,,,,,5.0,,2017,
+688,Motorola VerveCam+,actioncam,1/3,6.77,5.08,,,,2019,
+689,Mustek DV535A,camcorder,1/0.4,50.80,38.10,,,,2007,
+690,Mustek DV536,camcorder,1/0.4,50.80,38.10,,,,2007,
+691,Mustek GSmart mini 3,fixed,,,,,2.1,,2002,
+692,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
+693,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
+694,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
+695,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
+696,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
+697,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2021,
+698,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,,,,2024,
+699,Nedis Fahrradkamera,actioncam,,,,,,,2024,
+700,Nedis Wildlife Kamera,fixed,,,,,3.0,,2022,
+701,Nedis Wildlife Kamera,fixed,,,,,4.0,,2025,
+784,Nilox F-60,actioncam,1/2.3,8.83,6.63,,,,2013,
+785,Nilox Mini Up,actioncam,1/6,3.39,2.54,,,,2016,
+786,Oaxis myFirst Camera 10,fixed,,,,,5.0,,2024,
+787,Oaxis myFirst Camera 2,fixed,,,,,8.0,,2024,
+788,Oaxis myFirst Camera 3,fixed,,,,,,,2024,
+789,Oaxis myFirst Camera Insta 2,fixed,,,,,3.0,,2024,
+790,Oaxis myFirst Camera Insta Wi,fixed,,,,,,,2024,
+791,Oaxis myFirst Camera Insta Wi türkis,fixed,,,,,,,2024,
+827,Oregon Scientific ATC 9K Action Cam,actioncam,1/0.7,29.03,21.77,,,,2010,
+828,Oregon Scientific ATC Chameleon,actioncam,,,,,,,2014,
+829,Oregon Scientific ATC Mini Action Cam,actioncam,,,,,,,2012,
+830,Panasonic AG-CX10,camcorder,1/2.5,8.13,6.10,,,,2020,
+831,Panasonic AG-CX18,camcorder,1/2.5,8.13,6.10,,,,2025,
+832,Panasonic AG-CX20,camcorder,1/2.5,8.13,6.10,,,,2025,
+833,Panasonic AG-CX350,camcorder,1/1,20.32,15.24,,,,2019,
+834,Panasonic AG-CX370,camcorder,1/1,20.32,15.24,,,,2025,
+835,Panasonic AG-UX90,camcorder,1/1,20.32,15.24,,,,2016,
+836,Panasonic AJ-PX230,camcorder,1/3,6.77,5.08,,,,2017,
+837,Panasonic AU-EVA1,camcorder,1/0.6,25.50,15.60,,,,2017,
+838,Panasonic HC-MDH3,camcorder,1/3.1,6.55,4.92,,,,2018,
+839,Panasonic HC-V380,camcorder,1/5.8,3.50,2.63,,,,2016,
+840,Panasonic HC-V720,camcorder,1/2.3,8.83,6.63,,,,2013,
+841,Panasonic HC-V750,camcorder,1/2.3,8.83,6.63,,,,2014,
+842,Panasonic HC-V785,camcorder,1/2.3,8.83,6.63,,,,2022,
+843,Panasonic HC-V808,camcorder,1/2.5,8.13,6.10,,,,2018,
+844,Panasonic HC-V900,camcorder,1/2.5,8.13,6.10,,,,2024,
+845,Panasonic HC-VX3,camcorder,1/2.5,8.13,6.10,,,,2024,
+846,Panasonic HC-VX989,camcorder,1/2.3,8.83,6.63,,,,2016,
+847,Panasonic HC-VXF11,camcorder,1/2.5,8.13,6.10,,,,2018,
+848,Panasonic HC-VXF999,camcorder,1/2.3,8.83,6.63,,,,2016,
+849,Panasonic HC-WX979,camcorder,1/2.3,8.83,6.63,,,,2015,
+850,Panasonic HC-X1200,camcorder,1/2.5,8.13,6.10,,,,2025,
+851,Panasonic HC-X1500,camcorder,1/2.5,8.13,6.10,,,,2020,
+852,Panasonic HC-X1600,camcorder,1/2.5,8.13,6.10,,,,2025,
+853,Panasonic HC-X2,camcorder,1/1,20.32,15.24,,,,2022,
+854,Panasonic HC-X20,camcorder,1/1,20.32,15.24,,,,2022,
+855,Panasonic HC-X2000,camcorder,1/2.5,8.13,6.10,,,,2020,
+856,Panasonic HC-X920,camcorder,1/2.3,8.83,6.63,,,,2013,
+857,Panasonic Lumix DC-BGH1,camcorder,1/0.7,17.30,13.00,,,,2020,
+858,Panasonic Lumix DC-BS1H,camcorder,1/0.5,35.60,23.80,,,,2021,
+950,Panono Explorer Edition,fixed,,,,,108.0,,2016,
+971,Philips VoiceTracer,actioncam,1/2.3,8.83,6.63,,,,2019,
+972,Polaroid IE126,fixed,,,,,18.0,,2015,
+973,Polaroid IF045,fixed,,,,,14.0,,2015,
+974,Polaroid iS525,fixed,,,,,16.0,,2016,
+975,Polaroid iX5038,fixed,,,,,20.0,,2016,
+976,Polaroid IX828N,fixed,,,,,8.0,,2019,
+978,Polaroid Mint 2-in-1 Instant Digital Camera,fixed,,,,,16.0,,2018,
+979,Polaroid Pop,fixed,,,,,20.0,,2017,
+980,Polaroid Snap,fixed,,,,,10.0,,2015,
+981,Polaroid Snap Touch,fixed,,,,,13.0,,2016,
+984,PremiumBlue WC-1601 Wildkamera,fixed,,,,,5.0,,2020,
+998,Ricoh Theta,fixed,,,,,,,2014,
+999,Ricoh Theta m15,fixed,,,,,,,2014,
+1009,RICOH WG-M2,actioncam,1/2.3,8.83,6.63,,,,2016,
+1010,Rollei Action One,actioncam,1/2.3,8.83,6.63,,,,2023,
+1011,Rollei Action One Lite,actioncam,1/2.8,7.26,5.44,,,,2024,
+1012,Rollei Actioncam 300 Plus,actioncam,1/0.5,40.64,30.48,,,,2016,
+1013,Rollei Actioncam 372,actioncam,1/4,5.08,3.81,,,,2018,
+1014,Rollei Actioncam 4s Plus,actioncam,1/0.5,40.64,30.48,,,,2019,
+1015,Rollei Actioncam 525,actioncam,1/0.5,40.64,30.48,,,,2017,
+1016,Rollei Actioncam 5s Plus,actioncam,1/0.5,40.64,30.48,,,,2019,
+1017,Rollei Actioncam 9s Cube,actioncam,1/2.9,7.01,5.26,,,,2024,
+1018,Rollei Actioncam 9s Plus,actioncam,1/2.5,8.13,6.10,,,,2019,
+1019,Rollei AddEye,fixed,,,,,8.0,,2014,
+1020,Rollei Compactline 10x,fixed,,,,,20.0,,2024,
+1023,Rollei Compactline 880,fixed,,,,,18.0,,2024,
+1024,Rollei Compactline Dual Screen,fixed,,,,,64.0,,2025,
+1025,Rollei Compactline Mini,fixed,,,,,8.0,,2024,
+1026,Rollei Compactline Pocket,fixed,,,,,5.0,,2025,
+1027,Rollei D2Pro,fixed,,,,,20.0,,2024,
+1028,Rollei Movieline UHD5mWaterpro,camcorder,1/0.3,67.73,50.80,,,,2024,
+1035,Rollei Sportsline 100,fixed,,,,,20.0,,2015,
+1036,Rollei Sportsline 50,fixed,,,,,5.0,,2010,
+1037,Rollei Sportsline 60,fixed,,,,,5.0,,2010,
+1038,Rollei Sportsline 60 Plus,fixed,,,,,8.0,,2019,
+1039,Rollei Sportsline Fun,fixed,,,,,5.0,,2024,
+1040,Samsung Gear 360,fixed,,,,,15.0,,2016,
+1041,Samsung Gear 360,fixed,,,,,8.4,,2017,
+1045,Samsung WB110,fixed,,,,,20.2,,2013,
+1054,SeaLife Reefmaster RM-4K,actioncam,1/2.3,8.83,6.63,,,,2022,
+1055,SeaLife Reefmaster RM-4K Pro 2000 Set,actioncam,1/2.3,8.83,6.63,,,,2022,
+1056,SecaCam HomeVista,fixed,,,,,5.0,,2017,
+1057,SecaCam Wild-Vision,fixed,,,,,5.0,,2019,
+1058,Seissiger Special-Cam Classic,fixed,,,,,12.0,,2022,
+1059,Seissiger Special-Cam Supersim,fixed,,,,,12.0,,2023,
+1060,ShinePick Fotoapparat Kinder,fixed,,,,,8.0,,2024,
+1076,SJCAM C100+,actioncam,,,,,,,2023,
+1077,SJCAM C200,actioncam,1/2.8,7.26,5.44,,,,2023,
+1078,SJCAM C200 Pro,actioncam,1/0.8,25.40,19.05,,,,2023,
+1079,SJCAM C300,actioncam,1/2.8,7.26,5.44,,,,2023,
+1080,SJCAM C300 Pocket,actioncam,1/2.8,7.26,5.44,,,,2023,
+1081,SJCAM SJ20,actioncam,1/0.4,50.80,38.10,,,,2024,
+1082,SJCAM SJ4000,actioncam,1/3,6.77,5.08,,,,2015,
+1083,SJCAM SJ4000 Wifi,actioncam,1/3,6.77,5.08,,,,2015,
+1084,SJCAM SJ8 Air,actioncam,1/2.3,8.83,6.63,,,,2018,
+1085,SJCAM SJ8 Plus,actioncam,1/2.3,8.83,6.63,,,,2018,
+1086,SJCAM SJ8 Pro,actioncam,1/2.3,8.83,6.63,,,,2018,
+1087,Somikon DV-812.HD,camcorder,1/0.4,50.80,38.10,,,,2015,
+1088,Somikon Kinder-Full-HD-Digitalkamera,fixed,,,,,1.3,,2024,
+1138,Sony AX43,camcorder,1/2.5,8.13,6.10,,,,2020,
+1139,Sony AX43A,camcorder,1/2.5,8.13,6.10,,,,2023,
+1178,Sony FDR-X1000VR Remote Kit,actioncam,1/2.3,8.83,6.63,,,,2015,
+1179,Sony HDR-PJ810E,camcorder,1/4,5.08,3.81,,,,2014,
+1180,Sony HXR-NX80,camcorder,1/1,20.32,15.24,,,,2017,
+1181,Sony HXR-NX800,camcorder,1/1,20.32,15.24,,,,2024,
+1182,Sony ILME-FR7,camcorder,1/0.5,35.60,23.80,,,,2022,
+1183,Sony ILME-FX2,camcorder,1/0.5,35.90,23.90,,,,2025,
+1184,Sony ILME-FX2 mit XLR-Griffeinheit,camcorder,1/0.5,35.90,23.90,,,,2025,
+1185,Sony ILME-FX3,camcorder,1/0.5,35.60,23.80,,,,2021,
+1186,Sony ILME-FX30,camcorder,1/0.6,23.30,15.50,,,,2022,
+1187,Sony ILME-FX30 inkl. XLR Handgriff,camcorder,1/0.6,23.30,15.50,,,,2022,
+1188,Sony ILME-FX3a,camcorder,1/0.5,35.60,23.80,,,,2025,
+1189,Sony ILME-FX6V,camcorder,1/0.5,36.00,24.00,,,,2020,
+1190,Sony NEX-FS100,camcorder,1/0.3,67.73,50.80,,,,2011,
+1191,Sony PMW-EX1R,camcorder,,,,,,,2008,
+1192,Sony PMW-EX3,camcorder,,,,,,,2008,
+1193,Sony PXW-FX9,camcorder,1/0.3,67.73,50.80,,,,2019,
+1194,Sony PXW-FX9K,camcorder,1/0.3,67.73,50.80,,,,2019,
+1195,Sony PXW-Z150,camcorder,1/1,20.32,15.24,,,,2016,
+1196,Sony PXW-Z190,camcorder,1/3,6.77,5.08,,,,2018,
+1197,Sony PXW-Z200,camcorder,1/1,13.20,8.80,,,,2024,
+1198,Sony PXW-Z280,camcorder,1/2,10.16,7.62,,,,2018,
+1199,Sony PXW-Z90,camcorder,1/1,20.32,15.24,,,,2017,
+1210,Spypoint FLEX,fixed,,,,,33.0,,2023,
+1211,Spypoint LINK-MICRO-LTE,fixed,,,,,10.0,,2023,
+1212,Spypoint LINK-MICRO-S-LTE,fixed,,,,,10.0,,2021,
+1213,Stealth Cam GX45NG,fixed,,,,,12.0,,2016,
+1214,Suntekcam HC-801LTE,fixed,,,,,5.0,,2021,
+1215,Surfola SF230 Unterwasserkamera Actionkamera,actioncam,1/0.5,40.64,30.48,,,,2025,
+1217,Technaxx HD Pocket DV,camcorder,1/0.4,50.80,38.10,,,,2009,
+1220,Technaxx Nature Cam TX-09,fixed,,,,,5.0,,2015,
+1221,Technaxx Nature Cam TX-44,fixed,,,,,2.0,,2015,
+1225,Technaxx Video Sunglasses TX-25,actioncam,,,,,,,2014,
+1227,TomTom Bandit,actioncam,1/0.8,25.40,19.05,,,,2015,
+1228,Transcend DrivePro,actioncam,,,,,,,2016,
+1229,Trevi Go 2200 HD Scuba Sport Camera,actioncam,1/0.5,40.64,30.48,,,,2014,
+1230,Trust 820 LCD Powercam Zoom,fixed,,,,,4.0,,2003,
+1231,Veho Muvi Micro HD10L,actioncam,,,,,,,2019,
+1232,Veho Muvi Micro HD10X,actioncam,,,,,,,2019,
+1233,Veho Muvi Micro HDZ Pro,actioncam,,,,,,,2019,
+1234,Victure AC700,actioncam,1/0.5,40.64,30.48,,,,2020,
+1235,Vivitar DVR783HD,actioncam,1/0.6,33.87,25.40,,,,2015,
+1236,Vmotal GDC80X2,fixed,,,,,,,2022,
+1237,Vosker V150,fixed,,,,,,,2022,
+1238,Vosker V200,fixed,,,,,,,2022,
+1239,VTech Kidizoom Action Cam,actioncam,1/0.7,29.03,21.77,,,,2015,
+1240,VTech Kidizoom Connect,fixed,,,,,2.0,,2013,
+1241,VTech Kidizoom Duo,fixed,,,,,2.0,,2015,
+1242,VTech Kidizoom Duo 5.0,fixed,,,,,5.0,,2018,
+1243,VTech Kidizoom Duo 5.0 mit Tasche,fixed,,,,,5.0,,2018,
+1244,VTech Kidizoom Duo DX,fixed,,,,,5.0,,2020,
+1245,VTech Kidizoom Duo DX mit Tasche,fixed,,,,,5.0,,2020,
+1246,VTech Kidizoom Duo Pro,fixed,,,,,2.0,,2023,
+1247,VTech Kidizoom Duo Pro mit Tasche,fixed,,,,,2.0,,2023,
+1248,VTech Kidizoom Flix,fixed,,,,,0.3,,2017,
+1249,VTech Kidizoom Kid 2,fixed,,,,,2.0,,2020,
+1250,VTech Kidizoom Kid 4,fixed,,,,,2.0,,2024,
+1251,VTech Kidizoom Print Cam,fixed,,,,,2.0,,2021,
+1252,VTech Kidizoom Selfie Cam,fixed,,,,,0.3,,2016,
+1253,VTech Kidizoom Touch,fixed,,,,,2.0,,2013,
+1254,VTech Kidizoom Touch 5.0,fixed,,,,,5.0,,2018,
+1255,VTech Kidizoom Video Studio HD,fixed,,,,,2.0,,2020,
+1256,VTech Star Wars Stormtrooper,fixed,,,,,0.3,,2017,
+1257,Willfine 2.6C,fixed,,,,,,,2020,
+1258,Willfine 2.9L,fixed,,,,,,,2020,
+1259,Willfine 4.8CS,fixed,,,,,,,2020,
+1260,Wolfang WDC02,fixed,,,,,,,2025,
+1261,Yashica City 100,fixed,,,,,,,2025,
+1262,Yashica City 200,fixed,,,,,,,2025,
+1263,Yashica DZ-100 Hello Kitty,fixed,,,,,5.0,,2025,
+1264,Yashica Mini Hello Kitty,fixed,,,,,3.0,,2025,
+1265,Yashica x Peanuts DP-100 Blue Sky,fixed,,,,,5.0,,2025,
+1266,Yashica x Peanuts DP-100 Sage,fixed,,,,,5.0,,2025,
+1267,Yashica x Peanuts Mini Cream,fixed,,,,,3.0,,2025,
+1268,Z Cam E1,camcorder,1/0.4,50.80,38.10,,,,2016,
+1269,Z Cam E2,camcorder,1/0.7,19.00,13.00,,,,2018,
+1270,Z Cam E2-F6,camcorder,1/0.5,37.10,24.80,,,,2019,
+1271,Z Cam E2-F8,camcorder,1/0.5,36.00,24.00,,,,2019,
+1272,Z Cam E2-M4,camcorder,1/0.7,19.00,13.00,,,,2020,
+1273,Z Cam E2-S6,camcorder,1/0.6,23.40,15.70,,,,2019,
+1274,Z Cam E2-S6G EF,camcorder,1/0.6,23.40,15.70,,,,2022,
+1275,Z Cam E2C,camcorder,1/0.7,17.60,13.10,,,,2019,
+1276,Z Cam K1 Pro,camcorder,,,,,,,2019,
+1277,Zeiss Secacam 3 Wildkamera,fixed,,,,,3.0,,2025,
+1278,Zeiss Secacam 5 Wide Angle Wildkamera,fixed,,,,,5.0,,2024,
+1279,Zeiss Secacam 5 Wildkamera,fixed,,,,,5.0,,2024,
+1280,Zeiss Secacam 7 Wildkamera,fixed,,,,,5.0,,2024,
+1282,Zoom Q8,camcorder,1/3,6.77,5.08,,,,2015,
+1283,Zoom Q8n-4K,camcorder,1/2.3,8.83,6.63,,,,2022,
