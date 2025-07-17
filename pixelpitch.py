@@ -833,7 +833,7 @@ def render_html(output_dir: Path) -> None:
 
     (output_dir / "camcorder.html").write_text(
         template.render(
-            title="Camcorder Cameras",
+            title="Camcorders",
             specs=specs_camcorder,
             page="camcorder",
             date=date,
@@ -843,7 +843,7 @@ def render_html(output_dir: Path) -> None:
 
     (output_dir / "actioncam.html").write_text(
         template.render(
-            title="Actioncam Cameras",
+            title="Actioncams",
             specs=specs_actioncam,
             page="actioncam",
             date=date,
