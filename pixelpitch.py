@@ -375,6 +375,10 @@ def _create_browser():
     co = ChromiumOptions()
     co.set_argument("--disable-blink-features=AutomationControlled")
     co.set_argument("--no-sandbox")
+    # Use Google Chrome if available (CI has it pre-installed)
+    chrome_path = "/opt/google/chrome/chrome"
+    if os.path.exists(chrome_path):
+        co.set_browser_path(chrome_path)
     page = ChromiumPage(co)
     page.set.load_mode.eager  # Don't wait for full page load
     # Navigate to homepage to solve Cloudflare challenge and set cookie
@@ -400,7 +404,10 @@ def extract_entries(page, url: str) -> list[str]:
         rows = ROW_RE.findall(content)
         if rows:
             break
-        print(f"  Waiting (attempt {attempt + 1})...", flush=True)
+        # Debug: show what we got instead
+        title_match = re.search(r"<title>(.*?)</title>", content)
+        title = title_match.group(1) if title_match else "no title"
+        print(f"  Waiting (attempt {attempt + 1})... page title: {title}", flush=True)
 
     assert rows, "No entries found"
     print(f"  Found {len(rows)} entries", flush=True)
