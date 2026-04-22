@@ -7,18 +7,16 @@ import json
 import os
 import re
 import sys
-import tempfile
-import zipfile
 
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from math import sqrt
 from pathlib import Path
 from typing import Optional, Tuple, List
 from urllib.parse import quote_plus
 
-import requests
+from DrissionPage import ChromiumPage, ChromiumOptions
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -27,32 +25,19 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 # http://en.wikipedia.org/wiki/Image_sensor_format
 # This seems necessary as the advertised sensor sizes are often larger than they actually are.
 
-FIXED_URL = "https://geizhals.eu/?cat=dcam&hloc=at&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=1418&fcols=86&fcols=3377&sort=artikel&bl1_id=1000"
+FIXED_URL = "https://geizhals.eu/?cat=dcam&hloc=at&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=1418&fcols=86&fcols=3377&sort=artikel"
 
 # For DSLR and Mirrorless cameras we use the specified sensor dimensions as is.
-DSLR_URL = "https://geizhals.eu/?cat=dcamsp&xf=1480_Spiegelreflex+(DSLR)&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=166&fcols=5761&fcols=3378&sort=artikel&bl1_id=1000"
-MIRRORLESS_URL = "https://geizhals.eu/?cat=dcamsp&xf=1480_Spiegellos+(DSLM)&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=166&fcols=5761&fcols=3378&sort=artikel&bl1_id=1000"
-RANGEFINDER_URL = "https://geizhals.eu/?cat=dcamsp&xf=1480_Messsucher&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=166&fcols=5761&fcols=3378&sort=artikel&bl1_id=1000"
-CAMCORDER_URL = "https://geizhals.eu/?cat=dvcam&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=205&fcols=195&fcols=3373&sort=artikel&bl1_id=1000"
-ACTIONCAM_URL = "https://geizhals.eu/?cat=dvcamac&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=5023&fcols=5025&fcols=5036&sort=artikel&bl1_id=1000"
+DSLR_URL = "https://geizhals.eu/?cat=dcamsp&xf=1480_Spiegelreflex+(DSLR)&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=166&fcols=5761&fcols=3378&sort=artikel"
+MIRRORLESS_URL = "https://geizhals.eu/?cat=dcamsp&xf=1480_Spiegellos+(DSLM)&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=166&fcols=5761&fcols=3378&sort=artikel"
+RANGEFINDER_URL = "https://geizhals.eu/?cat=dcamsp&xf=1480_Messsucher&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=166&fcols=5761&fcols=3378&sort=artikel"
+CAMCORDER_URL = "https://geizhals.eu/?cat=dvcam&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=205&fcols=195&fcols=3373&sort=artikel"
+ACTIONCAM_URL = "https://geizhals.eu/?cat=dvcamac&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=5023&fcols=5025&fcols=5036&sort=artikel"
 
-SIZE_RE = re.compile(r"\s([\d\.]+)x([\d\.]+)mm")
-TYPE_RE = re.compile(
-    r'<div class="productlist__additionalfilter">\s+(1/[\d\.]+)&quot;\s+</div>'
-)
-MPIX_RE = re.compile(
-    r'<div class="productlist__additionalfilter">\s+([\d\.]+) Megapixel\s+</div>'
-)
-PITCH_RE = re.compile(
-    r'<div class="productlist__additionalfilter">\s+([\d\.]+)&micro;m\s+</div>'
-)
-YEAR_RE = re.compile(
-    r'<div class="productlist__additionalfilter">\s+([\d]{4})\s+</div>'
-)
-NAME_RE = re.compile(r'data-name="(.+?)"')
-ADDITIONAL_FILTER_RE = re.compile(
-    r'<div class="productlist__additionalfilter">\s+([\d\.\-]+)\s+</div>'
-)
+SIZE_RE = re.compile(r"([\d\.]+)x([\d\.]+)mm")
+SENSOR_TYPE_RE = re.compile(r"(1/[\d\.]+)\"")
+PITCH_RE = re.compile(r"([\d\.]+)µm")
+MPIX_RE = re.compile(r"([\d\.]+)\s*Megapixel")
 
 # from http://en.wikipedia.org/wiki/Image_sensor_format
 TYPE_SIZE: dict[str, Tuple[float, float]] = {
@@ -100,6 +85,14 @@ EXTRAS = [
 EXTRAS_RE = re.compile("|".join(EXTRAS))
 PARENS_RE = re.compile(r"\(.+\)$")
 
+# Regex for parsing the new Svelte SPA HTML
+ROW_RE = re.compile(
+    r'<tr class="datatable__row[^"]*"[^>]*>(.*?)</tr>', re.DOTALL
+)
+DD_TITLE_RE = re.compile(r'<dd[^>]*title="([^"]*)"')
+DT_TITLE_RE = re.compile(r'<dt[^>]*title="([^"]*)"')
+DATA_NAME_RE = re.compile(r'data-name="([^"]+)"')
+
 
 @dataclass
 class Spec:
@@ -123,21 +116,10 @@ class SpecDerived:
 
 
 def sensor_area(width: float, height: float) -> float:
-    """Calculate sensor area from dimensions."""
     return width * height
 
 
 def sensor_size(diag: float, aspect: float) -> Tuple[float, float]:
-    """
-    Calculate sensor dimensions from diagonal and aspect ratio.
-
-    Args:
-        diag: Diagonal in inches
-        aspect: Aspect ratio (e.g., 4/3 or 3/2)
-
-    Returns:
-        Tuple of (width, height) in mm
-    """
     diagmm = diag * 25.4
     h = sqrt(diagmm**2 / (aspect**2 + 1))
     w = aspect * h
@@ -147,16 +129,6 @@ def sensor_size(diag: float, aspect: float) -> Tuple[float, float]:
 def sensor_size_from_type(
     typ: Optional[str], use_table: bool
 ) -> Optional[Tuple[float, float]]:
-    """
-    Get sensor size from type designation.
-
-    Args:
-        typ: Type designation
-        use_table: Whether to use the TYPE_SIZE table
-
-    Returns:
-        Diagonal sensor size in mm
-    """
     if not typ:
         return None
 
@@ -172,21 +144,10 @@ def sensor_size_from_type(
 
 
 def pixel_pitch(area: float, mpix: float) -> float:
-    """
-    Calculate pixel pitch from sensor area and megapixels.
-
-    Args:
-        area: Sensor area in mm^2
-        mpix: Megapixels
-
-    Returns:
-        Pixel pitch in µm
-    """
     return 1000 * sqrt(area / (mpix * 10**6))
 
 
 def load_sensors_database() -> dict:
-    """Load the sensors database from sensors.json."""
     try:
         with open("sensors.json", "r", encoding="utf-8") as f:
             return json.load(f)
@@ -200,23 +161,9 @@ def match_sensors(
     height: Optional[float],
     megapixels: Optional[float],
     sensors_db: dict,
-    size_tolerance: float = 2,  # %
-    megapixel_tolerance: float = 5,  # %
+    size_tolerance: float = 2,
+    megapixel_tolerance: float = 5,
 ) -> List[str]:
-    """
-    Match camera specifications to sensor models.
-
-    Args:
-        width: Sensor width in mm
-        height: Sensor height in mm
-        megapixels: Megapixels
-        sensors_db: Sensors database
-        size_tolerance: Tolerance for size matching in mm
-        megapixel_tolerance: Tolerance for megapixel matching
-
-    Returns:
-        List of matching sensor model names
-    """
     if not sensors_db or not width or not height:
         return []
 
@@ -248,7 +195,6 @@ def match_sensors(
 
 
 def load_csv(output_dir: Path) -> Optional[str]:
-    """Load the previous CSV."""
     if os.path.exists(output_dir / "camera-data.csv"):
         return (output_dir / "camera-data.csv").read_text(encoding="utf-8")
 
@@ -256,7 +202,6 @@ def load_csv(output_dir: Path) -> Optional[str]:
 
 
 def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
-    """Parse existing CSV content into SpecDerived objects."""
     if not csv_content:
         return []
 
@@ -370,19 +315,16 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
 
 
 def create_camera_key(spec: Spec) -> str:
-    """Create a unique key for a camera spec to identify duplicates."""
     return f"{spec.name.lower().strip()}-{spec.year}"
 
 
 def merge_camera_data(
     new_specs: List[SpecDerived], existing_specs: List[SpecDerived]
 ) -> List[SpecDerived]:
-    """Merge new camera data with existing data, preserving removed cameras."""
     print(
         f"Merging {len(new_specs)} new records with {len(existing_specs)} existing records"
     )
 
-    # Load sensors database for re-matching
     sensors_db = load_sensors_database()
 
     existing_by_key = {}
@@ -400,6 +342,9 @@ def merge_camera_data(
         if key in existing_by_key:
             existing_spec = existing_by_key[key]
             new_spec.id = existing_spec.id
+            # Preserve year from existing data if new data has none
+            if new_spec.spec.year is None and existing_spec.spec.year is not None:
+                new_spec.spec.year = existing_spec.spec.year
             print(f"Updated existing camera: {new_spec.spec.name[:50]}")
 
         merged_specs.append(new_spec)
@@ -425,68 +370,122 @@ def merge_camera_data(
     return merged_specs
 
 
-def extract_entries(url: str) -> list[str]:
-    print(f"Fetching {url}")
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/120.0.0.0 Safari/537.36"
-        ),
-        "Accept": "text/html",
-        "Cookie": "blaettern=1000",
-        "DNT": "1",
-        "Connection": "keep-alive",
-    }
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
+def _create_browser():
+    """Create and return a DrissionPage browser instance."""
+    co = ChromiumOptions()
+    co.set_argument("--disable-blink-features=AutomationControlled")
+    co.set_argument("--no-sandbox")
+    page = ChromiumPage(co)
+    page.set.load_mode.eager  # Don't wait for full page load
+    # Navigate to homepage to solve Cloudflare challenge and set cookie
+    page.get("https://geizhals.eu/")
+    import time
+    time.sleep(5)
+    page.set.cookies("blaettern=1000")
+    return page
 
-    entries = re.findall(
-        r'class="row productlist__product.+?'
-        r'<div class="productlist__bestpriceoffer">',
-        response.text,
-        re.DOTALL,
-    )
-    assert entries, "No entries found"
-    print(f"Found {len(entries)} entries")
-    return entries
+
+def extract_entries(page, url: str) -> list[str]:
+    """Fetch product rows from a URL."""
+    import time
+
+    print(f"Fetching {url}", flush=True)
+    page.get(url)
+
+    # Wait for product rows to appear (Cloudflare challenge may delay)
+    rows = []
+    for attempt in range(12):
+        time.sleep(5)
+        content = page.html
+        rows = ROW_RE.findall(content)
+        if rows:
+            break
+        print(f"  Waiting (attempt {attempt + 1})...", flush=True)
+
+    assert rows, "No entries found"
+    print(f"  Found {len(rows)} entries", flush=True)
+    return rows
+
+
+def parse_sensor_field(sensor_text: str) -> dict:
+    """Parse the sensor description field from the new site.
+
+    Examples:
+        "Kleinbild, CMOS 36.0x24.0mm, 6.94µm Pixelgröße"
+        "CMOS 1/3.1\", 1.09µm Pixelgröße"
+        "APS-C, CMOS 23.5x15.6mm"
+        "CMOS"
+    """
+    result = {"type": None, "size": None, "pitch": None}
+
+    if not sensor_text:
+        return result
+
+    # Extract sensor type (e.g. "1/3.1", "1/2.3")
+    type_match = SENSOR_TYPE_RE.search(sensor_text)
+    if type_match:
+        result["type"] = type_match.group(1)
+
+    # Extract sensor dimensions (e.g. "36.0x24.0mm")
+    size_match = SIZE_RE.search(sensor_text)
+    if size_match:
+        result["size"] = (float(size_match.group(1)), float(size_match.group(2)))
+
+    # Extract pixel pitch (e.g. "6.94µm")
+    pitch_match = PITCH_RE.search(sensor_text)
+    if pitch_match:
+        result["pitch"] = float(pitch_match.group(1))
+
+    return result
 
 
 def extract_specs(entries: list[str], category: str) -> list[Spec]:
-    """Extract camera specifications from HTML entries."""
+    """Extract camera specifications from HTML table rows."""
     specs = []
 
-    for entry in entries:
-        name_match = NAME_RE.search(entry)
+    for row in entries:
+        # Extract name
+        name_match = DATA_NAME_RE.search(row)
         if not name_match:
             continue
-
-        type_match = TYPE_RE.search(entry)
-        size_match = SIZE_RE.search(entry)
-        pitch_match = PITCH_RE.search(entry)
-        if category == "camcorder" or category == "actioncam":
-            mpix_match = ADDITIONAL_FILTER_RE.search(entry)
-        else:
-            mpix_match = MPIX_RE.search(entry)
-        year_match = YEAR_RE.search(entry)
 
         name = html.unescape(name_match.group(1))
         name = " ".join(name.split())
 
-        typ = type_match.group(1) if type_match else None
+        # Extract dd/dt title pairs
+        dd_titles = DD_TITLE_RE.findall(row)
+        dt_titles = DT_TITLE_RE.findall(row)
 
-        if size_match:
-            width, height = float(size_match.group(1)), float(size_match.group(2))
-            size = (width, height)
-        else:
-            size = None
+        # Build a dict of field_name -> value
+        fields = {}
+        for dt_title, dd_title in zip(dt_titles, dd_titles):
+            fields[dt_title] = dd_title
 
-        mpix_match = mpix_match.group(1).replace("-", "") if mpix_match else None
-        pitch = float(pitch_match.group(1)) if pitch_match else None
-        mpix = float(mpix_match) if mpix_match else None
-        year = int(year_match.group(1)) if year_match else None
+        # Parse megapixel
+        mpix = None
+        mpix_text = fields.get("Megapixel effektiv", "")
+        if mpix_text:
+            mpix_match = MPIX_RE.search(mpix_text)
+            if mpix_match:
+                mpix = float(mpix_match.group(1))
 
-        specs.append(Spec(name, category, typ, size, pitch, mpix, year))
+        # Parse sensor info
+        sensor_text = fields.get("Sensor", "")
+        sensor_info = parse_sensor_field(sensor_text)
+
+        typ = sensor_info["type"]
+        size = sensor_info["size"]
+        pitch = sensor_info["pitch"]
+
+        # Parse type from "Typ" field for interchangeable-lens cameras
+        if typ is None:
+            type_text = fields.get("Typ", "")
+            if type_text and "/" in type_text:
+                type_match = SENSOR_TYPE_RE.search(type_text)
+                if type_match:
+                    typ = type_match.group(1)
+
+        specs.append(Spec(name, category, typ, size, pitch, mpix, year=None))
 
     specs = deduplicate_specs(specs)
     return specs
@@ -497,7 +496,6 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
     groups: dict[str, list[Spec]] = defaultdict(list)
     rest = []
 
-    # Group possible identical cameras
     for spec in specs:
         match = EXTRAS_RE.search(spec.name)
         if match:
@@ -506,7 +504,6 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
         else:
             rest.append(spec)
 
-    # Check if grouped cameras have the same sensor specs
     for unified_name, grouped_specs in groups.items():
         ref = grouped_specs[0]
         if all(
@@ -532,7 +529,6 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
         else:
             rest.extend(grouped_specs)
 
-    # Remove product numbers in parentheses at end of name
     def remove_parens(spec: Spec) -> Spec:
         name = spec.name.strip()
         match = PARENS_RE.search(name)
@@ -549,7 +545,6 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
 def derive_spec(
     spec: Spec, use_size_table: bool = False, sensors_db: Optional[dict] = None
 ) -> SpecDerived:
-    """Derive additional specifications from base spec."""
     if spec.size is None:
         size = sensor_size_from_type(spec.type, use_size_table)
     else:
@@ -575,63 +570,19 @@ def derive_spec(
 
 
 def derive_specs(specs: list[Spec], use_size_table: bool = False) -> list[SpecDerived]:
-    """Derive specifications for all cameras."""
     sensors_db = load_sensors_database()
     return [derive_spec(spec, use_size_table, sensors_db) for spec in specs]
 
 
-def get_fixed() -> list[SpecDerived]:
-    """Get fixed-lens camera specifications."""
-    entries = extract_entries(FIXED_URL)
-    return derive_specs(extract_specs(entries, "fixed"), use_size_table=True)
-
-
-def get_dslrs() -> list[SpecDerived]:
-    """Get DSLR camera specifications."""
-    entries = extract_entries(DSLR_URL)
-    return derive_specs(extract_specs(entries, "dslr"), use_size_table=False)
-
-
-def get_mirrorless() -> list[SpecDerived]:
-    """Get Mirrorless camera specifications."""
-    entries = extract_entries(MIRRORLESS_URL)
-    return derive_specs(extract_specs(entries, "mirrorless"), use_size_table=False)
-
-
-def get_rangefinder() -> list[SpecDerived]:
-    """Get Rangefinder camera specifications."""
-    entries = extract_entries(RANGEFINDER_URL)
-    return derive_specs(extract_specs(entries, "rangefinder"), use_size_table=False)
-
-
-def get_camcorder() -> list[SpecDerived]:
-    """Get Camcorder camera specifications."""
-    entries = extract_entries(CAMCORDER_URL)
-    return derive_specs(extract_specs(entries, "camcorder"), use_size_table=False)
-
-
-def get_actioncam() -> list[SpecDerived]:
-    """Get Actioncam camera specifications."""
-    entries = extract_entries(ACTIONCAM_URL)
-    return derive_specs(extract_specs(entries, "actioncam"), use_size_table=False)
-
-
-def get_all() -> list[SpecDerived]:
-    """Get all camera specifications."""
-    return (
-        get_fixed()
-        + get_dslrs()
-        + get_mirrorless()
-        + get_rangefinder()
-        + get_camcorder()
-        + get_actioncam()
-    )
+def get_category(page, url: str, category: str, use_size_table: bool) -> list[SpecDerived]:
+    """Fetch and derive specs for a camera category."""
+    entries = extract_entries(page, url)
+    return derive_specs(extract_specs(entries, category), use_size_table=use_size_table)
 
 
 def sorted_by(
     specs: list[SpecDerived], key: str = "pitch", reverse: bool = True
 ) -> list[SpecDerived]:
-    """Sort specifications by given key."""
     key_functions = {
         "pitch": lambda c: c.pitch if c.pitch else -1,
         "area": lambda c: c.area if c.area else -1,
@@ -642,7 +593,6 @@ def sorted_by(
 
 
 def prettyprint(derived: SpecDerived) -> None:
-    """Pretty print camera specification to console."""
     spec = derived.spec
 
     print(f'"{spec.name}": ', end="")
@@ -679,7 +629,6 @@ env.filters["urlencode"] = quote_plus
 
 
 def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
-    """Write camera specifications to CSV file."""
     print(f"Writing CSV to {output_file}")
 
     with open(output_file, "w", encoding="utf-8") as f:
@@ -714,81 +663,48 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
             )
 
 
+CATEGORIES = [
+    (FIXED_URL, "fixed", True),
+    (DSLR_URL, "dslr", False),
+    (MIRRORLESS_URL, "mirrorless", False),
+    (RANGEFINDER_URL, "rangefinder", False),
+    (CAMCORDER_URL, "camcorder", False),
+    (ACTIONCAM_URL, "actioncam", False),
+]
+
+
 def render_html(output_dir: Path) -> None:
     """Render all HTML files."""
     print("Loading previous CSV artifact...")
     previous_csv = load_csv(output_dir)
     existing_specs = parse_existing_csv(previous_csv) if previous_csv else []
 
+    print("Creating browser session...")
+    page = _create_browser()
+
     print("Fetching camera data...")
-    specs_fixedlens = get_fixed()
-    specs_dslr = get_dslrs()
-    specs_mirrorless = get_mirrorless()
-    specs_rangefinder = get_rangefinder()
-    specs_camcorder = get_camcorder()
-    specs_actioncam = get_actioncam()
-    new_specs_all = (
-        specs_fixedlens
-        + specs_dslr
-        + specs_mirrorless
-        + specs_rangefinder
-        + specs_camcorder
-        + specs_actioncam
-    )
+    category_specs = {}
+    for url, category, use_size_table in CATEGORIES:
+        category_specs[category] = get_category(page, url, category, use_size_table)
+
+    page.quit()
+
+    new_specs_all = []
+    for specs in category_specs.values():
+        new_specs_all.extend(specs)
 
     specs_all = merge_camera_data(new_specs_all, existing_specs)
 
-    specs_fixedlens = sorted_by(
-        [
-            s
-            for s in specs_all
-            if s.spec.name in {spec.spec.name for spec in specs_fixedlens}
-        ],
-        "pitch",
-    )
-    specs_dslr = sorted_by(
-        [
-            s
-            for s in specs_all
-            if s.spec.name in {spec.spec.name for spec in specs_dslr}
-        ],
-        "pitch",
-    )
-    specs_mirrorless = sorted_by(
-        [
-            s
-            for s in specs_all
-            if s.spec.name in {spec.spec.name for spec in specs_mirrorless}
-        ],
-        "pitch",
-    )
-    specs_rangefinder = sorted_by(
-        [
-            s
-            for s in specs_all
-            if s.spec.name in {spec.spec.name for spec in specs_rangefinder}
-        ],
-        "pitch",
-    )
-    specs_camcorder = sorted_by(
-        [
-            s
-            for s in specs_all
-            if s.spec.name in {spec.spec.name for spec in specs_camcorder}
-        ],
-        "pitch",
-    )
-    specs_actioncam = sorted_by(
-        [
-            s
-            for s in specs_all
-            if s.spec.name in {spec.spec.name for spec in specs_actioncam}
-        ],
-        "pitch",
-    )
+    specs_by_category = {}
+    for category in category_specs:
+        new_names = {spec.spec.name for spec in category_specs[category]}
+        specs_by_category[category] = sorted_by(
+            [s for s in specs_all if s.spec.name in new_names],
+            "pitch",
+        )
     specs_all = sorted_by(specs_all, "pitch")
 
-    date = datetime.now(UTC)
+    date = datetime.now(timezone.utc)
 
     print("Generating HTML files...")
 
@@ -799,7 +715,7 @@ def render_html(output_dir: Path) -> None:
     (output_dir / "fixedlens.html").write_text(
         template.render(
             title="Fixed-lens Cameras",
-            specs=specs_fixedlens,
+            specs=specs_by_category["fixed"],
             page="fixedlens",
             date=date,
         ),
@@ -807,14 +723,19 @@ def render_html(output_dir: Path) -> None:
     )
 
     (output_dir / "dslr.html").write_text(
-        template.render(title="DSLR Cameras", specs=specs_dslr, page="dslr", date=date),
+        template.render(
+            title="DSLR Cameras",
+            specs=specs_by_category["dslr"],
+            page="dslr",
+            date=date,
+        ),
         encoding="utf-8",
     )
 
     (output_dir / "mirrorless.html").write_text(
         template.render(
             title="Mirrorless Cameras",
-            specs=specs_mirrorless,
+            specs=specs_by_category["mirrorless"],
             page="mirrorless",
             date=date,
         ),
@@ -824,7 +745,7 @@ def render_html(output_dir: Path) -> None:
     (output_dir / "rangefinder.html").write_text(
         template.render(
             title="Rangefinder Cameras",
-            specs=specs_rangefinder,
+            specs=specs_by_category["rangefinder"],
             page="rangefinder",
             date=date,
         ),
@@ -834,7 +755,7 @@ def render_html(output_dir: Path) -> None:
     (output_dir / "camcorder.html").write_text(
         template.render(
             title="Camcorders",
-            specs=specs_camcorder,
+            specs=specs_by_category["camcorder"],
             page="camcorder",
             date=date,
         ),
@@ -844,7 +765,7 @@ def render_html(output_dir: Path) -> None:
     (output_dir / "actioncam.html").write_text(
         template.render(
             title="Actioncams",
-            specs=specs_actioncam,
+            specs=specs_by_category["actioncam"],
             page="actioncam",
             date=date,
         ),
@@ -882,30 +803,34 @@ def render_html(output_dir: Path) -> None:
 
 def main():
     if len(sys.argv) > 1:
-        match sys.argv[1]:
-            case "html":
-                output_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("dist")
-                render_html(output_dir)
-            case "list":
-                print("Fetching all cameras...")
-                specs = get_all()
-                specs_sorted = sorted_by(specs, "pitch")
-                for spec in specs_sorted:
-                    if spec.pitch:
-                        prettyprint(spec)
-            case "--help" | "-h":
-                print("Usage: python pixelpitch.py [command] [args]")
-                print("\nCommands:")
-                print(
-                    "  html [dir]    Generate HTML files "
-                    "(default: current directory)"
-                )
-                print("  list          List all cameras with pixel pitch to console")
-                print("  --help, -h    Show this help message")
-            case _:
-                print(f"Unknown command: {sys.argv[1]}")
-                print("Run 'python pixelpitch.py --help' for usage information")
-                sys.exit(1)
+        cmd = sys.argv[1]
+        if cmd == "html":
+            output_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("dist")
+            render_html(output_dir)
+        elif cmd == "list":
+            print("Fetching all cameras...")
+            page = _create_browser()
+            all_specs = []
+            for url, category, use_size_table in CATEGORIES:
+                all_specs.extend(get_category(page, url, category, use_size_table))
+            page.quit()
+            specs_sorted = sorted_by(all_specs, "pitch")
+            for spec in specs_sorted:
+                if spec.pitch:
+                    prettyprint(spec)
+        elif cmd in ("--help", "-h"):
+            print("Usage: python pixelpitch.py [command] [args]")
+            print("\nCommands:")
+            print(
+                "  html [dir]    Generate HTML files "
+                "(default: current directory)"
+            )
+            print("  list          List all cameras with pixel pitch to console")
+            print("  --help, -h    Show this help message")
+        else:
+            print(f"Unknown command: {sys.argv[1]}")
+            print("Run 'python pixelpitch.py --help' for usage information")
+            sys.exit(1)
     else:
         render_html(Path("dist"))
 

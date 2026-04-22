@@ -32,8 +32,17 @@ jobs:
       run: |
         python -m pip install -r requirements.txt
 
-    - name: Run script
+    - name: Install Chrome and Xvfb
       run: |
+        sudo apt-get update
+        sudo apt-get install -y chromium-browser xvfb
+
+    - name: Run script
+      env:
+        DISPLAY: ":99"
+      run: |
+        Xvfb :99 -screen 0 1280x1024x24 &
+        sleep 2
         python pixelpitch.py
 
     - name: Commit and push camera data
