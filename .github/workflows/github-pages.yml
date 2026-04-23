@@ -18,6 +18,8 @@ permissions:
 jobs:
   update:
     runs-on: [self-hosted, mac0]
+    env:
+      PATH: /opt/homebrew/opt/gnu-tar/libexec/gnubin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
     steps:
     - uses: actions/checkout@v4
