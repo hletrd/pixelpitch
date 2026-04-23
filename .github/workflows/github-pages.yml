@@ -24,11 +24,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3 -m pip install -r requirements.txt
+        /opt/homebrew/bin/python3 -m pip install -r requirements.txt
 
     - name: Run script
       run: |
-        python3 pixelpitch.py
+        /opt/homebrew/bin/python3 pixelpitch.py
 
     - name: Commit and push camera data
       run: |
