@@ -24,11 +24,14 @@ jobs:
 
     - name: Install dependencies
       run: |
-        /opt/homebrew/bin/python3 -m pip install -r requirements.txt
+        /opt/homebrew/bin/python3 -m venv .venv
+        . .venv/bin/activate
+        pip install -r requirements.txt
 
     - name: Run script
       run: |
-        /opt/homebrew/bin/python3 pixelpitch.py
+        . .venv/bin/activate
+        python pixelpitch.py
 
     - name: Commit and push camera data
       run: |
