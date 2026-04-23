@@ -375,10 +375,19 @@ def _create_browser():
     co = ChromiumOptions()
     co.set_argument("--disable-blink-features=AutomationControlled")
     co.set_argument("--no-sandbox")
-    # Use Google Chrome if available (CI has it pre-installed)
-    chrome_path = "/opt/google/chrome/chrome"
-    if os.path.exists(chrome_path):
-        co.set_browser_path(chrome_path)
+
+    # macOS: use Google Chrome (non-headless) to bypass Cloudflare
+    mac_chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    if os.path.exists(mac_chrome):
+        co.set_browser_path(mac_chrome)
+        co.headless(False)
+        co.set_argument("--remote-debugging-port=9222")
+    else:
+        # Linux CI: use system Chrome
+        chrome_path = "/opt/google/chrome/chrome"
+        if os.path.exists(chrome_path):
+            co.set_browser_path(chrome_path)
+
     page = ChromiumPage(co)
     page.set.load_mode.eager  # Don't wait for full page load
     # Navigate to homepage to solve Cloudflare challenge and set cookie
@@ -398,7 +407,7 @@ def extract_entries(page, url: str) -> list[str]:
 
     # Wait for product rows to appear (Cloudflare challenge may delay)
     rows = []
-    for attempt in range(12):
+    for attempt in range(24):
         time.sleep(5)
         content = page.html
         rows = ROW_RE.findall(content)
