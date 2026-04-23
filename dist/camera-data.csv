@@ -59,7 +59,7 @@ id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,megapixel
 545,Denver ACV-8305W,actioncam,1/1,20.32,15.24,309.68,4.0,8.80,2017,
 1038,König CSACWG100,actioncam,1/0.5,40.64,30.48,1238.71,16.0,8.80,2017,
 1041,Lamax X3.1 Atlas,actioncam,1/0.5,40.64,30.48,1238.71,16.0,8.80,2023,
-1110,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,1238.71,16.0,8.80,2021,
+1109,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,1238.71,16.0,8.80,2021,
 824,Goclever DVR Extreme WiFi,actioncam,1/1.4,14.51,10.89,158.00,2.1,8.67,2017,
 827,GoPro HERO,actioncam,1/0.6,33.87,25.40,860.21,12.0,8.47,2024,
 1568,Sony Alpha 7S Body,mirrorless,,35.60,23.80,847.28,12.2,8.40,2014,IMX235;IMX510
@@ -86,7 +86,7 @@ id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,megapixel
 236,Canon EOS 1D Mark III,rangefinder,,28.10,18.70,525.47,10.1,7.21,,
 237,Canon EOS 1D Mark III,dslr,,28.10,18.70,525.47,10.1,7.21,2007,
 238,Canon EOS 1D Mark III Body,dslr,,28.10,18.70,525.47,10.1,7.21,2007,
-1109,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,1238.71,24.0,7.18,2024,
+1110,Nedis Action-Kamera,actioncam,1/0.5,40.64,30.48,1238.71,24.0,7.18,2024,
 239,Canon EOS 1D X,dslr,,36.00,24.00,864.00,18.1,6.94,,
 240,Canon EOS 1D X,mirrorless,,36.00,24.00,864.00,18.1,6.94,,
 241,Canon EOS 1D X,rangefinder,,36.00,24.00,864.00,18.1,6.94,,
