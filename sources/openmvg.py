@@ -87,4 +87,4 @@ if __name__ == "__main__":
     rows = fetch(limit=5)
     for r in rows:
         print(r)
-    print(f"... total fetched: {len(fetch())}")
+    print(f"... total fetched: {len(rows)}")
