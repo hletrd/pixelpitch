@@ -428,6 +428,13 @@ def test_deduplicate_specs():
     deduped5 = pp.deduplicate_specs(specs5)
     expect("different categories kept separate", len(deduped5), 2)
 
+    # Multi-paren name: only last parenthetical should be stripped
+    specs6 = [
+        Spec("Canon EOS (R5) (Kit)", "mirrorless", None, (36.0, 24.0), 4.39, 45.0, 2020),
+    ]
+    deduped6 = pp.deduplicate_specs(specs6)
+    expect("multi-paren: inner parens preserved", deduped6[0].name, "Canon EOS (R5)")
+
 
 # --------------------------------------------------------------------------
 # merge_camera_data

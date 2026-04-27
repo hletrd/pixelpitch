@@ -88,7 +88,7 @@ EXTRAS = [
     "Body",
 ]
 EXTRAS_RE = re.compile("|".join(EXTRAS))
-PARENS_RE = re.compile(r"\(.+\)$")
+PARENS_RE = re.compile(r"\([^()]+\)$")
 
 # Regex for parsing the new Svelte SPA HTML
 ROW_RE = re.compile(
