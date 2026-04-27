@@ -145,7 +145,7 @@ def load_sensors_database() -> dict:
     try:
         with open(SCRIPT_DIR / "sensors.json", "r", encoding="utf-8") as f:
             return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
+    except (FileNotFoundError, json.JSONDecodeError, OSError) as e:
         print(f"Warning: Could not load sensors.json: {e}")
         return {}
 
