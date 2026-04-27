@@ -230,12 +230,14 @@ def test_openmvg_csv_parser():
         'Sigma,SD14,"20.7 x 13.8 mm",20.7,13.8,2652,1768\n'
         'Sony,Alpha 7 III,"35.6 x 23.8 mm",35.6,23.8,6000,4000\n'
         'Apple,iPhone (1/2.5"),"5.75 x 4.32 mm",5.75,4.32,2592,1944\n'
+        'Pentax,K3,"23.5 x 15.6 mm",23.5,15.6,6016,4000\n'
+        'Pentax,645Z,"43.8 x 32.9 mm",43.8,32.9,8256,6192\n'
     )
     # Replace http_get for this test using unittest.mock
     with unittest.mock.patch.object(openmvg, 'http_get', return_value=csv_body):
         specs = openmvg.fetch()
 
-    expect("record count", len(specs), 6)
+    expect("record count", len(specs), 8)
     by_name = {s.name: s for s in specs}
     expect("Canon EOS 5D size",     by_name["Canon EOS 5D"].size,    (36.0, 24.0), tol=0.01)
     expect("Sony Alpha 7 III size", by_name["Sony Alpha 7 III"].size,(35.6, 23.8), tol=0.01)
@@ -248,6 +250,9 @@ def test_openmvg_csv_parser():
     expect("EOS 250D category (xxxD DSLR)", by_name["Canon EOS 250D"].category, "dslr")
     expect("Samsung NX300 category (mirrorless, NOT DSLR)", by_name["Samsung NX300"].category, "mirrorless")
     expect("Sigma SD14 category (2-digit DSLR)", by_name["Sigma SD14"].category, "dslr")
+    # Pentax DSLR regex tests
+    expect("Pentax K3 category (no-hyphen DSLR)", by_name["Pentax K3"].category, "dslr")
+    expect("Pentax 645Z category (medium-format DSLR)", by_name["Pentax 645Z"].category, "dslr")
 
 
 def test_openmvg_bom():
