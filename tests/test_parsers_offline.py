@@ -444,6 +444,13 @@ def test_deduplicate_specs():
     deduped6 = pp.deduplicate_specs(specs6)
     expect("multi-paren: inner parens preserved", deduped6[0].name, "Canon EOS (R5)")
 
+    # EXTRAS word inside a name should NOT match (word boundary test)
+    specs7 = [
+        Spec("Polaroid BodyCam One", "fixed", None, (5.0, 3.7), 2.0, 10.0, 2020),
+    ]
+    deduped7 = pp.deduplicate_specs(specs7)
+    expect("EXTRAS word inside name not matched", deduped7[0].name, "Polaroid BodyCam One")
+
 
 # --------------------------------------------------------------------------
 # merge_camera_data

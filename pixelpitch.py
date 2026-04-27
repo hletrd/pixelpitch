@@ -113,7 +113,7 @@ EXTRAS = [
     "Gehäuse",
     "Body",
 ]
-EXTRAS_RE = re.compile("|".join(EXTRAS))
+EXTRAS_RE = re.compile(r"\b(?:%s)\b" % "|".join(map(re.escape, EXTRAS)))
 PARENS_RE = re.compile(r"\([^()]+\)$")
 
 # Regex for parsing the new Svelte SPA HTML
