@@ -1,5 +1,7 @@
 """
-This script calculates pixel pitch in µm for cameras listed on geizhals.at.
+Camera sensor pixel pitch database — calculates and aggregates pixel pitch
+from multiple sources including geizhals.eu, Imaging Resource, Apotelyt,
+GSMArena, CineD, and the openMVG camera sensor database.
 """
 
 import csv
