@@ -1,60 +1,73 @@
-# Debugger Review (Cycle 12) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 14) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-11 fixes
+**Scope:** Full repository re-review after cycles 1-13 fixes
 
-## Previously Fixed (Cycles 1-11) — Confirmed Resolved
-All previous fixes verified. No regressions detected. D11-01 (year in key) fixed. D11-02 (category strip) fixed. D11-03 (year overwrite logging) fixed.
+## Previously Fixed (Cycles 1-13) — Confirmed Resolved
+All previous fixes verified. No regressions detected. C13-01 (load_csv UnicodeDecodeError) and C13-02 (Sony fallback normalizations) both fixed and tested.
 
 ## New Findings
 
-### D12-01: `_parse_camera_name` Sony slug extraction produces "Cameras" for legacy IR spec URLs
-**File:** `sources/imaging_resource.py`, line 151
+### D14-01: openMVG DSLR misclassification — systematic duplicate bug
+**File:** `sources/openmvg.py`, lines 63-69
 **Severity:** MEDIUM | **Confidence:** HIGH
 
 Failure mode:
-1. `_gather_review_urls` matches a legacy spec URL: `.../cameras/sony-zv-e10-specifications/`
-2. `_spec_url` returns it unchanged (already has `-specifications`)
-3. `fetch_one` receives the legacy URL
-4. `_parse_camera_name` Sony branch: `fallback_url.rstrip('/').rsplit('/', 2)[-2]` = `'cameras'`
-5. `slug = 'cameras'` → `.title()` = `'Cameras'` → name = `'Cameras'`
-6. Camera appears on website with name "Cameras" — clearly wrong and confusing
+1. openMVG fetches Canon EOS 5D (36mm sensor width) → `category="mirrorless"`
+2. Geizhals fetches Canon EOS 5D → `category="dslr"`
+3. `create_camera_key` produces different keys → merge preserves both
+4. "All Cameras" page shows Canon EOS 5D twice — once under "mirrorless", once under "dslr"
+5. User sees a visible data-quality bug on the primary page
 
-This only happens when the source discovers a legacy spec URL (matched by `LEGACY_SPEC_URL_RE`). For modern review URLs, `_spec_url` adds `/specifications/` and the extraction works correctly.
+This is not an edge case — it affects every DSLR that openMVG covers. The openMVG dataset has thousands of cameras, many of which are DSLRs that also appear on Geizhals.
 
-**Failure scenario:** Fetch from Imaging Resource with legacy spec URLs present. Sony cameras from legacy URLs appear as "Cameras" on the website.
+**Failure scenario:** A user browsing the "All Cameras" page sees "Canon EOS 5D" listed twice with different category labels, undermining trust in the database.
 
-**Fix:** Use `rsplit('/', 1)[-1]` in the Sony branch, then strip suffixes with regex.
+**Fix:** Add DSLR name-pattern detection to openMVG's category heuristic.
 
 ---
 
-### D12-02: `parse_existing_csv` name field not stripped — latent whitespace bug
-**File:** `pixelpitch.py`, lines 277, 291
+### D14-02: UTF-8 BOM in CSV causes 0-row parse — complete data loss
+**File:** `pixelpitch.py`, lines 250-330
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-Same pattern as the fixed C10-01 (type) and C11-02 (category) bugs. The name field is the last string field without `.strip()`. While `write_csv` never introduces whitespace, manually edited CSVs could. The `create_camera_key` applies `.strip()` so deduplication still works, but the displayed name on the website would have visible whitespace.
+Failure mode:
+1. Developer opens `camera-data.csv` in Excel, saves as "CSV UTF-8"
+2. Excel adds BOM (`\xef\xbb\xbf`)
+3. `load_csv` reads file, BOM preserved as `﻿` in text
+4. `parse_existing_csv` → `header[0] = "﻿id"` ≠ `"id"` → `has_id = False`
+5. Column indices misaligned → `int("5.12")` ValueError on every row
+6. 0 records parsed → `existing_specs = []`
+7. `merge_camera_data(new_specs, [])` → only fresh data, no preserved cameras
+8. Site regenerates with missing data — cameras that were only in existing data are gone
 
-**Failure scenario:** CSV with `" Sony A7 IV "` as name → camera displays with leading/trailing spaces in table, search links, and scatter plot tooltips.
+**Failure scenario:** After a BOM introduction, the next CI build produces a site missing all preserved cameras. The data loss is silent — no error is raised, the site just has fewer cameras.
 
-**Fix:** Add `.strip()` to name field parsing.
+**Fix:** Strip BOM at entry point of `parse_existing_csv`.
 
 ---
 
-### D12-03: `_load_per_source_csvs` crashes on UnicodeDecodeError
-**File:** `pixelpitch.py`, line 754
-**Severity:** LOW | **Confidence:** HIGH
+### D14-03: CineD "Super35" variant not captured by regex — camera data loss
+**File:** `sources/cined.py`, lines 88-89
+**Severity:** LOW | **Confidence:** MEDIUM
 
-`path.read_text(encoding='utf-8')` raises `UnicodeDecodeError` for corrupt files. The `except OSError` at line 755 doesn't catch it. This would crash `render_html` and prevent site generation.
+Failure mode:
+1. CineD camera page contains "Super35" (no space) in body text
+2. Regex `Super 35(?:\s*mm)?` requires space → no match
+3. `FORMAT_TO_MM.get("super35")` exists but is never reached because `fmt_m` is None
+4. If no explicit mm dimensions found → `size = None`
+5. Camera may fail `if not (size or mpix): return None` check
+6. Camera silently dropped from CineD data
 
-**Failure scenario:** A source CSV file gets corrupted (non-UTF-8 bytes introduced). The next CI run crashes during render.
+**Failure scenario:** A cinema camera on CineD that only lists "Super35" format (without explicit mm dimensions) would be dropped from the site.
 
-**Fix:** Add `UnicodeDecodeError` to the except clause.
+**Fix:** Extend regex to capture "Super35" (no space) and other missing variants.
 
 ---
 
 ## Summary
 - NEW findings: 3 (2 MEDIUM, 1 LOW)
-- D12-01: Sony slug extraction fails for legacy IR URLs — MEDIUM
-- D12-02: Name field not stripped in parse_existing_csv — MEDIUM
-- D12-03: UnicodeDecodeError not caught in source CSV loading — LOW
+- D14-01: openMVG DSLR duplicates — MEDIUM
+- D14-02: BOM parse failure — MEDIUM
+- D14-03: CineD "Super35" variant missed — LOW

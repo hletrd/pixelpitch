@@ -1,35 +1,46 @@
-# Test Engineer Review (Cycle 12) — Test Coverage, Flaky Tests, TDD
+# Test Engineer Review (Cycle 14) — Test Coverage, Flaky Tests, TDD
 
 **Reviewer:** test-engineer
 **Date:** 2026-04-28
-**Scope:** Full repository test review after cycles 1-11 fixes
+**Scope:** Full repository test review after cycles 1-13 fixes
 
-## Previously Fixed (Cycles 1-11) — Confirmed Resolved
-TE11-01 (year mismatch test) was added in cycle 11 as `test_create_camera_key_year_mismatch`. TE11-02 (render_html integration test) and TE11-03 (single wide lens test) remain as LOW-priority gaps.
+## Previously Fixed (Cycles 1-13) — Confirmed Resolved
+TE13-01 (load_csv UnicodeDecodeError test) and TE13-02 (Sony fallback test) were added in cycle 13. All passing.
 
 ## New Findings
 
-### TE12-01: No test for name field whitespace stripping in parse_existing_csv
-**File:** `tests/test_parsers_offline.py`; `pixelpitch.py`, lines 277, 291
-**Severity:** MEDIUM (test gap) | **Confidence:** HIGH
+### TE14-01: No test for UTF-8 BOM handling in parse_existing_csv
+**File:** `tests/test_parsers_offline.py`; `pixelpitch.py`, lines 250-330
+**Severity:** MEDIUM (test gap for a MEDIUM bug) | **Confidence:** HIGH
 
-The type field whitespace test was added in cycle 10, the category field test could be added alongside. But there is no test for name field whitespace in `parse_existing_csv`. Once the name field `.strip()` fix is applied (C12-01), a test should verify it works. This is a test gap that should be filled when the fix is implemented.
+When the BOM fix is applied (stripping BOM from CSV content before parsing), a test should verify that `parse_existing_csv` correctly handles CSV content with a UTF-8 BOM prefix. Without this test, the fix could regress.
 
-**Fix:** Add a test case in `test_parse_existing_csv` that includes a name with leading/trailing whitespace and asserts it is stripped.
+**Fix:** Add a test case that feeds `parse_existing_csv` with BOM-prefixed content and asserts it produces the same result as non-BOM content.
 
 ---
 
-### TE12-02: No test for `_parse_camera_name` with legacy spec URLs
-**File:** `tests/test_parsers_offline.py`; `sources/imaging_resource.py`, line 151
-**Severity:** MEDIUM (test gap) | **Confidence:** HIGH
+### TE14-02: No test for openMVG DSLR category misclassification
+**File:** `tests/test_parsers_offline.py`; `sources/openmvg.py`, lines 63-69
+**Severity:** MEDIUM (test gap for a MEDIUM bug) | **Confidence:** HIGH
 
-The `_parse_camera_name` function is not directly tested — it's only tested indirectly through the fixture-based `test_imaging_resource` test. There's no test for the Sony branch with different URL formats (modern spec URL vs legacy spec URL). Since C12-02 identifies a bug in the Sony slug extraction for legacy URLs, a test should verify both URL formats produce correct names.
+The existing openMVG test (`test_openmvg_csv_parser`) tests Canon EOS 5D and asserts `category="mirrorless"`. This test would need to be updated when the DSLR classification fix is applied. Additionally, a dedicated test for the DSLR heuristic should be added.
 
-**Fix:** Add unit tests for `_parse_camera_name` with both modern and legacy URL formats.
+**Fix:** When the DSLR heuristic is added to openMVG, update the test to assert `category="dslr"` for Canon EOS 5D and add test cases for other DSLR name patterns.
+
+---
+
+### TE14-03: No test for CineD FORMAT_TO_MM regex/table consistency
+**File:** `tests/test_parsers_offline.py`; `sources/cined.py`
+**Severity:** LOW (test gap for a LOW bug) | **Confidence:** MEDIUM
+
+The existing `test_cined_format_coverage` only tests entries that are capturable by the regex. It doesn't check for unreachable entries in `FORMAT_TO_MM`. When the fix is applied (extending the regex or removing dead entries), a test should verify that every `FORMAT_TO_MM` key is reachable by the regex.
+
+**Fix:** Extend `test_cined_format_coverage` to verify that all `FORMAT_TO_MM` keys are capturable by the regex alternation.
 
 ---
 
 ## Summary
-- NEW findings: 2 (2 MEDIUM test gaps)
-- TE12-01: No test for name whitespace stripping — MEDIUM
-- TE12-02: No test for _parse_camera_name URL formats — MEDIUM
+- NEW findings: 3 (2 MEDIUM test gaps, 1 LOW test gap)
+- TE14-01: No BOM handling test — MEDIUM
+- TE14-02: No openMVG DSLR classification test — MEDIUM
+- TE14-03: No CineD FORMAT_TO_MM reachability test — LOW

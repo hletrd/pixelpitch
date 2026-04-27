@@ -1,56 +1,80 @@
-# Aggregate Review (Cycle 12) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 14) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-11 Status
+## Cycle 1-13 Status
 
 All previous fixes confirmed still working. No regressions.
-Deferred items: see `.omc/plans/C7-02-deferred.md` and other deferred files.
+Deferred items: see `.context/plans/deferred.md`.
 
-## Cross-Agent Agreement Matrix (Cycle 12 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 14 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| `parse_existing_csv` name field not stripped | code-reviewer, critic, verifier, tracer, debugger, architect, test-engineer | MEDIUM |
-| `_parse_camera_name` Sony slug extraction fails for legacy IR URLs | code-reviewer, critic, verifier, tracer, debugger, architect, test-engineer | MEDIUM |
-| `_load_per_source_csvs` doesn't catch UnicodeDecodeError | code-reviewer, critic, verifier, tracer, debugger | LOW |
+| openMVG DSLR misclassification → duplicates | code-reviewer, critic, verifier, tracer, architect, debugger, designer, test-engineer | MEDIUM |
+| UTF-8 BOM in CSV → 0-row parse failure | code-reviewer, critic, verifier, tracer, architect, debugger, security-reviewer, test-engineer | MEDIUM |
+| CineD FORMAT_TO_MM unreachable entries | code-reviewer, critic, verifier, tracer, debugger, test-engineer | LOW |
+| PHONE_TYPE_SIZE mutable alias of TYPE_SIZE | code-reviewer | LOW |
+| openMVG docstring doesn't document heuristic limitation | document-specialist | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C12-01: `parse_existing_csv` name field not stripped — whitespace in camera names
-**Sources:** C12-01, CR12-01, V12-01, T12-02, D12-02, A12-01, TE12-01
-**Severity:** MEDIUM | **Confidence:** HIGH (7-agent consensus)
+### C14-01: openMVG classifies all interchangeable-lens cameras as "mirrorless" — causes visible duplicates
+**Sources:** C14-01, CR14-01, V14-01, T14-01, A14-01, D14-01, UX14-01, TE14-02
+**Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
 
-`pixelpitch.py` lines 277, 291: The name field is parsed without `.strip()`. This is the same pattern that was fixed for the type field (C10-01) and the category field (C11-02). While `create_camera_key` applies `.lower().strip()` so deduplication still works, the displayed name on the website would show leading/trailing whitespace.
+openMVG's category heuristic (`size[0] >= 20 → mirrorless`) misclassifies all DSLRs as "mirrorless". When the same DSLR also appears in Geizhals data with `category="dslr"`, `create_camera_key` produces different keys and `merge_camera_data` preserves both entries. This results in visible duplicate entries on the "All Cameras" page.
 
-**Concrete failure:** A CSV with `" Sony A7 IV "` as the name would display with visible whitespace in the table, search links, and scatter plot tooltips.
+**Concrete failure:** Canon EOS 5D appears twice: once under "mirrorless" (openMVG) and once under "dslr" (Geizhals). The same applies to potentially dozens of DSLRs in the openMVG dataset.
 
-**Fix:** Add `.strip()` to the name field parsing at lines 277 and 291.
-
----
-
-### C12-02: `_parse_camera_name` Sony slug extraction fails for legacy IR spec URLs
-**Sources:** C12-02, CR12-02, V12-02, T12-01, D12-01, A12-02, TE12-02
-**Severity:** MEDIUM | **Confidence:** HIGH (7-agent consensus)
-
-`sources/imaging_resource.py` line 151: The Sony branch uses `fallback_url.rstrip('/').rsplit('/', 2)[-2]` to extract the camera slug. This assumes the URL has an extra path segment after the slug (e.g. `/specifications/`). However, legacy spec URLs matched by `LEGACY_SPEC_URL_RE` have the form `.../slug-specifications/` without a trailing `/specifications/` segment. For these URLs, `rsplit('/', 2)[-2]` returns the parent directory name `'cameras'` instead of the slug.
-
-**Concrete failure:** A Sony camera discovered via a legacy Imaging Resource spec URL (e.g. `https://www.imaging-resource.com/cameras/sony-zv-e10-specifications/`) would be named `"Cameras"` on the website.
-
-**Fix:** Use `rsplit('/', 1)[-1]` in the Sony branch (consistent with the non-Sony fallback at line 165), then strip known suffixes with the existing regex.
+**Fix:** Add a DSLR name-pattern heuristic to openMVG's category assignment (e.g., if name matches Canon EOS \d+D, Nikon D\d+, Pentax K-\d+, etc.).
 
 ---
 
-### C12-03: `_load_per_source_csvs` doesn't catch `UnicodeDecodeError`
-**Sources:** C12-03, CR12-03, V12-03, T12-03, D12-03
-**Severity:** LOW | **Confidence:** HIGH (5-agent consensus)
+### C14-02: UTF-8 BOM in camera-data.csv causes complete parse failure
+**Sources:** C14-02, CR14-02, V14-02, T14-02, A14-02, D14-02, S14-01, TE14-01
+**Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
 
-`pixelpitch.py` line 754: `path.read_text(encoding='utf-8')` can raise `UnicodeDecodeError` for corrupt files. The `except OSError` at line 755 doesn't catch it (`UnicodeDecodeError` is a subclass of `ValueError`, not `OSError`). This would crash `render_html`.
+If `camera-data.csv` or any source CSV is saved with a UTF-8 BOM (e.g., from Excel's "CSV UTF-8" save option), `parse_existing_csv` fails completely: the BOM makes `header[0]` equal to `"﻿id"` instead of `"id"`, causing schema detection to fail, column misalignment, and 0 rows parsed. The entire render pipeline proceeds with no existing data.
 
-**Concrete failure:** A corrupt source CSV file (non-UTF-8 bytes) causes `UnicodeDecodeError` during the render pipeline, preventing site generation.
+**Concrete failure:** A developer opens `camera-data.csv` in Excel, saves as "CSV UTF-8", and the next build produces a site missing all preserved cameras.
 
-**Fix:** Add `UnicodeDecodeError` to the except clause at line 755.
+**Fix:** Strip BOM at the entry point of `parse_existing_csv`:
+```python
+if csv_content and csv_content[0] == '﻿':
+    csv_content = csv_content[1:]
+```
+
+---
+
+### C14-03: CineD `FORMAT_TO_MM` has unreachable entries — dead code
+**Sources:** C14-03, CR14-03, V14-03, T14-03, D14-03, TE14-03
+**Severity:** LOW | **Confidence:** HIGH (6-agent consensus)
+
+Three entries in `FORMAT_TO_MM` are unreachable because the regex in `_parse_camera_page` doesn't capture those string patterns: `"super35"` (regex requires space), `"1 inch"` (regex matches `1"` or `1-inch` only), `"2/3-inch"` (regex matches `2/3"` only).
+
+**Fix:** Extend regex to capture missing variants, or remove unreachable entries.
+
+---
+
+### C14-04: `PHONE_TYPE_SIZE` is a mutable alias of `TYPE_SIZE`
+**Sources:** C14-04
+**Severity:** LOW | **Confidence:** HIGH
+
+`gsmarena.PHONE_TYPE_SIZE` is a direct reference to `pixelpitch.TYPE_SIZE`. Any mutation to `PHONE_TYPE_SIZE` would corrupt the central table. The code comment warns against mutation but the type system doesn't enforce it.
+
+**Fix:** Use `dict(SENSOR_TYPE_SIZE)` (copy) or `MappingProxyType` (read-only view).
+
+---
+
+### C14-05: openMVG docstring doesn't document category heuristic limitation
+**Sources:** DS14-01
+**Severity:** LOW | **Confidence:** HIGH
+
+The openMVG module docstring describes coverage but doesn't mention that the category heuristic misclassifies DSLRs. Developers reading the docstring won't understand why duplicate entries may appear.
+
+**Fix:** Add a note to the docstring about the category heuristic limitation.
 
 ---
 
@@ -59,7 +83,7 @@ Deferred items: see `.omc/plans/C7-02-deferred.md` and other deferred files.
 No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
-- Total distinct new findings: 3 (2 MEDIUM, 1 LOW)
+- Total distinct new findings: 5 (2 MEDIUM, 3 LOW)
 - Cross-agent consensus findings (3+ agents): 3
-- All cycle 1-11 fixes remain intact
-- Remaining deferred items: see `.omc/plans/C7-02-deferred.md`
+- All cycle 1-13 fixes remain intact
+- Remaining deferred items: see `.context/plans/deferred.md`
