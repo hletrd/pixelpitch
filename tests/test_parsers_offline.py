@@ -690,6 +690,39 @@ def test_gsmarena_select_main_lens():
                result4.startswith("48 MP"), True)
 
 
+# --------------------------------------------------------------------------
+# create_camera_key — year mismatch across sources must not produce duplicates
+
+def test_create_camera_key_year_mismatch():
+    section("create_camera_key year mismatch")
+    import pixelpitch as pp
+    from models import Spec, SpecDerived
+
+    def derive(name, category, size, mpix, year):
+        spec = Spec(name=name, category=category, type=None,
+                    size=size, pitch=None, mpix=mpix, year=year)
+        return pp.derive_spec(spec)
+
+    # Same camera from Geizhals (year=2005) and openMVG (year=None)
+    # must merge into a single entry, not produce duplicates.
+    existing = [derive("Canon EOS 5D", "dslr", (36.0, 24.0), 12.7, 2005)]
+    new = [derive("Canon EOS 5D", "dslr", (36.0, 24.0), 12.7, None)]
+    merged = pp.merge_camera_data(new, existing)
+    expect("year mismatch: no duplicate",
+           sum(1 for s in merged if s.spec.name == "Canon EOS 5D"), 1)
+
+    # Verify existing year is preserved when new has None
+    a7iv = [s for s in merged if s.spec.name == "Canon EOS 5D"][0]
+    expect("year mismatch: existing year preserved", a7iv.spec.year, 2005)
+
+    # Different years on same camera (new overwrites)
+    existing2 = [derive("Sony A7 IV", "mirrorless", (35.9, 23.9), 33.0, 2021)]
+    new2 = [derive("Sony A7 IV", "mirrorless", (35.9, 23.9), 33.0, 2022)]
+    merged2 = pp.merge_camera_data(new2, existing2)
+    expect("different years: no duplicate",
+           sum(1 for s in merged2 if s.spec.name == "Sony A7 IV"), 1)
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -708,6 +741,7 @@ def main():
     test_cined_format_coverage()
     test_about_html_rendering()
     test_gsmarena_select_main_lens()
+    test_create_camera_key_year_mismatch()
 
     print("\n" + ("=" * 60))
     if _failures:
