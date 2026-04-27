@@ -2,7 +2,9 @@
 This script calculates pixel pitch in µm for cameras listed on geizhals.at.
 """
 
+import csv
 import html
+import io
 import json
 import os
 import re
@@ -179,42 +181,35 @@ def load_csv(output_dir: Path) -> Optional[str]:
 
 
 def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
+    """Parse a CSV string produced by write_csv back into SpecDerived objects.
+
+    Uses the csv module for correct RFC 4180 handling (quoted fields, escaped
+    quotes, commas inside values).  The header row determines whether an ``id``
+    column is present; all subsequent rows are mapped by column index relative
+    to the detected schema.
+    """
     if not csv_content:
         return []
 
-    specs = []
-    lines = csv_content.strip().split("\n")
+    specs: List[SpecDerived] = []
+    reader = csv.reader(io.StringIO(csv_content))
+    rows = list(reader)
 
-    if len(lines) < 2:
+    if len(rows) < 2:
         return []
 
-    header = lines[0]
+    header = rows[0]
+    has_id = header[0] == "id" if header else False
 
-    has_id = header.startswith("id,")
-
-    for line in lines[1:]:
-        if not line.strip():
+    for values in rows[1:]:
+        if not values or not any(v.strip() for v in values):
             continue
 
         try:
-            values = []
-            current_value = ""
-            in_quotes = False
-
-            for char in line:
-                if char == '"':
-                    if in_quotes and current_value and current_value[-1] == '"':
-                        current_value = current_value[:-1] + '"'
-                    else:
-                        in_quotes = not in_quotes
-                elif char == "," and not in_quotes:
-                    values.append(current_value)
-                    current_value = ""
-                else:
-                    current_value += char
-            values.append(current_value)
-
-            if has_id and len(values) >= 10:
+            # Normalise column count — pad short rows with empty strings
+            if has_id:
+                while len(values) < 10:
+                    values.append("")
                 record_id = int(values[0]) if values[0] else None
                 name = values[1]
                 category = values[2]
@@ -226,44 +221,20 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
                 pitch_str = values[8]
                 year_str = values[9]
                 sensors_str = values[10] if len(values) > 10 else ""
-            elif has_id and len(values) >= 9:
-                record_id = int(values[0]) if values[0] else None
-                name = values[1]
-                category = values[2]
-                type_str = values[3] if values[3] else None
-                width_str = values[4]
-                height_str = values[5]
-                area_str = values[6]
-                mpix_str = values[7]
-                pitch_str = values[8]
-                year_str = values[9]
-                sensors_str = ""
-            elif not has_id and len(values) >= 9:
-                record_id = None
-                name = values[0]
-                category = values[1]
-                type_str = values[2] if values[2] else None
-                width_str = values[3]
-                height_str = values[4]
-                area_str = values[5]
-                mpix_str = values[6]
-                pitch_str = values[7]
-                year_str = values[8]
-                sensors_str = values[8] if len(values) > 8 else ""
-            elif not has_id and len(values) >= 8:
-                record_id = None
-                name = values[0]
-                category = values[1]
-                type_str = values[2] if values[2] else None
-                width_str = values[3]
-                height_str = values[4]
-                area_str = values[5]
-                mpix_str = values[6]
-                pitch_str = values[7]
-                year_str = values[8]
-                sensors_str = ""
             else:
-                continue
+                while len(values) < 9:
+                    values.append("")
+                record_id = None
+                name = values[0]
+                category = values[1]
+                type_str = values[2] if values[2] else None
+                width_str = values[3]
+                height_str = values[4]
+                area_str = values[5]
+                mpix_str = values[6]
+                pitch_str = values[7]
+                year_str = values[8]
+                sensors_str = values[9] if len(values) > 9 else ""
 
             size = None
             if width_str and height_str:
@@ -285,7 +256,8 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
             specs.append(derived)
 
         except Exception as e:
-            print(f"Error parsing CSV line: {line[:50]}... - {e}")
+            line_preview = ",".join(values)[:50]
+            print(f"Error parsing CSV line: {line_preview}... - {e}")
             continue
 
     return specs
@@ -631,13 +603,16 @@ def _get_env():
 
 
 def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
+    """Write camera specs to a CSV file using the csv module for proper escaping."""
     print(f"Writing CSV to {output_file}")
 
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write(
-            "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
-            "megapixels,pixel_pitch_um,year,matched_sensors\n"
-        )
+    with open(output_file, "w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "id", "name", "category", "type", "sensor_width_mm",
+            "sensor_height_mm", "sensor_area_mm2", "megapixels",
+            "pixel_pitch_um", "year", "matched_sensors",
+        ])
 
         for derived in specs:
             spec = derived.spec
@@ -655,14 +630,11 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
                 ";".join(derived.matched_sensors) if derived.matched_sensors else ""
             )
 
-            name_escaped = spec.name.replace('"', '""')
-            if "," in name_escaped or '"' in spec.name:
-                name_escaped = f'"{name_escaped}"'
-
-            f.write(
-                f"{id_str},{name_escaped},{category_str},{type_str},{width_str},{height_str},"
-                f"{area_str},{mpix_str},{pitch_str},{year_str},{sensors_str}\n"
-            )
+            writer.writerow([
+                id_str, spec.name, category_str, type_str, width_str,
+                height_str, area_str, mpix_str, pitch_str, year_str,
+                sensors_str,
+            ])
 
 
 CATEGORIES = [
