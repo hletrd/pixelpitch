@@ -1,0 +1,45 @@
+# Plan 12: SRI Hashes, TYPE_SIZE Merge, temporalCoverage Fix
+
+**Status:** completed
+**Priority:** P1 (2 MEDIUM severity findings promoted from deferred, 1 new MEDIUM)
+**Findings addressed:** C8-01, C8-02, C8-03
+
+## Problem
+
+1. **C8-01 (MEDIUM):** 4 CDN resources in `templates/index.html` lack Subresource Integrity (SRI) hashes. This is a re-escalation of C3-09+S4-02 (originally deferred as LOW). New security reviews in cycle 8 upgraded severity to MEDIUM because 4 of 7 CDN scripts are unprotected, creating a supply-chain attack vector.
+
+2. **C8-02 (MEDIUM, NEW):** The `TYPE_SIZE` lookup table in `pixelpitch.py` has only 12 entries. The `PHONE_TYPE_SIZE` table in `gsmarena.py` has 37 entries, 25 of which are absent from `TYPE_SIZE`. When `sensor_size_from_type` is called with a phone-format sensor type (e.g., "1/1.3"), it falls through to an inaccurate computation path with up to ~3% error.
+
+3. **C8-03 (LOW):** The LD+JSON `temporalCoverage` in `templates/index.html` line 74 has start year "2025" but the database spans decades. This is a re-escalation of C6-05 (originally deferred as LOW).
+
+## Implementation Steps
+
+### Step 1: Add SRI hashes to 4 CDN resources (C8-01)
+- [x] Compute SHA-384 hashes for each CDN resource
+- [x] Add `integrity="sha384-..."` and `crossorigin="anonymous"` to:
+  - `bootstrap-icons@1.13.1/font/bootstrap-icons.min.css` (line 79)
+  - `tablesorter@2.31.3/dist/js/jquery.tablesorter.min.js` (line 288)
+  - `tablesorter@2.31.3/dist/js/jquery.tablesorter.widgets.min.js` (line 289)
+  - `d3js.org/d3.v7.min.js` (line 290)
+- Commit: 447ee5a
+
+### Step 2: Merge PHONE_TYPE_SIZE into TYPE_SIZE (C8-02)
+- [x] Add the 25 missing entries from `gsmarena.PHONE_TYPE_SIZE` to `pixelpitch.TYPE_SIZE`
+- [x] Update `gsmarena.py` to import `TYPE_SIZE` from `pixelpitch` instead of maintaining its own `PHONE_TYPE_SIZE`
+- Commit: 2fba619
+
+### Step 3: Fix LD+JSON temporalCoverage (C8-03)
+- [x] Change `templates/index.html` line 74 from `"2025/{{ date.year ... }}"` to `"2000/{{ date.year ... }}"`
+- Commit: 447ee5a
+
+### Step 4: Verify fixes
+- [x] Run gate tests — ALL PASS
+- [x] SRI hashes valid (computed from live CDN resources)
+- [x] `sensor_size_from_type("1/1.3")` returns measured values from table (9.84, 7.40)
+
+## Exit Criteria
+- All CDN resources have SRI hashes — DONE
+- `TYPE_SIZE` contains all entries from `PHONE_TYPE_SIZE` — DONE
+- `sensor_size_from_type` returns measured values for phone-format types — DONE
+- `temporalCoverage` reflects actual data range — DONE
+- All gate tests pass — DONE

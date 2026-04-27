@@ -1,0 +1,63 @@
+# Plan 14: CineD Medium Format, About Page, Dead Code Cleanup
+
+**Status:** completed
+**Priority:** P1 (1 MEDIUM, 3 LOW findings)
+**Findings addressed:** C9-01, C9-02, C9-03, C9-04, C9-05, C9-06
+
+## Problem
+
+1. **C9-01 (MEDIUM):** CineD `_parse_camera_page` regex matches "Medium Format" but `FORMAT_TO_MM` does not contain a "medium format" key. Medium-format cinema cameras lose their size data silently.
+
+2. **C9-02 (LOW):** The about page is rendered without a `title` parameter, so it inherits the generic "Camera Sensor Pixel Pitch List" instead of "About Pixel Pitch".
+
+3. **C9-03 (LOW):** The about page inherits `@type: Dataset` LD+JSON which is semantically wrong for an informational page. Should use `@type: AboutPage` or exclude the LD+JSON block.
+
+4. **C9-04 (LOW):** The `use_size_table` parameter chain is dead code after the cycle-8 TYPE_SIZE merge. The table is always used when the type is present.
+
+5. **C9-05 (LOW):** openMVG category logic has redundant `>= 30` branch (subsumed by `>= 20`).
+
+6. **C9-06 (LOW):** gsmarena.PHONE_TYPE_SIZE is mutable alias to central TYPE_SIZE — fragile but currently safe.
+
+## Implementation Steps
+
+### Step 1: Add "medium format" to CineD FORMAT_TO_MM (C9-01)
+- [x] Add `"medium format": (43.8, 32.9)` to `FORMAT_TO_MM` in `sources/cined.py`
+- [x] Add a test that verifies all regex-capturable formats have FORMAT_TO_MM entries (TE9-01)
+- Commit: 9ece0c7
+
+### Step 2: Fix about page title and LD+JSON (C9-02, C9-03)
+- [x] Pass `title="About Pixel Pitch"` to about.html render call in `pixelpitch.py`
+- [x] Override LD+JSON block in about.html with `@type: AboutPage`
+- [x] Add `date` to the about.html render context so `dateModified` is current
+- [x] Override og:title and twitter:title for about page
+- [x] Wrap base template LD+JSON in {% block js_ldjson %} so about.html can override it
+- Commit: 81dc8c4
+
+### Step 3: Remove dead `use_size_table` parameter chain (C9-04)
+- [x] Remove `use_table` parameter from `sensor_size_from_type` in `pixelpitch.py`
+- [x] Remove `use_size_table` parameter from `derive_spec`, `derive_specs`, `get_category`
+- [x] Remove the boolean column from `CATEGORIES` tuple
+- [x] Update `fetch_source` which passed `use_size_table=False`
+- [x] Update tests that passed `use_table` or `use_size_table`
+- Commit: c1a6797
+
+### Step 4: Simplify openMVG redundant category branch (C9-05)
+- [x] Merge `size[0] >= 30` and `size[0] >= 20` branches in `sources/openmvg.py`
+- Commit: 7219f33
+
+### Step 5: Add comment for gsmarena mutable alias (C9-06)
+- [x] Add a comment on `PHONE_TYPE_SIZE = SENSOR_TYPE_SIZE` explaining it's an intentional read-only alias
+- Commit: 2e5769a
+
+### Step 6: Verify all fixes
+- [x] Run gate tests — ALL PASS
+- [x] Verify about.html renders with correct title and LD+JSON — VERIFIED
+- [x] Push all commits — DONE
+
+## Exit Criteria
+- FORMAT_TO_MM contains "medium format" — DONE
+- about.html title is "About Pixel Pitch" — DONE
+- about.html LD+JSON is @type:AboutPage — DONE
+- `use_size_table` parameter removed from entire codebase — DONE
+- openMVG category logic simplified — DONE
+- All gate tests pass — DONE

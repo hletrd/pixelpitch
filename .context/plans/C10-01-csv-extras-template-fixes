@@ -1,0 +1,72 @@
+# Plan 15: CSV Type Whitespace, EXTRAS Regex, Template Fixes, Test Additions
+
+**Status:** completed
+**Priority:** P2 (7 LOW severity findings — code correctness and robustness)
+**Findings addressed:** C10-01, C10-02, C10-03, C10-05, C10-06, C10-09, C10-10
+
+## Problem
+
+1. **C10-01 (LOW):** `parse_existing_csv` does not strip whitespace from the type field. A type like `" 1/2.3"` is truthy but fails to match in `sensor_size_from_type`, causing silent data loss for manually edited CSVs.
+
+2. **C10-02 (LOW):** The EXTRAS regex in `deduplicate_specs` has no word boundary anchors. Words like "Body", "grau" can match inside camera names, truncating them incorrectly.
+
+3. **C10-03 (LOW):** The about.html CSV download link uses `./camera-data.csv` while all other internal links use bare filenames. Inconsistent style.
+
+4. **C10-05 (LOW):** `selectattr('pitch')` in pixelpitch.html treats 0.0 as unknown because it uses Jinja2 truthiness. The intent is to separate known vs unknown pitch.
+
+5. **C10-06 (LOW):** The D3 scatter plot creation has no try/catch or zero-width guard. A JS error or zero-width container leaves the button stuck in "Creating Plot..." state.
+
+6. **C10-09 (LOW):** No automated test for about.html rendering with correct title and LD+JSON.
+
+7. **C10-10 (LOW):** No test for GSMArena `_select_main_lens` edge cases.
+
+## Implementation Steps
+
+### Step 1: Strip whitespace from CSV type field (C10-01)
+- [x] Add `.strip()` to `type_str` in `parse_existing_csv` for both has_id and no_id paths
+- [x] Add test for CSV with whitespace in type field
+- Commit: dc35ab1
+
+### Step 2: Add word boundaries to EXTRAS regex (C10-02)
+- [x] Change `EXTRAS_RE = re.compile("|".join(EXTRAS))` to use word boundaries with `re.escape`
+- [x] Add test for EXTRAS word inside camera name (should NOT match)
+- Commit: 5bc30f1
+
+### Step 3: Fix about.html CSV link prefix (C10-03)
+- [x] Change `href="./camera-data.csv"` to `href="camera-data.csv"` in about.html
+- Commit: 49f9c46
+
+### Step 4: Fix selectattr('pitch') for 0.0 edge case (C10-05)
+- [x] Change `specs|selectattr('pitch')` to `specs|selectattr('pitch', 'ne', None)` in pixelpitch.html
+- [x] Change `specs|rejectattr('pitch')` to `specs|rejectattr('pitch', 'ne', None)` in pixelpitch.html
+- Commit: 44b7616
+
+### Step 5: Add error boundary to scatter plot (C10-06)
+- [x] Wrap D3 rendering in try/catch, reset button state on error
+- [x] Add minimum width check before creating SVG
+- Commit: 8b14bac
+
+### Step 6: Add test for about.html rendering (C10-09)
+- [x] Add test that renders about.html and checks title contains "About Pixel Pitch"
+- [x] Add test that about.html LD+JSON contains "@type": "AboutPage" as top-level
+- Commit: 1d9646d
+
+### Step 7: Add tests for _select_main_lens edge cases (C10-10)
+- [x] Test with two wide lenses (stable sort preserves first)
+- [x] Test with no wide lenses (only telephoto/ultrawide)
+- [x] Test with empty camera value
+- [x] Test with lens having no role tag
+- Commit: be09797
+
+### Step 8: Verify all fixes
+- [x] Run gate tests — ALL PASS
+- [x] Push all commits — DONE
+
+## Exit Criteria
+- CSV type field whitespace stripped during parsing — DONE
+- EXTRAS regex uses word boundaries — DONE
+- About page CSV link uses bare filename — DONE
+- selectattr/rejectattr handle 0.0 pitch correctly — DONE
+- Scatter plot has error boundary — DONE
+- Tests for about.html rendering and _select_main_lens edge cases added — DONE
+- All gate tests pass — DONE

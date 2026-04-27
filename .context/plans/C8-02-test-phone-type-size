@@ -1,0 +1,23 @@
+# Plan 13: Test for Phone-Format Sensor Types in TYPE_SIZE
+
+**Status:** completed
+**Priority:** P2 (LOW severity, test coverage)
+**Findings addressed:** C8-04
+
+## Problem
+
+The `test_sensor_size_from_type` test only checks types already in `TYPE_SIZE` (1/2.3) and computed types not in any table (1/3.1). No test verifies the 25 phone-format types from `PHONE_TYPE_SIZE` are handled correctly after they are merged into `TYPE_SIZE` (Plan 12, Step 2).
+
+## Implementation Steps
+
+### Step 1: Add test for phone-format sensor types (C8-04)
+- [x] Add test cases after Plan 12 merged `PHONE_TYPE_SIZE` into `TYPE_SIZE`:
+  - `sensor_size_from_type("1/1.3")` returns `(9.84, 7.40)` — PASS
+  - `sensor_size_from_type("1/1.7")` returns `(7.60, 5.70)` — PASS
+  - `sensor_size_from_type("1/2.8")` returns `(5.12, 3.84)` — PASS
+- [x] Verify these return measured values, not computed approximations — PASS
+- Commit: f2a863f
+
+## Exit Criteria
+- New test cases pass — DONE
+- Gate tests pass — DONE
