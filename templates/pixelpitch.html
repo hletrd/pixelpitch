@@ -332,6 +332,7 @@
 
       button.prop('disabled', true).html('<i class="bi bi-arrow-clockwise spinner-border spinner-border-sm me-1"></i>Creating Plot...');
 
+      try {
       const data = [];
       $("#table_with_pitch tbody tr").each(function(i, el) {
         const row = $(el);
@@ -353,7 +354,13 @@
       plotDiv.empty().show();
 
       const margin = {top: 20, right: 30, bottom: 40, left: 50};
-      const width = plotDiv.width() - margin.left - margin.right;
+      const containerWidth = plotDiv.width();
+      if (containerWidth < 100) {
+        button.prop('disabled', false).html('<i class="bi bi-graph-up me-1"></i>Create Scatter Plot');
+        alert('Plot container is too narrow to render.');
+        return;
+      }
+      const width = containerWidth - margin.left - margin.right;
       const height = 350 - margin.top - margin.bottom;
 
       const svg = d3.select("#pitch_plot")
@@ -410,6 +417,12 @@
 
       plotVisible = true;
       button.prop('disabled', false).html('<i class="bi bi-eye-slash me-1"></i>Hide Scatter Plot');
+
+      } catch (err) {
+        console.error('Scatter plot error:', err);
+        plotDiv.empty().hide();
+        button.prop('disabled', false).html('<i class="bi bi-graph-up me-1"></i>Create Scatter Plot');
+      }
     }
 
     $('#create_plot').click(function() {
