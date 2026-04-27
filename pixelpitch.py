@@ -110,10 +110,23 @@ def sensor_size(diag: float, aspect: float) -> Tuple[float, float]:
 def sensor_size_from_type(
     typ: Optional[str], use_table: bool
 ) -> Optional[Tuple[float, float]]:
+    """Convert a fractional-inch sensor type designation to (width_mm, height_mm).
+
+    The lookup table contains measured (actual) sensor dimensions which are
+    significantly more accurate than computing from the nominal diagonal.
+    When the type is in the table, the table value is always used regardless
+    of ``use_table`` — the table is the source of truth for known types.
+
+    For types not in the table (e.g. "1/3.1"), the sensor size is computed
+    from the nominal diagonal.  Note that computed values are approximations
+    because the optical format naming convention does not represent the actual
+    sensor diagonal.
+    """
     if not typ:
         return None
 
-    if use_table and typ in TYPE_SIZE:
+    # Always prefer the lookup table — it has measured dimensions.
+    if typ in TYPE_SIZE:
         return TYPE_SIZE[typ]
 
     if typ.startswith("1/"):
