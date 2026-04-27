@@ -803,12 +803,61 @@ def render_html(output_dir: Path) -> None:
     print(f"SEO files copied to {output_dir}")
 
 
+SOURCE_REGISTRY = {
+    "openmvg": "sources.openmvg",
+    "digicamdb": "sources.digicamdb",
+    "imaging-resource": "sources.imaging_resource",
+    "apotelyt": "sources.apotelyt",
+    "gsmarena": "sources.gsmarena",
+    "cined": "sources.cined",
+}
+
+
+def fetch_source(name: str, limit: Optional[int], output_dir: Path) -> None:
+    """Fetch records from an alternative source and write a CSV file."""
+    import importlib
+
+    if name not in SOURCE_REGISTRY:
+        print(f"Unknown source: {name}")
+        print(f"Available: {', '.join(sorted(SOURCE_REGISTRY))}")
+        sys.exit(1)
+
+    module = importlib.import_module(SOURCE_REGISTRY[name])
+    print(f"Fetching from source '{name}' (limit={limit})...")
+    raw_specs = module.fetch(limit=limit) if limit is not None else module.fetch()
+
+    derived = derive_specs(raw_specs, use_size_table=False)
+    derived = sorted_by(derived, "pitch")
+    for i, d in enumerate(derived):
+        d.id = i
+
+    output_dir.mkdir(exist_ok=True, parents=True)
+    out_file = output_dir / f"camera-data-{name}.csv"
+    write_csv(derived, out_file)
+    print(f"  fetched {len(raw_specs)} records, wrote {out_file}")
+
+
 def main():
     if len(sys.argv) > 1:
         cmd = sys.argv[1]
         if cmd == "html":
             output_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("dist")
             render_html(output_dir)
+        elif cmd == "source":
+            if len(sys.argv) < 3:
+                print(f"Usage: python pixelpitch.py source <name> [--limit N] [--out DIR]")
+                print(f"Available sources: {', '.join(sorted(SOURCE_REGISTRY))}")
+                sys.exit(1)
+            src = sys.argv[2]
+            limit: Optional[int] = None
+            out_dir = Path("dist")
+            args = sys.argv[3:]
+            for i, a in enumerate(args):
+                if a == "--limit" and i + 1 < len(args):
+                    limit = int(args[i + 1])
+                elif a == "--out" and i + 1 < len(args):
+                    out_dir = Path(args[i + 1])
+            fetch_source(src, limit, out_dir)
         elif cmd == "list":
             print("Fetching all cameras...")
             page = _create_browser()
@@ -828,6 +877,11 @@ def main():
                 "(default: current directory)"
             )
             print("  list          List all cameras with pixel pitch to console")
+            print(
+                "  source <name> [--limit N] [--out DIR]\n"
+                "                Fetch from an alternative source.\n"
+                f"                Available: {', '.join(sorted(SOURCE_REGISTRY))}"
+            )
             print("  --help, -h    Show this help message")
         else:
             print(f"Unknown command: {sys.argv[1]}")
