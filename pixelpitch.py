@@ -20,6 +20,8 @@ from urllib.parse import quote_plus
 
 from models import Spec, SpecDerived
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+
 # For fixed-lens cameras we assume 4:3 sensor aspect ratio if not given.
 # Also, the following mapping of given sensor sizes to sensor areas is used from wikipedia:
 # http://en.wikipedia.org/wiki/Image_sensor_format
@@ -128,7 +130,7 @@ def pixel_pitch(area: float, mpix: float) -> float:
 
 def load_sensors_database() -> dict:
     try:
-        with open("sensors.json", "r", encoding="utf-8") as f:
+        with open(SCRIPT_DIR / "sensors.json", "r", encoding="utf-8") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         print(f"Warning: Could not load sensors.json: {e}")
@@ -595,7 +597,7 @@ def _get_env():
     if _env is None:
         from jinja2 import Environment, FileSystemLoader, select_autoescape
         _env = Environment(
-            loader=FileSystemLoader("templates"),
+            loader=FileSystemLoader(SCRIPT_DIR / "templates"),
             autoescape=select_autoescape(["html", "xml"]),
         )
         _env.filters["formatdate"] = datetimeformat
@@ -844,13 +846,13 @@ def render_html(output_dir: Path, skip_geizhals: bool = False) -> None:
 
     static_seo_files = ["robots.txt"]
     for filename in static_seo_files:
-        src_path = Path(filename)
+        src_path = SCRIPT_DIR / filename
         if src_path.exists():
             (output_dir / filename).write_text(
                 src_path.read_text(encoding="utf-8"), encoding="utf-8"
             )
 
-    sitemap_content = open("sitemap.xml", "r", encoding="utf-8").read()
+    sitemap_content = (SCRIPT_DIR / "sitemap.xml").read_text(encoding="utf-8")
     sitemap_content = sitemap_content.replace("2026-04-28", date.strftime("%Y-%m-%d"))
 
     (output_dir / "sitemap.xml").write_text(sitemap_content, encoding="utf-8")
