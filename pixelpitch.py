@@ -1006,7 +1006,6 @@ def render_html(output_dir: Path, skip_geizhals: bool = False) -> None:
 
 SOURCE_REGISTRY = {
     "openmvg": "sources.openmvg",
-    "digicamdb": "sources.digicamdb",
     "imaging-resource": "sources.imaging_resource",
     "apotelyt": "sources.apotelyt",
     "gsmarena": "sources.gsmarena",

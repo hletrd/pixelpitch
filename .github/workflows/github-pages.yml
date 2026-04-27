@@ -97,7 +97,6 @@ jobs:
           dist/camera-data-imaging-resource.csv \
           dist/camera-data-apotelyt.csv \
           dist/camera-data-gsmarena.csv \
-          dist/camera-data-digicamdb.csv \
           dist/camera-data-cined.csv 2>/dev/null || true
         git commit -m "Update camera data [skip ci]" || exit 0
         git pull --rebase || true
