@@ -258,6 +258,12 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
     if not csv_content:
         return []
 
+    # Strip UTF-8 BOM if present. Excel's "CSV UTF-8" save option adds a
+    # BOM (﻿) at the start of the file, which would make header[0] = "﻿id"
+    # instead of "id", breaking schema detection and causing 0-row parses.
+    if csv_content[0] == "﻿":
+        csv_content = csv_content[1:]
+
     specs: List[SpecDerived] = []
     reader = csv.reader(io.StringIO(csv_content))
     rows = list(reader)

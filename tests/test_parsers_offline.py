@@ -406,6 +406,18 @@ def test_parse_existing_csv():
     parsed7 = pp.parse_existing_csv(csv7)
     expect("whitespace name stripped", parsed7[0].spec.name, "Sony A7 IV")
 
+    # UTF-8 BOM prefix — should be stripped so schema detection works
+    csv8 = (
+        "﻿id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+        "megapixels,pixel_pitch_um,year,matched_sensors\n"
+        '8,Sony A7 IV,mirrorless,,35.90,23.90,858.61,33.0,5.12,2021,\n'
+    )
+    parsed8 = pp.parse_existing_csv(csv8)
+    expect("BOM: row count", len(parsed8), 1)
+    expect("BOM: name parsed", parsed8[0].spec.name, "Sony A7 IV")
+    expect("BOM: record id", parsed8[0].id, 8)
+    expect("BOM: category", parsed8[0].spec.category, "mirrorless")
+
 
 # --------------------------------------------------------------------------
 # CSV round-trip test
