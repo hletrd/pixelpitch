@@ -51,7 +51,8 @@
           data-sensor-width="{{ spec.size[0] if spec.size else 0 }}"
           data-sensor-height="{{ spec.size[1] if spec.size else 0 }}"
           data-category="{{ spec.spec.category }}"
-          data-name="{{ spec.spec.name }}">
+          data-name="{{ spec.spec.name }}"
+          data-year="{{ spec.spec.year or 0 }}">
         <td>
           <a href="https://duckduckgo.com/?q={{ spec.spec.name|urlencode }}"
              class="text-decoration-none" target="_blank" rel="noopener">
@@ -314,19 +315,11 @@
       $("#table_with_pitch tbody tr").each(function(i, el) {
         const row = $(el);
         const name = row.find('td:first-child a').text().trim();
-        const pitchText = row.find('td:nth-child(4)').text().trim();
-        const yearText = row.find('td:nth-child(5)').text().trim();
+        const pitch = parseFloat(row.attr('data-pitch'));
+        const year = parseInt(row.attr('data-year'));
 
-        const pitchMatch = pitchText.match(/([\d.]+)\s*µm/);
-        const yearMatch = yearText.match(/\d{4}/);
-
-        if (pitchMatch && yearMatch && pitchText !== 'unknown' && yearText !== 'unknown') {
-          const pitch = parseFloat(pitchMatch[1]);
-          const year = parseInt(yearMatch[0]);
-
-          if (!isNaN(year) && !isNaN(pitch) && year >= 2000 && year <= new Date().getFullYear()) {
-            data.push({ name, year, value: pitch });
-          }
+        if (!isNaN(pitch) && pitch > 0 && !isNaN(year) && year >= 2000 && year <= new Date().getFullYear()) {
+          data.push({ name, year, value: pitch });
         }
       });
 
