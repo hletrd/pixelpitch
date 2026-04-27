@@ -61,9 +61,7 @@ def fetch(limit: Optional[int] = None) -> list[Spec]:
         # full frame and larger / APS-C are usually interchangeable-lens, the
         # rest skew toward compacts. This is a best-effort guess.
         if size:
-            if size[0] >= 30:
-                category = "mirrorless"
-            elif size[0] >= 20:
+            if size[0] >= 20:
                 category = "mirrorless"
             else:
                 category = "fixed"
