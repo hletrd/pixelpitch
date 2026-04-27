@@ -881,7 +881,7 @@ def render_html(output_dir: Path, skip_geizhals: bool = False) -> None:
             )
 
     sitemap_content = (SCRIPT_DIR / "sitemap.xml").read_text(encoding="utf-8")
-    sitemap_content = sitemap_content.replace("2026-04-28", date.strftime("%Y-%m-%d"))
+    sitemap_content = sitemap_content.replace("__LASTMOD__", date.strftime("%Y-%m-%d"))
 
     (output_dir / "sitemap.xml").write_text(sitemap_content, encoding="utf-8")
 
