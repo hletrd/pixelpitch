@@ -260,7 +260,7 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
                 record_id = int(values[0]) if values[0] else None
                 name = values[1]
                 category = values[2]
-                type_str = values[3] if values[3] else None
+                type_str = values[3].strip() if values[3].strip() else None
                 width_str = values[4]
                 height_str = values[5]
                 area_str = values[6]
@@ -274,7 +274,7 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
                 record_id = None
                 name = values[0]
                 category = values[1]
-                type_str = values[2] if values[2] else None
+                type_str = values[2].strip() if values[2].strip() else None
                 width_str = values[3]
                 height_str = values[4]
                 area_str = values[5]

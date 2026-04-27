@@ -332,6 +332,15 @@ def test_parse_existing_csv():
     expect("short row name", parsed5[0].spec.name, "Short")
     expect("short row empty category", parsed5[0].spec.category, "")
 
+    # Type field with leading/trailing whitespace — should be stripped
+    csv6 = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+        "megapixels,pixel_pitch_um,year,matched_sensors\n"
+        '6,Test Cam,mirrorless, 1/2.3 ,6.17,4.55,28.07,12.0,1.55,2020,\n'
+    )
+    parsed6 = pp.parse_existing_csv(csv6)
+    expect("whitespace type stripped", parsed6[0].spec.type, "1/2.3")
+
 
 # --------------------------------------------------------------------------
 # CSV round-trip test
