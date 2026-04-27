@@ -363,6 +363,15 @@ def merge_camera_data(
             # Preserve year from existing data if new data has none
             if new_spec.spec.year is None and existing_spec.spec.year is not None:
                 new_spec.spec.year = existing_spec.spec.year
+            elif (
+                new_spec.spec.year is not None
+                and existing_spec.spec.year is not None
+                and new_spec.spec.year != existing_spec.spec.year
+            ):
+                print(
+                    f"  Year changed for {new_spec.spec.name[:40]}: "
+                    f"{existing_spec.spec.year} -> {new_spec.spec.year}"
+                )
             print(f"Updated existing camera: {new_spec.spec.name[:50]}")
 
         merged_specs.append(new_spec)
