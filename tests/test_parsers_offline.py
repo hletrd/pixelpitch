@@ -89,6 +89,38 @@ def test_imaging_resource():
            imaging_resource._body_category("", "Full-Frame", ""),
            "mirrorless")
 
+    # _parse_camera_name with modern spec URL (review/specifications/)
+    name_modern = imaging_resource._parse_camera_name(
+        {"Model Name": "Sony Alpha ILCE-A7 IV"},
+        "https://www.imaging-resource.com/cameras/sony-a7-iv-review/specifications/"
+    )
+    expect("IR Sony name from modern spec URL",
+           name_modern, "Sony A7 IV")
+
+    # _parse_camera_name with legacy spec URL (slug-specifications/)
+    name_legacy = imaging_resource._parse_camera_name(
+        {"Model Name": "Sony Alpha ILCZV-E10"},
+        "https://www.imaging-resource.com/cameras/sony-zv-e10-specifications/"
+    )
+    expect("IR Sony name from legacy spec URL",
+           name_legacy, "Sony ZV-E10")
+
+    # _parse_camera_name fallback with empty Model Name (modern URL)
+    name_fb_modern = imaging_resource._parse_camera_name(
+        {"Model Name": ""},
+        "https://www.imaging-resource.com/cameras/nikon-z9-review/specifications/"
+    )
+    expect("IR fallback name from modern spec URL",
+           name_fb_modern, "Nikon Z9")
+
+    # _parse_camera_name fallback with empty Model Name (legacy URL)
+    name_fb_legacy = imaging_resource._parse_camera_name(
+        {"Model Name": ""},
+        "https://www.imaging-resource.com/cameras/nikon-z9-specifications/"
+    )
+    expect("IR fallback name from legacy spec URL",
+           name_fb_legacy, "Nikon Z9")
+
 
 # --------------------------------------------------------------------------
 # Apotelyt — Sony A7 IV fixture

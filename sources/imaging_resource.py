@@ -148,8 +148,13 @@ def _parse_camera_name(fields: dict[str, str], fallback_url: str) -> Optional[st
     name = (fields.get("Model Name") or "").strip()
 
     if name.lower().startswith("sony"):
-        slug = fallback_url.rstrip("/").rsplit("/", 2)[-2]
-        slug = re.sub(r"-review$", "", slug)
+        parts = fallback_url.rstrip("/").rsplit("/")
+        slug = parts[-1]
+        if slug == "specifications":
+            # Modern format: .../camera-slug-review/specifications/
+            slug = parts[-2]
+        # Strip known URL suffixes (works for both modern and legacy formats)
+        slug = re.sub(r"-(review|specifications|digital-camera-review-information.*)$", "", slug)
         cleaned = slug.replace("-", " ").title()
         cleaned = re.sub(
             r"\b(Ii|Iii|Iv|Vi|Vii|Viii|Ix)\b",
@@ -162,7 +167,10 @@ def _parse_camera_name(fields: dict[str, str], fallback_url: str) -> Optional[st
     if name:
         return normalise_name(name)
 
-    slug = fallback_url.rstrip("/").rsplit("/", 1)[-1]
+    parts = fallback_url.rstrip("/").rsplit("/")
+    slug = parts[-1]
+    if slug == "specifications":
+        slug = parts[-2]
     slug = re.sub(r"-(review|specifications|digital-camera-review-information.*)$", "", slug)
     return normalise_name(slug.replace("-", " ").title())
 
