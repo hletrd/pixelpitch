@@ -55,7 +55,7 @@
           data-year="{{ spec.spec.year or 0 }}">
         <td>
           <a href="https://duckduckgo.com/?q={{ spec.spec.name|urlencode }}"
-             class="text-decoration-none" target="_blank" rel="noopener">
+             class="text-decoration-none" target="_blank" rel="noopener noreferrer">
             {{ spec.spec.name }}
             <i class="bi bi-box-arrow-up-right ms-1 text-muted"></i>
           </a>
@@ -125,7 +125,7 @@
         <div class="row align-items-center">
           <div class="col-md-9">
             <p class="mb-2">
-              Camera data is aggregated from multiple sources including <a href="https://geizhals.eu" target="_blank" rel="noopener">geizhals.eu</a>, <a href="https://www.imaging-resource.com" target="_blank" rel="noopener">Imaging Resource</a>, <a href="https://apotelyt.com" target="_blank" rel="noopener">Apotelyt</a>, <a href="https://www.gsmarena.com" target="_blank" rel="noopener">GSMArena</a>, and <a href="https://www.cined.com" target="_blank" rel="noopener">CineD</a>.
+              Camera data is aggregated from multiple sources including <a href="https://geizhals.eu" target="_blank" rel="noopener noreferrer">geizhals.eu</a>, <a href="https://www.imaging-resource.com" target="_blank" rel="noopener noreferrer">Imaging Resource</a>, <a href="https://apotelyt.com" target="_blank" rel="noopener noreferrer">Apotelyt</a>, <a href="https://www.gsmarena.com" target="_blank" rel="noopener noreferrer">GSMArena</a>, and <a href="https://www.cined.com" target="_blank" rel="noopener noreferrer">CineD</a>.
               Note that sensor size and <a href="about.html">pixel pitch</a> may not be fully accurate in all cases.
             </p>
             <small class="text-muted">
@@ -167,9 +167,9 @@
               <i class="bi bi-funnel me-1"></i>Filter
             </button>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#" onclick="filterTable('all')">All Cameras</a></li>
-              <li><a class="dropdown-item" href="#" onclick="filterTable('known')">Known Pixel Pitch Only</a></li>
-              <li><a class="dropdown-item" href="#" onclick="filterTable('unknown')">Unknown Pixel Pitch Only</a></li>
+              <li><a class="dropdown-item" href="#" onclick="filterTable('all'); return false;">All Cameras</a></li>
+              <li><a class="dropdown-item" href="#" onclick="filterTable('known'); return false;">Known Pixel Pitch Only</a></li>
+              <li><a class="dropdown-item" href="#" onclick="filterTable('unknown'); return false;">Unknown Pixel Pitch Only</a></li>
             </ul>
           </div>
         </div>
