@@ -15,6 +15,13 @@ permissions:
   id-token: write
   actions: write
 
+# Per-source fetch limits — keeps the workflow predictable. Adjust as needed.
+env:
+  IR_LIMIT: "200"          # Imaging Resource: ~0.5s/page → ~100s for 200
+  APOTELYT_LIMIT: "300"    # Apotelyt: ~0.4s/page → ~120s for 300
+  GSMARENA_LIMIT: "150"    # GSMArena: ~1s/page + brand discovery → ~3 min
+  GSMARENA_PAGES: "1"      # max pagination per brand
+
 jobs:
   update:
     runs-on: [self-hosted, mac0]
@@ -30,7 +37,52 @@ jobs:
         . .venv/bin/activate
         pip install -r requirements.txt
 
-    - name: Run script
+    - name: Run offline tests
+      run: |
+        . .venv/bin/activate
+        python -m tests.test_parsers_offline
+
+    # ----- Per-source fetch jobs ------------------------------------------
+    # Each source step is independent. continue-on-error keeps a transient
+    # failure from blocking the deploy — the previous source CSV stays
+    # checked in, and render_html will use it via _load_per_source_csvs.
+
+    - name: Fetch openMVG (MIT CSV, ~5s)
+      continue-on-error: true
+      run: |
+        . .venv/bin/activate
+        python pixelpitch.py source openmvg --out dist
+
+    - name: Fetch Imaging Resource
+      continue-on-error: true
+      timeout-minutes: 30
+      run: |
+        . .venv/bin/activate
+        python pixelpitch.py source imaging-resource --limit "${IR_LIMIT}" --out dist
+
+    - name: Fetch Apotelyt
+      continue-on-error: true
+      timeout-minutes: 20
+      run: |
+        . .venv/bin/activate
+        python pixelpitch.py source apotelyt --limit "${APOTELYT_LIMIT}" --out dist
+
+    - name: Fetch GSMArena (smartphones)
+      continue-on-error: true
+      timeout-minutes: 20
+      env:
+        GSMARENA_MAX_PAGES_PER_BRAND: ${{ env.GSMARENA_PAGES }}
+      run: |
+        . .venv/bin/activate
+        python pixelpitch.py source gsmarena --limit "${GSMARENA_LIMIT}" --out dist
+
+    # CineD requires DrissionPage + Cloudflare-solving (same as Geizhals).
+    # We let it run inside the main render step's browser session to share
+    # cost; here we explicitly skip the standalone fetch.
+
+    # ----- Master render & deploy -----------------------------------------
+
+    - name: Render HTML (live Geizhals + merge all source CSVs)
       run: |
         . .venv/bin/activate
         python pixelpitch.py
@@ -39,8 +91,16 @@ jobs:
       run: |
         git config --local user.email "hletrd@users.noreply.github.com"
         git config --local user.name "GitHub Action"
-        git add -f dist/camera-data.csv
-        git commit -m "Update camera-data.csv [skip ci]" || exit 0
+        git add -f \
+          dist/camera-data.csv \
+          dist/camera-data-openmvg.csv \
+          dist/camera-data-imaging-resource.csv \
+          dist/camera-data-apotelyt.csv \
+          dist/camera-data-gsmarena.csv \
+          dist/camera-data-digicamdb.csv \
+          dist/camera-data-cined.csv 2>/dev/null || true
+        git commit -m "Update camera data [skip ci]" || exit 0
+        git pull --rebase || true
         git push
 
     - name: Upload Pages artifact
