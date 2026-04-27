@@ -1,39 +1,42 @@
-# Architect Review (Cycle 11) — Architectural/Design Risks, Coupling, Layering
+# Architect Review (Cycle 12) — Architectural/Design Risks, Coupling, Layering
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository architecture review after cycles 1-10 fixes
+**Scope:** Full repository architecture review after cycles 1-11 fixes
 
 ## Previously Noted (Deferred, Still Valid)
-- F32: `pixelpitch.py` is a ~1024-line monolith — DEFERRED
+- F32: `pixelpitch.py` is a ~1057-line monolith — DEFERRED
 - F31: No source Protocol/base class — DEFERRED
 - A5-02: Template description blocks DRY violation — DEFERRED
 
+## Previously Fixed (Cycles 1-11)
+- A11-01: create_camera_key year coupling — FIXED (year removed from key)
+
 ## New Findings
 
-### A11-01: `create_camera_key` couples identity to data quality — architectural issue
-**File:** `pixelpitch.py`, lines 313-315
-**Severity:** MEDIUM | **Confidence:** HIGH
+### A12-01: `parse_existing_csv` field stripping is inconsistent — only some fields are stripped
+**File:** `pixelpitch.py`, lines 267-301
+**Severity:** LOW | **Confidence:** HIGH
 
-The camera identity key includes the year, which is an optional data field. This means the identity of a camera changes based on data quality: a camera with `year=2021` from one source and `year=None` from another produces two different identity keys. This is an architectural design flaw — the identity should be based on intrinsic properties (name + category) that are always present, not on optional metadata that may be missing.
+The CSV parser applies `.strip()` to the type field (C10-01) and the category field (C11-02), but NOT to the name field. This inconsistency suggests a pattern where each field was fixed reactively rather than proactively. The architectural concern is: there's no systematic approach to field sanitization in the CSV parser. Each field's whitespace handling depends on whether a bug was found for that specific field.
 
-The openMVG source always provides `year=None`, so any camera that appears in both openMVG and another source will be duplicated. This affects potentially thousands of cameras.
-
-**Fix:** Remove year from `create_camera_key`. The name+category is sufficient for identity. Year is metadata, not identity.
+**Fix:** Apply `.strip()` to ALL string fields consistently in `parse_existing_csv`. This would also fix C12-01 (name field whitespace) as a side effect.
 
 ---
 
-### A11-02: `gsmarena.PHONE_TYPE_SIZE` is a mutable alias to `pixelpitch.TYPE_SIZE` — coupling risk
-**File:** `sources/gsmarena.py`, line 58
-**Severity:** LOW | **Confidence:** HIGH
+### A12-02: `_parse_camera_name` Sony branch has different URL parsing logic than non-Sony fallback — fragile
+**File:** `sources/imaging_resource.py`, lines 151-167
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-Already noted as C9-06 and documented with a comment. The alias means gsmarena directly references the same dict object as pixelpitch. If gsmarena were ever to modify this dict (even accidentally), it would corrupt the central table. The comment warns against this, but a safer approach would be to use a function that returns the value, or import the module and access `TYPE_SIZE` via attribute access.
+The Sony branch uses `rsplit('/', 2)[-2]` for slug extraction, while the non-Sony fallback uses `rsplit('/', 1)[-1]`. These are different parsing strategies that assume different URL formats. The Sony branch assumes the URL has a `/specifications/` suffix (which is only true for modern review URLs, not legacy spec URLs). This creates a fragile coupling between `_spec_url` behavior and `_parse_camera_name` assumptions.
 
-This is already deferred. Re-confirming the finding is still valid.
+The architectural issue is that `_parse_camera_name` makes assumptions about the URL structure that aren't guaranteed by the interface contract. If `_gather_review_urls` returns a URL format that doesn't match the assumption, the name extraction silently produces wrong results.
+
+**Fix:** Use a single robust slug extraction strategy that works for all URL formats. Extract the last path component with `rsplit('/', 1)[-1]`, then strip known suffixes (review, specifications, etc.).
 
 ---
 
 ## Summary
-- NEW findings: 1 (1 MEDIUM)
-- A11-01: create_camera_key couples identity to year (optional data) — MEDIUM
-- No architectural regressions from previous cycles
+- NEW findings: 2 (1 MEDIUM, 1 LOW)
+- A12-01: Inconsistent field stripping in CSV parser — LOW
+- A12-02: Sony URL parsing assumes specific URL structure — MEDIUM

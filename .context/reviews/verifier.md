@@ -1,51 +1,66 @@
-# Verifier Review (Cycle 11) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 12) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
-**Scope:** Full repository verification after cycles 1-10 fixes
+**Scope:** Full repository verification after cycles 1-11 fixes
 
-## Previously Fixed (Cycles 1-10) — Verification Status
-All previous fixes verified still working. Gate tests pass cleanly.
+## Previously Fixed (Cycles 1-11) — Verification Status
+All previous fixes verified still working. Gate tests pass cleanly. V11-01 (year in key) verified as fixed — `create_camera_key` now uses name+category only.
 
 ## New Findings
 
-### V11-01: `create_camera_key` year mismatch produces duplicate cameras — verified via code trace
-**File:** `pixelpitch.py`, lines 313-315, 318-367
+### V12-01: `parse_existing_csv` name field not stripped — verified via runtime test
+**File:** `pixelpitch.py`, lines 277, 291
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-Verified by tracing the code path:
+Verified by runtime test:
+```python
+csv = 'id,name,category,...\n0, Sony A7 IV ,mirrorless,...\n'
+parsed = pp.parse_existing_csv(csv)
+# parsed[0].spec.name == ' Sony A7 IV '  (leading/trailing spaces preserved)
+```
 
-1. openMVG `fetch()` returns specs with `year=None` for every camera
-2. `fetch_source` calls `derive_specs(raw_specs)` which calls `derive_spec` for each
-3. `derive_spec` preserves `year=None` from the Spec
-4. `render_html` calls `_load_per_source_csvs` which calls `parse_existing_csv`
-5. `parse_existing_csv` preserves the year column — openMVG CSVs have empty year
-6. In `merge_camera_data`, `create_camera_key(spec)` produces keys like `"canon eos 5d-mirrorless-unknown"` for openMVG cameras
-7. The same camera from Geizhals produces `"canon eos 5d-mirrorless-2005"`
-8. These are different keys, so the merge treats them as different cameras
-9. Both cameras are added to the merged output
+The category field (fixed in C11-02) now has `.strip()`, and the type field (fixed in C10-01) also has `.strip()`. The name field is the last remaining field without `.strip()`. This is an inconsistency that could produce visible whitespace in camera names on the website.
 
-The resulting duplicate cameras appear on the website. I verified that `create_camera_key` is the ONLY deduplication mechanism in `merge_camera_data` — there's no secondary check by name+category.
-
-**Concrete failure:** The digicamdb source (which wraps openMVG) will produce cameras with year=None. If any of these cameras also exist in the Geizhals data (which has years), they will be duplicated in the output.
-
-**Fix:** Remove year from `create_camera_key`. The name+category is sufficient.
+**Fix:** Add `.strip()` to name field parsing.
 
 ---
 
-### V11-02: `parse_existing_csv` doesn't validate header column names — silent misparse on schema change
-**File:** `pixelpitch.py`, lines 230-310
-**Severity:** LOW | **Confidence:** MEDIUM
+### V12-02: `_parse_camera_name` Sony slug extraction verified broken for legacy URLs
+**File:** `sources/imaging_resource.py`, line 151
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The CSV parser detects `has_id` based on `header[0] == "id"`, but then uses positional indexing for all other fields. If a column is added or reordered in the CSV schema, the positional mapping silently breaks. For example, if a "sensor_type" column were inserted between "type" and "sensor_width_mm", all fields after "type" would shift by one position, and the parser would read wrong values without any error.
+Verified by runtime test:
+```python
+# Legacy spec URL (matched by LEGACY_SPEC_URL_RE)
+url = 'https://www.imaging-resource.com/cameras/sony-zv-e10-specifications/'
+url.rstrip('/').rsplit('/', 2)[-2]  # → 'cameras' (WRONG)
 
-This is unlikely in practice because `write_csv` and `parse_existing_csv` are maintained together, but it's a fragility worth noting. The fix would be to validate that header names match expected values.
+# Modern spec URL (produced by _spec_url)
+url = 'https://www.imaging-resource.com/cameras/sony-zv-e10-review/specifications/'
+url.rstrip('/').rsplit('/', 2)[-2]  # → 'sony-zv-e10-review' (correct)
+```
 
-**Fix:** Low priority — add header validation or switch to DictReader.
+The Sony-specific name parsing branch at line 151 uses `rsplit('/', 2)[-2]` which only works for URLs with an extra path segment after the slug. Legacy spec URLs don't have this extra segment, so the parent directory name `'cameras'` is extracted instead of the camera slug.
+
+The non-Sony fallback at line 165 uses `rsplit('/', 1)[-1]` which works correctly for both URL formats.
+
+**Fix:** Use `rsplit('/', 1)[-1]` in the Sony branch too, then strip the review/specifications suffix.
+
+---
+
+### V12-03: `_load_per_source_csvs` UnicodeDecodeError not caught — verified via code analysis
+**File:** `pixelpitch.py`, line 754
+**Severity:** LOW | **Confidence:** HIGH
+
+Verified: The `except OSError` at line 755 does not catch `UnicodeDecodeError` (which is `ValueError`, not `OSError`). The `path.read_text(encoding='utf-8')` call at line 754 can raise `UnicodeDecodeError` for corrupt files. This would crash `render_html`.
+
+**Fix:** Add `UnicodeDecodeError` to the except clause.
 
 ---
 
 ## Summary
-- NEW findings: 2 (1 MEDIUM, 1 LOW)
-- V11-01: create_camera_key year mismatch — verified duplicates — MEDIUM
-- V11-02: CSV parser positional indexing — schema change fragility — LOW
+- NEW findings: 3 (2 MEDIUM, 1 LOW)
+- V12-01: Name field whitespace not stripped — verified — MEDIUM
+- V12-02: Sony slug extraction fails for legacy IR URLs — verified — MEDIUM
+- V12-03: UnicodeDecodeError not caught — verified — LOW

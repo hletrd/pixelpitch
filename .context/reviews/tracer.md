@@ -1,39 +1,42 @@
-# Tracer Review (Cycle 11) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 12) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
-**Scope:** Full repository causal tracing after cycles 1-10 fixes
+**Scope:** Full repository causal tracing after cycles 1-11 fixes
 
 ## Traced Flows
 
-### Flow 1: openMVG camera through merge_camera_data with year=None
-**Path:** openMVG `fetch()` → Spec with `year=None` → `fetch_source` → `derive_specs` → `derive_spec` preserves year=None → `write_csv` writes empty year → `parse_existing_csv` reads empty year as `year=None` → `merge_camera_data` → `create_camera_key(spec)` produces `"name-category-unknown"` → same camera from Geizhals with year=2021 produces `"name-category-2021"` → different keys → both added to merged result → DUPLICATE
+### Flow 1: Legacy IR spec URL through _parse_camera_name (Sony branch)
+**Path:** `_gather_review_urls` matches legacy URL via `LEGACY_SPEC_URL_RE` → URL like `.../cameras/sony-zv-e10-specifications/` → `fetch_one` receives this URL → `_spec_url` returns it unchanged (already has `-specifications`) → `_parse_camera_name` called with this URL as `fallback_url` → Sony branch: `fallback_url.rstrip('/').rsplit('/', 2)[-2]` → For URL `.../cameras/sony-zv-e10-specifications/`, rsplit('/', 2) produces `['https://www.imaging-resource.com', 'cameras', 'sony-zv-e10-specifications']` → `[-2]` = `'cameras'` → slug = `'cameras'` → `.title()` = `'Cameras'` → camera name = `'Cameras'` → WRONG
 
-**FINDING: T11-01** — The year component in `create_camera_key` causes duplicate cameras when sources disagree on the year. This is a real bug that affects every camera that appears in both openMVG and Geizhals/IR.
+Compared with modern URL: `.../cameras/sony-zv-e10-review/specifications/` → rsplit('/', 2) = `['https://www.imaging-resource.com/cameras', 'sony-zv-e10-review', 'specifications']` → `[-2]` = `'sony-zv-e10-review'` → correct
+
+**FINDING: T12-01** — Sony slug extraction broken for legacy IR spec URLs. The `rsplit('/', 2)[-2]` assumes an extra path segment after the slug, which legacy URLs don't have.
 
 **Severity:** MEDIUM | **Confidence:** HIGH
 
 ---
 
-### Flow 2: CSV round-trip with empty category field
-**Path:** `write_csv` writes `category=""` when spec.category is None (but Spec.category is required, so it's always present) → `parse_existing_csv` reads `category = values[2]` → no `.strip()` applied → if whitespace present, it passes through unchanged → `render_html` filters by `spec.spec.category == "mirrorless"` → whitespace-prefixed category like `" mirrorless"` would not match → camera excluded from category page
+### Flow 2: Name field whitespace through CSV parse to display
+**Path:** Manually edited CSV has `name = " Sony A7 IV "` → `parse_existing_csv` line 277: `name = values[1]` (no `.strip()`) → `Spec(name=' Sony A7 IV ', ...)` → `create_camera_key` at line 336: `spec.name.lower().strip()` = `'sony a7 iv'` (key is correct) → but `spec.name` still has whitespace → `write_csv` writes ` Sony A7 IV ` → template renders `{{ spec.spec.name }}` = ` Sony A7 IV ` with visible spaces
 
-**FINDING: T11-02** — Same pattern as the C10-01 type whitespace fix, but for the category field. Low risk because `write_csv` never introduces whitespace.
+**FINDING: T12-02** — Name field not stripped in parse_existing_csv. While deduplication keys are correct (key applies `.strip()`), the display name preserves whitespace.
+
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+---
+
+### Flow 3: Corrupt UTF-8 source CSV through render pipeline
+**Path:** Manually corrupted source CSV with non-UTF-8 bytes → `_load_per_source_csvs` at line 754: `path.read_text(encoding='utf-8')` raises `UnicodeDecodeError` → `except OSError` at line 755 does NOT catch it → exception propagates up → `render_html` crashes → site not built
+
+**FINDING: T12-03** — UnicodeDecodeError not caught in _load_per_source_csvs, crashing the render pipeline.
 
 **Severity:** LOW | **Confidence:** HIGH
 
 ---
 
-### Flow 3: about.html title rendering through template inheritance
-**Path:** `render_html` line 899 → `_get_env().get_template("about.html").render(page="about", date=date)` → about.html overrides `{% block title %}About Pixel Pitch{% endblock %}` → base template `index.html` renders `{% block title %}{{ title | default('Camera Sensor Pixel Pitch List') }}{% endblock %}` → about.html's override takes precedence → "About Pixel Pitch" is rendered correctly
-
-No `title` variable is passed in the render context, but it's not needed because the block override works. However, if the about.html template's block override were accidentally removed, the fallback would produce the generic title.
-
-**FINDING:** No bug, but a defensive improvement would be to pass `title="About Pixel Pitch"` in the render context.
-
----
-
 ## Summary
-- NEW findings: 2 (1 MEDIUM, 1 LOW)
-- T11-01: create_camera_key year mismatch — verified duplicate camera flow — MEDIUM
-- T11-02: Category field whitespace not stripped — LOW (same as C10-01 pattern)
+- NEW findings: 3 (2 MEDIUM, 1 LOW)
+- T12-01: Sony slug extraction broken for legacy IR URLs — MEDIUM
+- T12-02: Name field not stripped in parse_existing_csv — MEDIUM
+- T12-03: UnicodeDecodeError not caught in source CSV loading — LOW

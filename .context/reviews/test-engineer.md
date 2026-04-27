@@ -1,50 +1,35 @@
-# Test Engineer Review (Cycle 11) — Test Coverage, Flaky Tests, TDD
+# Test Engineer Review (Cycle 12) — Test Coverage, Flaky Tests, TDD
 
 **Reviewer:** test-engineer
 **Date:** 2026-04-28
-**Scope:** Full repository test review after cycles 1-10 fixes
+**Scope:** Full repository test review after cycles 1-11 fixes
 
-## Previously Fixed (Cycles 1-10) — Confirmed Resolved
-All previous test-related fixes remain working. Gate tests pass cleanly.
+## Previously Fixed (Cycles 1-11) — Confirmed Resolved
+TE11-01 (year mismatch test) was added in cycle 11 as `test_create_camera_key_year_mismatch`. TE11-02 (render_html integration test) and TE11-03 (single wide lens test) remain as LOW-priority gaps.
 
 ## New Findings
 
-### TE11-01: No test for `create_camera_key` year mismatch — duplicate cameras across sources
-**File:** `pixelpitch.py`, lines 313-315; `tests/test_parsers_offline.py`
-**Severity:** MEDIUM | **Confidence:** HIGH
+### TE12-01: No test for name field whitespace stripping in parse_existing_csv
+**File:** `tests/test_parsers_offline.py`; `pixelpitch.py`, lines 277, 291
+**Severity:** MEDIUM (test gap) | **Confidence:** HIGH
 
-`create_camera_key` includes the year in its key. When the same camera comes from two sources with different years (e.g., year=2021 vs year=None), two different keys are produced, and `merge_camera_data` treats them as separate cameras. There is no test covering this scenario.
+The type field whitespace test was added in cycle 10, the category field test could be added alongside. But there is no test for name field whitespace in `parse_existing_csv`. Once the name field `.strip()` fix is applied (C12-01), a test should verify it works. This is a test gap that should be filled when the fix is implemented.
 
-The existing `test_merge_camera_data` tests overlapping cameras with the SAME year. It does not test cameras with differing years across sources.
-
-**Fix:** Add a test that merges the same camera from two sources where one has a year and the other doesn't, asserting that only one entry appears in the merged result.
+**Fix:** Add a test case in `test_parse_existing_csv` that includes a name with leading/trailing whitespace and asserts it is stripped.
 
 ---
 
-### TE11-02: No test for `render_html` output — integration gap
-**File:** `pixelpitch.py`, lines 738-920; `tests/test_parsers_offline.py`
-**Severity:** LOW | **Confidence:** MEDIUM
+### TE12-02: No test for `_parse_camera_name` with legacy spec URLs
+**File:** `tests/test_parsers_offline.py`; `sources/imaging_resource.py`, line 151
+**Severity:** MEDIUM (test gap) | **Confidence:** HIGH
 
-There is no integration test that calls `render_html` (or a subset of it) and verifies the HTML output. The current tests test individual functions (CSV parsing, dedup, merge, etc.) but not the end-to-end rendering pipeline. A regression in template rendering (e.g., a broken template block, a missing variable) would not be caught by the gate tests.
+The `_parse_camera_name` function is not directly tested — it's only tested indirectly through the fixture-based `test_imaging_resource` test. There's no test for the Sony branch with different URL formats (modern spec URL vs legacy spec URL). Since C12-02 identifies a bug in the Sony slug extraction for legacy URLs, a test should verify both URL formats produce correct names.
 
-The `test_about_html_rendering` test covers one template, but not the main `pixelpitch.html` template with table rendering.
-
-**Fix:** Add a minimal integration test that renders `pixelpitch.html` with a small set of specs and checks that the HTML contains expected content (table rows, sensor sizes, etc.).
-
----
-
-### TE11-03: `test_gsmarena_select_main_lens` test has no assertion for single wide lens case
-**File:** `tests/test_parsers_offline.py`, lines 661-690
-**Severity:** LOW | **Confidence:** LOW
-
-The `_select_main_lens` edge case tests cover: two wide lenses, no wide lenses, empty camera, and no role tag. But there's no test for the simplest case: a single lens with "(wide)" role. While this is covered indirectly by the S25 Ultra fixture test, a dedicated unit test would be more explicit.
-
-Low priority — the S25 Ultra fixture already validates this path.
+**Fix:** Add unit tests for `_parse_camera_name` with both modern and legacy URL formats.
 
 ---
 
 ## Summary
-- NEW findings: 3 (1 MEDIUM, 2 LOW)
-- TE11-01: No test for create_camera_key year mismatch — MEDIUM
-- TE11-02: No integration test for render_html — LOW
-- TE11-03: No single wide lens unit test — LOW
+- NEW findings: 2 (2 MEDIUM test gaps)
+- TE12-01: No test for name whitespace stripping — MEDIUM
+- TE12-02: No test for _parse_camera_name URL formats — MEDIUM

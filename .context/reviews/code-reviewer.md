@@ -1,51 +1,53 @@
-# Code Review (Cycle 11) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 12) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-10 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-11 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-10) — Confirmed Resolved
-All previous fixes remain intact. C10-01 through C10-10 all verified as fixed.
+## Previously Fixed (Cycles 1-11) — Confirmed Resolved
+All previous fixes remain intact. C11-01 (year in key) through C11-10 (year overwrite) all verified as fixed or properly deferred.
 
 ## New Findings
 
-### C11-01: `create_camera_key` produces different keys for same camera when year differs across sources — causes duplicates
-**File:** `pixelpitch.py`, lines 313-315
+### C12-01: `parse_existing_csv` doesn't strip whitespace from name field
+**File:** `pixelpitch.py`, lines 277, 291
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-`create_camera_key` includes the year in the key: `f"{spec.name.lower().strip()}-{spec.category}-{year}"`. When `year is None`, the key uses the string `"unknown"`. When the same camera is provided by two different sources (e.g., Geizhals with year=2021, openMVG with year=None), the keys differ: `"sony a7 iv-mirrorless-2021"` vs `"sony a7 iv-mirrorless-unknown"`. This causes `merge_camera_data` to treat them as separate cameras, producing duplicate entries.
+C10-01 fixed the type field and C11-02 fixed the category field by adding `.strip()`. The name field has the same pattern: `name = values[1]` (has-id) or `name = values[0]` (no-id) without `.strip()`. A name like `" Sony A7 IV "` would display with leading/trailing whitespace on the website. While `write_csv` never introduces whitespace, manually edited CSVs could. More importantly, `create_camera_key` does `.lower().strip()` so the key would be correct, but the displayed name would have whitespace — confusing to users.
 
-openMVG always provides `year=None` (its CSV has no year column). Any camera that appears in both openMVG and Geizhals or Imaging Resource will be duplicated.
+**Failure scenario:** A manually edited CSV has `" Sony A7 IV "` as the name. The camera appears on the website with visible leading/trailing spaces in its name. The search link and table display both show the whitespace.
 
-**Failure scenario:** Camera "Sony A7 IV" from Geizhals (year=2021) and from openMVG (year=None) produces two entries in the merged output. Both appear on the mirrorless page and the All Cameras page.
-
-**Fix:** Remove the year from `create_camera_key` or normalize None years. Camera names are already unique within categories, so year is not needed for deduplication. The merge code already handles year preservation on line 343-344.
+**Fix:** Add `.strip()` to the name field parsing, consistent with category and type fields.
 
 ---
 
-### C11-02: `parse_existing_csv` doesn't strip whitespace from category field — same pattern as fixed C10-01
-**File:** `pixelpitch.py`, lines 262-263, 275-276
+### C12-02: `_parse_camera_name` Sony slug extraction fails for legacy spec URLs
+**File:** `sources/imaging_resource.py`, line 151
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+The Sony branch of `_parse_camera_name` extracts the camera slug using `fallback_url.rstrip('/').rsplit('/', 2)[-2]`. This assumes the URL has the form `.../camera-slug/specifications/` (modern spec URL). However, `_gather_review_urls` also matches legacy spec URLs via `LEGACY_SPEC_URL_RE`, which have the form `.../camera-slug-specifications/`. For these legacy URLs, `rsplit('/', 2)[-2]` returns `'cameras'` (the parent path segment) instead of the slug, producing the camera name `"Cameras"` — clearly wrong.
+
+**Failure scenario:** A Sony camera discovered via a legacy Imaging Resource spec URL (e.g. `https://www.imaging-resource.com/cameras/sony-zv-e10-specifications/`) would be named `"Cameras"` on the website, making it indistinguishable from other similarly broken entries and breaking the data.
+
+**Fix:** Use `rsplit('/', 1)[-1]` consistently (like the non-Sony fallback at line 165), then strip the suffix with the existing regex. Or detect whether the URL ends with `/specifications/` and adjust the extraction accordingly.
+
+---
+
+### C12-03: `_load_per_source_csvs` doesn't catch `UnicodeDecodeError`
+**File:** `pixelpitch.py`, line 754
 **Severity:** LOW | **Confidence:** HIGH
 
-C10-01 fixed the type field by adding `.strip()`. The same pattern applies to the category field: `category = values[2]` (no-id) or `category = values[1]` (has-id). A category like `" mirrorless"` would not match the category filters in `render_html` (lines 785-802), causing the camera to appear only on the "All Cameras" page but not on its category page.
+`_load_per_source_csvs` catches `OSError` at line 755-756 but not `UnicodeDecodeError`. The `path.read_text(encoding='utf-8')` call raises `UnicodeDecodeError` (a subclass of `ValueError`, not `OSError`) if the file contains invalid UTF-8 bytes. Since `continue-on-error` in the CI workflow expects transient source failures to be gracefully handled, this unhandled exception could crash the entire render pipeline.
 
-While `write_csv` never introduces whitespace in the category field, manually edited CSVs could. This is the exact same vulnerability that C10-01 fixed for the type field.
+**Failure scenario:** A manually edited or corrupted source CSV with non-UTF-8 bytes causes `UnicodeDecodeError`, crashing `render_html` and preventing the site from being built.
 
-**Fix:** Add `.strip()` to category field parsing, same as was done for the type field.
-
----
-
-### C11-03: `deduplicate_specs` name unification loses the year from non-first variants
-**File:** `pixelpitch.py`, lines 523-543
-**Severity:** LOW | **Confidence:** MEDIUM
-
-When color variants are unified (same specs, different EXTRAS suffix), the code takes `year = min(years) if years else None` where `years = [s.year for s in grouped_specs if s.year]`. This correctly picks the earliest year. However, if the first variant has a year and a later variant doesn't, the unified result always uses the min year from variants that have years. This is correct behavior, but it's worth noting for completeness — a variant with `year=None` is silently ignored in the min calculation.
+**Fix:** Add `UnicodeDecodeError` to the except clause at line 755, or use `errors='replace'` in `read_text()`.
 
 ---
 
 ## Summary
-- NEW findings: 3 (1 MEDIUM, 2 LOW)
-- C11-01: `create_camera_key` year mismatch causes duplicates across sources — MEDIUM
-- C11-02: Category field whitespace not stripped — LOW (same pattern as C10-01)
-- C11-03: deduplicate_specs year handling for variants — LOW (informational)
-- All cycle 1-10 fixes remain intact
+- NEW findings: 3 (2 MEDIUM, 1 LOW)
+- C12-01: Name field whitespace not stripped in parse_existing_csv — MEDIUM
+- C12-02: Sony slug extraction fails for legacy IR URLs — MEDIUM
+- C12-03: UnicodeDecodeError not caught in _load_per_source_csvs — LOW
+- All cycle 1-11 fixes remain intact

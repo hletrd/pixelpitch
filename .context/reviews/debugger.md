@@ -1,59 +1,60 @@
-# Debugger Review (Cycle 11) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 12) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-10 fixes
+**Scope:** Full repository re-review after cycles 1-11 fixes
 
-## Previously Fixed (Cycles 1-10) — Confirmed Resolved
-All previous fixes verified. No regressions detected.
+## Previously Fixed (Cycles 1-11) — Confirmed Resolved
+All previous fixes verified. No regressions detected. D11-01 (year in key) fixed. D11-02 (category strip) fixed. D11-03 (year overwrite logging) fixed.
 
 ## New Findings
 
-### D11-01: `create_camera_key` year component causes duplicates when sources disagree on year
-**File:** `pixelpitch.py`, lines 313-315, 318-367
+### D12-01: `_parse_camera_name` Sony slug extraction produces "Cameras" for legacy IR spec URLs
+**File:** `sources/imaging_resource.py`, line 151
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The year in `create_camera_key` creates different keys for the same camera when different sources provide different year values. The failure mode:
+Failure mode:
+1. `_gather_review_urls` matches a legacy spec URL: `.../cameras/sony-zv-e10-specifications/`
+2. `_spec_url` returns it unchanged (already has `-specifications`)
+3. `fetch_one` receives the legacy URL
+4. `_parse_camera_name` Sony branch: `fallback_url.rstrip('/').rsplit('/', 2)[-2]` = `'cameras'`
+5. `slug = 'cameras'` → `.title()` = `'Cameras'` → name = `'Cameras'`
+6. Camera appears on website with name "Cameras" — clearly wrong and confusing
 
-1. Camera "Canon EOS R5" from Geizhals: key = `"canon eos r5-mirrorless-2020"`
-2. Same camera from openMVG (year=None): key = `"canon eos r5-mirrorless-unknown"`
-3. `merge_camera_data` sees different keys → treats as different cameras
-4. Both cameras appear in the merged output → duplicate on website
+This only happens when the source discovers a legacy spec URL (matched by `LEGACY_SPEC_URL_RE`). For modern review URLs, `_spec_url` adds `/specifications/` and the extraction works correctly.
 
-The `year=None` → `"unknown"` mapping means this affects EVERY camera that appears in both openMVG (or digicamdb, which wraps openMVG) and any other source.
+**Failure scenario:** Fetch from Imaging Resource with legacy spec URLs present. Sony cameras from legacy URLs appear as "Cameras" on the website.
 
-**Failure scenario:** Run `pixelpitch.py` with openMVG + Geizhals data. Observe duplicate cameras on the mirrorless and DSLR pages.
-
-**Fix:** Remove year from `create_camera_key`.
+**Fix:** Use `rsplit('/', 1)[-1]` in the Sony branch, then strip suffixes with regex.
 
 ---
 
-### D11-02: `parse_existing_csv` category field not stripped — same bug pattern as fixed C10-01
-**File:** `pixelpitch.py`, lines 262, 275
+### D12-02: `parse_existing_csv` name field not stripped — latent whitespace bug
+**File:** `pixelpitch.py`, lines 277, 291
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+Same pattern as the fixed C10-01 (type) and C11-02 (category) bugs. The name field is the last string field without `.strip()`. While `write_csv` never introduces whitespace, manually edited CSVs could. The `create_camera_key` applies `.strip()` so deduplication still works, but the displayed name on the website would have visible whitespace.
+
+**Failure scenario:** CSV with `" Sony A7 IV "` as name → camera displays with leading/trailing spaces in table, search links, and scatter plot tooltips.
+
+**Fix:** Add `.strip()` to name field parsing.
+
+---
+
+### D12-03: `_load_per_source_csvs` crashes on UnicodeDecodeError
+**File:** `pixelpitch.py`, line 754
 **Severity:** LOW | **Confidence:** HIGH
 
-The category field is parsed without `.strip()`. If a manually edited CSV has whitespace in the category column (e.g., `" mirrorless"`), the camera would have `category=" mirrorless"`, which would not match the category filter in `render_html` (line 793: `if s.spec.category == cat`). The camera would be excluded from the mirrorless page and only appear on the "All Cameras" page.
+`path.read_text(encoding='utf-8')` raises `UnicodeDecodeError` for corrupt files. The `except OSError` at line 755 doesn't catch it. This would crash `render_html` and prevent site generation.
 
-Same root cause as C10-01 which was fixed for the type field. The fix was applied to `type_str` but not to `category`.
+**Failure scenario:** A source CSV file gets corrupted (non-UTF-8 bytes introduced). The next CI run crashes during render.
 
-**Fix:** Add `.strip()` to category field parsing.
-
----
-
-### D11-03: `merge_camera_data` year preservation only works when existing has year and new doesn't
-**File:** `pixelpitch.py`, lines 342-344
-**Severity:** LOW | **Confidence:** MEDIUM
-
-Line 343-344: `if new_spec.spec.year is None and existing_spec.spec.year is not None: new_spec.spec.year = existing_spec.spec.year`. This only preserves the year from existing data when the NEW data has no year. It does NOT preserve the year when the existing data has a year and the new data has a DIFFERENT year (e.g., existing year=2020, new year=2021 from a revised source). The new year silently overwrites the old year.
-
-This is not necessarily a bug (updated data should take precedence), but it's worth noting that if a source incorrectly provides a year, it will overwrite the correct year from existing data without any warning.
-
-**Fix:** Consider logging when years differ, or preferring the existing year when the new source is known to have less reliable year data.
+**Fix:** Add `UnicodeDecodeError` to the except clause.
 
 ---
 
 ## Summary
-- NEW findings: 3 (1 MEDIUM, 2 LOW)
-- D11-01: create_camera_key year mismatch — duplicates across sources — MEDIUM
-- D11-02: Category field whitespace not stripped — LOW (same as C10-01 pattern)
-- D11-03: Merge year overwrite without warning — LOW
+- NEW findings: 3 (2 MEDIUM, 1 LOW)
+- D12-01: Sony slug extraction fails for legacy IR URLs — MEDIUM
+- D12-02: Name field not stripped in parse_existing_csv — MEDIUM
+- D12-03: UnicodeDecodeError not caught in source CSV loading — LOW
