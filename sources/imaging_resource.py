@@ -122,7 +122,7 @@ def _body_category(camera_format: str, sensor_format: str, name: str) -> str:
     # Fallbacks by sensor format hints
     if "/" in sf and "1/" in sf:
         return "fixed"
-    if "full frame" in sf or sf == "35mm" or "aps-c" in sf or "aps c" in sf or \
+    if "full frame" in sf or "full-frame" in sf or sf == "35mm" or "aps-c" in sf or "aps c" in sf or \
        "micro four" in sf or "four thirds" in sf or "medium format" in sf:
         # No camera-type hint; modern interchangeable-lens systems are
         # overwhelmingly mirrorless in 2025+, so guess mirrorless.

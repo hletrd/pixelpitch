@@ -84,6 +84,11 @@ def test_imaging_resource():
     m2 = imaging_resource.IR_MPIX_RE.search("33.0")
     expect("IR_MPIX_RE plain number", m2.group(1) if m2 else None, "33.0")
 
+    # _body_category with hyphenated "Full-Frame"
+    expect("IR body category Full-Frame",
+           imaging_resource._body_category("", "Full-Frame", ""),
+           "mirrorless")
+
 
 # --------------------------------------------------------------------------
 # Apotelyt — Sony A7 IV fixture
@@ -120,6 +125,11 @@ def test_apotelyt():
                fields.get("Sensor Format", ""),
                fields.get("Camera Model", ""),
            ),
+           "mirrorless")
+
+    # _body_category with hyphenated "Full-Frame"
+    expect("Apotelyt body category Full-Frame",
+           apotelyt._body_category("", "Full-Frame", ""),
            "mirrorless")
 
 

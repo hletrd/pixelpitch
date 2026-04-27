@@ -85,7 +85,7 @@ def _body_category(camera_type: str, sensor_format: str, name: str) -> str:
     if "compact" in ct or "bridge" in ct or "fixed" in ct or "point" in ct:
         return "fixed"
 
-    if "full frame" in sf or "aps-c" in sf or "aps c" in sf or \
+    if "full frame" in sf or "full-frame" in sf or "aps-c" in sf or "aps c" in sf or \
        "four thirds" in sf or "medium format" in sf:
         return "mirrorless"
     if "/" in sf and "1/" in sf:
