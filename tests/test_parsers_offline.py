@@ -225,6 +225,9 @@ def test_openmvg_csv_parser():
         "CameraMaker,CameraModel,SensorDescription,SensorWidth(mm),"
         "SensorHeight(mm),SensorWidth(pixels),SensorHeight(pixels)\n"
         'Canon,EOS 5D,"36 x 24 mm",36.0,24.0,4368,2912\n'
+        'Canon,EOS 250D,"22.3 x 14.9 mm",22.3,14.9,6032,4016\n'
+        'Samsung,NX300,"23.5 x 15.7 mm",23.5,15.7,5472,3648\n'
+        'Sigma,SD14,"20.7 x 13.8 mm",20.7,13.8,2652,1768\n'
         'Sony,Alpha 7 III,"35.6 x 23.8 mm",35.6,23.8,6000,4000\n'
         'Apple,iPhone (1/2.5"),"5.75 x 4.32 mm",5.75,4.32,2592,1944\n'
     )
@@ -232,7 +235,7 @@ def test_openmvg_csv_parser():
     with unittest.mock.patch.object(openmvg, 'http_get', return_value=csv_body):
         specs = openmvg.fetch()
 
-    expect("record count", len(specs), 3)
+    expect("record count", len(specs), 6)
     by_name = {s.name: s for s in specs}
     expect("Canon EOS 5D size",     by_name["Canon EOS 5D"].size,    (36.0, 24.0), tol=0.01)
     expect("Sony Alpha 7 III size", by_name["Sony Alpha 7 III"].size,(35.6, 23.8), tol=0.01)
@@ -241,6 +244,10 @@ def test_openmvg_csv_parser():
     expect("EOS 5D category",   by_name["Canon EOS 5D"].category,    "dslr")
     expect("Sony Alpha 7 III category", by_name["Sony Alpha 7 III"].category, "mirrorless")
     expect("iPhone category",   by_name["Apple iPhone (1/2.5\")"].category, "fixed")
+    # DSLR regex correctness tests
+    expect("EOS 250D category (xxxD DSLR)", by_name["Canon EOS 250D"].category, "dslr")
+    expect("Samsung NX300 category (mirrorless, NOT DSLR)", by_name["Samsung NX300"].category, "mirrorless")
+    expect("Sigma SD14 category (2-digit DSLR)", by_name["Sigma SD14"].category, "dslr")
 
 
 # --------------------------------------------------------------------------

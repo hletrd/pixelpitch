@@ -33,16 +33,17 @@ CSV_URL = (
 # DSLR name patterns — used to classify interchangeable-lens cameras when the
 # dataset has no body-type field. These patterns match the vast majority of
 # DSLRs in the openMVG database (Canon EOS *D, Nikon D*, Pentax K-*, etc.).
+# Note: this heuristic is imperfect — some DSLRs may be missed (e.g., obscure
+# brands) and non-DSLRs should not be included (e.g., Samsung NX is mirrorless).
 _DSLR_NAME_RE = re.compile(
     r"\b("
-    r"Canon\s+EOS[-\s]+\dD"       # Canon EOS 5D, 6D, 7D, 1D, EOS-1D, etc.
-    r"|Canon\s+EOS[-\s]+\dDs"     # Canon EOS-1Ds
+    r"Canon\s+EOS[-\s]+\d+D"     # Canon EOS 5D, 6D, 7D, 1D, 250D, 800D, 850D, etc.
+    r"|Canon\s+EOS[-\s]+\d+Ds"   # Canon EOS-1Ds
     r"|Nikon\s+D\d{1,4}"          # Nikon D850, D5, D500, etc.
     r"|Pentax\s+K[-\s]\d"         # Pentax K-1, K-3, etc.
     r"|Pentax\s+\d{1,2}D"         # Pentax 645D
-    r"|Sigma\s+SD\d?"             # Sigma SD1, SD9, SD14, etc.
+    r"|Sigma\s+SD\d+"            # Sigma SD1, SD9, SD10, SD14, SD15, etc.
     r"|Sony\s+DSLR-A\d+"          # Sony DSLR-A900, A700, etc.
-    r"|Samsung\s+NX\d{3}"         # Samsung NX300 (some were DSLR-style)
     r")\b",
     re.IGNORECASE,
 )
