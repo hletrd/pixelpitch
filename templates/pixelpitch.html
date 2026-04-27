@@ -180,11 +180,11 @@
 
     <div class="card border-0 shadow-sm">
       <div class="card-body p-0">
-        {{ table(specs|selectattr('pitch')) }}
+        {{ table(specs|selectattr('pitch', 'ne', None)) }}
       </div>
     </div>
 
-    {% set specs_nopitch = specs|rejectattr('pitch')|sort(attribute='spec.name') %}
+    {% set specs_nopitch = specs|rejectattr('pitch', 'ne', None)|sort(attribute='spec.name') %}
     {% if specs_nopitch %}
     <div class="mt-5">
       <h2 class="h4 mb-3">
