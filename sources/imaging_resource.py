@@ -172,7 +172,16 @@ def _parse_camera_name(fields: dict[str, str], fallback_url: str) -> Optional[st
     if slug == "specifications":
         slug = parts[-2]
     slug = re.sub(r"-(review|specifications|digital-camera-review-information.*)$", "", slug)
-    return normalise_name(slug.replace("-", " ").title())
+    cleaned = slug.replace("-", " ").title()
+    # Apply Sony-specific normalizations when the URL contains "sony-"
+    if "sony-" in fallback_url.lower():
+        cleaned = re.sub(
+            r"\b(Ii|Iii|Iv|Vi|Vii|Viii|Ix)\b",
+            lambda m: m.group(1).upper(),
+            cleaned,
+        )
+        cleaned = cleaned.replace("Sony Zv ", "Sony ZV-")
+    return normalise_name(cleaned)
 
 
 def fetch_one(spec_url: str) -> Optional[Spec]:
