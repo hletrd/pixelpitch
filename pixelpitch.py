@@ -357,6 +357,14 @@ def create_camera_key(spec: Spec) -> str:
 def merge_camera_data(
     new_specs: List[SpecDerived], existing_specs: List[SpecDerived]
 ) -> List[SpecDerived]:
+    """Merge new camera data with existing data.
+
+    Cameras are matched by ``name + category`` (via ``create_camera_key``).
+    If the same key appears multiple times in ``new_specs`` (e.g., the same
+    camera from both Geizhals and a source CSV), only the first occurrence
+    is kept and subsequent duplicates are silently dropped.  This prevents
+    duplicate rows on the All Cameras page.
+    """
     print(
         f"Merging {len(new_specs)} new records with {len(existing_specs)} existing records"
     )
@@ -370,9 +378,17 @@ def merge_camera_data(
 
     found_keys = set()
     merged_specs = []
+    seen_new_keys = set()
 
     for new_spec in new_specs:
         key = create_camera_key(new_spec.spec)
+
+        # Deduplicate among new_specs: if we've already processed this key
+        # from new data, skip the duplicate.
+        if key in seen_new_keys:
+            continue
+        seen_new_keys.add(key)
+
         found_keys.add(key)
 
         if key in existing_by_key:

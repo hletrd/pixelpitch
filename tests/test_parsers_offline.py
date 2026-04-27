@@ -598,6 +598,25 @@ def test_merge_camera_data():
     expect("merge: None year no duplicate",
            sum(1 for s in merged4 if s.spec.name == "Cam X"), 1)
 
+    # Duplicate keys within new_specs → deduplicated
+    new5 = [
+        derive("Canon EOS 250D", "dslr", (22.3, 14.9), 24.1, 2019),
+        derive("Canon EOS 250D", "dslr", (22.3, 14.9), 24.1, 2019),
+    ]
+    merged5 = pp.merge_camera_data(new5, [])
+    expect("merge: dedup new_specs same key",
+           sum(1 for s in merged5 if s.spec.name == "Canon EOS 250D"), 1)
+
+    # Duplicate keys within new_specs with existing → still deduplicated
+    existing6 = [derive("Canon EOS 250D", "dslr", (22.3, 14.9), 24.1, 2019)]
+    new6 = [
+        derive("Canon EOS 250D", "dslr", (22.3, 14.9), 24.1, 2019),
+        derive("Canon EOS 250D", "dslr", (22.3, 14.9), 24.1, 2019),
+    ]
+    merged6 = pp.merge_camera_data(new6, existing6)
+    expect("merge: dedup new_specs with existing",
+           sum(1 for s in merged6 if s.spec.name == "Canon EOS 250D"), 1)
+
 
 # --------------------------------------------------------------------------
 # sensor_size_from_type
