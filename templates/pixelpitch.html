@@ -51,7 +51,7 @@
           data-sensor-width="{{ spec.size[0] if spec.size else 0 }}"
           data-sensor-height="{{ spec.size[1] if spec.size else 0 }}"
           data-category="{{ spec.spec.category }}"
-          data-name="{{ spec.spec.name }}"
+          data-name="{{ spec.spec.name|e }}"
           data-year="{{ spec.spec.year or 0 }}">
         <td>
           <a href="https://duckduckgo.com/?q={{ spec.spec.name|urlencode }}"
