@@ -511,7 +511,17 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
         )
 
     rest = list(map(remove_parens, rest))
-    return rest
+
+    # Final deduplication: remove exact duplicates by (name, type, size, pitch, mpix)
+    seen: set[tuple] = set()
+    deduped: list[Spec] = []
+    for spec in rest:
+        key = (spec.name, spec.type, spec.size, spec.pitch, spec.mpix)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(spec)
+
+    return deduped
 
 
 def derive_spec(
