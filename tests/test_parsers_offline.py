@@ -121,6 +121,29 @@ def test_imaging_resource():
     expect("IR fallback name from legacy spec URL",
            name_fb_legacy, "Nikon Z9")
 
+    # _parse_camera_name fallback with Sony URL and empty Model Name
+    # Should apply Sony-specific normalizations (Roman numerals, ZV replacement)
+    name_sony_fb_modern = imaging_resource._parse_camera_name(
+        {"Model Name": ""},
+        "https://www.imaging-resource.com/cameras/sony-a7-iv-review/specifications/"
+    )
+    expect("IR Sony fallback name from modern URL",
+           name_sony_fb_modern, "Sony A7 IV")
+
+    name_sony_fb_legacy = imaging_resource._parse_camera_name(
+        {"Model Name": ""},
+        "https://www.imaging-resource.com/cameras/sony-a7-iv-specifications/"
+    )
+    expect("IR Sony fallback name from legacy URL",
+           name_sony_fb_legacy, "Sony A7 IV")
+
+    name_sony_fb_zv = imaging_resource._parse_camera_name(
+        {"Model Name": ""},
+        "https://www.imaging-resource.com/cameras/sony-zv-e10-review/specifications/"
+    )
+    expect("IR Sony fallback ZV name",
+           name_sony_fb_zv, "Sony ZV-E10")
+
 
 # --------------------------------------------------------------------------
 # Apotelyt — Sony A7 IV fixture
@@ -647,6 +670,45 @@ def test_load_sensors_database():
     expect("JSONDecodeError returns {}", result3, {})
 
 
+def test_load_csv():
+    section("load_csv error handling")
+    import tempfile
+    import pixelpitch as pp
+    from pathlib import Path
+
+    # UnicodeDecodeError should return None gracefully
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+        # Write a file with invalid UTF-8 bytes
+        bad_file = tmpdir_path / "camera-data.csv"
+        bad_file.write_bytes(b"\xff\xfe invalid utf-8 \x80\x81")
+        result = pp.load_csv(tmpdir_path)
+    expect("UnicodeDecodeError returns None", result, None)
+
+    # OSError should return None gracefully
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+        # Use a directory as the path (causes IsADirectoryError, a subclass of OSError)
+        bad_dir = tmpdir_path / "camera-data.csv"
+        bad_dir.mkdir()
+        result2 = pp.load_csv(tmpdir_path)
+    expect("OSError returns None", result2, None)
+
+    # Non-existent file returns None
+    with tempfile.TemporaryDirectory() as tmpdir:
+        result3 = pp.load_csv(Path(tmpdir))
+    expect("missing file returns None", result3, None)
+
+    # Valid file returns content
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+        good_file = tmpdir_path / "camera-data.csv"
+        good_file.write_text("id,name\n0,Test\n", encoding="utf-8")
+        result4 = pp.load_csv(tmpdir_path)
+    expect("valid file returns content", result4 is not None, True)
+    expect("valid file content starts with header", result4.startswith("id,name") if result4 else False, True)
+
+
 # --------------------------------------------------------------------------
 # CineD FORMAT_TO_MM completeness: every regex-capturable format must have
 # a corresponding lookup-table entry.
@@ -779,6 +841,7 @@ def main():
     test_pixel_pitch()
     test_match_sensors()
     test_load_sensors_database()
+    test_load_csv()
     test_cined_format_coverage()
     test_about_html_rendering()
     test_gsmarena_select_main_lens()

@@ -238,7 +238,11 @@ def match_sensors(
 def load_csv(output_dir: Path) -> Optional[str]:
     path = output_dir / "camera-data.csv"
     if path.exists():
-        return path.read_text(encoding="utf-8")
+        try:
+            return path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as e:
+            print(f"Warning: Could not read {path}: {e}")
+            return None
 
     return None
 
