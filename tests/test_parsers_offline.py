@@ -655,6 +655,41 @@ def test_about_html_rendering():
            html.index('"@type": "AboutPage"') < html.index('"@type": "Dataset"'), True)
 
 
+# --------------------------------------------------------------------------
+# GSMArena _select_main_lens edge cases
+
+def test_gsmarena_select_main_lens():
+    section("GSMArena _select_main_lens edge cases")
+
+    # Two wide lenses — first wide should be selected (stable sort preserves order)
+    cam_two_wide = "12 MP, f/2.2, (wide)\n50 MP, f/1.7, (wide)"
+    result1 = gsmarena._select_main_lens(cam_two_wide)
+    expect("two wide lenses: returns a result", result1 is not None, True)
+    if result1:
+        expect("two wide lenses: picks first wide",
+               result1.startswith("12 MP"), True)
+
+    # No wide lenses — telephoto + ultrawide
+    cam_no_wide = "10 MP, f/2.4, (telephoto)\n8 MP, f/2.2, (ultrawide)"
+    result2 = gsmarena._select_main_lens(cam_no_wide)
+    expect("no wide lenses: returns a result", result2 is not None, True)
+    if result2:
+        expect("no wide lenses: picks ultrawide over telephoto",
+               "ultrawide" in result2.lower() or "ultra wide" in result2.lower(), True)
+
+    # Empty camera value
+    result3 = gsmarena._select_main_lens("")
+    expect("empty camera value", result3 is None, True)
+
+    # Lens with no role tag (priority 1, between wide=0 and ultrawide=3)
+    cam_no_role = "48 MP, f/1.8\n8 MP, f/2.4, (ultrawide)"
+    result4 = gsmarena._select_main_lens(cam_no_role)
+    expect("no role tag: returns a result", result4 is not None, True)
+    if result4:
+        expect("no role tag: picks untagged over ultrawide",
+               result4.startswith("48 MP"), True)
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -672,6 +707,7 @@ def main():
     test_load_sensors_database()
     test_cined_format_coverage()
     test_about_html_rendering()
+    test_gsmarena_select_main_lens()
 
     print("\n" + ("=" * 60))
     if _failures:
