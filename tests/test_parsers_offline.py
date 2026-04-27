@@ -529,6 +529,26 @@ def test_match_sensors():
     expect("empty db", len(matches4), 0)
 
 
+def test_load_sensors_database():
+    section("load_sensors_database error handling")
+    import pixelpitch as pp
+
+    # PermissionError (subclass of OSError) should return {} gracefully
+    with unittest.mock.patch("builtins.open", side_effect=PermissionError("Permission denied")):
+        result = pp.load_sensors_database()
+    expect("PermissionError returns {}", result, {})
+
+    # FileNotFoundError should return {} gracefully
+    with unittest.mock.patch("builtins.open", side_effect=FileNotFoundError("No such file")):
+        result2 = pp.load_sensors_database()
+    expect("FileNotFoundError returns {}", result2, {})
+
+    # json.JSONDecodeError should return {} gracefully
+    with unittest.mock.patch("builtins.open", unittest.mock.mock_open(read_data="not json")):
+        result3 = pp.load_sensors_database()
+    expect("JSONDecodeError returns {}", result3, {})
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -543,6 +563,7 @@ def main():
     test_sensor_size_from_type()
     test_pixel_pitch()
     test_match_sensors()
+    test_load_sensors_database()
 
     print("\n" + ("=" * 60))
     if _failures:
