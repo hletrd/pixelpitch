@@ -404,6 +404,14 @@ def test_deduplicate_specs():
     deduped_empty = pp.deduplicate_specs([])
     expect("empty input", len(deduped_empty), 0)
 
+    # Same specs but different categories -> both kept
+    specs5 = [
+        Spec("Canon R5", "mirrorless", None, (36.0, 24.0), 4.39, 45.0, 2020),
+        Spec("Canon R5", "dslr", None, (36.0, 24.0), 4.39, 45.0, 2020),
+    ]
+    deduped5 = pp.deduplicate_specs(specs5)
+    expect("different categories kept separate", len(deduped5), 2)
+
 
 # --------------------------------------------------------------------------
 # merge_camera_data
