@@ -875,9 +875,10 @@ def fetch_source(name: str, limit: Optional[int], output_dir: Path) -> None:
     import importlib
 
     if name not in SOURCE_REGISTRY:
-        print(f"Unknown source: {name}")
-        print(f"Available: {', '.join(sorted(SOURCE_REGISTRY))}")
-        sys.exit(1)
+        raise ValueError(
+            f"Unknown source: {name}. "
+            f"Available: {', '.join(sorted(SOURCE_REGISTRY))}"
+        )
 
     module = importlib.import_module(SOURCE_REGISTRY[name])
     print(f"Fetching from source '{name}' (limit={limit})...")
