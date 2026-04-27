@@ -46,25 +46,6 @@ FORMAT_TO_MM: dict[str, tuple[float, float]] = {
 }
 
 
-def _category_for(format_text: str) -> str:
-    f = (format_text or "").lower()
-    if "full frame" in f:
-        return "fullframe"
-    if "super 35" in f or "super35" in f:
-        return "super35"
-    if "aps-c" in f:
-        return "apsc"
-    if "micro four" in f or "four thirds" in f:
-        return "mft"
-    if "1\"" in f or "1-inch" in f or "1 inch" in f:
-        return "type1"
-    if "2/3" in f:
-        return "type2_3"
-    if "medium format" in f:
-        return "mediumformat"
-    return "unknown"
-
-
 def _create_browser():
     """Reuse the existing DrissionPage browser helper from pixelpitch.
 
