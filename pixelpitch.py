@@ -883,10 +883,11 @@ def render_html(output_dir: Path, skip_geizhals: bool = False) -> None:
                 src_path.read_text(encoding="utf-8"), encoding="utf-8"
             )
 
-    sitemap_content = (SCRIPT_DIR / "sitemap.xml").read_text(encoding="utf-8")
-    sitemap_content = sitemap_content.replace("__LASTMOD__", date.strftime("%Y-%m-%d"))
-
-    (output_dir / "sitemap.xml").write_text(sitemap_content, encoding="utf-8")
+    sitemap_path = SCRIPT_DIR / "sitemap.xml"
+    if sitemap_path.exists():
+        sitemap_content = sitemap_path.read_text(encoding="utf-8")
+        sitemap_content = sitemap_content.replace("__LASTMOD__", date.strftime("%Y-%m-%d"))
+        (output_dir / "sitemap.xml").write_text(sitemap_content, encoding="utf-8")
 
     print(f"HTML files written to {output_dir}")
     print(f'CSV file written to {output_dir / "camera-data.csv"}')
