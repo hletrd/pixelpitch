@@ -1,6 +1,6 @@
 # Plan C15-01: DSLR Regex Fixes, Rangefinder Dedup, openMVG BOM, Docstring
 
-**Status:** in_progress
+**Status:** completed
 **Priority:** P1 (3 MEDIUM correctness bugs, 3 LOW robustness fixes)
 **Findings addressed:** C15-01, C15-02, C15-03, C15-04, C15-05, C15-06
 
@@ -21,34 +21,34 @@
 ## Implementation Steps
 
 ### Step 1: Fix DSLR regex — Canon xxxD + Samsung NX removal + Sigma SD
-- [ ] Change `Canon\s+EOS[-\s]+\dD` to `Canon\s+EOS[-\s]+\d+D` in `_DSLR_NAME_RE`
-- [ ] Remove `Samsung\s+NX\d{3}` from `_DSLR_NAME_RE` entirely
-- [ ] Change `Sigma\s+SD\d?` to `Sigma\s+SD\d+` in `_DSLR_NAME_RE`
-- [ ] Update regex comment to remove misleading Samsung NX note
-- [ ] Add test cases: Canon EOS 250D (dslr), Samsung NX300 (mirrorless), Sigma SD14 (dslr)
-- [ ] Commit
+- [x] Change `Canon\s+EOS[-\s]+\dD` to `Canon\s+EOS[-\s]+\d+D` in `_DSLR_NAME_RE`
+- [x] Remove `Samsung\s+NX\d{3}` from `_DSLR_NAME_RE` entirely
+- [x] Change `Sigma\s+SD\d?` to `Sigma\s+SD\d+` in `_DSLR_NAME_RE`
+- [x] Update regex comment to remove misleading Samsung NX note
+- [x] Add test cases: Canon EOS 250D (dslr), Samsung NX300 (mirrorless), Sigma SD14 (dslr)
+- [x] Commit: b416e55
 
 ### Step 2: Add Geizhals rangefinder dedup in render_html
-- [ ] In `render_html`, after fetching Geizhals categories, filter the rangefinder specs to remove entries that already exist in dslr/mirrorless/fixed categories by camera name
-- [ ] Only keep rangefinder entries whose name does NOT appear in any other Geizhals category
-- [ ] This preserves actual rangefinders (Leica M series) while removing misclassified cameras
-- [ ] Add test for multi-category dedup in merge
-- [ ] Commit
+- [x] In `render_html`, after fetching Geizhals categories, filter the rangefinder specs to remove entries that already exist in dslr/mirrorless/fixed categories by camera name
+- [x] Only keep rangefinder entries whose name does NOT appear in any other Geizhals category
+- [x] This preserves actual rangefinders (Leica M series) while removing misclassified cameras
+- [x] Add test for multi-category dedup in merge
+- [x] Commit: 8505d35
 
 ### Step 3: Add BOM defense to openMVG fetch
-- [ ] Strip UTF-8 BOM from CSV body before passing to `DictReader` in `openmvg.fetch()`
-- [ ] Add test: mock http_get to return BOM-prefixed CSV, verify correct parsing
-- [ ] Commit
+- [x] Strip UTF-8 BOM from CSV body before passing to `DictReader` in `openmvg.fetch()`
+- [x] Add test: mock http_get to return BOM-prefixed CSV, verify correct parsing
+- [x] Commit: a62a105
 
 ### Step 4: Update openMVG docstring
-- [ ] Update module docstring to warn about DSLR regex limitations
-- [ ] Remove misleading Samsung NX comment in the regex block
-- [ ] Commit
+- [x] Update module docstring to warn about DSLR regex limitations
+- [x] Remove misleading Samsung NX comment in the regex block
+- [x] Commit: c8d4f31
 
 ### Step 5: Verify all fixes
-- [ ] Run gate tests — ALL PASS
-- [ ] Verify no regressions
-- [ ] Push all commits
+- [x] Run gate tests — ALL PASS (98 checks)
+- [x] Verify no regressions
+- [x] Push all commits
 
 ## Exit Criteria
 - Canon EOS xxxD DSLRs classified as "dslr" — verified by test
