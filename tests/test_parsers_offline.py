@@ -733,16 +733,16 @@ def test_cined_format_coverage():
 
     # Regex alternation groups from _parse_camera_page
     fmt_re = re.compile(
-        r"(Full Frame|Super 35(?:\s*mm)?|APS-C|Micro Four Thirds|Four Thirds|"
-        r'1"|1-inch|2/3"|Medium Format)',
+        r"(Full Frame|Super[- ]?35(?:\s*mm)?|APS-C|Micro Four Thirds|Four Thirds|"
+        r'1\"|1[- ]inch|2/3\"|2/3[- ]inch|Medium Format)',
         re.IGNORECASE,
     )
 
     # Extract all possible match groups by testing known strings
     test_strings = [
-        "Full Frame", "Super 35", "Super 35 mm", "APS-C",
-        "Micro Four Thirds", "Four Thirds", '1"', "1-inch",
-        '2/3"', "Medium Format",
+        "Full Frame", "Super 35", "Super 35 mm", "Super35", "APS-C",
+        "Micro Four Thirds", "Four Thirds", '1"', "1-inch", "1 inch",
+        '2/3"', "2/3-inch", "Medium Format",
     ]
     for fmt_str in test_strings:
         m = fmt_re.search(fmt_str)

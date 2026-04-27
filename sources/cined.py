@@ -86,7 +86,7 @@ def _parse_camera_page(page, url: str) -> Optional[Spec]:
     name = normalise_name(name_m.group(1)) if name_m else url.rstrip("/").rsplit("/", 1)[-1]
 
     fmt_m = re.search(
-        r"(Full Frame|Super 35(?:\s*mm)?|APS-C|Micro Four Thirds|Four Thirds|1\"|1-inch|2/3\"|Medium Format)",
+        r"(Full Frame|Super[- ]?35(?:\s*mm)?|APS-C|Micro Four Thirds|Four Thirds|1\"|1[- ]inch|2/3\"|2/3[- ]inch|Medium Format)",
         body_text,
         re.IGNORECASE,
     )
