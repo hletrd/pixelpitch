@@ -8,6 +8,10 @@ Each module exposes:
 returning records compatible with pixelpitch.Spec so they can flow through
 derive_spec() and write_csv() unchanged.
 
+Note: some source modules accept additional keyword arguments beyond
+``limit`` (e.g. ``sleep_seconds``, ``brands``, ``max_pages_per_brand``).
+These are documented in the individual module docstrings.
+
 Sources implemented:
   - openmvg          : MIT-licensed CSV (primary, bulk)
   - digicamdb        : upstream of openmvg; live site is Cloudflare-blocked,

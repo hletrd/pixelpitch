@@ -23,7 +23,7 @@ from .openmvg import fetch as _openmvg_fetch
 
 def fetch(limit: Optional[int] = None) -> list[Spec]:
     specs = _openmvg_fetch(limit=limit)
-    # Re-tag category so downstream consumers can distinguish provenance
+    # Return specs with openMVG's category (no separate provenance tagging)
     return [
         Spec(
             name=s.name,
