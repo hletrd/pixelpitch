@@ -351,6 +351,7 @@ def _create_browser():
         co.set_browser_path(mac_chrome)
         co.headless(False)
         co.set_argument("--remote-debugging-port=9222")
+        co.set_argument("--remote-debugging-address=127.0.0.1")
     else:
         # Linux CI: use system Chrome
         chrome_path = "/opt/google/chrome/chrome"
