@@ -510,6 +510,19 @@ def test_sensor_size_from_type():
     result5 = pp.sensor_size_from_type("APS-C", use_table=True)
     expect("unknown type returns None", result5, None)
 
+    # Phone-format sensor types (merged from gsmarena.PHONE_TYPE_SIZE)
+    result6 = pp.sensor_size_from_type("1/1.3", use_table=True)
+    expect("1/1.3 measured width", result6[0], 9.84, tol=0.01)
+    expect("1/1.3 measured height", result6[1], 7.40, tol=0.01)
+
+    result7 = pp.sensor_size_from_type("1/1.7", use_table=True)
+    expect("1/1.7 measured width", result7[0], 7.60, tol=0.01)
+    expect("1/1.7 measured height", result7[1], 5.70, tol=0.01)
+
+    result8 = pp.sensor_size_from_type("1/2.8", use_table=True)
+    expect("1/2.8 measured width", result8[0], 5.12, tol=0.01)
+    expect("1/2.8 measured height", result8[1], 3.84, tol=0.01)
+
 
 # --------------------------------------------------------------------------
 # pixel_pitch
