@@ -639,6 +639,19 @@ def test_sensor_size_from_type():
     expect("1/2.8 measured width", result8[0], 5.12, tol=0.01)
     expect("1/2.8 measured height", result8[1], 3.84, tol=0.01)
 
+    # Invalid fractional types — must return None, not crash
+    result9 = pp.sensor_size_from_type("1/0")
+    expect("1/0 returns None (ZeroDivisionError guard)", result9, None)
+
+    result10 = pp.sensor_size_from_type("1/0.0")
+    expect("1/0.0 returns None (ZeroDivisionError guard)", result10, None)
+
+    result11 = pp.sensor_size_from_type("1/")
+    expect("1/ returns None (ValueError guard)", result11, None)
+
+    result12 = pp.sensor_size_from_type("1/-1")
+    expect("1/-1 returns None (negative diagonal)", result12, None)
+
 
 # --------------------------------------------------------------------------
 # pixel_pitch

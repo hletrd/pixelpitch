@@ -149,6 +149,9 @@ def sensor_size_from_type(
     from the nominal diagonal.  Note that computed values are approximations
     because the optical format naming convention does not represent the actual
     sensor diagonal.
+
+    Invalid fractional types (e.g. "1/0", "1/") return None instead of
+    raising ZeroDivisionError or ValueError.
     """
     if not typ:
         return None
@@ -158,7 +161,12 @@ def sensor_size_from_type(
         return TYPE_SIZE[typ]
 
     if typ.startswith("1/"):
-        diag = 1 / float(typ[2:])
+        try:
+            diag = 1 / float(typ[2:])
+        except (ZeroDivisionError, ValueError):
+            return None
+        if diag <= 0:
+            return None
         size = sensor_size(diag, 4 / 3)
         return size
 
