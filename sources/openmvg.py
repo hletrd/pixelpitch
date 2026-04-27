@@ -12,8 +12,12 @@ by a heuristic. Large-sensor cameras (>= 20mm width) are classified as
 interchangeable-lens; a name-based check distinguishes DSLRs from mirrorless
 cameras. Cameras that don't match any DSLR pattern default to "mirrorless"
 because the majority of modern interchangeable-lens cameras are mirrorless.
-Any misclassifications may produce duplicate entries when the same camera
-appears in Geizhals data with the correct category.
+
+Known heuristic limitations: The DSLR regex covers major brands (Canon EOS
+xD/xxD/xxxD, Nikon D, Pentax K, Sigma SD, Sony DSLR-A) but may miss
+obscure DSLR brands or unusual naming patterns. Any misclassifications may
+produce duplicate entries when the same camera appears in Geizhals data with
+the correct category.
 """
 
 from __future__ import annotations
