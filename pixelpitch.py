@@ -274,7 +274,7 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
                 while len(values) < 10:
                     values.append("")
                 record_id = int(values[0]) if values[0] else None
-                name = values[1]
+                name = values[1].strip()
                 category = values[2].strip()
                 type_str = values[3].strip() if values[3].strip() else None
                 width_str = values[4]
@@ -288,7 +288,7 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
                 while len(values) < 9:
                     values.append("")
                 record_id = None
-                name = values[0]
+                name = values[0].strip()
                 category = values[1].strip()
                 type_str = values[2].strip() if values[2].strip() else None
                 width_str = values[3]

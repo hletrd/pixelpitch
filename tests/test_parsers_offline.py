@@ -341,6 +341,15 @@ def test_parse_existing_csv():
     parsed6 = pp.parse_existing_csv(csv6)
     expect("whitespace type stripped", parsed6[0].spec.type, "1/2.3")
 
+    # Name field with leading/trailing whitespace — should be stripped
+    csv7 = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+        "megapixels,pixel_pitch_um,year,matched_sensors\n"
+        '7, Sony A7 IV ,mirrorless,,35.90,23.90,858.61,33.0,5.12,2021,\n'
+    )
+    parsed7 = pp.parse_existing_csv(csv7)
+    expect("whitespace name stripped", parsed7[0].spec.name, "Sony A7 IV")
+
 
 # --------------------------------------------------------------------------
 # CSV round-trip test
