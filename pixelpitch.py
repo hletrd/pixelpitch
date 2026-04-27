@@ -137,14 +137,13 @@ def sensor_size(diag: float, aspect: float) -> Tuple[float, float]:
 
 
 def sensor_size_from_type(
-    typ: Optional[str], use_table: bool
+    typ: Optional[str],
 ) -> Optional[Tuple[float, float]]:
     """Convert a fractional-inch sensor type designation to (width_mm, height_mm).
 
     The lookup table contains measured (actual) sensor dimensions which are
     significantly more accurate than computing from the nominal diagonal.
-    When the type is in the table, the table value is always used regardless
-    of ``use_table`` — the table is the source of truth for known types.
+    When the type is in the table, the table value is always used.
 
     For types not in the table (e.g. "1/3.1"), the sensor size is computed
     from the nominal diagonal.  Note that computed values are approximations
@@ -570,10 +569,10 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
 
 
 def derive_spec(
-    spec: Spec, use_size_table: bool = False, sensors_db: Optional[dict] = None
+    spec: Spec, sensors_db: Optional[dict] = None
 ) -> SpecDerived:
     if spec.size is None:
-        size = sensor_size_from_type(spec.type, use_size_table)
+        size = sensor_size_from_type(spec.type)
     else:
         size = spec.size
 
@@ -596,15 +595,15 @@ def derive_spec(
     return SpecDerived(spec, size, area, pitch, matched_sensors)
 
 
-def derive_specs(specs: list[Spec], use_size_table: bool = False) -> list[SpecDerived]:
+def derive_specs(specs: list[Spec]) -> list[SpecDerived]:
     sensors_db = load_sensors_database()
-    return [derive_spec(spec, use_size_table, sensors_db) for spec in specs]
+    return [derive_spec(spec, sensors_db) for spec in specs]
 
 
-def get_category(page, url: str, category: str, use_size_table: bool) -> list[SpecDerived]:
+def get_category(page, url: str, category: str) -> list[SpecDerived]:
     """Fetch and derive specs for a camera category."""
     entries = extract_entries(page, url)
-    return derive_specs(extract_specs(entries, category), use_size_table=use_size_table)
+    return derive_specs(extract_specs(entries, category))
 
 
 def sorted_by(
@@ -699,12 +698,12 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
 
 
 CATEGORIES = [
-    (FIXED_URL, "fixed", True),
-    (DSLR_URL, "dslr", False),
-    (MIRRORLESS_URL, "mirrorless", False),
-    (RANGEFINDER_URL, "rangefinder", False),
-    (CAMCORDER_URL, "camcorder", False),
-    (ACTIONCAM_URL, "actioncam", False),
+    (FIXED_URL, "fixed"),
+    (DSLR_URL, "dslr"),
+    (MIRRORLESS_URL, "mirrorless"),
+    (RANGEFINDER_URL, "rangefinder"),
+    (CAMCORDER_URL, "camcorder"),
+    (ACTIONCAM_URL, "actioncam"),
 ]
 
 
@@ -745,16 +744,16 @@ def render_html(output_dir: Path, skip_geizhals: bool = False) -> None:
     category_specs = {}
     if skip_geizhals:
         print("Skipping Geizhals fetch (per --skip-geizhals)")
-        for _url, category, _ust in CATEGORIES:
+        for _url, category in CATEGORIES:
             category_specs[category] = []
     else:
         print("Creating browser session...")
         page = _create_browser()
 
         print("Fetching camera data from Geizhals...")
-        for url, category, use_size_table in CATEGORIES:
+        for url, category in CATEGORIES:
             try:
-                category_specs[category] = get_category(page, url, category, use_size_table)
+                category_specs[category] = get_category(page, url, category)
             except Exception as e:
                 print(f"  Geizhals {category} failed: {e} — keeping previous data")
                 category_specs[category] = []
@@ -945,7 +944,7 @@ def fetch_source(name: str, limit: Optional[int], output_dir: Path) -> None:
     print(f"Fetching from source '{name}' (limit={limit})...")
     raw_specs = module.fetch(limit=limit) if limit is not None else module.fetch()
 
-    derived = derive_specs(raw_specs, use_size_table=False)
+    derived = derive_specs(raw_specs)
     derived = sorted_by(derived, "pitch")
     for i, d in enumerate(derived):
         d.id = i
@@ -991,8 +990,8 @@ def main():
             print("Fetching all cameras...")
             page = _create_browser()
             all_specs = []
-            for url, category, use_size_table in CATEGORIES:
-                all_specs.extend(get_category(page, url, category, use_size_table))
+            for url, category in CATEGORIES:
+                all_specs.extend(get_category(page, url, category))
             page.quit()
             specs_sorted = sorted_by(all_specs, "pitch")
             for spec in specs_sorted:
