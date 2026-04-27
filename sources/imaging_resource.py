@@ -44,7 +44,7 @@ IR_SENSOR_SIZE_RE = re.compile(
 # "Approximate Pixel Pitch: 3.92 microns"
 IR_PITCH_RE = re.compile(r"([\d.]+)\s*microns?", re.IGNORECASE)
 # "Effective Megapixels: 24.2"
-IR_MPIX_RE = re.compile(r"([\d.]+)")
+IR_MPIX_RE = re.compile(r"(\d+\.?\d*)")
 # "Date Available: 2021-08-31"
 IR_DATE_RE = re.compile(r"(\d{4})[-/](\d{2})[-/](\d{2})")
 

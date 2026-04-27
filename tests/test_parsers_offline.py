@@ -78,6 +78,12 @@ def test_imaging_resource():
            ),
            "mirrorless")
 
+    # IR_MPIX_RE should match the number, not a stray dot
+    m = imaging_resource.IR_MPIX_RE.search("approx. 24.2")
+    expect("IR_MPIX_RE skips stray dot", m.group(1) if m else None, "24.2")
+    m2 = imaging_resource.IR_MPIX_RE.search("33.0")
+    expect("IR_MPIX_RE plain number", m2.group(1) if m2 else None, "33.0")
+
 
 # --------------------------------------------------------------------------
 # Apotelyt — Sony A7 IV fixture
