@@ -752,7 +752,7 @@ def _load_per_source_csvs(output_dir: Path) -> List[SpecDerived]:
             continue
         try:
             content = path.read_text(encoding="utf-8")
-        except OSError as e:
+        except (OSError, UnicodeDecodeError) as e:
             print(f"  could not read {path.name}: {e}")
             continue
         parsed = parse_existing_csv(content)
