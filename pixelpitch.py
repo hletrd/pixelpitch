@@ -170,6 +170,22 @@ def pixel_pitch(area: float, mpix: float) -> float:
 
 
 def load_sensors_database() -> dict:
+    """Load the sensor database from sensors.json.
+
+    Expected schema::
+
+        {
+            "IMX455": {
+                "sensor_width_mm": 36.0,
+                "sensor_height_mm": 24.0,
+                "megapixels": [61.2, 61.0]
+            },
+            ...
+        }
+
+    Each key is a sensor model name.  ``megapixels`` is a list because
+    the same physical sensor may be used at different resolutions.
+    """
     try:
         with open(SCRIPT_DIR / "sensors.json", "r", encoding="utf-8") as f:
             return json.load(f)
