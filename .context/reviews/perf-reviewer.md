@@ -1,8 +1,8 @@
-# Performance Review (Cycle 14) — Performance, Concurrency, CPU/Memory
+# Performance Review (Cycle 15) — Performance, Concurrency, CPU/Memory
 
 **Reviewer:** perf-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository performance re-review after cycles 1-13 fixes
+**Scope:** Full repository performance re-review after cycles 1-14 fixes
 
 ## Previously Fixed / Deferred
 - P7-01: Tablesorter single-config — FIXED
@@ -10,7 +10,7 @@
 
 ## New Findings
 
-No new performance findings. The codebase remains a static site generator with no performance-critical runtime code. The openMVG DSLR duplication issue (C14-01) increases the total record count slightly but the impact on page load time is negligible (a few extra table rows out of hundreds).
+No new performance findings. The codebase remains a static site generator with no performance-critical runtime code. The DSLR regex corrections (C15-01/02/03) have negligible performance impact. The Geizhals rangefinder duplicate issue (C15-04) adds 43 extra rows to the "All Cameras" table but this is a data-quality issue, not a performance concern.
 
 ## Summary
 - NEW findings: 0

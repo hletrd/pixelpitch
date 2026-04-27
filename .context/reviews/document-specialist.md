@@ -1,25 +1,28 @@
-# Document Specialist Review (Cycle 14) — Doc/Code Mismatches
+# Document Specialist Review (Cycle 15) — Doc/Code Mismatches
 
 **Reviewer:** document-specialist
 **Date:** 2026-04-28
-**Scope:** Full repository doc/code consistency review after cycles 1-13 fixes
+**Scope:** Full repository doc/code consistency review after cycles 1-14 fixes
 
-## Previously Fixed (Cycles 1-12) — Confirmed Resolved
+## Previously Fixed (Cycles 1-14) — Confirmed Resolved
 - DS11-01: sensors.json schema documented — FIXED
 - DS11-02: openMVG listed as data source — FIXED
+- DS14-01: openMVG docstring documents category heuristic limitation — FIXED
 
 ## New Findings
 
-### DS14-01: openMVG module docstring says "category" but heuristic is incomplete
-**File:** `sources/openmvg.py`, module docstring (lines 1-10)
+### DS15-01: openMVG docstring claims DSLR name-pattern heuristic works but regex has bugs
+**File:** `sources/openmvg.py`, lines 10-17 (module docstring)
 **Severity:** LOW | **Confidence:** HIGH
 
-The module docstring says "Coverage skews toward 2010s consumer compacts" but doesn't mention that the category heuristic (`size[0] >= 20 → mirrorless`) misclassifies DSLRs. The docstring should document this known limitation so developers understand why duplicate entries may appear for DSLRs.
+The docstring (added in C14-05) says: "a name-based check distinguishes DSLRs from mirrorless cameras." While technically true, the name-based check has known bugs (Samsung NX false positives, Canon xxxD false negatives). The docstring should warn about these limitations so developers understand the heuristic is not comprehensive.
 
-**Fix:** Add a note to the docstring about the category heuristic limitation.
+Additionally, the DSLR_NAME_RE comment on line 35 says "Samsung NX300 (some were DSLR-style)" which is misleading — all Samsung NX cameras are mirrorless.
+
+**Fix:** Update the docstring to document the known limitations of the DSLR heuristic. Remove or correct the Samsung NX comment.
 
 ---
 
 ## Summary
 - NEW findings: 1 (1 LOW)
-- DS14-01: openMVG docstring doesn't document category heuristic limitation — LOW
+- DS15-01: Docstring doesn't warn about DSLR regex bugs — LOW

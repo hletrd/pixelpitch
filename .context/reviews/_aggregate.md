@@ -1,80 +1,99 @@
-# Aggregate Review (Cycle 14) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 15) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-13 Status
+## Cycle 1-14 Status
 
-All previous fixes confirmed still working. No regressions.
+All previous fixes confirmed still working. No regressions in previously-fixed items.
 Deferred items: see `.context/plans/deferred.md`.
 
-## Cross-Agent Agreement Matrix (Cycle 14 New Findings)
+**IMPORTANT:** The C14-01 DSLR regex fix introduced new bugs that are now being caught in this cycle.
+
+## Cross-Agent Agreement Matrix (Cycle 15 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| openMVG DSLR misclassification → duplicates | code-reviewer, critic, verifier, tracer, architect, debugger, designer, test-engineer | MEDIUM |
-| UTF-8 BOM in CSV → 0-row parse failure | code-reviewer, critic, verifier, tracer, architect, debugger, security-reviewer, test-engineer | MEDIUM |
-| CineD FORMAT_TO_MM unreachable entries | code-reviewer, critic, verifier, tracer, debugger, test-engineer | LOW |
-| PHONE_TYPE_SIZE mutable alias of TYPE_SIZE | code-reviewer | LOW |
-| openMVG docstring doesn't document heuristic limitation | document-specialist | LOW |
+| Canon EOS xxxD regex false negative → misclassified as mirrorless | code-reviewer, critic, verifier, tracer, architect, debugger, designer, test-engineer | MEDIUM |
+| Samsung NX regex false positive → mirrorless classified as DSLR | code-reviewer, critic, verifier, tracer, architect, debugger, designer, test-engineer | MEDIUM |
+| Geizhals rangefinder misclassification → 43 triple-category duplicates | code-reviewer, critic, verifier, tracer, architect, debugger, designer, test-engineer | MEDIUM |
+| openMVG CSV DictReader has no BOM defense | code-reviewer, security-reviewer, tracer, debugger, test-engineer | LOW |
+| Sigma SD regex misses 2-digit models | code-reviewer, critic, verifier, tracer, debugger | LOW |
+| openMVG docstring doesn't warn about regex bugs | document-specialist | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C14-01: openMVG classifies all interchangeable-lens cameras as "mirrorless" — causes visible duplicates
-**Sources:** C14-01, CR14-01, V14-01, T14-01, A14-01, D14-01, UX14-01, TE14-02
+### C15-01: Canon EOS xxxD DSLRs misclassified as mirrorless by incomplete regex — regression from C14-01
+**Sources:** C15-01, CR15-01, V15-01, T15-01, A15-01, D15-01, UX15-02, TE15-02
 **Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
 
-openMVG's category heuristic (`size[0] >= 20 → mirrorless`) misclassifies all DSLRs as "mirrorless". When the same DSLR also appears in Geizhals data with `category="dslr"`, `create_camera_key` produces different keys and `merge_camera_data` preserves both entries. This results in visible duplicate entries on the "All Cameras" page.
+The C14-01 DSLR regex `Canon\s+EOS[-\s]+\dD` only matches single-digit xD models (5D, 6D, 7D, 1D). It misses the entire Canon Rebel/xxxD series (250D, 800D, 850D), the xxD series (70D, 80D, 90D), and the xxxxD series (1200D, 2000D, 4000D) — all of which are DSLRs.
 
-**Concrete failure:** Canon EOS 5D appears twice: once under "mirrorless" (openMVG) and once under "dslr" (Geizhals). The same applies to potentially dozens of DSLRs in the openMVG dataset.
+Verified against dist data: 5 Canon EOS xxxD cameras are misclassified as "mirrorless" in the current data.
 
-**Fix:** Add a DSLR name-pattern heuristic to openMVG's category assignment (e.g., if name matches Canon EOS \d+D, Nikon D\d+, Pentax K-\d+, etc.).
+**Concrete failure:** Canon EOS 250D appears on the All Cameras page under "Mirrorless" (from openMVG) alongside its correct "DSLR" classification (from Geizhals).
+
+**Fix:** Change `Canon\s+EOS[-\s]+\dD` to `Canon\s+EOS[-\s]+\d+D` (allow multiple digits before the final D).
 
 ---
 
-### C14-02: UTF-8 BOM in camera-data.csv causes complete parse failure
-**Sources:** C14-02, CR14-02, V14-02, T14-02, A14-02, D14-02, S14-01, TE14-01
+### C15-02: Samsung NX pattern incorrectly classifies mirrorless cameras as DSLR — regression from C14-01
+**Sources:** C15-02, CR15-01, V15-02, T15-02, D15-02, UX15-02, TE15-01
+**Severity:** MEDIUM | **Confidence:** HIGH (7-agent consensus)
+
+The C14-01 DSLR regex includes `Samsung\s+NX\d{3}` which matches Samsung NX100, NX200, NX300, NX500. But **all Samsung NX cameras are mirrorless**. Samsung never made a DSLR under the NX brand. The comment "some were DSLR-style" confuses body styling with camera type.
+
+Verified: at least 1 Samsung NX camera is misclassified as "dslr" in the current dist data.
+
+**Concrete failure:** Samsung NX300 appears on the DSLR page instead of the Mirrorless page.
+
+**Fix:** Remove `Samsung\s+NX\d{3}` from `_DSLR_NAME_RE`.
+
+---
+
+### C15-03: Geizhals rangefinder (Messsucher) category misclassifies 43 cameras → triple-category duplicates
+**Sources:** C15-04, CR15-02, V15-03, T15-03, A15-02, D15-03, UX15-01, TE15-03
 **Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
 
-If `camera-data.csv` or any source CSV is saved with a UTF-8 BOM (e.g., from Excel's "CSV UTF-8" save option), `parse_existing_csv` fails completely: the BOM makes `header[0]` equal to `"﻿id"` instead of `"id"`, causing schema detection to fail, column misalignment, and 0 rows parsed. The entire render pipeline proceeds with no existing data.
+Geizhals's "Messsucher" filter returns 53 cameras, but only ~10 are actual rangefinders (Leica M series). The other 43 are interchangeable-lens cameras that also appear under "DSLR" or "Mirrorless" categories. Since `create_camera_key` uses `name + category`, each camera generates up to 3 separate entries.
 
-**Concrete failure:** A developer opens `camera-data.csv` in Excel, saves as "CSV UTF-8", and the next build produces a site missing all preserved cameras.
+Current dist data has exactly 43 cameras with triple-category duplicates (dslr + mirrorless + rangefinder). This is the most user-visible data-quality issue on the site.
 
-**Fix:** Strip BOM at the entry point of `parse_existing_csv`:
-```python
-if csv_content and csv_content[0] == '﻿':
-    csv_content = csv_content[1:]
-```
+**Concrete failure:** Canon EOS 5D Mark IV appears 3 times on the All Cameras page: once as "DSLR", once as "Mirrorless", once as "Rangefinder".
+
+**Fix:** Add category normalization during merge: when a camera already exists in Geizhals dslr or mirrorless data, discard the rangefinder duplicate. Only true rangefinders (Leica M, Voigtlander Bessa, etc.) should remain in the rangefinder category.
 
 ---
 
-### C14-03: CineD `FORMAT_TO_MM` has unreachable entries — dead code
-**Sources:** C14-03, CR14-03, V14-03, T14-03, D14-03, TE14-03
-**Severity:** LOW | **Confidence:** HIGH (6-agent consensus)
+### C15-04: openMVG CSV DictReader has no BOM defense — potential 0-record parse
+**Sources:** C15-05, S15-01, T15-04, D15-04, TE15-04
+**Severity:** LOW | **Confidence:** HIGH (5-agent consensus)
 
-Three entries in `FORMAT_TO_MM` are unreachable because the regex in `_parse_camera_page` doesn't capture those string patterns: `"super35"` (regex requires space), `"1 inch"` (regex matches `1"` or `1-inch` only), `"2/3-inch"` (regex matches `2/3"` only).
+If the openMVG GitHub CSV ever contains a UTF-8 BOM, `csv.DictReader` would produce mangled field names (e.g., `"﻿CameraMaker"` instead of `"CameraMaker"`), causing `KeyError` on every row and 0 records returned. The existing BOM defense in `parse_existing_csv` does not cover this code path.
 
-**Fix:** Extend regex to capture missing variants, or remove unreachable entries.
+**Concrete failure:** If the openMVG CSV repository adds a BOM, the next CI build produces a site missing all openMVG cameras.
+
+**Fix:** Strip BOM from the CSV body before passing to `DictReader` in `openmvg.fetch()`.
 
 ---
 
-### C14-04: `PHONE_TYPE_SIZE` is a mutable alias of `TYPE_SIZE`
-**Sources:** C14-04
+### C15-05: Sigma SD regex `\d?` misses 2-digit models (SD10, SD14, SD15)
+**Sources:** C15-03, CR15-03, V15-04, T15-01, D15-01 (partial)
 **Severity:** LOW | **Confidence:** HIGH
 
-`gsmarena.PHONE_TYPE_SIZE` is a direct reference to `pixelpitch.TYPE_SIZE`. Any mutation to `PHONE_TYPE_SIZE` would corrupt the central table. The code comment warns against mutation but the type system doesn't enforce it.
+The pattern `Sigma\s+SD\d?` only matches 0-1 digits after "SD", missing Sigma SD10, SD14, and SD15 — all Foveon-sensor DSLRs.
 
-**Fix:** Use `dict(SENSOR_TYPE_SIZE)` (copy) or `MappingProxyType` (read-only view).
+**Fix:** Change `Sigma\s+SD\d?` to `Sigma\s+SD\d+`.
 
 ---
 
-### C14-05: openMVG docstring doesn't document category heuristic limitation
-**Sources:** DS14-01
+### C15-06: openMVG docstring doesn't warn about DSLR regex limitations
+**Sources:** DS15-01
 **Severity:** LOW | **Confidence:** HIGH
 
-The openMVG module docstring describes coverage but doesn't mention that the category heuristic misclassifies DSLRs. Developers reading the docstring won't understand why duplicate entries may appear.
+The docstring added in C14-05 describes the DSLR heuristic but doesn't warn about its known limitations (Canon xxxD, Samsung NX). The Samsung NX comment in the code is also misleading.
 
-**Fix:** Add a note to the docstring about the category heuristic limitation.
+**Fix:** Update the docstring and the Samsung NX comment.
 
 ---
 
@@ -83,7 +102,8 @@ The openMVG module docstring describes coverage but doesn't mention that the cat
 No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
-- Total distinct new findings: 5 (2 MEDIUM, 3 LOW)
-- Cross-agent consensus findings (3+ agents): 3
-- All cycle 1-13 fixes remain intact
+- Total distinct new findings: 6 (3 MEDIUM, 3 LOW)
+- Cross-agent consensus findings (3+ agents): 4
+- All cycle 1-14 fixes remain intact
+- 2 MEDIUM findings are REGRESSIONS from the C14-01 fix
 - Remaining deferred items: see `.context/plans/deferred.md`

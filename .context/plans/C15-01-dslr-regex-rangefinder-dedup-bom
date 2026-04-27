@@ -1,0 +1,60 @@
+# Plan C15-01: DSLR Regex Fixes, Rangefinder Dedup, openMVG BOM, Docstring
+
+**Status:** in_progress
+**Priority:** P1 (3 MEDIUM correctness bugs, 3 LOW robustness fixes)
+**Findings addressed:** C15-01, C15-02, C15-03, C15-04, C15-05, C15-06
+
+## Problem
+
+1. **C15-01 (MEDIUM):** The C14-01 DSLR regex `Canon\s+EOS[-\s]+\dD` only matches single-digit xD models (5D, 6D, 7D). It misses Canon Rebel/xxxD series (250D, 800D, 850D), xxD series (70D, 80D, 90D), and xxxxD series (1200D, 2000D, 4000D). All are DSLRs. 5 Canon EOS xxxD cameras are misclassified as "mirrorless" in current dist data.
+
+2. **C15-02 (MEDIUM):** The DSLR regex includes `Samsung\s+NX\d{3}` which matches Samsung NX100, NX200, NX300, NX500 — all mirrorless cameras. Samsung never made a DSLR under the NX brand. At least 1 Samsung NX camera is misclassified as "dslr" in current dist data.
+
+3. **C15-03 (MEDIUM):** Geizhals's "Messsucher" (rangefinder) filter returns 53 cameras, but only ~10 are actual rangefinders. The other 43 are interchangeable-lens cameras that also appear under DSLR or Mirrorless categories. Since `create_camera_key` uses `name + category`, each camera generates up to 3 separate entries. 43 cameras have triple-category duplicates in current dist data.
+
+4. **C15-04 (LOW):** openMVG CSV `DictReader` has no BOM defense. If the remote CSV adds a BOM, `DictReader` produces mangled field names and returns 0 records.
+
+5. **C15-05 (LOW):** Sigma SD regex `Sigma\s+SD\d?` only matches 0-1 digits after "SD", missing SD10, SD14, SD15 (all DSLRs).
+
+6. **C15-06 (LOW):** openMVG docstring doesn't warn about DSLR regex limitations. Samsung NX comment is misleading.
+
+## Implementation Steps
+
+### Step 1: Fix DSLR regex — Canon xxxD + Samsung NX removal + Sigma SD
+- [ ] Change `Canon\s+EOS[-\s]+\dD` to `Canon\s+EOS[-\s]+\d+D` in `_DSLR_NAME_RE`
+- [ ] Remove `Samsung\s+NX\d{3}` from `_DSLR_NAME_RE` entirely
+- [ ] Change `Sigma\s+SD\d?` to `Sigma\s+SD\d+` in `_DSLR_NAME_RE`
+- [ ] Update regex comment to remove misleading Samsung NX note
+- [ ] Add test cases: Canon EOS 250D (dslr), Samsung NX300 (mirrorless), Sigma SD14 (dslr)
+- [ ] Commit
+
+### Step 2: Add Geizhals rangefinder dedup in render_html
+- [ ] In `render_html`, after fetching Geizhals categories, filter the rangefinder specs to remove entries that already exist in dslr/mirrorless/fixed categories by camera name
+- [ ] Only keep rangefinder entries whose name does NOT appear in any other Geizhals category
+- [ ] This preserves actual rangefinders (Leica M series) while removing misclassified cameras
+- [ ] Add test for multi-category dedup in merge
+- [ ] Commit
+
+### Step 3: Add BOM defense to openMVG fetch
+- [ ] Strip UTF-8 BOM from CSV body before passing to `DictReader` in `openmvg.fetch()`
+- [ ] Add test: mock http_get to return BOM-prefixed CSV, verify correct parsing
+- [ ] Commit
+
+### Step 4: Update openMVG docstring
+- [ ] Update module docstring to warn about DSLR regex limitations
+- [ ] Remove misleading Samsung NX comment in the regex block
+- [ ] Commit
+
+### Step 5: Verify all fixes
+- [ ] Run gate tests — ALL PASS
+- [ ] Verify no regressions
+- [ ] Push all commits
+
+## Exit Criteria
+- Canon EOS xxxD DSLRs classified as "dslr" — verified by test
+- Samsung NX cameras classified as "mirrorless" — verified by test
+- Sigma SD2-digit models classified as "dslr" — verified by test
+- No triple-category duplicates for non-rangefinder cameras — verified by test
+- openMVG BOM-prefixed CSV parsed correctly — verified by test
+- Docstring updated with regex limitations
+- All gate tests pass
