@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="auto">
 <head>
+  <script>
+    // Apply stored theme immediately to prevent flash of wrong theme
+    (function() {
+      const stored = localStorage.getItem('theme');
+      const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      const theme = stored || preferred;
+      document.documentElement.setAttribute('data-bs-theme', theme);
+    })();
+  </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pixel Pitch - {% block title %}{{ title | default('Camera Sensor Pixel Pitch List') }}{% endblock %}</title>
