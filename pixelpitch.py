@@ -800,6 +800,23 @@ def render_html(output_dir: Path, skip_geizhals: bool = False) -> None:
 
         page.quit()
 
+    # Geizhals "rangefinder" (Messsucher) filter misclassifies many non-rangefinder
+    # cameras (Canon EOS DSLRs, Fujifilm mirrorless, etc.) that already appear under
+    # the correct category. Remove rangefinder entries whose name also exists in any
+    # other Geizhals category to prevent duplicate entries on the All Cameras page.
+    rf_names = {spec.spec.name for spec in category_specs.get("rangefinder", [])}
+    other_names = set()
+    for cat, specs in category_specs.items():
+        if cat != "rangefinder":
+            other_names.update(spec.spec.name for spec in specs)
+    dup_rf_names = rf_names & other_names
+    if dup_rf_names:
+        print(f"  Removing {len(dup_rf_names)} rangefinder duplicates (also in dslr/mirrorless/etc.)")
+        category_specs["rangefinder"] = [
+            s for s in category_specs.get("rangefinder", [])
+            if s.spec.name not in dup_rf_names
+        ]
+
     print("Loading per-source CSVs...")
     extra_specs = _load_per_source_csvs(output_dir)
 

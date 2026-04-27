@@ -846,6 +846,49 @@ def test_create_camera_key_year_mismatch():
            sum(1 for s in merged2 if s.spec.name == "Sony A7 IV"), 1)
 
 
+# --------------------------------------------------------------------------
+# Category dedup: same camera in multiple Geizhals categories must not
+# produce duplicates in the merge result
+
+def test_category_dedup():
+    section("category dedup across Geizhals categories")
+    import pixelpitch as pp
+    from models import Spec, SpecDerived
+
+    def derive(name, category, size, mpix, year):
+        spec = Spec(name=name, category=category, type=None,
+                    size=size, pitch=None, mpix=mpix, year=year)
+        return pp.derive_spec(spec)
+
+    # Simulate Geizhals fetching the same camera in two categories
+    # (e.g., Canon EOS 5D as both "dslr" and "rangefinder")
+    dslr_specs = [derive("Canon EOS 5D", "dslr", (36.0, 24.0), 12.7, 2005)]
+    rf_specs = [derive("Canon EOS 5D", "rangefinder", (36.0, 24.0), 12.7, 2005)]
+    # When merged, the two entries have different merge keys → both preserved
+    all_specs = dslr_specs + rf_specs
+    names = [s.spec.name for s in all_specs]
+    expect("same camera different categories: 2 raw entries",
+           sum(1 for n in names if n == "Canon EOS 5D"), 2)
+
+    # The dedup logic in render_html filters the rangefinder category
+    # to remove entries whose name also exists in other categories.
+    # Simulate that logic here:
+    rf_names = {s.spec.name for s in rf_specs}
+    other_names = set()
+    for spec in dslr_specs:
+        other_names.add(spec.spec.name)
+    dup_rf_names = rf_names & other_names
+    filtered_rf = [s for s in rf_specs if s.spec.name not in dup_rf_names]
+    expect("rangefinder dedup: filtered to 0", len(filtered_rf), 0)
+
+    # Actual rangefinder (Leica M11) is kept because it's not in other categories
+    actual_rf = [derive("Leica M11", "rangefinder", (36.0, 24.0), 60.3, 2022)]
+    rf_names2 = {s.spec.name for s in actual_rf}
+    dup_rf_names2 = rf_names2 & other_names
+    filtered_rf2 = [s for s in actual_rf if s.spec.name not in dup_rf_names2]
+    expect("actual rangefinder kept", len(filtered_rf2), 1)
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -866,6 +909,7 @@ def main():
     test_about_html_rendering()
     test_gsmarena_select_main_lens()
     test_create_camera_key_year_mismatch()
+    test_category_dedup()
 
     print("\n" + ("=" * 60))
     if _failures:
