@@ -1,12 +1,12 @@
 # Plan: Cycle 16 Findings — Sensor Type Crash, Merge Dedup, Pentax Regex, http_get Exception, digicamdb Alias
 
 **Created:** 2026-04-28
-**Status:** IN PROGRESS
+**Status:** COMPLETED
 **Source Reviews:** C16-01 through C16-05 (aggregate)
 
 ---
 
-## Task 1: Fix `sensor_size_from_type` crash on invalid fractional sensor types — TODO
+## Task 1: Fix `sensor_size_from_type` crash on invalid fractional sensor types — DONE
 **Finding:** C16-01 (9-agent consensus)
 **Severity:** MEDIUM | **File:** `pixelpitch.py`, lines 152-165
 
@@ -23,7 +23,7 @@ Wrap the computation in a try/except block catching ZeroDivisionError and ValueE
 
 ---
 
-## Task 2: Fix `merge_camera_data` duplicate entries from same key in new_specs — TODO
+## Task 2: Fix `merge_camera_data` duplicate entries from same key in new_specs — DONE
 **Finding:** C16-02 (10-agent consensus)
 **Severity:** MEDIUM | **File:** `pixelpitch.py`, lines 349-407
 
@@ -40,7 +40,7 @@ Track seen keys among new_specs within the merge loop. When a duplicate key is e
 
 ---
 
-## Task 3: Fix Pentax DSLR regex to cover models without hyphen and letter-suffix models — TODO
+## Task 3: Fix Pentax DSLR regex to cover models without hyphen and letter-suffix models — DONE
 **Finding:** C16-03 (7-agent consensus)
 **Severity:** LOW | **File:** `sources/openmvg.py`, line 47
 
@@ -57,7 +57,7 @@ Change `Pentax\s+K[-\s]\d` to `Pentax\s+K[-\s]?\d+[A-Za-z]*` and `Pentax\s+\d{1,
 
 ---
 
-## Task 4: Add OSError to http_get exception handling — TODO
+## Task 4: Add OSError to http_get exception handling — DONE
 **Finding:** C16-05 (3-agent consensus)
 **Severity:** LOW | **File:** `sources/__init__.py`, lines 48-61
 
@@ -73,7 +73,7 @@ Add OSError to the except clause in http_get.
 
 ---
 
-## Task 5: Remove digicamdb from SOURCE_REGISTRY or add duplicate guard — TODO
+## Task 5: Remove digicamdb from SOURCE_REGISTRY or add duplicate guard — DONE
 **Finding:** C16-04 (3-agent consensus)
 **Severity:** LOW | **File:** `sources/digicamdb.py`; `pixelpitch.py`, line 985
 
