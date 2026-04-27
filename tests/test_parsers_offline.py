@@ -636,6 +636,25 @@ def test_cined_format_coverage():
             expect(f"FORMAT_TO_MM[{key!r}]", val is not None, True)
 
 
+# --------------------------------------------------------------------------
+# about.html template rendering
+
+def test_about_html_rendering():
+    section("about.html rendering")
+    import pixelpitch as pp
+    from datetime import datetime, timezone
+
+    date = datetime.now(timezone.utc)
+    html = pp._get_env().get_template("about.html").render(page="about", date=date)
+
+    expect("title contains About Pixel Pitch",
+           "About Pixel Pitch" in html, True)
+    expect("LD+JSON has AboutPage type",
+           '"@type": "AboutPage"' in html, True)
+    expect("top-level @type is AboutPage (not Dataset)",
+           html.index('"@type": "AboutPage"') < html.index('"@type": "Dataset"'), True)
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -652,6 +671,7 @@ def main():
     test_match_sensors()
     test_load_sensors_database()
     test_cined_format_coverage()
+    test_about_html_rendering()
 
     print("\n" + ("=" * 60))
     if _failures:
