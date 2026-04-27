@@ -1,5 +1,27 @@
 {% extends "index.html" %}
 
+{% block title %}About Pixel Pitch{% endblock %}
+
+{% block og_title %}About Pixel Pitch{% endblock %}
+{% block twitter_title %}About Pixel Pitch{% endblock %}
+
+{% block js_ldjson %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "name": "About Pixel Pitch",
+  "description": "Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.",
+  "url": "https://hletrd.github.io/pixelpitch/about.html",
+  "mainEntity": {
+    "@type": "Dataset",
+    "name": "Camera Sensor Pixel Pitch Database",
+    "url": "https://hletrd.github.io/pixelpitch/"
+  }
+}
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="row">
   <div class="col-12">

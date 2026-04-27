@@ -897,7 +897,7 @@ def render_html(output_dir: Path, skip_geizhals: bool = False) -> None:
     )
 
     (output_dir / "about.html").write_text(
-        _get_env().get_template("about.html").render(page="about"), encoding="utf-8"
+        _get_env().get_template("about.html").render(page="about", date=date), encoding="utf-8"
     )
 
     write_csv(specs_all, output_dir / "camera-data.csv")
