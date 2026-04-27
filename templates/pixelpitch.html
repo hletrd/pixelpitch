@@ -160,7 +160,7 @@
             </label>
           </div>
           <button class="btn btn-outline-primary btn-sm" id="create_plot" type="button">
-            <i class="bi bi-graph-up me-1"></i>Create Box Plot
+            <i class="bi bi-graph-up me-1"></i>Create Scatter Plot
           </button>
           <div class="dropdown">
             <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -324,7 +324,7 @@
       });
 
       if (data.length === 0) {
-        button.prop('disabled', false).html('<i class="bi bi-graph-up me-1"></i>Create Box Plot');
+        button.prop('disabled', false).html('<i class="bi bi-graph-up me-1"></i>Create Scatter Plot');
         alert('No valid data found for plotting.');
         return;
       }
@@ -388,7 +388,7 @@
         .text(d => `${d.name}: ${d.value}µm (${d.year})`);
 
       plotVisible = true;
-      button.prop('disabled', false).html('<i class="bi bi-eye-slash me-1"></i>Hide Plot');
+      button.prop('disabled', false).html('<i class="bi bi-eye-slash me-1"></i>Hide Scatter Plot');
     }
 
     $('#create_plot').click(function() {
@@ -398,7 +398,7 @@
       if (plotVisible) {
         plotDiv.hide();
         plotVisible = false;
-        button.html('<i class="bi bi-graph-up me-1"></i>Create Box Plot');
+        button.html('<i class="bi bi-graph-up me-1"></i>Create Scatter Plot');
       } else {
         createPlot();
       }
