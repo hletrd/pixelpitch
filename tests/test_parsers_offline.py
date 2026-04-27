@@ -238,7 +238,8 @@ def test_openmvg_csv_parser():
     expect("Sony Alpha 7 III size", by_name["Sony Alpha 7 III"].size,(35.6, 23.8), tol=0.01)
     expect("iPhone 1/2.5 size",     by_name["Apple iPhone (1/2.5\")"].size, (5.75, 4.32), tol=0.01)
     expect("EOS 5D MP",         by_name["Canon EOS 5D"].mpix,    12.7,  tol=0.1)
-    expect("EOS 5D category",   by_name["Canon EOS 5D"].category,    "mirrorless")
+    expect("EOS 5D category",   by_name["Canon EOS 5D"].category,    "dslr")
+    expect("Sony Alpha 7 III category", by_name["Sony Alpha 7 III"].category, "mirrorless")
     expect("iPhone category",   by_name["Apple iPhone (1/2.5\")"].category, "fixed")
 
 
