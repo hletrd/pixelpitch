@@ -52,6 +52,9 @@ PITCH_RE = re.compile(r"([\d.]+)\s*(?:µm|μm|um)", re.IGNORECASE)
 
 # fractional inch → (width_mm, height_mm). Uses the central TYPE_SIZE table
 # from pixelpitch which now includes phone-only formats.
+# NOTE: This is an alias to the same dict object — DO NOT mutate (e.g. no
+# PHONE_TYPE_SIZE[key] = val). Any mutation would corrupt the central
+# TYPE_SIZE table in pixelpitch. Read-only access via .get() is safe.
 PHONE_TYPE_SIZE: dict[str, tuple[float, float]] = SENSOR_TYPE_SIZE
 
 
