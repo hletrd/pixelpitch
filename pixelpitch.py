@@ -16,9 +16,7 @@ from pathlib import Path
 from typing import Optional, Tuple, List
 from urllib.parse import quote_plus
 
-from DrissionPage import ChromiumPage, ChromiumOptions
-
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from models import Spec, SpecDerived
 
 # For fixed-lens cameras we assume 4:3 sensor aspect ratio if not given.
 # Also, the following mapping of given sensor sizes to sensor areas is used from wikipedia:
@@ -92,27 +90,6 @@ ROW_RE = re.compile(
 DD_TITLE_RE = re.compile(r'<dd[^>]*title="([^"]*)"')
 DT_TITLE_RE = re.compile(r'<dt[^>]*title="([^"]*)"')
 DATA_NAME_RE = re.compile(r'data-name="([^"]+)"')
-
-
-@dataclass
-class Spec:
-    name: str
-    category: str
-    type: Optional[str]
-    size: Optional[Tuple[float, float]]
-    pitch: Optional[float]
-    mpix: Optional[float]
-    year: Optional[int]
-
-
-@dataclass
-class SpecDerived:
-    spec: Spec
-    size: Optional[Tuple[float, float]]
-    area: Optional[float]
-    pitch: Optional[float]
-    matched_sensors: List[str] = None
-    id: Optional[int] = None
 
 
 def sensor_area(width: float, height: float) -> float:
@@ -372,6 +349,7 @@ def merge_camera_data(
 
 def _create_browser():
     """Create and return a DrissionPage browser instance."""
+    from DrissionPage import ChromiumPage, ChromiumOptions  # lazy import
     co = ChromiumOptions()
     co.set_argument("--disable-blink-features=AutomationControlled")
     co.set_argument("--no-sandbox")
@@ -631,17 +609,25 @@ def prettyprint(derived: SpecDerived) -> None:
     print()
 
 
-env = Environment(
-    loader=FileSystemLoader("templates"), autoescape=select_autoescape(["html", "xml"])
-)
-
-
 def datetimeformat(value, format="%d %b %Y %H:%M:%S UTC"):
     return value.strftime(format)
 
 
-env.filters["formatdate"] = datetimeformat
-env.filters["urlencode"] = quote_plus
+_env = None
+
+
+def _get_env():
+    """Lazy-init Jinja env so this module can be imported without jinja2."""
+    global _env
+    if _env is None:
+        from jinja2 import Environment, FileSystemLoader, select_autoescape
+        _env = Environment(
+            loader=FileSystemLoader("templates"),
+            autoescape=select_autoescape(["html", "xml"]),
+        )
+        _env.filters["formatdate"] = datetimeformat
+        _env.filters["urlencode"] = quote_plus
+    return _env
 
 
 def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
@@ -726,7 +712,7 @@ def render_html(output_dir: Path) -> None:
 
     output_dir.mkdir(exist_ok=True)
 
-    template = env.get_template("pixelpitch.html")
+    template = _get_env().get_template("pixelpitch.html")
 
     (output_dir / "fixedlens.html").write_text(
         template.render(
@@ -794,7 +780,7 @@ def render_html(output_dir: Path) -> None:
     )
 
     (output_dir / "about.html").write_text(
-        env.get_template("about.html").render(page="about"), encoding="utf-8"
+        _get_env().get_template("about.html").render(page="about"), encoding="utf-8"
     )
 
     write_csv(specs_all, output_dir / "camera-data.csv")
