@@ -1,46 +1,46 @@
-# Designer Review (Cycle 15) — UI/UX Review
+# Designer Review (Cycle 16) — UI/UX Review
 
 **Reviewer:** designer
 **Date:** 2026-04-28
-**Scope:** Full UI/UX review of Jinja2 templates, Bootstrap, D3.js, jQuery, tablesorter
+**Scope:** Full repository UI/UX re-review after cycles 1-15 fixes
 
-## Previously Fixed (Cycles 1-13) — Confirmed Resolved
-All previous UI/UX fixes remain intact. C14 findings were data-focused, no new UI changes.
-
-## Deferred Items Still Valid
-- F35: Box plot hardcoded dimensions — DEFERRED
-- F36: No skip-to-content link — DEFERRED
-- F37: Filter dropdown doesn't show current state — DEFERRED
-- F38: No loading indicator or pagination — DEFERRED
-- F39: Navbar 9 items on mobile — DEFERRED
-- UX11-01: Scatter plot year axis label overlap — DEFERRED
-- UX11-02: "Hide possibly invalid data" label unclear — DEFERRED
+## Previously Fixed (Cycles 1-15) — Confirmed Resolved
+- All `target="_blank"` links have `rel="noopener noreferrer"`
+- SRI hashes on all CDN resources
+- Dark mode support with persistent theme toggle
 
 ## New Findings
 
-### UX15-01: 43 triple-duplicate cameras visible on All Cameras page — severe data-quality UX issue
-**File:** `pixelpitch.py`, lines 740-747, 339; `templates/pixelpitch.html` (display)
+### UX16-01: Duplicate camera entries visible on All Cameras page — user confusion
+**File:** `pixelpitch.py`, merge_camera_data (C16-02)
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The combination of Geizhals rangefinder misclassification and openMVG DSLR regex bugs causes 43 cameras to appear 3 times on the All Cameras page, each with a different category label. The Category column on the All Cameras page makes these duplicates especially visible: the same camera name appears with "DSLR", "Mirrorless", and "Rangefinder" labels.
+When the same camera appears in multiple sources with the same category, the All Cameras page shows duplicate rows. This is confusing for users who expect each camera to appear once. The tablesorter sorts by pitch, so the duplicates may not be adjacent, making them harder to spot.
 
-For a reference database site, this is a significant credibility issue. Users expect each camera to appear once with the correct category.
-
-**Fix:** Fix the underlying data issues (DSL regex bugs + rangefinder normalization) to eliminate duplicates.
+**Fix:** Fix C16-02 (merge dedup) to prevent duplicates at the data level.
 
 ---
 
-### UX15-02: Samsung NX cameras appear on wrong page (DSLR instead of Mirrorless) — C14-01 regression
-**File:** `sources/openmvg.py`, line 44; `templates/pixelpitch.html` (display)
+### UX16-02: Pentax cameras appear under wrong category (Mirrorless instead of DSLR)
+**File:** `sources/openmvg.py`, line 47 (C16-03)
 **Severity:** LOW | **Confidence:** HIGH
 
-The Samsung NX pattern in `_DSLR_NAME_RE` causes Samsung NX300 (and similar) to appear on the DSLR page instead of the Mirrorless page. While there are only a few Samsung NX cameras in the dataset, placing them on the wrong page is confusing for users who know Samsung NX cameras are mirrorless.
+Pentax K3, K5, K7 and other DSLR models appear on the Mirrorless page instead of the DSLR page. This is misleading for users looking for Pentax DSLRs.
 
-**Fix:** Remove Samsung NX from the DSLR regex.
+**Fix:** Fix C16-03 (Pentax regex) to correctly classify these cameras.
+
+---
+
+### UX16-03: Scatter plot does not show category differentiation
+**File:** `templates/pixelpitch.html`, lines 329-426
+**Severity:** NEGLIGIBLE | **Confidence:** LOW
+
+The scatter plot shows all cameras as the same color regardless of category. Adding color coding by category would improve data visualization, but this is a feature enhancement, not a bug.
 
 ---
 
 ## Summary
-- NEW findings: 2 (1 MEDIUM, 1 LOW)
-- UX15-01: 43 triple-duplicate entries on All Cameras page — MEDIUM
-- UX15-02: Samsung NX on wrong page — LOW
+- NEW findings: 3 (1 MEDIUM, 1 LOW, 1 NEGLIGIBLE)
+- UX16-01: Duplicate camera entries — MEDIUM
+- UX16-02: Pentax misclassification — LOW
+- UX16-03: Scatter plot color coding — NEGLIGIBLE (enhancement)

@@ -1,56 +1,49 @@
-# Critic Review (Cycle 15) — Multi-Perspective Critique
+# Critic Review (Cycle 16) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository critique after cycles 1-14 fixes
+**Scope:** Full repository critique after cycles 1-15 fixes
 
-## Previously Fixed (Cycles 1-14) — Confirmed Resolved
-All previous findings addressed or properly deferred. No regressions. C14-01 through C14-05 all fixed and tested.
+## Previously Fixed (Cycles 1-15) — Confirmed Resolved
+All previous fixes remain intact. No regressions detected.
 
 ## New Findings
 
-### CR15-01: The C14-01 DSLR regex fix introduced two regressions — Samsung NX false positives and Canon xxxD false negatives
-**File:** `sources/openmvg.py`, lines 36-48 (`_DSLR_NAME_RE`)
+### CR16-01: `sensor_size_from_type` is a crash waiting to happen — defensive programming gap
+**File:** `pixelpitch.py`, lines 152-165
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C14-01 fix was well-intentioned but poorly implemented. The regex has two bugs:
-
-1. **Samsung NX false positives**: `Samsung\s+NX\d{3}` matches Samsung NX100/NX200/NX300/NX500, all of which are mirrorless cameras. Samsung never made a DSLR under the NX brand. The original comment "some were DSLR-style" confuses body styling with camera type.
-
-2. **Canon EOS xxxD false negatives**: `Canon\s+EOS[-\s]+\dD` only matches single-digit xD models (5D, 6D, 7D, 1D). The entire Canon Rebel series (xxxD: 250D, 800D, 850D; xxD: 70D, 80D, 90D; and xxxxD: 1200D, 2000D, 4000D) is missed.
-
-The net effect of these two bugs partially cancels out: some cameras are wrongly promoted to DSLR (Samsung NX), others are wrongly demoted to mirrorless (Canon xxxD). But the real-world impact is clear — verified against dist data: 6 cameras are misclassified (5 Canon xxxD as mirrorless, 1 Samsung NX as dslr).
-
-**Fix:** Change Canon pattern to `Canon\s+EOS[-\s]+\d+D` and remove Samsung NX pattern entirely.
+Same as C16-01/S16-01. The function performs arithmetic on user-derived data (sensor type strings from HTML parsing) without any error handling. This violates the principle of failing gracefully. Any source HTML containing an unusual sensor type format would crash the entire pipeline. The fix is simple: wrap the computation in try/except and return None on failure.
 
 ---
 
-### CR15-02: Geizhals rangefinder (Messsucher) category is fundamentally misaligned with the site's category system — 43 triple-duplicates
-**File:** `pixelpitch.py`, lines 740-747 (CATEGORIES); line 339 (create_camera_key)
+### CR16-02: `merge_camera_data` lacks self-dedup for new_specs — a fundamental correctness issue
+**File:** `pixelpitch.py`, lines 349-407
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-Geizhals's "Messsucher" filter returns 53 cameras, but only ~10 are actual rangefinders (Leica M series). The other 43 are interchangeable-lens cameras with optical viewfinders that Geizhals also lists under "DSLR" or "Mirrorless". Because the merge key includes category, the same camera generates 3 separate entries (dslr + mirrorless + rangefinder).
-
-This is the most user-visible data-quality issue on the site: 43 cameras appear 3 times each on the All Cameras page.
-
-The previous cycles focused on code-correctness issues; this is a data-correctness + architecture issue that directly impacts the user experience.
-
-**Fix:** Add a deduplication step that normalizes Geizhals rangefinder entries against the DSLR/mirrorless data before merge. If a camera already exists in the Geizhals DSLR or mirrorless category, the rangefinder entry should be discarded (since the camera is not a true rangefinder).
+Same as C16-02. The merge function deduplicates against existing data but not among its own inputs. This is a fundamental design oversight: when the same camera appears in multiple sources with the same category, the user sees duplicate rows on the All Cameras page. The function should dedup among new_specs before or during the merge loop.
 
 ---
 
-### CR15-03: openMVG Sigma SD regex too restrictive — SD10/SD14/SD15 missed
-**File:** `sources/openmvg.py`, line 43
+### CR16-03: Pentax DSLR regex is incomplete — multiple model families missed
+**File:** `sources/openmvg.py`, line 47
 **Severity:** LOW | **Confidence:** HIGH
 
-The pattern `Sigma\s+SD\d?` only matches 0-1 digits after "SD", missing Sigma SD10, SD14, and SD15 — all of which are DSLRs. This is a minor gap since these are older cameras that may not appear in the openMVG dataset, but the regex should be correct.
+Same as C16-03. The `Pentax\s+K[-\s]\d` pattern is overly restrictive. It misses at least 10 Pentax DSLR models that lack the hyphen or have letter suffixes. The fix is to broaden the regex to `Pentax\s+K[-\s]?\d+\w?` or similar.
 
-**Fix:** Change to `Sigma\s+SD\d+`.
+---
+
+### CR16-04: digicamdb alias creates silent duplication risk
+**File:** `sources/digicamdb.py`; `pixelpitch.py`, line 985
+**Severity:** LOW | **Confidence:** HIGH
+
+Same as C16-04. The digicamdb source is a pure alias for openMVG. Having both in SOURCE_REGISTRY means a manual `python pixelpitch.py source digicamdb` creates an identical CSV, compounding the merge dedup issue.
 
 ---
 
 ## Summary
-- NEW findings: 3 (2 MEDIUM, 1 LOW)
-- CR15-01: DSLR regex regressions from C14-01 — MEDIUM
-- CR15-02: Geizhals rangefinder misclassification causes 43 triple-duplicates — MEDIUM
-- CR15-03: Sigma SD regex too restrictive — LOW
+- NEW findings: 4 (2 MEDIUM, 2 LOW)
+- CR16-01: sensor_size_from_type crash — MEDIUM
+- CR16-02: merge_camera_data self-dedup missing — MEDIUM
+- CR16-03: Pentax regex incomplete — LOW
+- CR16-04: digicamdb alias duplication — LOW

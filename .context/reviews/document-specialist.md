@@ -1,28 +1,32 @@
-# Document Specialist Review (Cycle 15) — Doc/Code Mismatches
+# Document Specialist Review (Cycle 16) — Doc/Code Mismatches
 
 **Reviewer:** document-specialist
 **Date:** 2026-04-28
-**Scope:** Full repository doc/code consistency review after cycles 1-14 fixes
+**Scope:** Full repository doc/code review after cycles 1-15 fixes
 
-## Previously Fixed (Cycles 1-14) — Confirmed Resolved
-- DS11-01: sensors.json schema documented — FIXED
-- DS11-02: openMVG listed as data source — FIXED
-- DS14-01: openMVG docstring documents category heuristic limitation — FIXED
+## Previously Fixed (Cycles 1-15) — Confirmed Resolved
+- C15-06: openMVG docstring now warns about DSLR regex limitations
+- All previous doc fixes remain intact
 
 ## New Findings
 
-### DS15-01: openMVG docstring claims DSLR name-pattern heuristic works but regex has bugs
-**File:** `sources/openmvg.py`, lines 10-17 (module docstring)
+### DS16-01: `sensor_size_from_type` docstring does not mention invalid input handling
+**File:** `pixelpitch.py`, lines 139-165
 **Severity:** LOW | **Confidence:** HIGH
 
-The docstring (added in C14-05) says: "a name-based check distinguishes DSLRs from mirrorless cameras." While technically true, the name-based check has known bugs (Samsung NX false positives, Canon xxxD false negatives). The docstring should warn about these limitations so developers understand the heuristic is not comprehensive.
+The docstring describes what the function does for valid inputs but does not mention behavior for invalid inputs (1/0, 1/, etc.). After fixing C16-01, the docstring should be updated to state that invalid fractional types return None.
 
-Additionally, the DSLR_NAME_RE comment on line 35 says "Samsung NX300 (some were DSLR-style)" which is misleading — all Samsung NX cameras are mirrorless.
+---
 
-**Fix:** Update the docstring to document the known limitations of the DSLR heuristic. Remove or correct the Samsung NX comment.
+### DS16-02: `merge_camera_data` docstring does not mention duplicate handling among new_specs
+**File:** `pixelpitch.py`, lines 349-407
+**Severity:** LOW | **Confidence:** HIGH
+
+The function's docstring does not describe how duplicates within new_specs are handled. After fixing C16-02, the docstring should state that entries with duplicate keys in new_specs are merged (first wins or last wins).
 
 ---
 
 ## Summary
-- NEW findings: 1 (1 LOW)
-- DS15-01: Docstring doesn't warn about DSLR regex bugs — LOW
+- NEW findings: 2 (2 LOW)
+- DS16-01: sensor_size_from_type docstring gap — LOW
+- DS16-02: merge_camera_data docstring gap — LOW

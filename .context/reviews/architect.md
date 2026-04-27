@@ -1,60 +1,46 @@
-# Architect Review (Cycle 15) — Architectural/Design Risks, Coupling, Layering
+# Architect Review (Cycle 16) — Architectural/Design Risks, Coupling, Layering
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository architecture review after cycles 1-14 fixes
+**Scope:** Full repository architecture re-review after cycles 1-15 fixes
 
-## Previously Noted (Deferred, Still Valid)
-- F32: `pixelpitch.py` is a ~1067-line monolith — DEFERRED
-- F31: No source Protocol/base class — DEFERRED
-- A5-02: Template description blocks DRY violation — DEFERRED
-
-## Previously Fixed (Cycles 1-14)
-- A14-01: openMVG category heuristic misalignment — PARTIALLY FIXED (C14-01 added DSLR regex, but regex has bugs)
-- A14-02: No BOM defense in CSV parsing layer — FIXED
+## Previously Fixed (Cycles 1-15) — Confirmed Resolved
+All previous architectural fixes remain intact.
 
 ## New Findings
 
-### A15-01: The DSLR regex approach in openMVG is fragile — C14-01 fix introduced new bugs
-**File:** `sources/openmvg.py`, lines 36-48
+### A16-01: `merge_camera_data` has no deduplication contract for its input — architectural gap
+**File:** `pixelpitch.py`, lines 349-407
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C14-01 fix added a regex-based DSLR classification to openMVG. This approach is inherently fragile because:
-1. Camera naming conventions vary by manufacturer and change over time
-2. The regex must be manually maintained for every camera brand
-3. The Samsung NX pattern was added with incorrect information ("some were DSLR-style")
+The function's contract is: "merge new camera data with existing camera data." It deduplicates against existing data but assumes new_specs is already deduplicated. This implicit precondition is not documented or enforced. When multiple sources contribute the same camera (same name + category), the function produces duplicates.
 
-The fix introduced two regressions (Samsung NX false positives, Canon xxxD false negatives) because the regex was not thoroughly tested against the full range of camera names in the dataset.
+Architecturally, the function should either:
+1. Document that new_specs must be pre-deduplicated, OR
+2. Handle duplicates in new_specs internally
 
-A more robust architectural approach would be:
-1. Make openMVG's category a "suggestion" that the merge layer can override based on existing Geizhals data
-2. Or use a known-model whitelist instead of a regex pattern heuristic
-3. Or simply set openMVG interchangeable-lens cameras to `"unknown"` and let the merge layer classify them based on Geizhals data
-
-However, these architectural changes are significant. For now, fixing the regex bugs is the pragmatic approach.
-
-**Fix:** Fix the immediate regex bugs (Canon `\d+D`, remove Samsung NX) and update the docstring to warn about fragility.
+Option 2 is more robust because callers should not need to know about this precondition.
 
 ---
 
-### A15-02: Geizhals rangefinder category (Messsucher) creates architectural coupling with incorrect data
-**File:** `pixelpitch.py`, lines 740-747 (CATEGORIES)
+### A16-02: `digicamdb` source module is a pure alias — violates DRY at the registry level
+**File:** `sources/digicamdb.py`; `pixelpitch.py`, line 985
+**Severity:** LOW | **Confidence:** HIGH
+
+The digicamdb module delegates entirely to openmvg.fetch(), creating identical Spec objects. Having both in SOURCE_REGISTRY means the same data could be fetched and stored twice. This is not a DRY violation in code (the module is trivial), but it IS a DRY violation at the data level — two source CSVs with identical content.
+
+---
+
+### A16-03: `sensor_size_from_type` lacks input validation — defensive programming gap
+**File:** `pixelpitch.py`, lines 152-165
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The `CATEGORIES` list includes `RANGEFINDER_URL` with `category="rangefinder"`. But Geizhals's "Messsucher" filter returns many cameras that are not rangefinders — they simply have an optical viewfinder. This creates a data-quality issue at the source layer that propagates through the entire pipeline.
-
-The architectural concern is that the code trusts Geizhals's category assignment without validation. When Geizhals says a camera is a "rangefinder" but it's actually a DSLR or mirrorless camera, the merge layer has no mechanism to correct this.
-
-**Fix options:**
-1. Post-filter the rangefinder category: only keep cameras from known rangefinder manufacturers
-2. Normalize during merge: if a camera already exists in dslr/mirrorless categories from Geizhals, discard the rangefinder duplicate
-3. Remove the rangefinder URL from CATEGORIES entirely (simplest but loses actual rangefinders)
-
-Recommended: Option 2 (normalize during merge).
+The function performs arithmetic on parsed input without validation. From an architectural perspective, any function that processes external data (from HTML parsing) should validate its inputs and fail gracefully rather than crashing. The fix is to add a try/except block.
 
 ---
 
 ## Summary
-- NEW findings: 2 (both MEDIUM)
-- A15-01: DSLR regex fragility — MEDIUM
-- A15-02: Geizhals rangefinder data coupling — MEDIUM
+- NEW findings: 3 (2 MEDIUM, 1 LOW)
+- A16-01: merge_camera_data input dedup contract gap — MEDIUM
+- A16-02: digicamdb registry-level DRY violation — LOW
+- A16-03: sensor_size_from_type defensive programming gap — MEDIUM

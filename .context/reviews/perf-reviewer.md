@@ -1,17 +1,25 @@
-# Performance Review (Cycle 15) — Performance, Concurrency, CPU/Memory
+# Performance Review (Cycle 16) — Performance, Concurrency, CPU/Memory
 
 **Reviewer:** perf-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository performance re-review after cycles 1-14 fixes
+**Scope:** Full repository performance re-review after cycles 1-15 fixes
 
-## Previously Fixed / Deferred
-- P7-01: Tablesorter single-config — FIXED
-- All deferred items remain acceptable
+## Previously Fixed (Cycles 1-15) — Confirmed Resolved
+- All previous performance fixes remain intact
 
 ## New Findings
 
-No new performance findings. The codebase remains a static site generator with no performance-critical runtime code. The DSLR regex corrections (C15-01/02/03) have negligible performance impact. The Geizhals rangefinder duplicate issue (C15-04) adds 43 extra rows to the "All Cameras" table but this is a data-quality issue, not a performance concern.
+### P16-01: `merge_camera_data` iterates new_specs without dedup — O(n*m) for duplicates
+**File:** `pixelpitch.py`, lines 366-387
+**Severity:** LOW | **Confidence:** HIGH
+
+When the same key appears multiple times in `new_specs`, each entry triggers a dict lookup in `existing_by_key` (O(1)) and is appended to `merged_specs`. The final sort is O(n log n) on the full list. If many duplicates exist (e.g., openMVG + Geizhals overlap), the merged list is larger than necessary and the sort takes longer. However, the data set is small (thousands, not millions), so the performance impact is negligible.
+
+**Fix:** Dedup among new_specs before appending. This is primarily a correctness fix (C16-02) with minor performance benefit.
+
+---
 
 ## Summary
-- NEW findings: 0
-- All previous performance fixes remain intact
+- NEW findings: 1 (1 LOW)
+- P16-01: merge_camera_data duplicate overhead — LOW
+- No significant performance regressions

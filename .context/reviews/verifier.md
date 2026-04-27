@@ -1,89 +1,78 @@
-# Verifier Review (Cycle 15) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 16) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
-**Scope:** Full repository verification after cycles 1-14 fixes
+**Scope:** Full repository verification after cycles 1-15 fixes
 
-## Previously Fixed (Cycles 1-14) — Verification Status
-All previous fixes verified still working. Gate tests pass cleanly. C14-01 through C14-05 all verified.
+## Previously Fixed (Cycles 1-15) — Confirmed Resolved
+All previous fixes verified as correctly applied and tested.
+
+## Verification of C15 Fixes
+
+### C15-01: Canon EOS xxxD DSLR regex — VERIFIED
+Test `test_openmvg_csv_parser` includes `expect("EOS 250D category", ..., "dslr")` which passes.
+
+### C15-02: Samsung NX mirrorless — VERIFIED
+Test includes `expect("Samsung NX300 category", ..., "mirrorless")` which passes.
+
+### C15-03: Rangefinder dedup — VERIFIED
+`test_category_dedup` verifies the dedup logic. Passing.
+
+### C15-04: openMVG BOM defense — VERIFIED
+`test_openmvg_bom` verifies BOM handling. Passing.
+
+### C15-05: Sigma SD regex — VERIFIED
+Test includes `expect("Sigma SD14 category", ..., "dslr")`. Passing.
+
+### C15-06: Docstring update — VERIFIED
+OpenMVG docstring now warns about heuristic limitations.
 
 ## New Findings
 
-### V15-01: Canon EOS xxxD DSLRs misclassified as mirrorless by openMVG regex — verified by regex test
-**File:** `sources/openmvg.py`, lines 36-48
+### V16-01: `sensor_size_from_type` crash on invalid input — REPRODUCED
+**File:** `pixelpitch.py`, lines 152-165
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-Verified by regex test:
+Reproduced with test:
 ```python
-_DSLR_NAME_RE.search("Canon EOS 250D")   # None (WRONG - is DSLR)
-_DSLR_NAME_RE.search("Canon EOS 800D")   # None (WRONG - is DSLR)
-_DSLR_NAME_RE.search("Canon EOS 850D")   # None (WRONG - is DSLR)
-_DSLR_NAME_RE.search("Canon EOS 1200D")  # None (WRONG - is DSLR)
-_DSLR_NAME_RE.search("Canon EOS 2000D")  # None (WRONG - is DSLR)
-_DSLR_NAME_RE.search("Canon EOS 4000D")  # None (WRONG - is DSLR)
-_DSLR_NAME_RE.search("Canon EOS 90D")    # None (WRONG - is DSLR)
-_DSLR_NAME_RE.search("Canon EOS 70D")    # None (WRONG - is DSLR)
-_DSLR_NAME_RE.search("Canon EOS 80D")    # None (WRONG - is DSLR)
+spec = Spec(name='Test', category='fixed', type='1/0', size=None, pitch=None, mpix=10.0, year=2020)
+derive_spec(spec)  # ZeroDivisionError
 ```
-All return None, but these are all DSLRs. The pattern `\dD` only matches a single digit before D.
+Also crashes with `type='1/'` (ValueError) and `type='1/0.0'` (ZeroDivisionError).
+A single bad spec in `derive_specs()` crashes the entire batch.
 
-**Fix:** Change `Canon\s+EOS[-\s]+\dD` to `Canon\s+EOS[-\s]+\d+D`.
+**Fix:** Add try/except in `sensor_size_from_type` returning None on error.
 
 ---
 
-### V15-02: Samsung NX cameras misclassified as DSLR by openMVG regex — verified by regex test
-**File:** `sources/openmvg.py`, line 44
+### V16-02: `merge_camera_data` duplicate entries confirmed — REPRODUCED
+**File:** `pixelpitch.py`, lines 349-407
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-Verified by regex test:
+Reproduced with test:
 ```python
-_DSLR_NAME_RE.search("Samsung NX100")   # Match (WRONG - is mirrorless)
-_DSLR_NAME_RE.search("Samsung NX200")   # Match (WRONG - is mirrorless)
-_DSLR_NAME_RE.search("Samsung NX300")   # Match (WRONG - is mirrorless)
-_DSLR_NAME_RE.search("Samsung NX500")   # Match (WRONG - is mirrorless)
+new = [derive('Canon EOS 250D', 'dslr', (22.3, 14.9), 24.1, 2019),
+       derive('Canon EOS 250D', 'dslr', (22.3, 14.9), 24.1, 2019)]
+merged = merge_camera_data(new, [])
+# Result: 2 entries for Canon EOS 250D instead of 1
 ```
-All match the DSLR regex, but all Samsung NX cameras are mirrorless.
 
-**Fix:** Remove `Samsung\s+NX\d{3}` from the DSLR regex.
-
----
-
-### V15-03: 43 cameras have triple-category duplicates in dist data — verified by data analysis
-**File:** `pixelpitch.py`, line 339 (`create_camera_key`); dist data
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-Verified by analyzing the dist/camera-data.csv:
-- 43 cameras appear under 3 categories (dslr + mirrorless + rangefinder)
-- All 43 are misclassified as "rangefinder" by Geizhals
-- 10 cameras are actual rangefinders (Leica M series)
-- None of the 43 misclassified cameras are actual rangefinders
-
-The triple-duplicate is caused by `create_camera_key(name, category)` producing 3 different keys for the same camera.
-
-**Fix:** Normalize Geizhals rangefinder data against dslr/mirrorless data before merge.
+**Fix:** Dedup among new_specs before/within the merge loop.
 
 ---
 
-### V15-04: Sigma SD2-digit models missed by openMVG regex — verified by regex test
-**File:** `sources/openmvg.py`, line 43
+### V16-03: Pentax DSLR regex misses 10+ models — VERIFIED
+**File:** `sources/openmvg.py`, line 47
 **Severity:** LOW | **Confidence:** HIGH
 
-Verified:
-```python
-_DSLR_NAME_RE.search("Sigma SD10")   # None (WRONG - is DSLR)
-_DSLR_NAME_RE.search("Sigma SD14")   # None (WRONG - is DSLR)
-_DSLR_NAME_RE.search("Sigma SD15")   # None (WRONG - is DSLR)
-_DSLR_NAME_RE.search("Sigma SD1")    # Match (correct)
-_DSLR_NAME_RE.search("Sigma SD9")    # Match (correct)
-```
+Verified with regex testing: Pentax K3, K5, K7, K1, KP, KF, K-r, K-x, K-30, K-50, K-70, K30, K50, K70, K100D, K200D, K10D, K20D all fail to match. Only Pentax K-1, K-3, K-5, K-7 (with hyphen) match.
 
-**Fix:** Change `Sigma\s+SD\d?` to `Sigma\s+SD\d+`.
+**Fix:** Broaden regex pattern.
 
 ---
 
 ## Summary
-- NEW findings: 4 (3 MEDIUM, 1 LOW)
-- V15-01: Canon EOS xxxD regex false negatives — MEDIUM
-- V15-02: Samsung NX regex false positives — MEDIUM
-- V15-03: 43 triple-category duplicates in data — MEDIUM
-- V15-04: Sigma SD regex misses 2-digit models — LOW
+- NEW findings: 3 (2 MEDIUM, 1 LOW)
+- V16-01: sensor_size_from_type crash — MEDIUM (reproduced)
+- V16-02: merge_camera_data duplicate — MEDIUM (reproduced)
+- V16-03: Pentax regex misses models — LOW (verified)
