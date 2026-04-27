@@ -171,6 +171,9 @@ def match_sensors(
             )
             if megapixel_match:
                 matches.append(sensor_name)
+        elif megapixels is None or not sensor_megapixels:
+            # No megapixel data available — match on size alone (lower confidence)
+            matches.append(sensor_name)
 
     return sorted(matches)
 
