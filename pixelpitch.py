@@ -311,8 +311,13 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
 
 
 def create_camera_key(spec: Spec) -> str:
-    year = spec.year if spec.year is not None else "unknown"
-    return f"{spec.name.lower().strip()}-{spec.category}-{year}"
+    """Create a deduplication key from name + category.
+
+    Year is deliberately excluded so that cameras with missing or
+    differing years across sources are correctly merged into a single
+    entry.  Year preservation is handled by merge_camera_data.
+    """
+    return f"{spec.name.lower().strip()}-{spec.category}"
 
 
 def merge_camera_data(
