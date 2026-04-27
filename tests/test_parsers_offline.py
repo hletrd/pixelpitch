@@ -250,6 +250,25 @@ def test_openmvg_csv_parser():
     expect("Sigma SD14 category (2-digit DSLR)", by_name["Sigma SD14"].category, "dslr")
 
 
+def test_openmvg_bom():
+    """Verify openMVG fetch handles BOM-prefixed CSV correctly."""
+    section("openMVG BOM handling")
+    # Same CSV as above but with UTF-8 BOM prefix
+    csv_body = (
+        "﻿CameraMaker,CameraModel,SensorDescription,SensorWidth(mm),"
+        "SensorHeight(mm),SensorWidth(pixels),SensorHeight(pixels)\n"
+        'Canon,EOS 5D,"36 x 24 mm",36.0,24.0,4368,2912\n'
+    )
+    with unittest.mock.patch.object(openmvg, 'http_get', return_value=csv_body):
+        specs = openmvg.fetch()
+
+    expect("BOM: record count", len(specs), 1)
+    if specs:
+        expect("BOM: name parsed", specs[0].name, "Canon EOS 5D")
+        expect("BOM: size", specs[0].size, (36.0, 24.0), tol=0.01)
+        expect("BOM: category", specs[0].category, "dslr")
+
+
 # --------------------------------------------------------------------------
 # Merge logic: feeding multi-source CSV records through merge_camera_data
 
@@ -894,6 +913,7 @@ def main():
     test_apotelyt()
     test_gsmarena()
     test_openmvg_csv_parser()
+    test_openmvg_bom()
     test_merge_multi_source()
     test_csv_schema()
     test_parse_existing_csv()

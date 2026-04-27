@@ -54,6 +54,13 @@ def fetch(limit: Optional[int] = None) -> list[Spec]:
     if body is None:
         return []
 
+    # Strip UTF-8 BOM if present. If the upstream CSV is saved with a BOM
+    # (e.g., by Excel), DictReader would produce mangled field names like
+    # "﻿CameraMaker" instead of "CameraMaker", causing KeyError on
+    # every row and 0 records returned.
+    if body and body[0] == "﻿":
+        body = body[1:]
+
     reader = csv.DictReader(io.StringIO(body))
     specs: list[Spec] = []
     for i, row in enumerate(reader):
