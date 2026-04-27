@@ -54,7 +54,7 @@ def http_get(url: str, timeout: float = 30.0, retries: int = 3) -> Optional[str]
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 charset = resp.headers.get_content_charset() or "utf-8"
                 return resp.read().decode(charset, errors="replace")
-        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError) as e:
             last_err = e
             time.sleep(1.0 * (attempt + 1))
     print(f"  GET failed: {url} ({last_err})", file=sys.stderr)
