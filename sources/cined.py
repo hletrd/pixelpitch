@@ -43,6 +43,7 @@ FORMAT_TO_MM: dict[str, tuple[float, float]] = {
     "1 inch": (13.2, 8.8),
     "2/3\"": (8.8, 6.6),
     "2/3-inch": (8.8, 6.6),
+    "medium format": (43.8, 32.9),
 }
 
 

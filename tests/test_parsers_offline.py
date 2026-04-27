@@ -593,6 +593,36 @@ def test_load_sensors_database():
     expect("JSONDecodeError returns {}", result3, {})
 
 
+# --------------------------------------------------------------------------
+# CineD FORMAT_TO_MM completeness: every regex-capturable format must have
+# a corresponding lookup-table entry.
+
+def test_cined_format_coverage():
+    section("CineD FORMAT_TO_MM completeness")
+    from sources.cined import FORMAT_TO_MM
+    import re
+
+    # Regex alternation groups from _parse_camera_page
+    fmt_re = re.compile(
+        r"(Full Frame|Super 35(?:\s*mm)?|APS-C|Micro Four Thirds|Four Thirds|"
+        r'1"|1-inch|2/3"|Medium Format)',
+        re.IGNORECASE,
+    )
+
+    # Extract all possible match groups by testing known strings
+    test_strings = [
+        "Full Frame", "Super 35", "Super 35 mm", "APS-C",
+        "Micro Four Thirds", "Four Thirds", '1"', "1-inch",
+        '2/3"', "Medium Format",
+    ]
+    for fmt_str in test_strings:
+        m = fmt_re.search(fmt_str)
+        if m:
+            key = m.group(1).lower()
+            val = FORMAT_TO_MM.get(key)
+            expect(f"FORMAT_TO_MM[{key!r}]", val is not None, True)
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -608,6 +638,7 @@ def main():
     test_pixel_pitch()
     test_match_sensors()
     test_load_sensors_database()
+    test_cined_format_coverage()
 
     print("\n" + ("=" * 60))
     if _failures:
