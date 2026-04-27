@@ -1,6 +1,6 @@
 # Plan C14-01: openMVG DSLR Classification, BOM Defense, CineD Dead Code, Mutable Alias
 
-**Status:** pending
+**Status:** completed
 **Priority:** P1 (2 MEDIUM correctness bugs, 3 LOW robustness fixes)
 **Findings addressed:** C14-01, C14-02, C14-03, C14-04, C14-05
 
@@ -19,36 +19,36 @@
 ## Implementation Steps
 
 ### Step 1: Fix openMVG DSLR classification (C14-01, C14-05)
-- [ ] Add a DSLR name-pattern heuristic to `sources/openmvg.py`
-- [ ] Pattern: names matching Canon EOS [0-9]D, Nikon D[0-9], Pentax K-[0-9], Sigma SD, etc.
-- [ ] Update the docstring to document the category heuristic limitation
-- [ ] Update existing test to assert `category="dslr"` for Canon EOS 5D
-- [ ] Add test cases for other DSLR name patterns
-- [ ] Commit
+- [x] Add a DSLR name-pattern heuristic to `sources/openmvg.py`
+- [x] Pattern: names matching Canon EOS [0-9]D, Nikon D[0-9], Pentax K-[0-9], Sigma SD, etc.
+- [x] Update the docstring to document the category heuristic limitation
+- [x] Update existing test to assert `category="dslr"` for Canon EOS 5D
+- [x] Add test cases for other DSLR name patterns
+- [x] Commit: 55790c2
 
 ### Step 2: Add BOM defense to parse_existing_csv (C14-02)
-- [ ] Strip UTF-8 BOM at the entry point of `parse_existing_csv` in `pixelpitch.py`
-- [ ] Add test for BOM-prefixed CSV content
-- [ ] Commit
+- [x] Strip UTF-8 BOM at the entry point of `parse_existing_csv` in `pixelpitch.py`
+- [x] Add test for BOM-prefixed CSV content
+- [x] Commit: 5cf5cab
 
 ### Step 3: Fix CineD unreachable FORMAT_TO_MM entries (C14-03)
-- [ ] Extend regex in `_parse_camera_page` to capture missing variants: `Super[- ]?35`, `1[- ]inch`, `2/3[- ]inch`
-- [ ] Update `test_cined_format_coverage` to verify all FORMAT_TO_MM keys are reachable
-- [ ] Commit
+- [x] Extend regex in `_parse_camera_page` to capture missing variants: `Super[- ]?35`, `1[- ]inch`, `2/3[- ]inch`
+- [x] Update `test_cined_format_coverage` to verify all FORMAT_TO_MM keys are reachable
+- [x] Commit: b71ff6e
 
 ### Step 4: Make PHONE_TYPE_SIZE truly read-only (C14-04)
-- [ ] Change `PHONE_TYPE_SIZE = SENSOR_TYPE_SIZE` to `PHONE_TYPE_SIZE = MappingProxyType(SENSOR_TYPE_SIZE)` or `dict(SENSOR_TYPE_SIZE)`
-- [ ] Update the existing comment
-- [ ] Commit
+- [x] Change `PHONE_TYPE_SIZE = SENSOR_TYPE_SIZE` to `dict(SENSOR_TYPE_SIZE)`
+- [x] Update the existing comment
+- [x] Commit: 7555feb
 
 ### Step 5: Verify all fixes
-- [ ] Run gate tests
-- [ ] Verify no regressions
-- [ ] Push all commits
+- [x] Run gate tests — ALL PASS
+- [x] Verify no regressions
+- [x] Push all commits — DONE
 
 ## Exit Criteria
-- openMVG DSLRs classified as "dslr" — verified by test
-- BOM-prefixed CSV parsed correctly — verified by test
-- All FORMAT_TO_MM entries reachable by regex — verified by test
-- PHONE_TYPE_SIZE is a read-only copy — verified by code
-- All gate tests pass
+- openMVG DSLRs classified as "dslr" — DONE (verified by test)
+- BOM-prefixed CSV parsed correctly — DONE (verified by test)
+- All FORMAT_TO_MM entries reachable by regex — DONE (verified by test)
+- PHONE_TYPE_SIZE is a read-only copy — DONE (verified by code)
+- All gate tests pass — DONE
