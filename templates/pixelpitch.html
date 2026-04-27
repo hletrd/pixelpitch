@@ -205,12 +205,17 @@
 {% block js %}
 <script>
   $(function(){
-    $('.table').tablesorter({
+    // Initialize each table separately with correct header config for its column layout
+    var tsBase = {
       theme: 'bootstrap',
       headerTemplate: '{content} {icon}',
       widgets: ["uitheme", "zebra"],
       sortInitialOrder: 'desc',
       sortRestart: true,
+    };
+
+    // Table with pitch column: Name, [Category,] Sensor Size, Resolution, Pixel Pitch, Year
+    $('#table_with_pitch').tablesorter($.extend({}, tsBase, {
       headers: {
         0: { sorter: "text" },
         1: { sorter: "text" },
@@ -225,7 +230,23 @@
         5: { sorter: "digit" }
         {% endif %}
       }
-    });
+    }));
+
+    // Table without pitch column: Name, [Category,] Sensor Size, Resolution, Year
+    $('#table_without_pitch').tablesorter($.extend({}, tsBase, {
+      headers: {
+        0: { sorter: "text" },
+        1: { sorter: "text" },
+        {% if page == "all" %}
+        2: { sorter: "text" },
+        3: { sorter: "digit" },
+        4: { sorter: "digit" }
+        {% else %}
+        2: { sorter: "digit" },
+        3: { sorter: "digit" }
+        {% endif %}
+      }
+    }));
 
     function isInvalidData(row) {
       const pitch = parseFloat(row.attr('data-pitch')) || 0;
