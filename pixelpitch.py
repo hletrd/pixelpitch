@@ -675,35 +675,99 @@ CATEGORIES = [
 ]
 
 
-def render_html(output_dir: Path) -> None:
+def _load_per_source_csvs(output_dir: Path) -> List[SpecDerived]:
+    """Read dist/camera-data-{source}.csv for every registered source.
+
+    These are produced by `python pixelpitch.py source <name>` runs and
+    serve as caches between deployments. Missing files are silently
+    skipped — failure of one source must not block the build.
+    """
+    extras: List[SpecDerived] = []
+    for src in SOURCE_REGISTRY:
+        path = output_dir / f"camera-data-{src}.csv"
+        if not path.exists():
+            print(f"  source CSV missing: {path.name} (skipped)")
+            continue
+        try:
+            content = path.read_text(encoding="utf-8")
+        except OSError as e:
+            print(f"  could not read {path.name}: {e}")
+            continue
+        parsed = parse_existing_csv(content)
+        # Per-source CSVs carry their own ids — clear them so merge gives
+        # globally unique ids.
+        for d in parsed:
+            d.id = None
+        extras.extend(parsed)
+        print(f"  loaded {len(parsed)} records from {path.name}")
+    return extras
+
+
+def render_html(output_dir: Path, skip_geizhals: bool = False) -> None:
     """Render all HTML files."""
     print("Loading previous CSV artifact...")
     previous_csv = load_csv(output_dir)
     existing_specs = parse_existing_csv(previous_csv) if previous_csv else []
 
-    print("Creating browser session...")
-    page = _create_browser()
-
-    print("Fetching camera data...")
     category_specs = {}
-    for url, category, use_size_table in CATEGORIES:
-        category_specs[category] = get_category(page, url, category, use_size_table)
+    if skip_geizhals:
+        print("Skipping Geizhals fetch (per --skip-geizhals)")
+        for _url, category, _ust in CATEGORIES:
+            category_specs[category] = []
+    else:
+        print("Creating browser session...")
+        page = _create_browser()
 
-    page.quit()
+        print("Fetching camera data from Geizhals...")
+        for url, category, use_size_table in CATEGORIES:
+            try:
+                category_specs[category] = get_category(page, url, category, use_size_table)
+            except Exception as e:
+                print(f"  Geizhals {category} failed: {e} — keeping previous data")
+                category_specs[category] = []
 
-    new_specs_all = []
+        page.quit()
+
+    print("Loading per-source CSVs...")
+    extra_specs = _load_per_source_csvs(output_dir)
+
+    new_specs_all: List[SpecDerived] = []
     for specs in category_specs.values():
         new_specs_all.extend(specs)
+    new_specs_all.extend(extra_specs)
 
     specs_all = merge_camera_data(new_specs_all, existing_specs)
 
-    specs_by_category = {}
+    specs_by_category: dict[str, list[SpecDerived]] = {}
+    # Geizhals categories: include only freshly fetched names so the page
+    # reflects the live retailer data; older preserved cameras still appear
+    # on the "all" page.
     for category in category_specs:
         new_names = {spec.spec.name for spec in category_specs[category]}
         specs_by_category[category] = sorted_by(
             [s for s in specs_all if s.spec.name in new_names],
             "pitch",
         )
+    # New / source-driven categories: include every record with that
+    # category from the merged set.
+    for extra_category in ("smartphone", "cinema"):
+        specs_by_category[extra_category] = sorted_by(
+            [s for s in specs_all if s.spec.category == extra_category],
+            "pitch",
+        )
+    # Backfill the Geizhals categories with source-only records (e.g. modern
+    # mirrorless cameras that Geizhals dropped from its current listing).
+    geizhals_names = {spec.spec.name for cat in category_specs for spec in category_specs[cat]}
+    for cat in ("dslr", "mirrorless", "rangefinder", "fixed", "camcorder", "actioncam"):
+        existing_names = {s.spec.name for s in specs_by_category[cat]}
+        for s in specs_all:
+            if (
+                s.spec.category == cat
+                and s.spec.name not in existing_names
+                and s.spec.name not in geizhals_names
+            ):
+                specs_by_category[cat].append(s)
+        specs_by_category[cat] = sorted_by(specs_by_category[cat], "pitch")
     specs_all = sorted_by(specs_all, "pitch")
 
     date = datetime.now(timezone.utc)
@@ -769,6 +833,26 @@ def render_html(output_dir: Path) -> None:
             title="Actioncams",
             specs=specs_by_category["actioncam"],
             page="actioncam",
+            date=date,
+        ),
+        encoding="utf-8",
+    )
+
+    (output_dir / "smartphone.html").write_text(
+        template.render(
+            title="Smartphone Cameras",
+            specs=specs_by_category["smartphone"],
+            page="smartphone",
+            date=date,
+        ),
+        encoding="utf-8",
+    )
+
+    (output_dir / "cinema.html").write_text(
+        template.render(
+            title="Cinema Cameras",
+            specs=specs_by_category["cinema"],
+            page="cinema",
             date=date,
         ),
         encoding="utf-8",
@@ -841,8 +925,18 @@ def main():
     if len(sys.argv) > 1:
         cmd = sys.argv[1]
         if cmd == "html":
-            output_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("dist")
-            render_html(output_dir)
+            args = sys.argv[2:]
+            output_dir = Path("dist")
+            skip_geizhals = False
+            i = 0
+            while i < len(args):
+                a = args[i]
+                if a == "--skip-geizhals":
+                    skip_geizhals = True
+                elif not a.startswith("--"):
+                    output_dir = Path(a)
+                i += 1
+            render_html(output_dir, skip_geizhals=skip_geizhals)
         elif cmd == "source":
             if len(sys.argv) < 3:
                 print(f"Usage: python pixelpitch.py source <name> [--limit N] [--out DIR]")

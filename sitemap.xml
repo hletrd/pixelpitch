@@ -43,6 +43,18 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://hletrd.github.io/pixelpitch/smartphone.html</loc>
+    <lastmod>2025-07-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://hletrd.github.io/pixelpitch/cinema.html</loc>
+    <lastmod>2025-07-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://hletrd.github.io/pixelpitch/about.html</loc>
     <lastmod>2025-07-15</lastmod>
     <changefreq>weekly</changefreq>

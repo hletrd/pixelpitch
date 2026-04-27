@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pixel Pitch - {% block title %}{{ title | default('Camera Sensor Pixel Pitch List') }}{% endblock %}</title>
-  <meta name="description" content="{% block description %}{% if page == 'all' %}Comprehensive database of camera sensor pixel pitch measurements.{% elif page == 'dslr' %}List of DSLR camera sensor pixel pitch.{% elif page == 'mirrorless' %}List of mirrorless camera sensor pixel pitch.{% elif page == 'rangefinder' %}List of rangefinder camera sensor pixel pitch.{% elif page == 'fixedlens' %}List of fixed-lens camera sensor pixel pitch.{% elif page == 'camcorder' %}List of camcorder sensor pixel pitch.{% elif page == 'actioncam' %}List of actioncam sensor pixel pitch.{% elif page == 'about' %}Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.{% endif %}{% endblock %}">
+  <meta name="description" content="{% block description %}{% if page == 'all' %}Comprehensive database of camera sensor pixel pitch measurements.{% elif page == 'dslr' %}List of DSLR camera sensor pixel pitch.{% elif page == 'mirrorless' %}List of mirrorless camera sensor pixel pitch.{% elif page == 'rangefinder' %}List of rangefinder camera sensor pixel pitch.{% elif page == 'fixedlens' %}List of fixed-lens camera sensor pixel pitch.{% elif page == 'camcorder' %}List of camcorder sensor pixel pitch.{% elif page == 'actioncam' %}List of actioncam sensor pixel pitch.{% elif page == 'smartphone' %}List of smartphone main-camera sensor pixel pitch.{% elif page == 'cinema' %}List of cinema camera sensor pixel pitch.{% elif page == 'about' %}Learn about pixel pitch, sensor sizes, and how they affect camera image quality and performance.{% endif %}{% endblock %}">
   <meta name="keywords" content="{% block keywords %}camera sensor, pixel pitch, sensor size, megapixels, DSLR, mirrorless, photography, camera specifications, sensor dimensions, image quality{% if page == 'dslr' %}, DSLR cameras{% elif page == 'mirrorless' %}, mirrorless cameras{% elif page == 'rangefinder' %}, rangefinder cameras{% elif page == 'fixedlens' %}, fixed lens cameras{% elif page == 'camcorder' %}, camcorders{% elif page == 'actioncam' %}, actioncams{% endif %}{% endblock %}">
   <meta name="author" content="Jiyong Youn">
   <meta name="robots" content="index, follow">
@@ -202,13 +202,23 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link{% if page == 'dslr' %} active{% endif %}" href="dslr.html">
-              DSLR
+            <a class="nav-link{% if page == 'smartphone' %} active{% endif %}" href="smartphone.html">
+              Smartphone
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link{% if page == 'mirrorless' %} active{% endif %}" href="mirrorless.html">
               MILC
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if page == 'dslr' %} active{% endif %}" href="dslr.html">
+              DSLR
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if page == 'cinema' %} active{% endif %}" href="cinema.html">
+              Cinema
             </a>
           </li>
           <li class="nav-item">
