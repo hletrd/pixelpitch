@@ -368,7 +368,8 @@ def extract_entries(page, url: str) -> list[str]:
         title = title_match.group(1) if title_match else "no title"
         print(f"  Waiting (attempt {attempt + 1})... page title: {title}", flush=True)
 
-    assert rows, "No entries found"
+    if not rows:
+        raise RuntimeError(f"No entries found at {url}")
     print(f"  Found {len(rows)} entries", flush=True)
     return rows
 
