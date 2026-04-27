@@ -23,6 +23,9 @@ from typing import Optional
 
 from . import Spec, http_get, normalise_name, parse_year
 
+# Import the central sensor-size lookup table (now includes phone formats)
+from pixelpitch import TYPE_SIZE as SENSOR_TYPE_SIZE
+
 BASE = "https://www.gsmarena.com/"
 
 # Phone listing
@@ -47,47 +50,9 @@ LENS_RE = re.compile(
 SENSOR_FORMAT_RE = re.compile(r'(1/[\d.]+)"', re.IGNORECASE)
 PITCH_RE = re.compile(r"([\d.]+)\s*(?:µm|μm|um)", re.IGNORECASE)
 
-# fractional inch → (width_mm, height_mm). Same table as pixelpitch.TYPE_SIZE
-# but extended for phone-only formats commonly seen on GSMArena.
-PHONE_TYPE_SIZE: dict[str, tuple[float, float]] = {
-    "1/4.0": (3.6, 2.7),
-    "1/3.6": (4.0, 3.0),
-    "1/3.2": (4.54, 3.42),
-    "1/3": (4.80, 3.60),
-    "1/2.93": (4.91, 3.68),
-    "1/2.8": (5.12, 3.84),
-    "1/2.76": (5.20, 3.90),
-    "1/2.7": (5.37, 4.04),
-    "1/2.55": (5.65, 4.24),
-    "1/2.5": (5.76, 4.29),
-    "1/2.3": (6.17, 4.55),
-    "1/2": (6.40, 4.80),
-    "1/1.95": (6.56, 4.92),
-    "1/1.9": (6.72, 5.04),
-    "1/1.8": (7.18, 5.32),
-    "1/1.78": (7.20, 5.40),
-    "1/1.74": (7.36, 5.52),
-    "1/1.7": (7.60, 5.70),
-    "1/1.65": (7.76, 5.82),
-    "1/1.6": (8.08, 6.01),
-    "1/1.56": (8.20, 6.16),
-    "1/1.5": (8.80, 6.60),
-    "1/1.43": (8.96, 6.72),
-    "1/1.4": (9.14, 6.86),
-    "1/1.35": (9.50, 7.10),
-    "1/1.33": (9.62, 7.22),
-    "1/1.31": (9.79, 7.34),
-    "1/1.3": (9.84, 7.40),
-    "1/1.29": (9.92, 7.45),
-    "1/1.28": (10.0, 7.50),
-    "1/1.22": (10.50, 7.87),
-    "1/1.2": (10.67, 8.00),
-    "1/1.12": (11.43, 8.57),
-    "1/1.1": (11.65, 8.74),
-    "1/1.07": (11.96, 8.97),
-    "1/1.0": (12.80, 9.60),
-    "1": (13.20, 8.80),
-}
+# fractional inch → (width_mm, height_mm). Uses the central TYPE_SIZE table
+# from pixelpitch which now includes phone-only formats.
+PHONE_TYPE_SIZE: dict[str, tuple[float, float]] = SENSOR_TYPE_SIZE
 
 
 def _parse_spec_table(html: str) -> dict[str, str]:
