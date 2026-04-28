@@ -1,12 +1,12 @@
 # Plan: Cycle 44 Findings — CineD Dead Code Cleanup
 
 **Created:** 2026-04-28
-**Status:** PENDING
+**Status:** COMPLETED
 **Source Reviews:** CR44-01, CR44-02, CRIT44-01, CRIT44-02, CRIT44-03, ARCH44-01, ARCH44-02, TR44-01, DBG44-03, DOC44-01, TE44-02
 
 ---
 
-## Task 1: Remove FORMAT_TO_MM dict from cined.py — C44-01 (core) [PENDING]
+## Task 1: Remove FORMAT_TO_MM dict from cined.py — C44-01 (core) [COMPLETED]
 
 **Finding:** C44-01 (7-agent consensus)
 **Severity:** LOW | **Confidence:** HIGH
@@ -45,7 +45,7 @@ The ``FORMAT_TO_MM`` table is kept for the regex coverage test only.
 
 ---
 
-## Task 2: Remove dead format extraction code from _parse_camera_page — C44-02 [PENDING]
+## Task 2: Remove dead format extraction code from _parse_camera_page — C44-02 [COMPLETED]
 
 **Finding:** C44-02 (5-agent consensus)
 **Severity:** LOW | **Confidence:** HIGH
@@ -97,7 +97,7 @@ if size is None and fmt:
 
 ---
 
-## Task 3: Update CineD module docstring — C44-01 cleanup [PENDING]
+## Task 3: Update CineD module docstring — C44-01 cleanup [COMPLETED]
 
 **Finding:** CRIT44-03, DOC44-01
 **Severity:** LOW | **Confidence:** HIGH
