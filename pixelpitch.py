@@ -371,6 +371,12 @@ def merge_camera_data(
     camera from both Geizhals and a source CSV), only the first occurrence
     is kept and subsequent duplicates are silently dropped.  This prevents
     duplicate rows on the All Cameras page.
+
+    When a camera exists in both new and existing data, the new data takes
+    precedence but missing fields (None) are preserved from the existing
+    entry.  Both Spec fields (type, size, pitch, mpix, year) and
+    SpecDerived fields (size, area, pitch) are preserved so that the
+    rendered HTML reflects the most complete known data.
     """
     print(
         f"Merging {len(new_specs)} new records with {len(existing_specs)} existing records"
@@ -399,15 +405,27 @@ def merge_camera_data(
         if key in existing_by_key:
             existing_spec = existing_by_key[key]
             new_spec.id = existing_spec.id
-            # Preserve fields from existing data if new data has None
+            # Preserve Spec fields from existing data if new data has None
             if new_spec.spec.type is None and existing_spec.spec.type is not None:
                 new_spec.spec.type = existing_spec.spec.type
             if new_spec.spec.size is None and existing_spec.spec.size is not None:
                 new_spec.spec.size = existing_spec.spec.size
             if new_spec.spec.pitch is None and existing_spec.spec.pitch is not None:
                 new_spec.spec.pitch = existing_spec.spec.pitch
+            if new_spec.spec.mpix is None and existing_spec.spec.mpix is not None:
+                new_spec.spec.mpix = existing_spec.spec.mpix
             if new_spec.spec.year is None and existing_spec.spec.year is not None:
                 new_spec.spec.year = existing_spec.spec.year
+            # Preserve SpecDerived fields from existing data if new data has None.
+            # These are the fields the template actually reads — without this,
+            # cameras show "unknown" for sensor size and pixel pitch even though
+            # the data exists at the Spec level.
+            if new_spec.size is None and existing_spec.size is not None:
+                new_spec.size = existing_spec.size
+            if new_spec.area is None and existing_spec.area is not None:
+                new_spec.area = existing_spec.area
+            if new_spec.pitch is None and existing_spec.pitch is not None:
+                new_spec.pitch = existing_spec.pitch
             elif (
                 new_spec.spec.year is not None
                 and existing_spec.spec.year is not None
