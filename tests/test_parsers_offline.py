@@ -2149,6 +2149,69 @@ def test_matched_sensors_parse_tolerance():
                parsed_ws[0].matched_sensors, [])
 
 
+def test_year_parse_tolerance():
+    """Verify parse_existing_csv tolerates Excel-coerced year values.
+
+    Excel often rewrites integer columns as floats when re-saving a CSV
+    (``2023`` → ``"2023.0"``). The parser must tolerate this — and
+    whitespace padding — while still rejecting garbage and out-of-range
+    values. Companion to F52-01.
+    """
+    section("year parse tolerance (Excel hand-edit)")
+    import pixelpitch as pp
+
+    # has_id schema: 11 columns. Vary only the year cell across rows.
+    csv_text = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+        "sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Cam Int,fixed,,,,,,,2023,\n"
+        "1,Cam Float,fixed,,,,,,,2023.0,\n"
+        "2,Cam Pad,fixed,,,,,,, 2023 ,\n"
+        "3,Cam FloatPad,fixed,,,,,,, 2023.0 ,\n"
+        "4,Cam Bad,fixed,,,,,,,abc,\n"
+        "5,Cam Empty,fixed,,,,,,,,\n"
+        "6,Cam OutOfRange,fixed,,,,,,,1800,\n"
+        "7,Cam NaN,fixed,,,,,,,nan,\n"
+        "8,Cam Inf,fixed,,,,,,,inf,\n"
+    )
+    parsed = pp.parse_existing_csv(csv_text)
+    expect("year-tolerance: 9 rows parsed", len(parsed), 9)
+    expected_years = [2023, 2023, 2023, 2023, None, None, None, None, None]
+    for i, want in enumerate(expected_years):
+        if i < len(parsed):
+            expect(f"year-tolerance: row {i} year",
+                   parsed[i].spec.year, want)
+
+
+def test_record_id_parse_tolerance():
+    """Verify parse_existing_csv tolerates Excel-coerced record_id values.
+
+    Excel may rewrite integer ids as floats (``5`` → ``"5.0"``). The old
+    code raised ValueError, which the broad except at parse_existing_csv
+    line ~390 caught and SKIPPED the entire row. Now ``_safe_int_id``
+    tolerates the float form so the row survives. Companion to F52-02.
+    """
+    section("record_id parse tolerance (Excel hand-edit)")
+    import pixelpitch as pp
+
+    csv_text = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+        "sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "5,Cam Int,fixed,,,,,,,,\n"
+        "5.0,Cam Float,fixed,,,,,,,,\n"
+        " 7 ,Cam Pad,fixed,,,,,,,,\n"
+        "abc,Cam Bad,fixed,,,,,,,,\n"
+        ",Cam Empty,fixed,,,,,,,,\n"
+    )
+    parsed = pp.parse_existing_csv(csv_text)
+    expect("id-tolerance: 5 rows parsed (no row drop)",
+           len(parsed), 5)
+    expected_ids = [5, 5, 7, None, None]
+    for i, want in enumerate(expected_ids):
+        if i < len(parsed):
+            expect(f"id-tolerance: row {i} id", parsed[i].id, want)
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -2192,6 +2255,8 @@ def main():
     test_write_csv_zero_negative_guards()
     test_matched_sensors_roundtrip()
     test_matched_sensors_parse_tolerance()
+    test_year_parse_tolerance()
+    test_record_id_parse_tolerance()
 
     print("\n" + ("=" * 60))
     if _failures:
