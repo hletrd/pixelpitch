@@ -1,61 +1,68 @@
-# Verifier Review (Cycle 25) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 26) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-24 fixes
+**Scope:** Full repository re-review after cycles 1-25 fixes
 
-## V25-01: Gate tests pass — all 222 checks verified
+## V26-01: Gate tests pass — all checks verified
 
-**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all 222 checks passed.
+**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed.
 
-## V25-02: SIZE_RE inconsistency verified — Unicode × not matched
+## V26-02: MPIX_RE not centralized — verified discrepancy
 
-**File:** `pixelpitch.py`, line 42
+**File:** `pixelpitch.py`, line 42 vs `sources/__init__.py`, line 67
 **Severity:** MEDIUM | **Confidence:** HIGH
 
 **Evidence:**
 ```python
-SIZE_RE = re.compile(r"([\d\.]+)x([\d\.]+)mm")
-SIZE_RE.search('36.0×24.0mm')   # Returns None (Unicode ×)
-SIZE_RE.search('36.0 x 24.0mm') # Returns None (spaces)
-SIZE_RE.search('36.0x24.0mm')   # Returns ('36.0', '24.0') ✓
+# pixelpitch.py line 42:
+MPIX_RE = re.compile(r"([\d\.]+)\s*Megapixel")
+
+# sources/__init__.py line 67:
+MPIX_RE = re.compile(r"([\d.]+)\s*(?:effective\s+)?(?:Mega ?pixels?|MP)", re.IGNORECASE)
 ```
 
-The shared `SIZE_MM_RE` handles both cases correctly. The Geizhals parser (`parse_sensor_field`) uses the limited `SIZE_RE`.
+The local pattern in pixelpitch.py only matches "Megapixel" (case-sensitive). The shared pattern handles "MP", "Mega pixels", "Megapixels" etc.
 
-## V25-03: PITCH_RE inconsistency verified — Greek mu not matched
-
-**File:** `pixelpitch.py`, line 43
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-**Evidence:**
 ```python
-PITCH_RE = re.compile(r"([\d\.]+)µm")
-PITCH_RE.search('5.12μm')       # Returns None (Greek mu U+03BC)
-PITCH_RE.search('5.12 microns') # Returns None
-PITCH_RE.search('5.12µm')       # Returns ('5.12',) ✓ (micro sign U+00B5)
+import re
+MPIX_LOCAL = re.compile(r"([\d\.]+)\s*Megapixel")
+MPIX_SHARED = re.compile(r"([\d.]+)\s*(?:effective\s+)?(?:Mega ?pixels?|MP)", re.IGNORECASE)
+
+MPIX_LOCAL.search("33.0 MP")         # Returns None
+MPIX_SHARED.search("33.0 MP")        # Returns ("33.0",)
+MPIX_LOCAL.search("33.0 Mega pixels")  # Returns None
+MPIX_SHARED.search("33.0 Mega pixels")  # Returns ("33.0",)
+MPIX_LOCAL.search("33.0 Megapixel")  # Returns ("33.0",) ✓
+MPIX_SHARED.search("33.0 Megapixel") # Returns ("33.0",) ✓
 ```
 
-The shared `PITCH_UM_RE` handles both cases correctly. The Geizhals parser uses the limited `PITCH_RE`.
+The shared pattern is a strict superset of the local pattern. It is exported in `__all__` (line 89) and can be imported.
 
-## V25-04: ValueError risk verified — malformed float in SIZE_RE match
+## V26-03: ValueError guard missing in source modules — verified
 
-**File:** `pixelpitch.py`, line 556
-**Severity:** MEDIUM | **Confidence:** MEDIUM
+**File:** `sources/cined.py` line 98, `sources/apotelyt.py` lines 119-129, `sources/gsmarena.py` lines 130/133, `sources/imaging_resource.py` line 228
+**Severity:** LOW | **Confidence:** MEDIUM
 
-**Evidence:**
+**Evidence:** Confirmed by code inspection that all four source modules call `float()` on regex match groups without try/except ValueError guards. The regex pattern `[\d.]+` allows multi-dot values like "36.0.1" which `float()` rejects.
+
 ```python
-SIZE_RE.search('36.0.1x24.0mm')  # matches group(1)="36.0.1"
-float("36.0.1")                  # ValueError: could not convert string to float
+# sources/cined.py line 98:
+size = (float(s.group(1)), float(s.group(2)))  # no try/except
+
+# sources/apotelyt.py line 119-120:
+size = (float(m.group(1)), float(m.group(2)))  # no try/except
+
+# sources/gsmarena.py line 130:
+mpix = float(mp_match.group(1)) if mp_match else None  # no try/except
 ```
 
-The regex `[\d\.]+` allows multiple dots. While this exact input is unlikely from real Geizhals HTML, the lack of a ValueError guard means any malformed match crashes the entire category fetch.
+However, these modules are called from `fetch_one()` / `_phone_to_spec()` which are called in loops within `fetch()`. If a ValueError propagates from one camera, it would be caught by the module-level exception handler (e.g., `except Exception as ex` in cined.py line 149), losing only that camera.
 
 ---
 
 ## Summary
 
-- V25-01: All gate tests pass (222/222)
-- V25-02 (MEDIUM): SIZE_RE misses Unicode × — verified
-- V25-03 (MEDIUM): PITCH_RE misses Greek mu — verified
-- V25-04 (MEDIUM): ValueError risk on malformed float — verified
+- V26-01: All gate tests pass
+- V26-02 (MEDIUM): MPIX_RE not centralized — verified
+- V26-03 (LOW): ValueError guard missing in source modules — verified

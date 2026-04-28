@@ -1,33 +1,34 @@
-# Architect Review (Cycle 25) — Architectural/Design Risks
+# Architect Review (Cycle 26) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-24 fixes
+**Scope:** Full repository re-review after cycles 1-25 fixes
 
 ## Previous Findings Status
 
-All previously identified architectural concerns remain deferred (LOW severity). ARCH24-01 (TYPE_FRACTIONAL_RE evolution) addressed by adding space+inch and bare 1-inch support.
+ARCH25-01 (DRY violation for SIZE_RE/PITCH_RE) addressed in C25-01. All previously identified architectural concerns remain deferred (LOW severity).
 
 ## New Findings
 
-### ARCH25-01: Duplicate regex patterns with different robustness — DRY violation
+### ARCH26-01: MPIX_RE not centralized — incomplete DRY resolution from C25-01
 
-**File:** `pixelpitch.py` lines 42-43 vs `sources/__init__.py` lines 65-66
+**File:** `pixelpitch.py` line 42 vs `sources/__init__.py` line 67
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The project has two sets of regex patterns for the same conceptual data (sensor dimensions, pixel pitch):
+The C25-01 fix centralized SIZE_RE and PITCH_RE (imported from `sources/__init__.py`), following the pattern already used for TYPE_FRACTIONAL_RE. However, MPIX_RE was not similarly centralized, despite the C25-01 aggregate review explicitly flagging it.
 
-1. `pixelpitch.py`: `SIZE_RE`, `PITCH_RE` — used by Geizhals parsing (more restrictive)
-2. `sources/__init__.py`: `SIZE_MM_RE`, `PITCH_UM_RE` — used by other source modules (more robust)
+Current state after C25-01 fix:
+- `TYPE_FRACTIONAL_RE` — centralized (imported from sources) ✓
+- `SIZE_MM_RE` — centralized (imported from sources) ✓
+- `PITCH_UM_RE` — centralized (imported from sources) ✓
+- `MPIX_RE` — NOT centralized (local definition in pixelpitch.py) ✗
 
-This violates DRY. As the sources have evolved, the shared patterns in `sources/__init__.py` have been improved to handle more edge cases (Unicode ×, Greek mu, spaces, multiple suffix variants), while the Geizhals-specific patterns in `pixelpitch.py` have not been updated to match.
+The `sources/__init__.py` exports `MPIX_RE` in `__all__` (line 89) and it is a superset of the local pattern. This is the same class of DRY violation that was fixed for SIZE_RE and PITCH_RE.
 
-The `TYPE_FRACTIONAL_RE` pattern was already centralized (imported from `sources/__init__.py` into `pixelpitch.py`), but `SIZE_RE` and `PITCH_RE` were not similarly centralized.
-
-**Fix:** Import `SIZE_MM_RE` and `PITCH_UM_RE` from `sources` in `pixelpitch.py` (replacing the local `SIZE_RE` and `PITCH_RE`), or centralize all patterns in `sources/__init__.py` and import them. This follows the same pattern already used for `TYPE_FRACTIONAL_RE`.
+**Fix:** Import `MPIX_RE` from `sources` in `pixelpitch.py`, replacing the local definition on line 42. Update `extract_specs()` to use the imported pattern. This completes the DRY centralization that C25-01 started.
 
 ---
 
 ## Summary
 
-- ARCH25-01 (MEDIUM): Duplicate regex patterns with different robustness — DRY violation
+- ARCH26-01 (MEDIUM): MPIX_RE not centralized — incomplete DRY resolution from C25-01

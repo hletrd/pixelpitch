@@ -1,42 +1,42 @@
-# Critic Review (Cycle 25) — Multi-Perspective Critique
+# Critic Review (Cycle 26) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-24 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-25 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-C24-01 (TYPE_FRACTIONAL_RE space+inch) and C24-02 (bare 1-inch type) implemented. All previous fixes stable.
+C25-01 (SIZE_RE/PITCH_RE centralization) and C25-02 (ValueError guard) implemented. All previous fixes stable.
 
 ## New Findings
 
-### CRIT25-01: SIZE_RE/PITCH_RE inconsistency between pixelpitch.py and sources/__init__.py
+### CRIT26-01: MPIX_RE centralization was missed in C25-01 fix — incomplete DRY resolution
 
-**File:** `pixelpitch.py`, lines 42-43 vs `sources/__init__.py`, lines 65-66
+**File:** `pixelpitch.py`, line 42 vs `sources/__init__.py`, line 67
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The Geizhals path uses more restrictive regex patterns than the shared source patterns. `SIZE_RE` only matches lowercase `x` (not `×` or spaces), and `PITCH_RE` only matches micro sign `µ` (not Greek mu `μ` or "microns"). If Geizhals changes their HTML format, these parsers silently fail while the other source parsers handle the same data correctly.
+The C25-01 aggregate review explicitly mentioned MPIX_RE: "Update the MPIX_RE in pixelpitch.py similarly (it only matches 'Megapixel', not 'MP' or 'Mega pixels')." But the implementation plan deferred it: "MPIX_RE.search() stays (no shared equivalent for 'Megapixel')". This was an error — `sources/__init__.py` line 67 exports `MPIX_RE` that handles "MP", "Mega pixels", "Megapixel" etc.
 
-This is a consistency and robustness concern: the same type of data (sensor dimensions, pixel pitch) is parsed with different levels of robustness depending on which source it comes from.
+The centralization was incomplete. SIZE_RE and PITCH_RE were centralized, but MPIX_RE was not, despite being flagged in the same finding.
 
-**Fix:** Use the shared patterns from `sources/__init__.py` in `parse_sensor_field()`, or upgrade the local patterns to match the robustness of the shared ones.
+**Fix:** Import MPIX_RE from sources in pixelpitch.py, following the same pattern as SIZE_MM_RE/PITCH_UM_RE/TYPE_FRACTIONAL_RE.
 
 ---
 
-### CRIT25-02: parse_sensor_field missing ValueError guard — entire category at risk
+### CRIT26-02: ValueError guard inconsistency — only applied to Geizhals path, not source modules
 
-**File:** `pixelpitch.py`, lines 556, 561
-**Severity:** MEDIUM | **Confidence:** MEDIUM
+**File:** `sources/cined.py` line 98, `sources/apotelyt.py` lines 119-129, `sources/gsmarena.py` lines 130/133, `sources/imaging_resource.py` line 228
+**Severity:** LOW | **Confidence:** MEDIUM
 
-If a malformed sensor field produces a regex match that `float()` cannot parse (e.g., "36.0.1"), a `ValueError` propagates up and causes the entire Geizhals category to be dropped. The outer `try/except Exception` in `render_html` catches the error, but the result is that all cameras in that category are lost for that deployment.
+The C25-02 fix added ValueError guards in `parse_sensor_field()` but source modules that parse the same kind of data (sensor dimensions, pixel pitch, megapixels) from different websites still call `float()` on regex matches without any guard. The same multi-dot input that could crash `parse_sensor_field()` could crash these modules.
 
-Other parsing functions in the codebase (e.g., `parse_existing_csv`, `sensor_size_from_type`) use try/except to gracefully handle unparseable values. This function should follow the same pattern.
+However, the blast radius is smaller: source modules process one camera at a time in a loop, and exceptions are caught by the outer try/except in each module. The individual camera is lost, but not the entire category.
 
-**Fix:** Add try/except ValueError around the float() calls in parse_sensor_field.
+**Fix:** Add try/except ValueError guards in source modules for consistency with the parse_sensor_field() pattern.
 
 ---
 
 ## Summary
 
-- CRIT25-01 (MEDIUM): SIZE_RE/PITCH_RE inconsistency — less robust than shared patterns
-- CRIT25-02 (MEDIUM): parse_sensor_field ValueError guard missing — category-wide data loss risk
+- CRIT26-01 (MEDIUM): MPIX_RE centralization missed in C25-01 — incomplete DRY fix
+- CRIT26-02 (LOW): ValueError guard inconsistency across source modules

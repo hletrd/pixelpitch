@@ -1,64 +1,60 @@
-# Aggregate Review (Cycle 25) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 26) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-24 Status
+## Cycle 1-25 Status
 
-All previous fixes confirmed still working. No regressions. Gate tests pass (222/222 checks). C24-01 (TYPE_FRACTIONAL_RE space+inch) and C24-02 (bare 1-inch type) implemented and verified.
+All previous fixes confirmed still working. No regressions. Gate tests pass (all checks). C25-01 (SIZE_RE/PITCH_RE centralization) and C25-02 (ValueError guard) implemented and verified.
 
-## Cross-Agent Agreement Matrix (Cycle 25 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 26 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| SIZE_RE/PITCH_RE less robust than shared patterns | code-reviewer, critic, verifier, tracer, architect, debugger, test-engineer | MEDIUM |
-| parse_sensor_field ValueError crash on malformed float | code-reviewer, critic, verifier, tracer, debugger, test-engineer | MEDIUM |
-| parse_sensor_field docstring format limitations | document-specialist | LOW |
+| MPIX_RE not centralized — incomplete C25-01 DRY fix | code-reviewer, critic, verifier, tracer, architect, debugger, test-engineer, document-specialist | MEDIUM |
+| ValueError guard missing in source modules | code-reviewer, critic, verifier, tracer, debugger, test-engineer | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C25-01: SIZE_RE and PITCH_RE in pixelpitch.py are less robust than shared patterns in sources/__init__.py
+### C26-01: MPIX_RE not centralized — incomplete DRY resolution from C25-01
 
-**Sources:** CR25-01, CRIT25-01, V25-02, V25-03, TR25-02, ARCH25-01, DBG25-02, TE25-01
+**Sources:** CR26-01, CRIT26-01, V26-02, TR26-01, ARCH26-01, DBG26-01, TE26-01, DOC26-01
 **Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
 
-The Geizhals-specific regex patterns in `pixelpitch.py` are significantly less robust than the shared patterns in `sources/__init__.py`:
+The C25-01 aggregate review explicitly mentioned MPIX_RE: "Update the MPIX_RE in pixelpitch.py similarly (it only matches 'Megapixel', not 'MP' or 'Mega pixels')." However, the implementation plan incorrectly stated "MPIX_RE.search() stays (no shared equivalent for 'Megapixel')" — but `sources/__init__.py` line 67 DOES export a shared `MPIX_RE` that is a superset of the local pattern.
 
-- `SIZE_RE` (pixelpitch.py line 42): only matches ASCII `x` with no spaces. Does not match Unicode `×` or spaces around separator.
-- `SIZE_MM_RE` (sources/__init__.py line 65): matches `x`, `×`, optional spaces, case-insensitive.
+Current centralization status after C25-01:
+- `TYPE_FRACTIONAL_RE` — centralized (imported from sources) ✓
+- `SIZE_MM_RE` — centralized (imported from sources) ✓
+- `PITCH_UM_RE` — centralized (imported from sources) ✓
+- `MPIX_RE` — NOT centralized (local definition in pixelpitch.py line 42) ✗
 
-- `PITCH_RE` (pixelpitch.py line 43): only matches micro sign `µ` (U+00B5). Does not match Greek mu `μ` (U+03BC), "microns", "um", or HTML entities.
-- `PITCH_UM_RE` (sources/__init__.py line 66): matches all the above variants.
+The local `MPIX_RE` in pixelpitch.py only matches "Megapixel" (case-sensitive). The shared `MPIX_RE` in sources/__init__.py matches "MP", "Mega pixels", "Megapixel", "Megapixels" etc. (case-insensitive).
 
-This is a DRY violation — `TYPE_FRACTIONAL_RE` was already centralized (imported from sources), but `SIZE_RE` and `PITCH_RE` were not.
+**Impact:** If Geizhals changes "Megapixel" to "MP" or "Mega pixels" in their HTML, megapixel values are silently lost. Camera shows "unknown" resolution and computed pixel pitch is lost.
 
-**Impact:** If Geizhals sensor text uses `×` instead of `x`, or `μ` instead of `µ`, or spaces around dimension separator, sensor data is silently lost.
-
-**Fix:** Import `SIZE_MM_RE` and `PITCH_UM_RE` from `sources` in `pixelpitch.py`, replacing the local `SIZE_RE` and `PITCH_RE`. Follow the same pattern already used for `TYPE_FRACTIONAL_RE`. Update `parse_sensor_field()` and `extract_specs()` to use the imported patterns. Update the `MPIX_RE` in pixelpitch.py similarly (it only matches "Megapixel", not "MP" or "Mega pixels"). Add tests for the expanded format support.
-
----
-
-### C25-02: parse_sensor_field has no ValueError guard on float() calls
-
-**Sources:** CR25-02, CRIT25-02, V25-04, TR25-01, DBG25-01, TE25-02
-**Severity:** MEDIUM | **Confidence:** MEDIUM (6-agent consensus)
-
-`parse_sensor_field()` calls `float(size_match.group(1))` and `float(pitch_match.group(1))` without try/except. The regex `[\d\.]+` allows multiple dots, and `float("36.0.1")` raises `ValueError`. This exception propagates up through `extract_specs` → `get_category` → `render_html`, where the outer try/except drops the entire Geizhals category.
-
-**Impact:** A single malformed sensor field from Geizhals HTML can cause all cameras in that category to be lost for the deployment cycle.
-
-**Fix:** Add try/except ValueError around float() calls in `parse_sensor_field()`, returning None for unparseable values. Add a test for the malformed input case.
+**Fix:** Import `MPIX_RE` from `sources` in `pixelpitch.py`, replacing the local definition on line 42. Update `extract_specs()` line 596 to use the imported pattern. Add test cases for "MP" and "Mega pixels" formats. Update docstring if applicable.
 
 ---
 
-### C25-03: parse_sensor_field docstring does not mention format limitations
+### C26-02: ValueError guard missing in source module float() calls
 
-**Sources:** DOC25-01
-**Severity:** LOW | **Confidence:** MEDIUM
+**Sources:** CR26-02, CRIT26-02, V26-03, TR26-02, DBG26-02, TE26-02
+**Severity:** LOW | **Confidence:** MEDIUM (6-agent consensus)
 
-The docstring examples only show ASCII `x` and micro sign `µ`. If the regex is upgraded, the docstring should be updated.
+The C25-02 fix added ValueError guards only in `pixelpitch.py`'s `parse_sensor_field()`. Source modules that parse the same data types from HTML still call `float()` on regex matches without any guard:
 
-**Status:** Deferred — will be addressed as part of C25-01 fix (regex upgrade implies docstring update).
+1. `sources/cined.py` line 98: `size = (float(s.group(1)), float(s.group(2)))`
+2. `sources/apotelyt.py` lines 119-120: `size = (float(m.group(1)), float(m.group(2)))`
+3. `sources/apotelyt.py` line 123: `pitch = float(m.group(1))`
+4. `sources/apotelyt.py` line 129: `mpix = float(m.group(1))`
+5. `sources/gsmarena.py` line 130: `mpix = float(mp_match.group(1))`
+6. `sources/gsmarena.py` line 133: `pitch = float(pitch_match.group(1))`
+7. `sources/imaging_resource.py` line 228: `size = (float(m.group(1)), float(m.group(2)))`
+
+**Impact:** A malformed value from any source (e.g., "36.0.1" in a size field) raises ValueError and the individual camera record is lost. The blast radius is smaller than C25-02 (only one camera, not an entire category) because source modules process one camera at a time in loops with outer exception handlers.
+
+**Fix:** Wrap float() calls in try/except ValueError, setting the affected field to None. This is consistent with the `parse_sensor_field()` pattern and allows remaining fields to still be extracted.
 
 ---
 
@@ -68,7 +64,7 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 3 (2 MEDIUM, 1 LOW)
-- Cross-agent consensus findings (3+ agents): 2 (C25-01: 8-agent, C25-02: 6-agent)
-- 2 MEDIUM findings: SIZE_RE/PITCH_RE inconsistency, ValueError guard missing
-- 1 LOW finding: docstring limitations (deferred with C25-01)
+- Total distinct new findings: 2 (1 MEDIUM, 1 LOW)
+- Cross-agent consensus findings (3+ agents): 2 (C26-01: 8-agent, C26-02: 6-agent)
+- 1 MEDIUM finding: MPIX_RE not centralized — incomplete C25-01 DRY resolution
+- 1 LOW finding: ValueError guard missing in source modules

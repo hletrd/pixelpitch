@@ -1,44 +1,42 @@
-# Debugger Review (Cycle 25) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 26) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-24 fixes
+**Scope:** Full repository re-review after cycles 1-25 fixes
 
 ## Previous Findings Status
 
-DBG24-01 (TYPE_FRACTIONAL_RE space+inch) and DBG24-02 (bare 1-inch) fixed. DBG24-03 (rstrip) remains deferred.
+DBG25-01 (ValueError guard) and DBG25-02 (SIZE_RE Unicode) both fixed in C25-01/C25-02. DBG24-03 (rstrip) remains deferred.
 
 ## New Findings
 
-### DBG25-01: parse_sensor_field ValueError crash on malformed float
-
-**File:** `pixelpitch.py`, lines 556, 561
-**Severity:** MEDIUM | **Confidence:** MEDIUM
-
-**Failure mode:** If `SIZE_RE` matches a string containing multiple dots (e.g., `"36.0.1x24.0mm"` produces group(1)=`"36.0.1"`), `float()` raises `ValueError`. This exception is NOT caught in `parse_sensor_field()` or `extract_specs()`, and propagates to `render_html()` where the outer `try/except Exception` drops the entire Geizhals category.
-
-**Root cause:** The regex `[\d\.]+` allows multiple dots, but `float()` requires at most one. No try/except wraps the conversion.
-
-**Impact:** All cameras in the affected category are lost for that deployment. Previous data is preserved via CSV merge, but current Geizhals data for that category is gone.
-
-**Verified:** `float("36.0.1")` raises `ValueError`.
-
-### DBG25-02: SIZE_RE does not match Unicode × or spaces — silent data loss
+### DBG26-01: MPIX_RE only matches "Megapixel" — will silently lose data if Geizhals uses "MP"
 
 **File:** `pixelpitch.py`, line 42
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode:** If Geizhals sensor text uses `×` (U+00D7) instead of `x` (U+0078), or includes spaces around `x`, `SIZE_RE` returns None. The sensor dimensions are silently lost.
+**Failure mode:** If Geizhals changes their "Megapixel effektiv" field to show "33.0 MP" (a common abbreviation), `MPIX_RE.search("33.0 MP")` returns None. The megapixel value is silently lost.
 
-**Root cause:** `SIZE_RE` pattern is `([\d\.]+)x([\d\.]+)mm` — only ASCII lowercase `x`, no spaces. The shared `SIZE_MM_RE` handles both `×` and spaces.
+**Root cause:** `MPIX_RE = re.compile(r"([\d\.]+)\s*Megapixel")` only matches the literal string "Megapixel" (case-sensitive). The shared `MPIX_RE` in `sources/__init__.py` handles "MP", "Mega pixels", "Megapixel" etc.
 
-**Impact:** Camera shows "unknown" sensor size on website.
+**Impact:** Camera shows "unknown" resolution and computed pixel pitch is lost.
 
-**Verified:** `SIZE_RE.search('36.0×24.0mm')` returns None.
+**Verified:** `MPIX_RE.search("33.0 MP")` returns None with the local pattern.
+
+### DBG26-02: ValueError in source module float() calls — individual camera crash
+
+**File:** `sources/apotelyt.py` lines 119-129, `sources/cined.py` line 98, `sources/gsmarena.py` lines 130/133, `sources/imaging_resource.py` line 228
+**Severity:** LOW | **Confidence:** MEDIUM
+
+**Failure mode:** A malformed value in any source module's HTML (e.g., "35.9.1x23.9 mm") causes `float()` to raise ValueError. The exception is caught by the outer loop in each source's `fetch()`, so only that camera is lost. Other cameras continue processing.
+
+**Root cause:** The C25-02 fix only addressed ValueError guards in `parse_sensor_field()`. Source modules that parse the same data types still lack the same guards.
+
+**Impact:** Individual camera record lost. Not category-wide like the Geizhals path.
 
 ---
 
 ## Summary
 
-- DBG25-01 (MEDIUM): parse_sensor_field ValueError crash on malformed float input
-- DBG25-02 (MEDIUM): SIZE_RE does not match Unicode × or spaces
+- DBG26-01 (MEDIUM): MPIX_RE only matches "Megapixel" — silent data loss on format change
+- DBG26-02 (LOW): ValueError in source module float() calls — individual camera crash

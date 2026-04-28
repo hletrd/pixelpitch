@@ -1,8 +1,8 @@
-# Designer Review (Cycle 25) — UI/UX Review
+# Designer Review (Cycle 26) — UI/UX Review
 
 **Reviewer:** designer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-24 fixes
+**Scope:** Full repository re-review after cycles 1-25 fixes
 
 ## Previous Findings Status
 
