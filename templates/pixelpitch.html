@@ -205,6 +205,16 @@
 {% block js %}
 <script>
   $(function(){
+    // Custom parser: sort Sensor Size column by sensor width (mm) instead of text
+    $.tablesorter.addParser({
+      id: 'sensor-width',
+      is: function() { return false; },
+      format: function(s, table, cell) {
+        return $(cell).closest('tr').attr('data-sensor-width') || 0;
+      },
+      type: 'numeric'
+    });
+
     // Initialize each table separately with correct header config for its column layout
     var tsBase = {
       theme: 'bootstrap',
@@ -220,9 +230,9 @@
         0: { sorter: "text" },
         1: { sorter: "text" },
         {% if page == "all" %}
-        2: { sorter: "text" },
+        2: { sorter: "sensor-width" },
         {% else %}
-        2: { sorter: "digit" },
+        2: { sorter: "sensor-width" },
         {% endif %}
         3: { sorter: "digit" },
         4: { sorter: "digit" },
@@ -238,11 +248,11 @@
         0: { sorter: "text" },
         1: { sorter: "text" },
         {% if page == "all" %}
-        2: { sorter: "text" },
+        2: { sorter: "sensor-width" },
         3: { sorter: "digit" },
         4: { sorter: "digit" }
         {% else %}
-        2: { sorter: "digit" },
+        2: { sorter: "sensor-width" },
         3: { sorter: "digit" }
         {% endif %}
       }
@@ -336,6 +346,7 @@
       const data = [];
       $("#table_with_pitch tbody tr").each(function(i, el) {
         const row = $(el);
+        if (!row.is(':visible')) return;
         const name = row.find('td:first-child a').text().trim();
         const pitch = parseFloat(row.attr('data-pitch'));
         const year = parseInt(row.attr('data-year'));
