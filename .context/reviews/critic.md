@@ -1,39 +1,36 @@
-# Critic Review (Cycle 17) — Multi-Perspective Critique
+# Critic Review (Cycle 18) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository critique after cycles 1-16 fixes, focusing on NEW issues
+**Scope:** Full repository critique after cycles 1-17 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-16) — Confirmed Resolved
+## Previously Fixed (Cycles 1-17) — Confirmed Resolved
 
-- CR16-01 (sensor_size_from_type crash): Fixed — try/except guard confirmed.
-- CR16-02 (merge dedup): Fixed — `seen_new_keys` set confirmed working.
-- CR16-03 (Pentax regex): Partially fixed — `K[-\s]?\d+[A-Za-z]*` now covers K3, K5, K-30, K100D etc., but still misses KP, KF, K-r, K-x (no digit after K or after hyphen).
-- CR16-04 (digicamdb alias): Fixed — removed from SOURCE_REGISTRY.
+All C17 fixes verified. Pentax KP/KF/K-r/K-x now DSLR, Nikon Df DSLR, GSMArena Unicode quotes working, docstrings updated, sensors_db lazy-loaded.
 
 ## New Findings
 
-### CR17-01: Pentax KP/KF/K-r/K-x STILL misclassified — C16-03 fix was incomplete
-**File:** `sources/openmvg.py`, line 47
+### CR18-01: Scatter plot violates user's visibility expectations by including hidden rows
+**File:** `templates/pixelpitch.html`, lines 337-346
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C16-03 fix changed the regex to `Pentax\s+K[-\s]?\d+[A-Za-z]*` which requires at least one digit. Pentax KP and KF have a letter directly after K (no digit). Pentax K-r and K-x have a hyphen followed by a letter (no digit). All four are DSLRs. This is a carry-over from the incomplete fix.
+The scatter plot reads data from ALL table rows, including those hidden by the "Hide possibly invalid data" toggle. This is a user-trust issue — the user explicitly hid suspect data, but the plot still includes it. The user sees a data point in the scatter plot, clicks the corresponding row, and finds it's not visible in the table. This undermines confidence in the data quality.
 
-**Fix:** Change to `Pentax\s+K[-\s]?[\dA-Za-z]+[A-Za-z]*` to allow letters or digits after K[-\s]?.
+**Fix:** Add `if (!row.is(':visible')) return;` in the scatter plot data collection loop.
 
 ---
 
-### CR17-02: Nikon Df — a known DSLR missed by the regex
-**File:** `sources/openmvg.py`, line 46
+### CR18-02: CI GSMARENA_MAX_PAGES_PER_BRAND env var is dead code — suggests incomplete wiring
+**File:** `.github/workflows/github-pages.yml`, line 74; `pixelpitch.py`, lines 1021-1043
 **Severity:** LOW | **Confidence:** HIGH
 
-The Nikon Df is a well-known retro DSLR with no digit after "D". The regex `Nikon\s+D\d{1,4}` requires at least one digit. If the Df appears in the openMVG database, it would be classified as mirrorless.
+The CI workflow sets an environment variable that the Python code never reads. This is a code/configuration mismatch — it suggests the developer intended to control GSMArena pagination via CI but didn't complete the wiring. The result: CI always fetches 2 pages per brand regardless of the `GSMARENA_PAGES: "1"` setting.
 
-**Fix:** Add `|Nikon\s+Df` to the regex alternation.
+**Fix:** Wire the env var through `fetch_source()` to `gsmarena.fetch(max_pages_per_brand=...)`, or remove the dead env var.
 
 ---
 
 ## Summary
 - NEW findings: 2 (1 MEDIUM, 1 LOW)
-- CR17-01: Pentax KP/KF/K-r/K-x STILL misclassified — MEDIUM
-- CR17-02: Nikon Df missed by DSLR regex — LOW
+- CR18-01: Scatter plot includes hidden data — MEDIUM
+- CR18-02: CI env var dead code — LOW

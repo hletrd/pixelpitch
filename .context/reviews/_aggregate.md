@@ -1,77 +1,119 @@
-# Aggregate Review (Cycle 17) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 18) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-16 Status
+## Cycle 1-17 Status
 
-All previous fixes confirmed still working. No regressions in previously-fixed items. Gate tests pass (98 checks).
+All previous fixes confirmed still working. No regressions. Gate tests pass (98 checks).
 
-## Cross-Agent Agreement Matrix (Cycle 17 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 18 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| Pentax KP/KF/K-r/K-x still misclassified (C16-03 fix incomplete) | code-reviewer, critic, verifier, tracer, debugger, designer, test-engineer | MEDIUM |
-| Nikon Df missed by DSLR regex | code-reviewer, critic, verifier, tracer, debugger, designer, test-engineer | LOW |
-| GSMArena SENSOR_FORMAT_RE doesn't match Unicode quotes | code-reviewer, tracer, debugger, test-engineer, document-specialist | LOW |
-| openMVG docstring says "Pentax K-*" but regex is broader | document-specialist | LOW |
-| sensors_db loaded unconditionally in merge | perf-reviewer | LOW |
+| Scatter plot includes hidden/invalid data | designer, critic, tracer, debugger | MEDIUM |
+| SENSOR_TYPE_RE in pixelpitch.py doesn't match Unicode quotes | code-reviewer, verifier, debugger | LOW |
+| Three divergent sensor-type regexes (DRY violation) | code-reviewer, architect | LOW |
+| CI GSMARENA_MAX_PAGES_PER_BRAND env var is dead code | code-reviewer, critic, tracer | LOW |
+| No test for GSMArena Unicode quote regex | test-engineer | LOW |
+| No test for Pentax KF/K-r/K-x DSLR classification | test-engineer | LOW |
+| No test for SENSOR_TYPE_RE in pixelpitch.py | test-engineer | LOW |
+| SENSOR_TYPE_RE has no ASCII-only comment | document-specialist | NEGLIGIBLE |
+| Sensor Size column sorts as text, not numerically | designer | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C17-01: Pentax KP, KF, K-r, K-x still misclassified as mirrorless — C16-03 fix incomplete
-**Sources:** C17-01, CR17-01, V17-01, T17-01, D17-01, UX17-01, TE17-01, A17-01 (context), DS17-01 (doc)
-**Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
+### C18-01: Scatter plot includes hidden/invalid data points — user-trust violation
+**Sources:** UX18-01, CR18-01, T18-01, D18-01
+**Severity:** MEDIUM | **Confidence:** HIGH (4-agent consensus)
 
-The C16-03 fix changed `Pentax\s+K[-\s]\d` to `Pentax\s+K[-\s]?\d+[A-Za-z]*`. This regex still requires at least one digit after K[-\s]?. Four Pentax DSLR models have no digit in that position:
-- **Pentax KP** — letter directly after K
-- **Pentax KF** — letter directly after K
-- **Pentax K-r** — hyphen + letter (no digit)
-- **Pentax K-x** — hyphen + letter (no digit)
+When the "Hide possibly invalid data" toggle is active (default ON), hidden rows are excluded from the table but still included in the scatter plot. The `createPlot()` function iterates over all `#table_with_pitch tbody tr` elements without checking `row.is(':visible')`.
 
-All four are DSLRs. Verified: `_DSLR_NAME_RE.search()` returns None for all four.
+**Concrete failure scenario:**
+1. Default: "Hide possibly invalid data" is checked
+2. A camera with pixel pitch > 10 µm is hidden from the table
+3. User clicks "Create Scatter Plot"
+4. The hidden outlier appears as a data point in the scatter plot
+5. User sees data in the plot that is not visible in the table
 
-**Fix:** Change `Pentax\s+K[-\s]?\d+[A-Za-z]*` to `Pentax\s+K[-\s]?[\dA-Za-z]+[A-Za-z]*` to allow letters or digits after K[-\s]?. Add test cases for Pentax KP and KF.
-
----
-
-### C17-02: Nikon Df missed by DSLR regex
-**Sources:** C17-02, CR17-02, V17-02, T17-02, D17-02, UX17-02, TE17-02
-**Severity:** LOW | **Confidence:** HIGH (7-agent consensus)
-
-The Nikon pattern `Nikon\s+D\d{1,4}` requires at least one digit after D. Nikon Df has no digit — it's a letter-only suffix. The Df is a well-known retro-style DSLR.
-
-**Fix:** Add `|Nikon\s+Df` to the regex alternation. Add test case.
+**Fix:** Add `if (!row.is(':visible')) return;` at the start of the `.each()` callback in `createPlot()`.
 
 ---
 
-### C17-03: GSMArena SENSOR_FORMAT_RE doesn't match Unicode curly quotes
-**Sources:** C17-03, T17-03, D17-03, TE17-03, DS17-02
-**Severity:** LOW | **Confidence:** MEDIUM (5-agent consensus)
+### C18-02: `SENSOR_TYPE_RE` in pixelpitch.py doesn't match Unicode quotes
+**Sources:** C18-01, V18-01, D18-02
+**Severity:** LOW | **Confidence:** MEDIUM (3-agent consensus)
 
-The regex `r'(1/[\d.]+)"'` requires ASCII double-quote. Some web pages use Unicode right double quotation mark (U+2033). The central `TYPE_FRACTIONAL_RE` handles this correctly. When GSMArena pages use curly quotes, the sensor type is lost silently.
+The C17-03 fix updated GSMArena's `SENSOR_FORMAT_RE` to match Unicode curly quotes (U+2033), but the `SENSOR_TYPE_RE` in pixelpitch.py (line 43) still only matches ASCII double-quotes. If Geizhals HTML ever uses Unicode quotes, `parse_sensor_field()` would silently lose the sensor type.
 
-**Fix:** Change the regex to `r'(1/[\d.]+)(?:\"|″)'` or reuse `TYPE_FRACTIONAL_RE`.
+Practical impact is LOW since Geizhals HTML title attributes typically use ASCII quotes.
+
+**Fix:** Update `SENSOR_TYPE_RE` to `re.compile(r'(1/[\d.]+)(?:\"|″)')`, or reuse `TYPE_FRACTIONAL_RE`.
 
 ---
 
-### C17-04: openMVG docstring says "Pentax K-*" but regex is now broader
-**Sources:** DS17-01
+### C18-03: Three divergent sensor-type regexes — DRY violation
+**Sources:** C18-02, A18-01
+**Severity:** LOW | **Confidence:** HIGH (2-agent consensus)
+
+The fractional-inch sensor type pattern is defined independently in three places with divergent capabilities:
+1. `SENSOR_TYPE_RE` in pixelpitch.py — ASCII-only
+2. `TYPE_FRACTIONAL_RE` in sources/__init__.py — comprehensive
+3. `SENSOR_FORMAT_RE` in gsmarena.py — ASCII + Unicode quotes
+
+Changes must be synchronized across all three, violating Single Source of Truth.
+
+**Fix:** Import `TYPE_FRACTIONAL_RE` from `sources/__init__.py` in pixelpitch.py and gsmarena.py, or create a shared regex module.
+
+---
+
+### C18-04: CI `GSMARENA_MAX_PAGES_PER_BRAND` env var is dead code
+**Sources:** C18-03, CR18-02, T18-02
+**Severity:** LOW | **Confidence:** HIGH (3-agent consensus)
+
+The CI workflow sets `GSMARENA_MAX_PAGES_PER_BRAND: "1"` as an environment variable, but `fetch_source()` never reads it. GSMArena always uses `max_pages_per_brand=2`. The env var suggests incomplete wiring.
+
+**Fix:** Wire the env var through `fetch_source()` to `gsmarena.fetch(max_pages_per_brand=...)`, or remove the dead env var from CI.
+
+---
+
+### C18-05: No test for GSMArena Unicode curly-quote regex
+**Sources:** TE18-01
 **Severity:** LOW | **Confidence:** HIGH
 
-After the C16-03 fix, the regex matches K3, K5, K7 (no hyphen) as well as K-1, K-30 (with hyphen). The docstring still says "Pentax K-*" which implies only hyphenated models.
+C17-03 fixed GSMArena's `SENSOR_FORMAT_RE` to match Unicode quotes, but no test was added. Regression risk.
 
-**Fix:** Update docstring to say "Pentax K-mount (K3, K-1, KP, etc.)".
+**Fix:** Add a test verifying `SENSOR_FORMAT_RE.search('1/1.3″')` matches.
 
 ---
 
-### C17-05: sensors_db loaded unconditionally in merge_camera_data
-**Sources:** P17-01
+### C18-06: No test for Pentax KF, K-r, K-x DSLR classification
+**Sources:** TE18-02
 **Severity:** LOW | **Confidence:** HIGH
 
-`load_sensors_database()` is always called even when no existing-only cameras need sensor matching. Minor inefficiency — the file is small and the parse is fast.
+The test CSV includes Pentax KP and Nikon Df but not Pentax KF, K-r, or K-x. Only partial coverage of the C17-01 fix.
 
-**Fix (if desired):** Lazy-load — only call when existing-only cameras are found.
+**Fix:** Add these models to the test CSV and verify DSLR classification.
+
+---
+
+### C18-07: No test for `SENSOR_TYPE_RE` in pixelpitch.py
+**Sources:** TE18-03
+**Severity:** LOW | **Confidence:** MEDIUM
+
+No dedicated test for `SENSOR_TYPE_RE` used in Geixhals parsing. If the regex is broken, sensor type extraction silently fails.
+
+**Fix:** Add a basic test verifying `SENSOR_TYPE_RE` matches standard patterns.
+
+---
+
+### C18-08: Sensor Size column sorts as text, not numerically
+**Sources:** UX18-02
+**Severity:** LOW | **Confidence:** HIGH
+
+Clicking the Sensor Size column header sorts alphabetically ("9.84 x 7.40 mm" after "35.9 x 23.9 mm") instead of numerically by width.
+
+**Fix:** Add a custom tablesorter parser that reads `data-sensor-width` attribute.
 
 ---
 
@@ -80,8 +122,8 @@ After the C16-03 fix, the regex matches K3, K5, K7 (no hyphen) as well as K-1, K
 No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
-- Total distinct new findings: 5 (1 MEDIUM, 4 LOW)
-- Cross-agent consensus findings (3+ agents): 3
-- All cycle 1-16 fixes remain intact
-- 1 MEDIUM finding is a carry-over from incomplete C16-03 fix (Pentax letter-only models)
-- Gate tests pass (98 checks)
+- Total distinct new findings: 8 (1 MEDIUM, 6 LOW, 1 NEGLIGIBLE excluded from count)
+- Cross-agent consensus findings (3+ agents): 3 (C18-01, C18-04, C18-02)
+- All cycle 1-17 fixes remain intact
+- 1 MEDIUM finding: scatter plot includes hidden data
+- NEGLIGIBLE finding (DS18-01: ASCII-only comment) excluded from actionable count

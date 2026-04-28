@@ -1,37 +1,28 @@
-# Document Specialist Review (Cycle 17) — Doc/Code Mismatches
+# Document Specialist Review (Cycle 18) — Doc/Code Mismatches
 
 **Reviewer:** document-specialist
 **Date:** 2026-04-28
-**Scope:** Full repository doc/code review after cycles 1-16 fixes, focusing on NEW issues
+**Scope:** Full repository doc/code review after cycles 1-17 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-16) — Confirmed Resolved
+## Previously Fixed (Cycles 1-17) — Confirmed Resolved
 
-- DS16-01 (sensor_size_from_type docstring): Fixed — docstring now states "Invalid fractional types (e.g. "1/0", "1/") return None instead of raising ZeroDivisionError or ValueError."
-- DS16-02 (merge_camera_data docstring): Fixed — docstring now states "If the same key appears multiple times in new_specs, only the first occurrence is kept and subsequent duplicates are silently dropped."
+- DS16-01 (sensor_size_from_type docstring): Fixed.
+- DS16-02 (merge_camera_data docstring): Fixed.
+- DS17-01 (openMVG docstring): Fixed — now says "Pentax K-mount (K3, K-1, KP, etc.)" and "Nikon D/Df".
+- DS17-02 (GSMArena quote limitation): Fixed — Unicode quotes now supported.
 
 ## New Findings
 
-### DS17-01: openMVG docstring says "Pentax K-*, etc." but regex now covers K3, K5 without hyphen
-**File:** `sources/openmvg.py`, lines 10-21
-**Severity:** LOW | **Confidence:** HIGH
-
-The docstring says "Pentax K-*" which implies only hyphenated models. After the C16-03 fix, the regex now matches K3, K5, K7, K1 (no hyphen) as well as K-30, K-50 (with hyphen). The docstring should be updated to reflect the broader coverage. Also, after fixing C17-01, it should mention KP, KF, K-r, K-x coverage.
-
-**Fix:** Update the docstring to say "Pentax K-mount (K3, K-1, KP, etc.)" instead of "Pentax K-*".
-
----
-
-### DS17-02: GSMArena SENSOR_FORMAT_RE pattern not documented as ASCII-only
-**File:** `sources/gsmarena.py`, line 50
+### DS18-01: `SENSOR_TYPE_RE` in pixelpitch.py has no comment noting its ASCII-only limitation
+**File:** `pixelpitch.py`, line 43
 **Severity:** NEGLIGIBLE | **Confidence:** HIGH
 
-The regex pattern only matches ASCII double-quote characters, not Unicode curly quotes. This limitation should be documented in a comment.
+After C17-03 fixed GSMArena's regex to support Unicode quotes, the `SENSOR_TYPE_RE` in pixelpitch.py remains ASCII-only. While this is likely intentional for Geizhals parsing, there's no comment explaining why it differs from `TYPE_FRACTIONAL_RE`.
 
-**Fix:** Add a comment noting the ASCII-quote limitation if the regex is not fixed.
+**Fix:** Add a comment: `# Geizhals HTML uses ASCII double-quotes in title attributes`.
 
 ---
 
 ## Summary
-- NEW findings: 2 (1 LOW, 1 NEGLIGIBLE)
-- DS17-01: openMVG docstring outdated after regex fix — LOW
-- DS17-02: GSMArena quote limitation undocumented — NEGLIGIBLE
+- NEW findings: 1 (NEGLIGIBLE)
+- DS18-01: SENSOR_TYPE_RE has no comment about ASCII-only limitation — NEGLIGIBLE

@@ -1,65 +1,49 @@
-# Tracer Review (Cycle 17) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 18) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
-**Scope:** Full repository causal tracing after cycles 1-16 fixes, focusing on NEW issues
+**Scope:** Full repository causal tracing after cycles 1-17 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-16) — Confirmed Resolved
+## Previously Fixed (Cycles 1-17) — Confirmed Resolved
 
-- T16-01 (crash propagation): Fixed — sensor_size_from_type now catches ZeroDivisionError/ValueError.
-- T16-02 (duplicate propagation): Fixed — seen_new_keys set prevents duplicate appends.
-- T16-03 (Pentax classification): Partially fixed — K3, K5, K7 etc. now match, but KP, KF, K-r, K-x still fail.
+All C17 fixes confirmed. Pentax, Nikon Df, GSMArena quotes, sensors_db lazy load all working.
 
 ## New Findings
 
-### T17-01: Pentax KP/KF/K-r/K-x misclassification path — C16-03 fix incomplete
-**File:** `sources/openmvg.py`, line 47
+### T18-01: Scatter plot data collection ignores row visibility — hidden invalid data leaks into plot
+**File:** `templates/pixelpitch.html`, lines 337-346
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-Traced misclassification path:
-1. openMVG CSV contains "Pentax KP" (letter directly after K)
-2. `_DSLR_NAME_RE.search("Pentax KP")` returns None — regex requires at least one digit
-3. Category defaults to "mirrorless"
-4. On All Cameras page, "Pentax KP" appears under Mirrorless instead of DSLR
-5. If Geizhals also lists "Pentax KP" as DSLR, duplicate entries appear on All Cameras page
+Traced data flow:
+1. `applyInvalidFilter()` hides rows with `row.hide()` when "Hide possibly invalid data" is checked
+2. User clicks "Create Scatter Plot"
+3. `createPlot()` iterates ALL `#table_with_pitch tbody tr` elements
+4. No visibility check is performed
+5. Hidden rows with suspicious pitch > 10 µm appear as data points
+6. User sees outlier in scatter plot that isn't visible in the table
 
-Same path for KF, K-r, K-x. The C16-03 fix changed `K[-\s]\d` to `K[-\s]?\d+[A-Za-z]*` but the `\d+` requirement still blocks letter-only suffixes.
+**Concrete failure:** A misclassified camera with 12 µm pixel pitch is hidden by the filter. The scatter plot shows this as a data point at 12 µm. The user can't find the corresponding row in the table.
 
-**Fix:** Change `Pentax\s+K[-\s]?\d+[A-Za-z]*` to `Pentax\s+K[-\s]?[\dA-Za-z]+[A-Za-z]*`.
+**Fix:** Add `if (!row.is(':visible')) return;` in the scatter plot `.each()` callback.
 
 ---
 
-### T17-02: Nikon Df misclassification path
-**File:** `sources/openmvg.py`, line 46
+### T18-02: CI GSMARENA_MAX_PAGES_PER_BRAND env var is read by nobody
+**File:** `.github/workflows/github-pages.yml`, line 74; `pixelpitch.py`, lines 1031-1033
 **Severity:** LOW | **Confidence:** HIGH
 
-Traced path:
-1. openMVG CSV contains "Nikon Df" (letter after D, no digit)
-2. `_DSLR_NAME_RE.search("Nikon Df")` returns None — regex requires `\d{1,4}`
-3. Category defaults to "mirrorless"
-4. Nikon Df is a well-known DSLR but appears as mirrorless
+Traced configuration path:
+1. CI sets `GSMARENA_MAX_PAGES_PER_BRAND: "1"` as env var
+2. `python pixelpitch.py source gsmarena --limit 150 --out dist` is executed
+3. `fetch_source()` calls `module.fetch(limit=limit)` — only passes `limit`
+4. `gsmarena.fetch()` uses `max_pages_per_brand=2` (default) — never reads env var
+5. CI fetches 2 pages per brand instead of the intended 1
 
-**Fix:** Add `|Nikon\s+Df` to the regex alternation.
-
----
-
-### T17-03: GSMArena curly-quote sensor format loss path
-**File:** `sources/gsmarena.py`, line 50
-**Severity:** LOW | **Confidence:** MEDIUM
-
-Traced data loss path:
-1. GSMArena page contains `1/1.3″` (Unicode right double quote U+2033)
-2. `SENSOR_FORMAT_RE` pattern `r'(1/[\d.]+)"'` requires ASCII `"` — no match
-3. `sensor_type` remains None
-4. `size` also remains None (not in PHONE_TYPE_SIZE lookup since type is None)
-5. Camera appears with "unknown" sensor size on the page
-
-**Fix:** Add Unicode quote variant to SENSOR_FORMAT_RE.
+**Fix:** Wire the env var through `fetch_source()` or add CLI flag.
 
 ---
 
 ## Summary
-- NEW findings: 3 (1 MEDIUM, 2 LOW)
-- T17-01: Pentax KP/KF/K-r/K-x misclassification — MEDIUM
-- T17-02: Nikon Df misclassification — LOW
-- T17-03: GSMArena curly-quote data loss — LOW
+- NEW findings: 2 (1 MEDIUM, 1 LOW)
+- T18-01: Scatter plot includes hidden data — MEDIUM
+- T18-02: CI env var dead code — LOW
