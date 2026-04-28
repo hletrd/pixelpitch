@@ -736,7 +736,9 @@ def derive_spec(
     are known, pitch is computed as
     ``1000 * sqrt(area / (mpix * 10**6))``.  This computed value is
     an approximation because it does not account for pixel binning or
-    gap pixels.
+    gap pixels.  When ``pixel_pitch`` returns 0.0 (sentinel for
+    invalid inputs such as non-positive mpix/area or NaN/inf), the
+    computed pitch is set to None instead of propagating the sentinel.
 
     Matched sensors: looked up from ``sensors_db`` when both size
     and the database are available.
@@ -758,6 +760,11 @@ def derive_spec(
         pitch = spec.pitch
     elif spec.mpix is not None and area is not None:
         pitch = pixel_pitch(area, spec.mpix)
+        # pixel_pitch returns 0.0 as a sentinel for invalid inputs
+        # (negative, zero, NaN, inf).  Convert to None so downstream
+        # consumers (selectattr, write_csv) treat it as "unknown".
+        if pitch == 0.0:
+            pitch = None
     else:
         pitch = None
 
@@ -856,9 +863,9 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
             type_str = spec.type or ""
             width_str = f"{derived.size[0]:.2f}" if derived.size else ""
             height_str = f"{derived.size[1]:.2f}" if derived.size else ""
-            area_str = f"{derived.area:.2f}" if derived.area is not None else ""
-            mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None else ""
-            pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None else ""
+            area_str = f"{derived.area:.2f}" if derived.area is not None and isfinite(derived.area) else ""
+            mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None and isfinite(spec.mpix) else ""
+            pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None and isfinite(derived.pitch) else ""
             year_str = str(spec.year) if spec.year is not None else ""
             sensors_str = (
                 ";".join(derived.matched_sensors) if derived.matched_sensors else ""
