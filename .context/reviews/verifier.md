@@ -1,31 +1,44 @@
-# verifier Review (Cycle 51)
+# verifier Review (Cycle 52)
 
 **Date:** 2026-04-29
-**HEAD:** 3b35dcc
+**HEAD:** 331c6f5
 
-## Evidence-based gate verification
+## Gate evidence
 
-- `python3 -m flake8 . --exclude=.git,__pycache__,dist,downloaded_files,.context,.omc,templates`
-  → exit 0 (no errors).
-- `python3 -m tests.test_parsers_offline` → exit 0; "All checks passed."
-  - The `test_matched_sensors_roundtrip` block (cycle 50) runs and reports OK on:
-    - `roundtrip: matched_sensors preserved verbatim`
-    - `roundtrip-guard: ';'-containing element dropped` (with warning print)
+- `flake8 .` — exit 0, no output.
+- `python3 -m tests.test_parsers_offline` — exit 0, "All checks passed."
+  All sections green, including:
+  - `roundtrip: matched_sensors preserved verbatim`
+  - `roundtrip-guard: ';'-containing element dropped`
+  - `parse-tolerance: whitespace stripped, duplicate removed, order preserved`
 
-## Verification of cycle-50 fixes
+## Verification of cycle 51 fixes
 
 | Finding | Commit  | Verified |
 |---------|---------|----------|
-| F50-01  | 5f2a3fd | YES — `.github/workflows/github-pages.yml:108` is `git pull --rebase` (no `\|\| true`). |
-| F50-03  | 9dc88fa | YES — `pixelpitch.py:925-937` filters tokens containing `;` and warns. |
-| F50-04  | 5b31802 | YES — round-trip test runs in `main()`; output observed. |
+| F51-01  | a0ac8bc | YES — `pixelpitch.py:377-381` strips and dedups. |
+| F51-02  | a0ac8bc | YES — same comprehension dedups via `dict.fromkeys`. |
+| F51-test| d1b0ca1 | YES — `test_parsers_offline` runs the parse-tolerance section. |
 
 ## New findings
 
-None this cycle. The repo is consistent with stated behavior.
+### F52-01 confirmed
 
-## Note on F51-01 (raised by code-reviewer)
+Direct REPL test:
 
-The `parse_existing_csv` whitespace-strip absence is a fragility, not a current bug. The
-existing round-trip test does not exercise whitespace because `write_csv` produces tokens
-without leading/trailing space. Verification confirms this is correctly latent.
+```
+python3 -c "print(int('2023.0'))"            # ValueError
+python3 -c "print(int(float('2023.0')))"     # 2023
+python3 -c "print(int(float(' 2023.0 ')))"   # 2023
+python3 -c "print(int(float('inf')))"        # OverflowError → caught
+python3 -c "print(int(float('nan')))"        # ValueError → caught
+```
+
+The fallback path `int(float(...))` correctly handles the Excel `2023.0`
+case while still rejecting non-finite values when the range guard
+(1900..2100) is applied.
+
+## Verdict
+
+Repo state matches stated behavior. F52-01 is real, single-cause,
+single-fix. Both gates hold.

@@ -1,30 +1,42 @@
-# tracer Review (Cycle 51)
+# tracer Review (Cycle 52)
 
 **Date:** 2026-04-29
-**HEAD:** 3b35dcc
+**HEAD:** 331c6f5
 
-## Causal trace of `matched_sensors` through the pipeline
+## Causal trace: F52-01 — year column drop on Excel-roundtrip
 
-1. **Source:** `derive_spec` (`pixelpitch.py:817`) calls `match_sensors` → `List[str]`.
-2. **Persistence:** `write_csv` (`pixelpitch.py:925-937`) joins on `;`, dropping any element
-   containing `;` (with warning).
-3. **Re-read:** `parse_existing_csv` (`pixelpitch.py:373`) splits on `;`, filters empty
-   strings (no whitespace strip).
-4. **Merge:** `merge_camera_data` preserves existing matched_sensors when new is None
-   (`pixelpitch.py:512-513`).
+1. CI runs `python pixelpitch.py render` →
+   `render_html(output_dir)` (`pixelpitch.py:992`).
+2. `load_csv(output_dir)` reads `dist/camera-data.csv`
+   (`pixelpitch.py:256`).
+3. `parse_existing_csv(previous_csv)` enters the row loop
+   (`pixelpitch.py:310`).
+4. `year_str = values[9]` (or `values[8]` for no-id rows).
+5. `int(year_str)` (`pixelpitch.py:368`) — if Excel saved the file with
+   `"2023.0"`, this raises ValueError.
+6. The except branch is `pass`; year stays None
+   (`pixelpitch.py:371`).
+7. `merge_camera_data` then sees `existing_spec.spec.year = None` →
+   the year-preservation branch
+   (`pixelpitch.py:495`) does NOT fire (it triggers only when new is
+   None and existing is non-None).
+8. `write_csv` then emits an empty year column for all edited rows.
 
-### Hypothesis A: end-to-end round-trip is symmetric for clean data
-- Verified by cycle-50 round-trip test. PASS.
+Single hypothesis confirmed; no competing flow.
 
-### Hypothesis B: external CSV with whitespace breaks symmetry
-- Not currently triggered (write_csv emits no whitespace).
-- Latent fragility; aligns with code-reviewer F51-01.
+## Causal trace: matched_sensors stability
 
-### Hypothesis C: matched_sensors=None vs [] semantic distinction is preserved
-- Trace: `parse_existing_csv` always produces `[]` for empty `sensors_str` (line 373).
-  `derive_spec` produces `None` when `size` is missing (line 823) and a list otherwise.
-  `merge_camera_data` uses the None vs not-None distinction for preservation logic.
-- After CSV round-trip, an originally-`None` field becomes `[]`. The merge does NOT
-  preserve existing matched_sensors when new is `[]`. By design — see lines 510-513.
+After cycle 51, the chain
+`derive_spec → merge_camera_data → write_csv → parse_existing_csv →
+merge_camera_data` for matched_sensors is verified idempotent under:
 
-No new actionable issues. The `matched_sensors` causal flow is consistent.
+- whitespace (cycle 51 fix)
+- duplicates (cycle 51 fix)
+- `;`-injection (cycle 50 fix)
+- missing sensors_db (cycle 46 fix)
+
+No new trace-level concerns this cycle.
+
+## Verdict
+
+F52-01 is real, single-cause, single-fix.

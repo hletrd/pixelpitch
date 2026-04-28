@@ -1,37 +1,36 @@
-# critic Review (Cycle 51)
+# critic Review (Cycle 52)
 
 **Date:** 2026-04-29
-**HEAD:** 3b35dcc
+**HEAD:** 331c6f5
 
 ## Multi-perspective critique
 
 ### Maintainer hat
-- Cycle 50 closed F50-01..04 cleanly. The CI rebase guard now fails loud on conflicts
-  (`5f2a3fd`), the `;` delimiter contract is enforced defensively (`9dc88fa`), and the
-  round-trip test guards regressions (`5b31802`). All commits are GPG-signed,
-  conventional+gitmoji, and small-grained. Hygiene is good.
-- The 1306-line `pixelpitch.py` remains a deferred architectural concern (F32). No urgency.
+
+Cycles 45-51 settled into a clean cadence: one finding, one plan, one
+focused commit, one accompanying test. Cycle 52 (this one) continues
+that — the year-column parse-tolerance hardening (F52-01) is the same
+class of defense as F51-01, applied to the only other column where
+Excel is likely to corrupt a clean write.
 
 ### User hat
-- Site still builds; data freshness depends on CI cron + per-source workflows.
-- No user-facing regressions visible from review.
 
-### F51-C-01: deferred.md is growing (~30 entries) — LOW
-- **File:** `.context/plans/deferred.md`
-- **Detail:** The deferred list now spans cycles 8 → 49 with no periodic prune. Each entry
-  has an exit criterion, but a periodic re-validation pass would catch entries that have
-  become moot.
-- **Fix:** Audit deferred entries one at a time as cycles progress; out of scope for cycle 51
-  changes.
-- **Confidence:** MEDIUM
-- **Severity:** LOW
+Site is healthy. No user-facing regressions. Build pipeline cleared by
+both gates.
 
-### F51-C-02: Cycle-50 plan bundles three orthogonal fixes — LOW (process)
-- **File:** `.context/plans/C50-01-rebase-mask-and-matched-sensors-roundtrip.md`
-- **Detail:** Plan covers F50-01, F50-03, F50-04 in one document. Each was committed
-  independently (right shape) but the plan name conflates them. Future cycles should split
-  plans per finding for clearer provenance.
+### Steady-state risk
+
+The repo now has a gentle "long tail" of LOW-severity Excel-tolerance
+findings (F50-04 round-trip → F51-01 whitespace → F52-01 year `.0`).
+A single comprehensive sweep — "every CSV column tolerates Excel
+hand-edit" — would close them all. Out of scope as a refactor (F32
+deferred), but worth noting as the natural end-state.
+
+### F52-03: Per-agent review files were modified but uncommitted at cycle start — LOW (process)
+
+- **Flagged by:** critic
+- **Detail:** `git status` showed all 12 review files dirty. The cycle's
+  docs commit must include the refreshed snapshots so the
+  HEAD-pinned-snapshot convention holds. Same hygiene reminder as F51-04.
+- **Severity:** LOW (process)
 - **Confidence:** HIGH
-- **Severity:** LOW (process; plan is already marked completed)
-
-## No high-severity findings this cycle.

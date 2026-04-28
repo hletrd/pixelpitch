@@ -1,27 +1,28 @@
-# document-specialist Review (Cycle 51)
+# document-specialist Review (Cycle 52)
 
 **Date:** 2026-04-29
-**HEAD:** 3b35dcc
+**HEAD:** 331c6f5
 
-## Inventory
+## Doc/code consistency
 
-- `README.md` — describes data sources and CLI.
-- `.context/plans/` — implementation plans, several cycles closed, several deferred.
-- Inline docstrings — present on most functions in `pixelpitch.py` and sources.
-- No external API doc; no Sphinx site.
+- `README.md` accurately describes the data sources and CLI.
+- `pixelpitch.py` module docstring correctly enumerates the six data
+  sources (matches `sources/__init__.py:15-22`).
+- `parse_existing_csv` docstring (`pixelpitch.py:285-291`) accurately
+  describes header-row schema detection. The cycle-51 whitespace +
+  dedup comment block at lines 373-376 is up to date.
+- `merge_camera_data` docstring (`pixelpitch.py:411-433`) correctly
+  describes the spec-vs-derived consistency override.
 
-## Findings
+## F52-DS-01: After F52-01 lands, `parse_existing_csv` should mention year tolerance — LOW
 
-### F51-DS-01: `pixelpitch.py:920-924` comment documents the `;` invariant; matches code — OK
-- The cycle-50 fix added an inline comment explaining the round-trip contract. The comment
-  is accurate and aligned with `parse_existing_csv` (line 373). No mismatch.
-
-### F51-DS-02: `deferred.md` references finding IDs (e.g. F18, F23) without per-cycle anchors — LOW
-- **File:** `.context/plans/deferred.md`
-- **Detail:** Many finding IDs lack the `Fcycle-NN` form used in newer entries. Back-references
-  across cycles are harder.
-- **Fix:** Use `Fcycle-NN` form for new entries (already done for F49-02/F49-04). No retrofit.
+- **File:** `pixelpitch.py:285-291` (docstring) and inline comment near
+  the year-parse block
+- **Detail:** After F52-01 lands, the parser will accept `"2023.0"`
+  alongside `"2023"`. The docstring or an inline comment should
+  document this so future maintainers know the contract is "tolerant
+  to Excel hand-edits."
+- **Severity:** LOW (cosmetic; gate-bound to F52-01 implementation)
 - **Confidence:** HIGH
-- **Severity:** LOW (process)
 
 ## No external doc-vs-code mismatches identified this cycle.

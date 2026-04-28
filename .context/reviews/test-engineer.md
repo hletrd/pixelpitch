@@ -1,27 +1,35 @@
-# test-engineer Review (Cycle 51)
+# test-engineer Review (Cycle 52)
 
 **Date:** 2026-04-29
-**HEAD:** 3b35dcc
+**HEAD:** 331c6f5
 
-## Inventory
+## Coverage map
 
-- `tests/test_parsers_offline.py` (2155 LOC): comprehensive, runs as a script (no pytest).
-- `tests/test_sources.py` (111 LOC): live-fetch, optional.
-- `tests/fixtures/`: HTML fixtures.
-- Round-trip tests for matched_sensors verbatim and `;`-guard added cycle 50.
+The offline gate (`tests/test_parsers_offline.py`, ~2206 LOC) covers:
 
-## Findings
+- pixel_pitch sentinel handling
+- TYPE_SIZE phone formats
+- write_csv finite/positive guards
+- write_csv → parse_existing_csv round-trip for matched_sensors
+- write_csv guard against `;` in matched_sensors
+- parse_existing_csv whitespace + dedup tolerance for matched_sensors
+- merge_camera_data matched_sensors preservation
 
-### F51-T-01: No round-trip test for whitespace in `matched_sensors` tokens — LOW / MEDIUM
-- **File:** `tests/test_parsers_offline.py`
-- **Detail:** Pairs with code-reviewer F51-01. If `parse_existing_csv` is updated to strip
-  whitespace (recommended fragility-defense), an asymmetry test would catch regressions.
-  Currently no test asserts that hand-edited CSV with `IMX455; IMX571` yields exactly
-  `["IMX455", "IMX571"]` after parse.
-- **Fix:** Add a minimal test that parses a synthetic CSV row containing `IMX455; IMX571 ; IMX989`
-  in the matched_sensors column via `parse_existing_csv`, and asserts the parsed list is
-  `["IMX455", "IMX571", "IMX989"]`. Companion to the F51-01 strip fix.
-- **Confidence:** HIGH (test gap is real; prerequisite is the F51-01 strip fix)
+## Gap identified
+
+### F52-04: No parse-tolerance test for `year_str = "2023.0"` — LOW
+
+- **File:** `tests/test_parsers_offline.py` (gap)
+- **Detail:** All current parse-tolerance tests exercise the
+  `matched_sensors` column. The F52-01 fix needs an accompanying test
+  asserting that `year_str ∈ {"2023", " 2023 ", "2023.0", "2023.5",
+  "abc", ""}` parses to `{2023, 2023, 2023, None, None, None}`
+  (`2023.5` is rejected because it cannot represent a calendar year
+  cleanly; or accept `2023` if rounding is acceptable — the
+  implementation will pick the conservative path).
 - **Severity:** LOW
+- **Confidence:** HIGH (companion to F52-01)
 
-## No other test gaps identified this cycle.
+## No flaky tests detected.
+
+The offline gate is fully deterministic (fixture-based).
