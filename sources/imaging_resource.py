@@ -162,7 +162,15 @@ def _parse_camera_name(fields: dict[str, str], fallback_url: str) -> Optional[st
             cleaned,
         )
         cleaned = cleaned.replace("Sony Zv ", "Sony ZV-")
+        # Sony uppercase series: .title() mangles multi-letter prefixes
+        # (fx->Fx, rx->Rx, etc.).  Restore the correct ALL-CAPS form.
         cleaned = re.sub(r"\bFx(\d)", r"FX\1", cleaned)
+        cleaned = re.sub(r"\bRx(\d)", r"RX\1", cleaned)
+        cleaned = re.sub(r"\bHx(\d)", r"HX\1", cleaned)
+        cleaned = re.sub(r"\bWx(\d)", r"WX\1", cleaned)
+        cleaned = re.sub(r"\bTx(\d)", r"TX\1", cleaned)
+        cleaned = re.sub(r"\bQx(\d)", r"QX\1", cleaned)
+        cleaned = re.sub(r"\bDsc\b", r"DSC", cleaned)
         return normalise_name(cleaned)
 
     if name:
@@ -182,7 +190,14 @@ def _parse_camera_name(fields: dict[str, str], fallback_url: str) -> Optional[st
             cleaned,
         )
         cleaned = cleaned.replace("Sony Zv ", "Sony ZV-")
+        # Sony uppercase series: .title() mangles multi-letter prefixes
         cleaned = re.sub(r"\bFx(\d)", r"FX\1", cleaned)
+        cleaned = re.sub(r"\bRx(\d)", r"RX\1", cleaned)
+        cleaned = re.sub(r"\bHx(\d)", r"HX\1", cleaned)
+        cleaned = re.sub(r"\bWx(\d)", r"WX\1", cleaned)
+        cleaned = re.sub(r"\bTx(\d)", r"TX\1", cleaned)
+        cleaned = re.sub(r"\bQx(\d)", r"QX\1", cleaned)
+        cleaned = re.sub(r"\bDsc\b", r"DSC", cleaned)
     return normalise_name(cleaned)
 
 
