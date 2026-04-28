@@ -745,6 +745,32 @@ def test_parse_existing_csv():
     expect("matched_sensors: correct entries from semicolons",
            parsed_semi[0].matched_sensors, ["IMX455", "IMX410"])
 
+    # NaN values in CSV should be treated as None
+    csv_nan = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+        "megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Test,mirrorless,,nan,nan,nan,nan,nan,2021,\n"
+    )
+    parsed_nan = pp.parse_existing_csv(csv_nan)
+    expect("NaN CSV: row count", len(parsed_nan), 1)
+    expect("NaN CSV: size is None", parsed_nan[0].size, None)
+    expect("NaN CSV: area is None", parsed_nan[0].area, None)
+    expect("NaN CSV: mpix is None", parsed_nan[0].spec.mpix, None)
+    expect("NaN CSV: pitch is None", parsed_nan[0].pitch, None)
+
+    # inf values in CSV should be treated as None
+    csv_inf = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+        "megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Test,mirrorless,,inf,inf,inf,inf,inf,2021,\n"
+    )
+    parsed_inf = pp.parse_existing_csv(csv_inf)
+    expect("inf CSV: row count", len(parsed_inf), 1)
+    expect("inf CSV: size is None", parsed_inf[0].size, None)
+    expect("inf CSV: area is None", parsed_inf[0].area, None)
+    expect("inf CSV: mpix is None", parsed_inf[0].spec.mpix, None)
+    expect("inf CSV: pitch is None", parsed_inf[0].pitch, None)
+
 
 # --------------------------------------------------------------------------
 # CSV round-trip test
@@ -1233,6 +1259,22 @@ def test_pixel_pitch():
     pitch7 = pp.pixel_pitch(0.0, 33.0)
     expect("zero area pitch", pitch7, 0.0)
 
+    # Edge case: NaN area — must return 0.0, not propagate NaN
+    pitch8 = pp.pixel_pitch(float('nan'), 33.0)
+    expect("nan area pitch", pitch8, 0.0)
+
+    # Edge case: NaN mpix — must return 0.0, not propagate NaN
+    pitch9 = pp.pixel_pitch(864.0, float('nan'))
+    expect("nan mpix pitch", pitch9, 0.0)
+
+    # Edge case: inf area — must return 0.0, not propagate inf
+    pitch10 = pp.pixel_pitch(float('inf'), 33.0)
+    expect("inf area pitch", pitch10, 0.0)
+
+    # Edge case: inf mpix — must return 0.0, not propagate inf
+    pitch11 = pp.pixel_pitch(864.0, float('inf'))
+    expect("inf mpix pitch", pitch11, 0.0)
+
 
 def test_derive_spec_zero_pitch():
     """Verify derive_spec preserves spec.pitch=0.0 instead of computing from area+mpix.
@@ -1286,6 +1328,13 @@ def test_derive_spec_negative_size():
     d_neg2 = pp.derive_spec(spec_neg2)
     expect("derive_spec negative height: no crash", d_neg2 is not None, True)
     expect("derive_spec negative height: pitch is 0.0", d_neg2.pitch, 0.0)
+
+    # NaN width: size=(nan, 24.0), pitch=None, mpix=10.0
+    spec_nan = Spec(name="NaN Size Cam", category="fixed", type=None,
+                     size=(float('nan'), 24.0), pitch=None, mpix=10.0, year=2020)
+    d_nan = pp.derive_spec(spec_nan)
+    expect("derive_spec NaN size: no crash", d_nan is not None, True)
+    expect("derive_spec NaN size: pitch is 0.0", d_nan.pitch, 0.0)
 
 
 # --------------------------------------------------------------------------
