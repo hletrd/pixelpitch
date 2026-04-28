@@ -65,7 +65,7 @@ def http_get(url: str, timeout: float = 30.0, retries: int = 3) -> Optional[str]
 SIZE_MM_RE = re.compile(r"([\d.]+)\s*[x×]\s*([\d.]+)\s*mm", re.IGNORECASE)
 PITCH_UM_RE = re.compile(r"([\d.]+)\s*(?:µm|microns?|μm|&micro;m|&#0?956;m)", re.IGNORECASE)
 MPIX_RE = re.compile(r"([\d.]+)\s*(?:effective\s+)?(?:Mega ?pixels?|MP)", re.IGNORECASE)
-TYPE_FRACTIONAL_RE = re.compile(r"(1/[\d.]+)(?:\"|inch|-inch|-type|\s*type|″)", re.IGNORECASE)
+TYPE_FRACTIONAL_RE = re.compile(r"(1/[\d.]+)(?:\"|\s*inch|-inch|-type|\s*type|″)", re.IGNORECASE)
 
 
 def parse_year(text: str) -> Optional[int]:
