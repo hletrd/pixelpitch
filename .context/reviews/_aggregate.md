@@ -1,76 +1,64 @@
-# Aggregate Review (Cycle 37) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 38) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-36 Status
+## Cycle 1-37 Status
 
-All previous fixes confirmed still working. No regressions. Gate tests pass. C36-01/02/03/04/05 implemented and verified.
+All previous fixes confirmed still working. No regressions in core logic. Gate tests pass. C37-01 and C37-02 implemented and verified.
 
-## Cross-Agent Agreement Matrix (Cycle 37 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 38 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| `derive_spec` does not validate NaN/inf size dimensions → produces nan area | CR37-02, CRIT37-01, V37-02, TR37-01, ARCH37-01, DBG37-01, TE37-01, TE37-02, DOC37-01 | MEDIUM |
-| `0.0` pitch renders as "0.0 µm" not "unknown" — defense-in-depth | DES37-01 | LOW |
-| Source parsers use bare `float()` but regex excludes NaN/inf | CRIT37-02, V37-03 | LOW (verified safe) |
-| `match_sensors` division by near-zero width | CR37-03 | LOW |
+| Template renders "0.0 µm" for zero pitch but JS `isInvalidData` hides those rows — UX contradiction | CR38-01, CRIT38-01, V38-02, TR38-01, ARCH38-01, DBG38-01, DES38-01, TE38-01 | MEDIUM |
+| `match_sensors` latent ZeroDivisionError if guard changes | CR38-02 | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C37-01: `derive_spec` does not validate NaN/inf size dimensions
+### C38-01: Template renders "0.0 µm" for zero pitch but JS hides those rows — UX contradiction introduced by C37-02
 
-**Sources:** CR37-02, CRIT37-01, V37-02, TR37-01, ARCH37-01, DBG37-01, TE37-01, TE37-02, DOC37-01
-**Severity:** MEDIUM | **Confidence:** HIGH (9-agent consensus)
+**Sources:** CR38-01, CRIT38-01, V38-02, TR38-01, ARCH38-01, DBG38-01, DES38-01, TE38-01
+**Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
 
-`derive_spec` computes `area = size[0] * size[1]` without checking that the size dimensions are finite. When `spec.size = (nan, 24.0)`:
-1. `area = nan * 24.0 = nan`
-2. `pixel_pitch(nan, mpix)` returns `0.0` (guarded)
-3. `write_csv` writes `f"{nan:.2f}"` = `"nan"` to CSV
-4. On re-read, `_safe_float("nan")` returns `None` — area changes from nan to None
+The C37-02 fix added `if (pitch === 0) { return true; }` to the JS `isInvalidData` function, hiding zero-pitch rows by default. However, the Jinja2 template still renders `0.0` pitch as "0.0 µm" (not "unknown"). This creates a three-layer disagreement:
 
-The C36 fixes addressed NaN at the boundaries (CSV parser, openmvg) but not at the computation point. `derive_spec` should validate its inputs as defense-in-depth.
+1. **Python `pixel_pitch`**: returns `0.0` as sentinel for "invalid input"
+2. **Jinja2 template**: treats `0.0` as a valid number, renders "0.0 µm"
+3. **JS `isInvalidData`**: treats `0.0` as invalid, hides the row
 
-Source parser regex patterns (`[\d.]+`) naturally exclude NaN/inf strings, so the practical risk is limited to code-constructed Spec objects (tests, etc.). However, the architectural principle (validate at the computation point, not just the boundaries) warrants the fix.
+The user experience: rows with `pitch=0.0` are hidden by default (toggle is checked), but if the user unchecks "Hide possibly invalid data", they see "0.0 µm" displayed as if it were a legitimate measurement. A 0.0 µm pixel pitch is physically impossible.
 
-**Fix:** Add `isfinite` validation in `derive_spec`:
-```python
-if size is not None and spec.mpix is not None:
-    if isfinite(size[0]) and isfinite(size[1]) and size[0] > 0 and size[1] > 0:
-        area = size[0] * size[1]
-    else:
-        size = None
-        area = None
+The same issue applies to `mpix=0.0` — rendered as "0.0 MP" in the template but representing invalid data.
+
+**Fix:** Update the Jinja2 template to render "unknown" for `pitch=0.0` and `mpix=0.0`, consistent with JS treating these as invalid:
+```jinja2
+{% if spec.pitch is not none and spec.pitch != 0.0 %}
+  {{ spec.pitch|round(1) }} µm
+{% else %}
+  <span class="text-muted">unknown</span>
+{% endif %}
 ```
 
-Also update the `derive_spec` docstring to mention NaN/inf handling.
+Similarly for mpix:
+```jinja2
+{% if spec.spec.mpix is not none and spec.spec.mpix != 0.0 %}
+  {{ spec.spec.mpix|round(1) }} MP
+{% else %}
+  <span class="text-muted">unknown</span>
+{% endif %}
+```
 
-Add tests for area being None when size has NaN dimensions, and for CSV round-trip of NaN area.
+Also update `test_template_zero_pitch_rendering` to verify that 0.0 pitch/mpix render as "unknown" (not as numbers).
 
 ---
 
-### C37-02: `0.0` pitch renders as "0.0 µm" instead of "unknown" — defense-in-depth
+### C38-02: `match_sensors` latent ZeroDivisionError risk — currently guarded
 
-**Sources:** DES37-01, CR37-01
-**Severity:** LOW | **Confidence:** HIGH
+**Sources:** CR38-02
+**Severity:** LOW | **Confidence:** MEDIUM
 
-When `pixel_pitch` returns `0.0` for invalid inputs (NaN, inf, negative), the template renders "0.0 µm" instead of "unknown". A 0.0 µm pixel pitch is physically impossible. The JS `isInvalidData` function does not catch `pitch === 0` either.
-
-**Fix:** Add `pitch === 0` check to JS `isInvalidData` function:
-```javascript
-if (pitch === 0) {
-  return true;
-}
-```
-
----
-
-### C37-03: Source parsers use bare `float()` but regex patterns exclude NaN/inf — verified safe
-
-**Sources:** CRIT37-02, V37-03
-**Severity:** LOW (verified safe) | **Confidence:** HIGH
-
-All source parser regex patterns use `[\d.]+` or `\d` character classes which cannot match "nan" or "inf" strings. No fix required. Document as verified.
+The `abs(megapixels - mp) / megapixels` expression would divide by zero if `megapixels=0.0`. The outer guard `megapixels > 0` prevents this, but if that guard were ever relaxed, a ZeroDivisionError would occur. This is a theoretical risk only — no fix needed now.
 
 ---
 
@@ -80,8 +68,8 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 3 (C37-01, C37-02, C37-03)
-- Cross-agent consensus findings (3+ agents): 1 (C37-01 with 9 agents)
-- Highest severity: MEDIUM (C37-01)
-- Actionable findings: 2 (C37-01, C37-02)
-- Verified safe (no action): 1 (C37-03)
+- Total distinct new findings: 2 (C38-01, C38-02)
+- Cross-agent consensus findings (3+ agents): 1 (C38-01 with 8 agents)
+- Highest severity: MEDIUM (C38-01)
+- Actionable findings: 1 (C38-01)
+- Verified safe / deferred: 1 (C38-02)

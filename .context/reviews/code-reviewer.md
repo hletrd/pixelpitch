@@ -1,71 +1,65 @@
-# Code Review (Cycle 37) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 38) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-36 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-37 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-All C36 findings (CR36-01 through CR36-03) confirmed fixed. `_safe_float` correctly rejects NaN/inf. `pixel_pitch` uses `isfinite` guard. `openmvg.fetch` uses `math.isfinite`. All gate tests pass.
+All C37 findings confirmed fixed. `derive_spec` isfinite guard working. `isInvalidData` zero-pitch check added. Gate tests pass.
 
 ## New Findings
 
-### CR37-01: `write_csv` writes `0.0` pitch/mpix as `0.00`/`0.0` — round-trip asymmetry
+### CR38-01: `isInvalidData` pitch===0 check hides legitimate 0.0 pitch rows — UX contradiction with template rendering
 
-**File:** `pixelpitch.py`, lines 838-839
-**Severity:** LOW | **Confidence:** HIGH
-
-When `spec.mpix` is `0.0`, `write_csv` outputs `f"{0.0:.1f}"` = `"0.0"`. When `derived.pitch` is `0.0`, it outputs `f"{0.0:.2f}"` = `"0.00"`. These are valid float strings that `_safe_float` will parse back to `0.0`, so the round-trip test passes. However, `0.0` for mpix and `0.0` for pitch represent invalid/malformed data (a camera with zero megapixels or zero pixel pitch is physically impossible). These values survive the CSV round-trip but represent a semantic issue — the guard in `pixel_pitch` returns `0.0` for invalid inputs, and that `0.0` propagates as if it were a legitimate measurement.
-
-This is a design concern, not a bug. The `0.0` sentinel value for "invalid" is indistinguishable from a legitimate `0.0` value. A cleaner approach would be to store `None` for invalid-derived values instead of `0.0`, but this is a larger refactor.
-
-**Fix:** No immediate fix required. Consider converting `pixel_pitch` to return `None` instead of `0.0` for invalid inputs in a future refactor, and update the template to display "unknown" for `None` pitch values.
-
----
-
-### CR37-02: `derive_spec` computes `area = nan * 24.0 = nan` when one dimension is NaN but the other is valid
-
-**File:** `pixelpitch.py`, lines 731-733
+**File:** `templates/pixelpitch.html`, lines 277-279
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-When `spec.size = (float('nan'), 24.0)` (NaN width, valid height), `derive_spec` computes:
-```python
-area = size[0] * size[1]  # = nan * 24.0 = nan
-```
+The C37-02 fix added `if (pitch === 0) { return true; }` to `isInvalidData`. This causes rows with `pitch=0.0` to be hidden when "Hide possibly invalid data" is checked (which is the default state — `checked` on line 157).
 
-The `area` becomes `nan`, which then flows to `pixel_pitch(nan, mpix)` → returns `0.0`. The final `pitch` is `0.0` rather than `None`, which is incorrect — it's not that the camera has a zero pitch, it's that we have invalid data.
+However, `test_template_zero_pitch_rendering` explicitly verifies that 0.0 pitch renders as "0.0 µm" in the template — NOT as "unknown". The intent of the test is to confirm that 0.0 is a valid numeric display value. But the JS filter then hides those rows by default, making the template rendering moot for users.
 
-The `parse_existing_csv` path now rejects NaN via `_safe_float`, so NaN can't enter through CSV. But a Spec object constructed in code with `size=(nan, 24.0)` still reaches `derive_spec` with NaN in one dimension.
+The contradiction: the code renders "0.0 µm" in the table, but then hides the row. If 0.0 is truly invalid data that should be hidden, the template should render "unknown" instead. If 0.0 is a valid value, it shouldn't be hidden by default.
 
-**Fix:** Add a `math.isfinite` guard in `derive_spec` for the size dimensions:
-```python
-if size is not None and spec.mpix is not None:
-    if isfinite(size[0]) and isfinite(size[1]) and size[0] > 0 and size[1] > 0:
-        area = size[0] * size[1]
-    else:
-        size = None
-        area = None
-```
+Furthermore, `pixel_pitch` returns `0.0` for `mpix=0.0` cameras. If a camera genuinely has zero megapixels listed (which can happen from source data), its computed pitch would be `0.0`, and that row would be hidden.
+
+**Fix:** Two options:
+1. (Preferred) Change `pixel_pitch` to return `None` for invalid inputs instead of `0.0`, update template to show "unknown" for `None` pitch, and keep the JS `pitch === 0` check as defense-in-depth. This eliminates the `0.0` sentinel entirely.
+2. Remove the `pitch === 0` check from `isInvalidData` and accept that 0.0 pitch rows are visible (matching the template behavior).
+
+Option 1 is cleaner but is a larger refactor. Option 2 is simpler but leaves the semantic ambiguity.
 
 ---
 
-### CR37-03: `match_sensors` division by zero when `width` or `height` is very small
+### CR38-02: `match_sensors` ZeroDivisionError when `megapixels=0.0` and `sensor_megapixels` is non-empty
 
-**File:** `pixelpitch.py`, line 236
-**Severity:** LOW | **Confidence:** MEDIUM
+**File:** `pixelpitch.py`, line 243
+**Severity:** MEDIUM | **Confidence:** HIGH
 
 ```python
-width_match = abs(width - sensor_width) / width * 100 <= size_tolerance
+megapixel_match = any(
+    abs(megapixels - mp) / megapixels * 100 <= megapixel_tolerance
+    for mp in sensor_megapixels
+)
 ```
 
-If `width` is extremely small (e.g., `1e-15`), the division `abs(width - sensor_width) / width` can produce an enormous number, causing false negatives. While `width <= 0` is already guarded, extremely small positive values are not. This is a theoretical edge case — real sensor widths are always >= 2mm.
+When `megapixels=0.0` (which is `> 0` is False, but `megapixels is not None and megapixels > 0` on line 242 evaluates to `0.0 > 0 = False`), the code skips to the elif branch. So in practice this is currently safe because the guard `megapixels > 0` rejects `0.0`. However, if that guard were ever changed to `megapixels is not None and megapixels >= 0`, a ZeroDivisionError would occur.
 
-**Fix:** No immediate fix required. The guard `width <= 0` handles the practical cases. Add a minimum width check only if sensor data includes anomalous entries.
+The existing test `test_match_sensors` with `megapixels=0.0` uses the size-only match path (the elif branch), which works. So this is not a current bug, but the division by `megapixels` without a zero guard in the `any()` expression is a latent risk.
+
+**Fix:** Add an explicit `megapixels > 0` guard inside the `any()` expression as defense-in-depth:
+```python
+if megapixels is not None and megapixels > 0 and sensor_megapixels:
+    megapixel_match = any(
+        megapixels > 0 and abs(megapixels - mp) / megapixels * 100 <= megapixel_tolerance
+        for mp in sensor_megapixels
+    )
+```
+Or more simply, since the outer guard already ensures `megapixels > 0`, no fix is strictly needed. Deferring.
 
 ---
 
 ## Summary
 
-- CR37-01 (LOW): `pixel_pitch` returns `0.0` sentinel for invalid inputs — design concern, not a bug
-- CR37-02 (MEDIUM): `derive_spec` propagates NaN area from partially-NaN size tuple
-- CR37-03 (LOW): `match_sensors` division by near-zero width — theoretical edge case
+- CR38-01 (MEDIUM): `isInvalidData` pitch===0 hides rows that template renders as "0.0 µm" — UX contradiction
+- CR38-02 (LOW): Latent ZeroDivisionError risk in `match_sensors` megapixel matching — currently guarded

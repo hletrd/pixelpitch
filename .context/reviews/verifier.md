@@ -1,53 +1,33 @@
-# Verifier Review (Cycle 37) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 38) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-36 fixes
+**Scope:** Full repository re-review after cycles 1-37 fixes
 
-## V37-01: Gate tests pass — all checks verified
+## V38-01: Gate tests pass — all checks verified
 
-**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. C36 fixes verified working. No regressions.
+**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. C37 fixes verified working. No regressions.
 
-## V37-02: `derive_spec` with NaN size tuple produces nan area then 0.0 pitch — verified
+## V38-02: `isInvalidData` with `pitch === 0` hides rows that `test_template_zero_pitch_rendering` expects to be visible — verified contradiction
 
-**File:** `pixelpitch.py` lines 726-733
+**File:** `templates/pixelpitch.html`, lines 157, 277-279, 84-89
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Evidence:** Tested directly:
-```python
-import pixelpitch as pp
-from models import Spec
+**Evidence:** Traced the data flow:
+1. Template renders `0.0` pitch as "0.0 µm" (line 84-88: `spec.pitch is not none` is True for 0.0)
+2. Test `test_template_zero_pitch_rendering` asserts "0.0 µm" appears in rendered HTML — PASSES
+3. JS `isInvalidData` returns `true` for `pitch === 0` (line 277-279)
+4. "Hide possibly invalid data" checkbox is checked by default (line 157)
+5. `applyInvalidFilter()` is called on page load (line 327)
+6. Result: rows with `pitch=0.0` are hidden by default
 
-spec = Spec(name='NaN Size', category='fixed', type=None,
-            size=(float('nan'), 24.0), pitch=None, mpix=10.0, year=2020)
-d = pp.derive_spec(spec)
-# d.area = nan (not None)
-# d.pitch = 0.0 (pixel_pitch guard catches it)
-```
+The template correctly renders the value, but JS hides it. Users with default settings never see "0.0 µm". If they uncheck the toggle, they see a physically impossible value displayed as if valid.
 
-The test `test_derive_spec_negative_size` already tests `size=(nan, 24.0)` and expects `pitch=0.0`, which passes. However, the area is `nan` rather than `None`, which is inconsistent. The template only reads `derived.pitch` (not `derived.area`), so this doesn't cause visible rendering issues. But `write_csv` would write `area_str = f"{nan:.2f}"` = `"nan"` to CSV, and `_safe_float("nan")` on re-read would return `None`. So there's a round-trip asymmetry: `area=nan` writes as `"nan"` which reads back as `None`.
-
-## V37-03: Source parser regex patterns naturally exclude NaN/inf — verified
-
-**Files:** `sources/cined.py`, `sources/apotelyt.py`, `sources/imaging_resource.py`, `sources/gsmarena.py`
-**Severity:** N/A (verification only)
-**Confidence:** HIGH
-
-**Evidence:** Examined all regex patterns used for numeric extraction:
-- `SIZE_MM_RE = re.compile(r"([\d.]+)\s*[x×]\s*([\d.]+)\s*mm")` — `[\d.]+` cannot match "nan" or "inf"
-- `PITCH_UM_RE = re.compile(r"([\d.]+)\s*(?:µm|um|...)")` — same
-- `MPIX_RE = re.compile(r"([\d.]+)\s*(?:effective\s+)?(?:Mega ?pixels?|MP)")` — same
-- `IR_SENSOR_SIZE_RE = re.compile(r"([\d.]+)\s*mm\s*[x×]\s*([\d.]+)\s*mm")` — same
-- `IR_PITCH_RE = re.compile(r"([\d.]+)\s*microns?")` — same
-- `IR_MPIX_RE = re.compile(r"(\d+\.?\d*)")` — same
-- `RES_RE = re.compile(r"(\d{3,5})\s*[x×]\s*(\d{3,5})")` — matches only 3-5 digit integers
-
-All regex patterns use `[\d.]+` or `\d` character classes which cannot match "nan" or "inf" strings. The source parsers are safe from NaN/inf injection via regex-extracted values.
+**Fix:** Template should render "unknown" for `pitch=0.0`, consistent with JS treating it as invalid.
 
 ---
 
 ## Summary
 
-- V37-01: Gate tests pass
-- V37-02 (MEDIUM): `derive_spec` produces `area=nan` (not None) for partially-NaN size, causing round-trip asymmetry
-- V37-03: Source parser regex patterns verified safe from NaN/inf injection
+- V38-01: Gate tests pass
+- V38-02 (MEDIUM): `isInvalidData` hides zero-pitch rows that template renders as "0.0 µm" — UX contradiction

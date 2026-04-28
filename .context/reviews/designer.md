@@ -1,53 +1,50 @@
-# Designer Review (Cycle 37) — UI/UX Review
+# Designer Review (Cycle 38) — UI/UX Review
 
 **Reviewer:** designer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-36 fixes
+**Scope:** Full repository re-review after cycles 1-37 fixes
 
 ## Previous Findings Status
 
-DES36-01 (NaN pitch renders as "nan µm") addressed. `pixel_pitch` returns `0.0` for NaN. JS `isInvalidData` now catches NaN via `isNaN()` check.
+DES37-01 (0.0 pitch renders as "0.0 µm" not "unknown") — partially fixed. The JS `isInvalidData` now catches `pitch === 0` and hides those rows. But this creates a new UX issue.
 
 ## New Findings
 
-### DES37-01: `0.0` pitch cameras render as "0.0 µm" in the table — not "unknown"
+### DES38-01: Zero-pitch rows hidden by default but rendered as "0.0 µm" — inconsistent user experience
 
-**File:** `templates/pixelpitch.html`, lines 83-89
-**Severity:** LOW | **Confidence:** HIGH
+**File:** `templates/pixelpitch.html`, lines 157, 277-279, 84-88
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-When `pixel_pitch` returns `0.0` for invalid inputs (negative area, NaN, inf), the template renders `{{ spec.pitch|round(1) }}` as `0.0 µm`. A zero pixel pitch is physically impossible, so this should arguably display as "unknown" (the same as `None` pitch).
+The "Hide possibly invalid data" toggle is checked by default (line 157). When checked, `isInvalidData` returns `true` for `pitch === 0` (line 277-279), hiding those rows. But the template still renders 0.0 pitch as "0.0 µm" (line 84-88), not "unknown".
 
-The template logic is:
+The user experience is: if you uncheck "Hide possibly invalid data", you see "0.0 µm" pitch entries. If you check it, those entries vanish. This is inconsistent — either the data is valid (show it) or invalid (display "unknown" instead of a number).
+
+A 0.0 µm pixel pitch is physically impossible for any real camera sensor. The correct UX treatment is to display "unknown" for these entries, just like `None` pitch values, and optionally hide them by default.
+
+**Fix:** In the Jinja2 template, add a check for `spec.pitch == 0.0` to render "unknown" instead of "0.0 µm":
 ```jinja2
-{% if spec.pitch is not none %}
+{% if spec.pitch is not none and spec.pitch != 0.0 %}
   {{ spec.pitch|round(1) }} µm
 {% else %}
   <span class="text-muted">unknown</span>
 {% endif %}
 ```
 
-Since `0.0 is not none` is True, the `0.0` value renders as a number, not "unknown". The JS `isInvalidData` filter does hide these rows when "Hide possibly invalid data" is checked (because `0 < 10` is not `> 10` and `0 < 0` is False, so the row passes... wait, actually `pitch = 0` is not caught by any existing JS check either).
+This makes the template consistent with the JS filter: both treat 0.0 pitch as "unknown/invalid".
 
-Wait — let me re-check the JS. The `isInvalidData` function:
-- `isNaN(parseFloat(row.attr('data-pitch')))` — 0 is not NaN, so this doesn't catch it
-- `pitch > 10` — 0 is not > 10, so this doesn't catch it
-- `pitch < 0` — 0 is not < 0, so this doesn't catch it
+---
 
-So a camera with `pitch=0.0` is NOT hidden by the "Hide possibly invalid data" filter, even though a 0.0 µm pixel pitch is physically impossible. This is a defense-in-depth gap similar to the NaN issue.
+### DES38-02: Scatter plot filter `pitch > 0` correctly excludes zero-pitch entries
 
-However, the practical impact is very low because:
-1. `0.0` pitch can only occur from `pixel_pitch` returning `0.0` for invalid inputs
-2. These cases are increasingly rare as the input validation improves
-3. The camera data from sources is validated and shouldn't produce 0.0 pitch
-4. Any 0.0 pitch that does appear would be immediately noticeable as "wrong"
+**File:** `templates/pixelpitch.html`, line 372
+**Severity:** N/A (verification only)
+**Confidence:** HIGH
 
-**Fix options (defense-in-depth):**
-1. Change `pixel_pitch` to return `None` instead of `0.0` for invalid inputs (requires template update)
-2. Add `pitch === 0` check to JS `isInvalidData` function
-3. Add a template-level check for `spec.pitch == 0.0` to render "unknown"
+The scatter plot creation code has `if (!isNaN(pitch) && pitch > 0 && ...)` which correctly excludes zero-pitch entries from the plot. This is consistent with treating 0.0 pitch as invalid. No fix needed.
 
 ---
 
 ## Summary
 
-- DES37-01 (LOW): `0.0` pitch renders as "0.0 µm" instead of "unknown" — defense-in-depth gap
+- DES38-01 (MEDIUM): Template renders "0.0 µm" for zero pitch but JS hides those rows — inconsistent UX
+- DES38-02: Scatter plot correctly excludes zero-pitch entries — verified

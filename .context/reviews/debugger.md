@@ -1,39 +1,35 @@
-# Debugger Review (Cycle 37) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 38) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-36 fixes
+**Scope:** Full repository re-review after cycles 1-37 fixes
 
 ## Previous Findings Status
 
-All C36 findings fixed. No regressions detected. Gate tests pass.
+All C37 findings fixed. No regressions in core logic.
 
 ## New Findings
 
-### DBG37-01: `derive_spec` computes `area = nan` for partially-NaN size, writes "nan" to CSV
+### DBG38-01: C37-02 fix introduced behavioral regression — zero-pitch rows now hidden by default but template still renders "0.0 µm"
 
-**File:** `pixelpitch.py`, lines 731-733
+**File:** `templates/pixelpitch.html`, lines 84-89, 277-279
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode:** When `spec.size = (nan, 24.0)`, `derive_spec` computes `area = nan * 24.0 = nan`. This `nan` area then flows to:
-1. `pixel_pitch(nan, mpix)` → returns `0.0` (guarded, OK)
-2. `SpecDerived(area=nan, ...)` — the `area` field is `nan`
-3. `write_csv` formats `f"{nan:.2f}"` = `"nan"` — writes literal "nan" to CSV
-4. `_safe_float("nan")` on re-read returns `None` — area changes from nan to None
+**Failure mode:** When a camera has `pitch=0.0` (from `pixel_pitch` returning 0.0 for invalid inputs):
+1. Template renders "0.0 µm" in the table cell
+2. JS `isInvalidData` returns true for `pitch === 0`
+3. "Hide possibly invalid data" is checked by default
+4. Row is hidden on page load
+5. User never sees "0.0 µm" — it's invisible
 
-The failure mode is: on the first render after a camera with NaN size enters the system, the CSV contains "nan" strings. On the next render, those "nan" strings are parsed as `None`, so the data "self-heals" but with data loss (area changes from nan to None, when it should have been None from the start).
+If the user unchecks "Hide possibly invalid data", they see "0.0 µm" displayed as a legitimate value, which is misleading. A zero pixel pitch is physically impossible.
 
-**Trigger scenario:**
-1. Source parser or test code constructs `Spec(size=(nan, 24.0))`
-2. `derive_spec` produces `SpecDerived(area=nan, pitch=0.0)`
-3. `write_csv` writes "nan" to the area column
-4. Next build reads "nan" → `_safe_float` → `None`
-5. Area becomes None — data "healed" but via a corrupt intermediate CSV
+**Regression:** Before C37-02, zero-pitch rows were visible (rendered as "0.0 µm"). After C37-02, they're hidden by default. The template rendering wasn't updated to match, creating an inconsistency.
 
-**Fix:** Add `isfinite` guard in `derive_spec` for size dimensions. Set `size=None` and `area=None` when dimensions are not finite.
+**Fix:** Update the template to render "unknown" for `pitch=0.0` and `mpix=0.0`, consistent with JS treating these as invalid.
 
 ---
 
 ## Summary
 
-- DBG37-01 (MEDIUM): `derive_spec` area=nan writes "nan" to CSV, self-heals to None on next read
+- DBG38-01 (MEDIUM): C37-02 introduced regression — zero-pitch rows hidden but template still renders "0.0 µm"

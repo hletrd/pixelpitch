@@ -1,42 +1,41 @@
-# Tracer Review (Cycle 37) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 38) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-36 fixes
+**Scope:** Full repository re-review after cycles 1-37 fixes
 
 ## Previous Findings Status
 
-TR36-01 (NaN propagation from CSV to page) fixed. All `isfinite` guards verified working.
+TR37-01 (derive_spec area=nan round-trip) fixed by isfinite guard.
 
 ## New Findings
 
-### TR37-01: `derive_spec` area=nan → `write_csv` → "nan" string → `_safe_float` → None: asymmetric round-trip
+### TR38-01: Zero-pitch data flow: `pixel_pitch` returns 0.0 → template renders "0.0 µm" → JS hides row — three layers disagree
 
-**Files:** `pixelpitch.py` (derive_spec, write_csv, parse_existing_csv)
-**Severity:** LOW | **Confidence:** HIGH
+**Files:** `pixelpitch.py` (pixel_pitch), `templates/pixelpitch.html` (template + JS)
+**Severity:** MEDIUM | **Confidence:** HIGH
 
 **Causal trace:**
-1. A `Spec` is constructed with `size=(nan, 24.0)` (from source code or in-memory)
-2. `derive_spec` computes `area = nan * 24.0 = nan`
-3. `write_csv` formats `f"{nan:.2f}"` = `"nan"` into the CSV area column
-4. On next run, `parse_existing_csv` calls `_safe_float("nan")` → returns `None`
-5. The area changes from `nan` to `None` across a write-read cycle
+1. `pixel_pitch(0.0, 0.0)` returns `0.0` (guard: `mpix <= 0 or area <= 0` → returns 0.0)
+2. `derive_spec` with `spec.pitch=None, mpix=0.0, area=0.0` → `pitch = pixel_pitch(0.0, 0.0) = 0.0`
+3. `write_csv` writes `0.00` for pitch
+4. `_safe_float("0.00")` returns `0.0` — round-trip preserves the value
+5. Template: `spec.pitch is not none` → True (0.0 is not None) → renders "0.0 µm"
+6. JS: `isInvalidData` → `pitch === 0` → returns true → row hidden
 
-This is a data integrity asymmetry. The first write produces a CSV with "nan" in it; the read-back produces `None`. The CSV file is "corrupted" with a "nan" string on the first pass, then "corrected" to empty on the second pass.
+Three layers disagree:
+- **Python logic**: `pixel_pitch` returns `0.0` as a sentinel for "invalid"
+- **Template**: treats `0.0` as a valid number, renders it
+- **JS**: treats `0.0` as invalid, hides the row
 
-**Competing hypothesis:** Can NaN area actually reach `write_csv`?
-- `parse_existing_csv` now rejects NaN via `_safe_float` — NO from CSV
-- Source parsers use `[\d.]+` regex which can't match "nan" — NO from sources
-- `derive_spec` can produce NaN area from NaN size — YES from code-constructed Spec
-- `openmvg.fetch` now guards inf dimensions — NO from openmvg
-- Other source parsers use bare `float()` but regex excludes NaN — NO
+The correct fix is to align all three layers: either `pixel_pitch` should return `None` (not `0.0`) for invalid inputs, or the template should treat `0.0` as "unknown" (matching JS), or both.
 
-The only remaining path is `derive_spec` computing `nan * valid = nan` from a code-constructed Spec with NaN size dimensions. This can only happen if a source parser somehow produces a NaN dimension, which the regex analysis shows is impossible from real HTML data.
+Since changing `pixel_pitch` to return `None` would be a larger refactor with cascading effects on `sorted_by`, `write_csv`, and `merge_camera_data`, the simpler fix is to update the template to render "unknown" for `0.0` pitch/mpix values, aligning with the JS behavior.
 
-**Fix:** Add `isfinite` guard in `derive_spec` for size dimensions. This closes the last remaining NaN propagation path.
+**Fix:** Add `spec.pitch != 0.0` check to the template's pitch condition. Add `spec.spec.mpix != 0.0` check to the mpix condition.
 
 ---
 
 ## Summary
 
-- TR37-01 (LOW): `derive_spec` area=nan writes "nan" to CSV, which round-trips as None
+- TR38-01 (MEDIUM): Three-layer disagreement on zero-pitch semantics — Python returns 0.0, template renders it, JS hides it

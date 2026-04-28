@@ -1,38 +1,34 @@
-# Architect Review (Cycle 37) — Architectural/Design Risks
+# Architect Review (Cycle 38) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-36 fixes
+**Scope:** Full repository re-review after cycles 1-37 fixes
 
 ## Previous Findings Status
 
-ARCH36-01 (validation layer incomplete) addressed by C36 fixes. `isfinite` guards now in `pixel_pitch`, `parse_existing_csv`, and `openmvg.fetch`.
+ARCH37-01 (derive_spec validation incomplete) fixed by isfinite guard.
 
 ## New Findings
 
-### ARCH37-01: Validation layer still incomplete — `derive_spec` does not validate size dimensions
+### ARCH38-01: `0.0` sentinel value for "invalid" propagates through system as if legitimate — design concern
 
-**File:** `pixelpitch.py`, lines 726-733
+**File:** `pixelpitch.py` (pixel_pitch), `templates/pixelpitch.html` (template + JS)
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C36 fixes added `isfinite` guards at the data ingestion points (`parse_existing_csv`, `openmvg.fetch`, `pixel_pitch`). However, `derive_spec` — the central computation function — still does not validate its inputs. It trusts that `spec.size` contains finite, positive values.
+The `pixel_pitch` function returns `0.0` as a sentinel for "invalid input" (NaN, inf, negative, zero). This `0.0` propagates through `derive_spec`, `write_csv`, template rendering, and JS filtering as if it were a legitimate measurement value.
 
-The validation strategy is "guard at the boundaries" (CSV parser, source fetchers), which works for data entering through those paths. But `derive_spec` is also called from code paths that construct `Spec` objects directly (tests, merge logic, etc.). If any of these paths produce a Spec with NaN/inf/negative size, the validation is bypassed.
+The fundamental issue is that `0.0` is a valid float but an invalid pixel pitch. Using `0.0` as a sentinel conflates "the computation produced zero" with "the input was invalid". The correct sentinel for "unknown/invalid" is `None`, which the template already handles by displaying "unknown".
 
-A more robust approach would be to also validate at the computation point (`derive_spec`), providing defense-in-depth. This is the same principle as the `pixel_pitch` guard — the function itself should reject invalid inputs, not just rely on callers to do so.
+The C37-02 fix tried to address this by adding `pitch === 0` to the JS filter, which hides zero-pitch rows. But this created a contradiction: the template still renders "0.0 µm" (as if valid) while JS hides it (as if invalid).
 
-**Fix:** Add `isfinite` validation in `derive_spec` for size dimensions:
-```python
-if size is not None and spec.mpix is not None:
-    if isfinite(size[0]) and isfinite(size[1]) and size[0] > 0 and size[1] > 0:
-        area = size[0] * size[1]
-    else:
-        size = None
-        area = None
-```
+**Two-part fix (incremental, not a full refactor):**
+1. **Template fix (immediate):** Add `spec.pitch != 0.0` to the pitch condition, so 0.0 renders as "unknown". This aligns template rendering with JS filtering.
+2. **`pixel_pitch` refactor (deferred):** Change `pixel_pitch` to return `None` instead of `0.0` for invalid inputs. This requires updating `sorted_by` (which uses `-1` as fallback for None), `write_csv`, `merge_camera_data`, and all related tests. This is a larger change that should be done carefully.
+
+The template fix is small, safe, and addresses the immediate UX issue. The `pixel_pitch` refactor can be deferred.
 
 ---
 
 ## Summary
 
-- ARCH37-01 (MEDIUM): Validation layer incomplete — `derive_spec` should validate size dimensions
+- ARCH38-01 (MEDIUM): `0.0` sentinel value propagates as if legitimate — template should render "unknown" for 0.0 pitch/mpix
