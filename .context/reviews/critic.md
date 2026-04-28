@@ -1,40 +1,22 @@
-# Critic Review (Cycle 21) — Multi-Perspective Critique
+# Critic Review (Cycle 22) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
 
-## C21-CR01: C20-03 fix is fundamentally broken — SpecDerived fields are stale
-
-**Severity:** HIGH | **Confidence:** HIGH
-
-The C20-03 fix added field preservation for `type`, `size`, and `pitch` at the `Spec` level. But this is the WRONG layer. The Jinja2 template reads from `SpecDerived` attributes (`spec.size`, `spec.pitch`, `spec.area`), not from `Spec` attributes (`spec.spec.size`, `spec.spec.pitch`). The preserved values exist in the data structure but are invisible to users.
-
-This means the C20-03 fix was essentially a no-op for the rendered output. The data preservation it claims to implement does not actually work. Any camera that relies on field preservation from existing data will still show "unknown" for sensor size and pixel pitch.
-
-**Amplification:** This affects 30.5% of cameras (532 with no size) and 32.5% (567 with no pitch) in the current dataset. These cameras are being shown as "unknown" when they could display the preserved data.
-
----
-
-## C21-CR02: Sony FX fix is incomplete — all Sony uppercase series are affected
+## C22-CR01: Year-change `elif` misattachment — C21-01 regression
 
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C20-02 fix added `re.sub(r'\bFx(\d)', r'FX\1', cleaned)` for FX series cameras. But the same `.title()` issue affects every Sony camera series with a two-letter uppercase prefix: RX, HX, WX, TX, QX, and DSC. The FX fix was a band-aid for a systemic issue with `.title()` and Sony naming conventions.
+The C21-01 fix inserted SpecDerived field preservation code between the Spec year-preservation `if` and the year-change `elif`. This broke the conditional chain: the `elif` is now attached to the SpecDerived pitch preservation `if` instead of the year preservation `if`.
 
-**Amplification:** If IR has review pages for any RX-series cameras (RX100, RX10, etc.), those cameras are misnamed and may create duplicate entries when merged with data from Apotelyt or GSMArena.
+This is a classic code-insertion bug: adding code in the middle of a conditional chain without recognizing that the `elif` is part of that chain. The fix should have either:
+1. Converted the year-change `elif` to a standalone `if` before inserting new code, or
+2. Inserted the SpecDerived preservation AFTER the entire year-preservation block
 
----
-
-## C21-CR03: Incomplete field preservation — mpix is missing
-
-**Severity:** LOW | **Confidence:** HIGH
-
-The merge function preserves `type`, `size`, `pitch`, and `year` but NOT `mpix`. This is an inconsistent design choice — why preserve some fields and not others? The original year-preservation logic was added for a specific reason (different sources report different years). The same reasoning applies to mpix (different sources may or may not report effective megapixels).
+**Amplification:** While this only affects a diagnostic log (not data correctness), it demonstrates that the merge function is becoming fragile. Multiple rounds of fixes (C20-03, C21-01) have added preservation logic in an ad-hoc manner. A cleaner design would be a generic "preserve None fields" helper that iterates over all field names.
 
 ---
 
 ## Summary
 
-- C21-CR01 (HIGH): C20-03 SpecDerived stale fields — fix is a no-op for rendered output
-- C21-CR02 (MEDIUM): Sony FX fix incomplete — all uppercase series affected
-- C21-CR03 (LOW): mpix not preserved — inconsistent with other field preservation
+- C22-CR01 (MEDIUM): `elif` misattachment is a code-insertion regression — suggests merge logic needs refactoring

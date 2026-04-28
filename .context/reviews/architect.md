@@ -1,20 +1,39 @@
-# Architect Review (Cycle 21) — Architectural/Design Risks
+# Architect Review (Cycle 22) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
 
-## A21-01: SpecDerived stale fields reveal a deeper data model design issue
+## A22-01: `merge_camera_data` field preservation is ad-hoc and fragile
 
-**Severity:** MEDIUM | **Confidence:** HIGH
+**Severity:** LOW | **Confidence:** HIGH
 
-The C21-01 bug (SpecDerived fields stale after merge) reveals a deeper architectural issue: the `Spec` / `SpecDerived` split creates two sources of truth for the same data. `Spec` holds input values; `SpecDerived` holds computed values. When merge modifies `Spec` fields, `SpecDerived` fields become stale.
+The C22-01 bug (`elif` misattachment) is a symptom of a deeper design issue. The merge function now has 8 separate `if` statements for field preservation:
 
-The current fix (preserving both Spec and SpecDerived fields) is pragmatic but perpetuates the dual-source-of-truth problem. A more robust approach would be to re-derive `SpecDerived` from `Spec` after any merge operation. However, this has a subtle complication: `derive_spec` computes `SpecDerived.size` from `spec.type` when `spec.size` is None, which could produce different results than the preserved `spec.size`.
+1. `spec.type` preservation
+2. `spec.size` preservation
+3. `spec.pitch` preservation
+4. `spec.mpix` preservation
+5. `spec.year` preservation (with elif for year-change logging)
+6. `derived.size` preservation
+7. `derived.area` preservation
+8. `derived.pitch` preservation
 
-**Recommendation:** The pragmatic fix (preserving SpecDerived fields) is correct for now. If the source diversity grows, consider making `SpecDerived` a pure computed view with no independent state, so it's always consistent with `Spec`.
+This list will grow as more fields are added to the data model. The ad-hoc `if` chain is error-prone: inserting code in the middle (as C21-01 did) can break the conditional structure.
+
+**Recommendation:** Extract a generic field-preservation helper:
+```python
+def _preserve_none_fields(new_obj, existing_obj, field_names):
+    for field in field_names:
+        if getattr(new_obj, field) is None and getattr(existing_obj, field) is not None:
+            setattr(new_obj, field, getattr(existing_obj, field))
+```
+
+This would make the preservation logic declarative and less prone to insertion errors. However, the year-change logging is a special case that would still need separate handling.
+
+This is an architectural improvement, not a correctness fix. It can be deferred.
 
 ---
 
 ## Summary
 
-- A21-01 (MEDIUM): Spec/SpecDerived dual-source-of-truth design issue — pragmatic fix is acceptable
+- A22-01 (LOW): Field preservation logic is ad-hoc and fragile — consider generic helper

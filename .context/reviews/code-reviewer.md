@@ -1,121 +1,79 @@
-# Code Review (Cycle 21) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 22) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-20 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-21 fixes, focusing on NEW issues
 
-## C21-01: `merge_camera_data` preserves `Spec` fields but NOT `SpecDerived` fields — stale data in rendered HTML
+## C22-01: `merge_camera_data` year-change log message is unreachable — `elif` attached to wrong `if`
 
-**File:** `pixelpitch.py`, lines 403-410
-**Severity:** HIGH | **Confidence:** HIGH (reproduced)
+**File:** `pixelpitch.py`, lines 428-437
+**Severity:** MEDIUM | **Confidence:** HIGH (static analysis)
 
-The C20-03 fix added field preservation for `type`, `size`, and `pitch` at the `Spec` level (`new_spec.spec.*`). However, the `SpecDerived` fields (`new_spec.size`, `new_spec.area`, `new_spec.pitch`) are NOT updated to match. The Jinja2 template reads from `SpecDerived` fields, not `Spec` fields, so the preserved values are invisible in the rendered HTML.
+The C21-01 fix added SpecDerived field preservation after the Spec field preservation block. However, the `elif` branch that logs year changes (added in C20-03) is now structurally attached to the SpecDerived pitch preservation `if`:
 
-**Concrete failure scenario:**
-1. Camera "Sony A7 IV" has `size=(35.9, 23.9)`, `pitch=5.12` in the existing CSV
-2. A new source (e.g., IR) has the same camera with `size=None`, `pitch=None`
-3. After merge: `spec.spec.size=(35.9, 23.9)` (preserved), but `spec.size=None` (NOT updated)
-4. Template reads `spec.size` -> shows "unknown" instead of "35.9 × 23.9 mm"
-5. Similarly, `spec.spec.pitch=5.12` but `spec.pitch=None` -> shows "unknown" instead of "5.12 µm"
-
-**Evidence:**
 ```python
-spec_new = Spec(name='Test Cam', category='fixed', type='1/2.3', size=None, pitch=None, mpix=10.0, year=2020)
-derived_new = pp.derive_spec(spec_new)
-spec_existing = Spec(name='Test Cam', category='fixed', type='1/2.3', size=(5.0, 3.7), pitch=2.0, mpix=10.0, year=2020)
-derived_existing = pp.derive_spec(spec_existing)
-merged = pp.merge_camera_data([derived_new], [derived_existing])
-m = merged[0]
-# m.spec.size = (5.0, 3.7)  <- preserved at Spec level (correct)
-# m.size = None               <- NOT updated at SpecDerived level (BUG)
-# m.spec.pitch = 2.0          <- preserved at Spec level (correct)
-# m.pitch = None              <- NOT updated at SpecDerived level (BUG)
-```
-
-**Fix:** Also preserve `SpecDerived` fields alongside `Spec` fields in `merge_camera_data`:
-```python
-if new_spec.size is None and existing_spec.size is not None:
-    new_spec.size = existing_spec.size
-if new_spec.area is None and existing_spec.area is not None:
-    new_spec.area = existing_spec.area
 if new_spec.pitch is None and existing_spec.pitch is not None:
     new_spec.pitch = existing_spec.pitch
+elif (                              # <-- this elif belongs to the pitch preservation
+    new_spec.spec.year is not None  # <-- but compares YEAR, not pitch
+    and existing_spec.spec.year is not None
+    and new_spec.spec.year != existing_spec.spec.year
+):
+    print(
+        f"  Year changed for {new_spec.spec.name[:40]}: "
+        f"{existing_spec.spec.year} -> {new_spec.spec.year}"
+    )
+```
+
+This `elif` is only reachable when `new_spec.pitch is NOT None` (i.e., the SpecDerived pitch is already set) AND the year conditions are met. If `new_spec.pitch is None` and `existing_spec.pitch is not None`, the `if` branch executes (preserving pitch), and the `elif` is skipped entirely — even if the year changed.
+
+**Concrete failure scenario:**
+1. Camera "Canon EOS R5" has `pitch=4.39, year=2020` in existing data
+2. New source has `pitch=None, year=2021`
+3. After merge: `new_spec.pitch = 4.39` (preserved from existing, correct)
+4. But the year change log "Year changed for Canon EOS R5: 2020 -> 2021" is NEVER printed because the `elif` is attached to the pitch-preservation `if`
+5. The year IS correctly set to 2021 (new data takes precedence), but the diagnostic log is silently suppressed
+
+**Fix:** Move the year-change `elif` out of the SpecDerived block and make it a standalone `if`:
+
+```python
+if new_spec.pitch is None and existing_spec.pitch is not None:
+    new_spec.pitch = existing_spec.pitch
+
+if (
+    new_spec.spec.year is not None
+    and existing_spec.spec.year is not None
+    and new_spec.spec.year != existing_spec.spec.year
+):
+    print(
+        f"  Year changed for {new_spec.spec.name[:40]}: "
+        f"{existing_spec.spec.year} -> {new_spec.spec.year}"
+    )
 ```
 
 ---
 
-## C21-02: Sony RX/DSC/HX/WX/TX/QX series cameras misnamed — same `.title()` issue as C20-02 but broader
+## C22-02: `_parse_camera_name` Sony DSC hyphen is stripped to space — breaks "DSC-HX400" pattern
 
-**File:** `sources/imaging_resource.py`, lines 158-165
-**Severity:** MEDIUM | **Confidence:** HIGH (reproduced)
+**File:** `sources/imaging_resource.py`, line 173
+**Severity:** LOW | **Confidence:** MEDIUM
 
-The C20-02 fix added `re.sub(r'\bFx(\d)', r'FX\1', cleaned)` to fix the FX naming issue. However, the same `.title()` issue affects ALL Sony multi-letter uppercase series: RX, HX, WX, TX, QX, and DSC. These are all converted to lowercase second letter by `.title()` (e.g., "rx100" -> "Rx100" instead of "RX100").
+When the Sony name starts with "Sony" and falls through to URL-based parsing, the slug hyphens are replaced with spaces via `.replace("-", " ")`. For cameras like "Sony DSC-HX400", the URL slug is "sony-dsc-hx400". After `.replace("-", " ")` and `.title()`, it becomes "Sony Dsc Hx400". The DSC normalizer converts "Dsc" to "DSC" and the HX normalizer converts "Hx400" to "HX400", producing "Sony DSC HX400".
 
-**Concrete failure scenario:** A user searches for "Sony RX100 VII" on the All Cameras page and doesn't find it because it's listed as "Sony Rx100 Vii". If another source (Apotelyt) produces the correct name "Sony RX100 VII", the merge treats them as different cameras (different keys), creating a duplicate entry.
+However, if the camera name is provided directly via "Model Name" (e.g., "Sony DSC-HX400"), the `.title()` call in the non-URL path does NOT apply, and the name flows through `normalise_name()` which only collapses whitespace. The hyphen in "DSC-HX400" is preserved, resulting in "Sony DSC-HX400" (with hyphen) vs. "Sony DSC HX400" (without hyphen from URL). This inconsistency means the same camera can have two different names depending on whether it came from the Model Name field or the URL.
 
-**Evidence:**
+The test expects "Sony DSC HX400" (space), which is the URL-derived form. But if a real IR page has Model Name = "Sony DSC-HX400", the name would have a hyphen, creating a potential dedup mismatch.
+
+**Concrete failure scenario:** IR page has Model Name "Sony DSC-HX400". The name is not URL-derived, so hyphens are preserved. Apotelyt might produce "Sony DSC-HX400" too. But if GSMArena or another source produces "Sony DSC HX400" (without hyphen), the merge keys would differ, creating a duplicate.
+
+**Fix:** Add a hyphen-to-space normalizer for "DSC-" patterns after the DSC uppercase normalizer:
 ```python
-name = imaging_resource._parse_camera_name(
-    {'Model Name': 'Sony RX100 VII'},
-    'https://www.imaging-resource.com/cameras/sony-rx100-vii-review/specifications/'
-)
-# Returns "Sony Rx100 Vii" instead of "Sony RX100 VII"
-```
-
-**Fix:** Add a general Sony uppercase series normalizer:
-```python
-# After the existing FX normalizer:
-cleaned = re.sub(r'\bFx(\d)', r'FX\1', cleaned)
-# Add:
-cleaned = re.sub(r'\bRx(\d)', r'RX\1', cleaned)
-cleaned = re.sub(r'\bHx(\d)', r'HX\1', cleaned)
-cleaned = re.sub(r'\bWx(\d)', r'WX\1', cleaned)
-cleaned = re.sub(r'\bTx(\d)', r'TX\1', cleaned)
-cleaned = re.sub(r'\bQx(\d)', r'QX\1', cleaned)
-cleaned = re.sub(r'\bDsc\b', r'DSC', cleaned)
-```
-
----
-
-## C21-03: `mpix` field is NOT preserved by merge when new data has `mpix=None`
-
-**File:** `pixelpitch.py`, lines 403-410
-**Severity:** LOW | **Confidence:** HIGH
-
-The merge function preserves `type`, `size`, `pitch`, and `year` from existing data when new data has None. However, `mpix` has no such preservation logic. When a new source has `mpix=None` but existing data has `mpix=33.0`, the megapixel count is lost and the camera shows "unknown" resolution.
-
-**Concrete failure scenario:** Camera "Canon R5" has `mpix=45.0` in the existing CSV. A new source fetch returns the camera without effective megapixels. After merge, `mpix=None` -> camera shows "unknown" resolution.
-
-**Fix:** Add mpix preservation:
-```python
-if new_spec.spec.mpix is None and existing_spec.spec.mpix is not None:
-    new_spec.spec.mpix = existing_spec.spec.mpix
-```
-
----
-
-## C21-04: `test_merge_field_preservation` only validates `Spec` fields, not `SpecDerived` fields
-
-**File:** `tests/test_parsers_offline.py`, lines 676-718
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-The test added in C20-03 checks `merged_t[0].spec.type`, `merged_s[0].spec.size`, and `merged_p[0].spec.pitch` (Spec-level fields). It does NOT check `merged_t[0].size`, `merged_s[0].area`, or `merged_p[0].pitch` (SpecDerived-level fields). This is why the C21-01 bug went undetected — the test passes but doesn't verify the fields that the template actually uses.
-
-**Fix:** Add assertions for SpecDerived fields:
-```python
-expect("merge: preserves derived.size from existing",
-       merged_s[0].size, (5.0, 3.7), tol=0.01)
-expect("merge: preserves derived.area from existing",
-       merged_s[0].area, 18.5, tol=0.01)
-expect("merge: preserves derived.pitch from existing",
-       merged_p[0].pitch, 2.0, tol=0.01)
+cleaned = re.sub(r'\bDSC-', 'DSC ', cleaned)
 ```
 
 ---
 
 ## Summary
 
-- C21-01 (HIGH): SpecDerived fields stale after merge — data shows as "unknown" in rendered HTML
-- C21-02 (MEDIUM): Sony RX/DSC/HX/WX/TX/QX naming — same .title() issue as C20-02 but broader
-- C21-03 (LOW): mpix not preserved by merge when new data has None
-- C21-04 (MEDIUM): test_merge_field_preservation doesn't verify SpecDerived fields
+- C22-01 (MEDIUM): Year-change log unreachable due to `elif` attached to wrong `if` — diagnostic regression from C21-01 fix
+- C22-02 (LOW): Sony DSC hyphen inconsistency between Model Name and URL paths — potential dedup mismatch

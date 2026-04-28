@@ -216,3 +216,11 @@ These findings from the review are explicitly deferred. Each entry records:
 - **Re-open if:** The CSV schema changes and the parser silently breaks.
 
 ---
+
+## C22-05: Field preservation logic is ad-hoc and fragile
+- **File:** `pixelpitch.py`, `merge_camera_data()`, lines 408-440
+- **Severity:** LOW | **Confidence:** HIGH (architectural, not a bug)
+- **Reason:** Extracting a generic `_preserve_none_fields()` helper is a refactoring improvement, not a correctness fix. The current code works correctly after the C22-01 fix. Refactoring carries risk of introducing new bugs in the merge logic (the most critical path in the application). The benefit (declarative field list) does not outweigh the risk at this time.
+- **Re-open if:** More fields are added to Spec/SpecDerived and the `if` chain grows beyond 12 statements, or another insertion bug occurs.
+
+---

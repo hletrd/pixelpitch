@@ -1,36 +1,29 @@
-# Debugger Review (Cycle 21) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 22) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
 
-## D21-01: C20-03 regression — SpecDerived fields stale after merge
+## D22-01: `elif` year-change branch unreachable — C21-01 regression
 
-**Severity:** HIGH | **Confidence:** HIGH (reproduced)
+**File:** `pixelpitch.py`, lines 428-437
+**Severity:** MEDIUM | **Confidence:** HIGH (static analysis + traced execution)
 
-The C20-03 fix introduced a subtle data inconsistency. When `merge_camera_data` preserves `spec.type`, `spec.size`, or `spec.pitch` from existing data, it only sets the `Spec` attribute. The corresponding `SpecDerived` attributes (`size`, `area`, `pitch`) are NOT updated. This creates an internal inconsistency where `new_spec.spec.size != new_spec.size`.
+The C21-01 fix inserted SpecDerived field preservation (lines 423-428) between the Spec field preservation block and the year-change `elif`. The `elif` was originally attached to the `if new_spec.spec.year is None` guard (line 418). After the insertion, it is now attached to `if new_spec.pitch is None and existing_spec.pitch is not None` (line 428).
 
-**Failure mode:**
-1. Camera "Test Cam" exists with `spec.size=(5.0, 3.7)`, `derived.size=(5.0, 3.7)`, `derived.area=18.5`
-2. New source has `spec.size=None`, `derived.size=None`, `derived.area=None`
-3. After merge: `spec.spec.size=(5.0, 3.7)`, `spec.size=None`, `spec.area=None`
-4. The `spec.spec.size` and `spec.size` disagree — an internal invariant violation
-5. Template reads `spec.size` -> shows "unknown"
+**Execution trace:**
+1. `new_spec.spec.year is None and existing_spec.spec.year is not None` → `new_spec.spec.year = existing_spec.spec.year` (line 418)
+2. `new_spec.size is None and existing_spec.size is not None` → `new_spec.size = existing_spec.size` (line 424)
+3. `new_spec.area is None and existing_spec.area is not None` → `new_spec.area = existing_spec.area` (line 426)
+4. `new_spec.pitch is None and existing_spec.pitch is not None` → `new_spec.pitch = existing_spec.pitch` (line 428)
+5. The `elif` on line 429 is evaluated ONLY when step 4's condition is False
+6. But the year-change message should fire when BOTH years are non-None and differ — regardless of pitch
 
-**Root cause:** The C20-03 fix was implemented at the wrong layer. It should preserve `SpecDerived` fields alongside `Spec` fields, or re-derive after preservation.
+**Failure mode:** When a camera's pitch is preserved from existing data (step 4 condition True), the `elif` is never evaluated. The year change IS correctly applied (new data takes precedence on line 418 when year is not None), but the diagnostic log is suppressed. This means the "Year changed for ..." message is partially silenced.
 
----
-
-## D21-02: Sony RX/DSC/HX/WX/TX/QX naming — latent bug from C20-02 incomplete fix
-
-**Severity:** MEDIUM | **Confidence:** HIGH (reproduced)
-
-The C20-02 fix only addressed the FX series. The same `.title()` issue affects all Sony multi-letter uppercase series. These cameras will be misnamed and may create dedup failures with other sources.
-
-**Failure mode:** Camera "Sony RX100 VII" from IR is named "Sony Rx100 Vii". Apotelyt names it "Sony RX100 VII". Merge treats them as different cameras -> duplicate entry.
+**Impact:** Not a data correctness bug — years are still correct. But it's a diagnostic regression that makes it harder to track year changes in CI logs.
 
 ---
 
 ## Summary
 
-- D21-01 (HIGH): SpecDerived fields stale after merge — internal invariant violation
-- D21-02 (MEDIUM): Sony RX/DSC/HX/WX/TX/QX naming — same class of bug as C20-02
+- D22-01 (MEDIUM): `elif` year-change branch unreachable — diagnostic regression from C21-01

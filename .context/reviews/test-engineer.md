@@ -1,61 +1,45 @@
-# Test Engineer Review (Cycle 21) — Test Coverage, Flaky Tests, TDD
+# Test Engineer Review (Cycle 22) — Test Coverage, Flaky Tests, TDD
 
 **Reviewer:** test-engineer
 **Date:** 2026-04-28
 
-## TE21-01: test_merge_field_preservation doesn't verify SpecDerived fields
+## TE22-01: No test for year-change log in merge_camera_data
 
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-The test added in C20-03 validates that `merged[0].spec.type`, `merged[0].spec.size`, and `merged[0].spec.pitch` are preserved (Spec-level fields). But it does NOT check `merged[0].size`, `merged[0].area`, or `merged[0].pitch` (SpecDerived-level fields). These are the fields the template actually reads. This test gap allowed the C21-01 bug (SpecDerived stale fields) to go undetected.
-
-**Fix:** Add assertions for SpecDerived fields alongside existing Spec-level assertions:
-```python
-expect("merge: preserves derived.size from existing",
-       merged_s[0].size, (5.0, 3.7), tol=0.01)
-expect("merge: preserves derived.area from existing",
-       merged_s[0].area, 18.5, tol=0.01)
-expect("merge: preserves derived.pitch from existing",
-       merged_p[0].pitch, 2.0, tol=0.01)
-```
-
----
-
-## TE21-02: No test for Sony RX/DSC/HX/WX/TX/QX name normalization
-
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-The C20-02 fix added tests for FX3, FX30, FX6 but no tests for RX, DSC, HX, WX, TX, QX series cameras. This is why the broader naming issue went undetected.
-
-**Fix:** Add test cases:
-```python
-name_rx100 = imaging_resource._parse_camera_name(
-    {"Model Name": "Sony RX100 VII"},
-    "https://www.imaging-resource.com/cameras/sony-rx100-vii-review/specifications/"
-)
-expect("IR Sony RX100 VII name", name_rx100, "Sony RX100 VII")
-
-name_dsc = imaging_resource._parse_camera_name(
-    {"Model Name": "Sony DSC-HX400"},
-    "https://www.imaging-resource.com/cameras/sony-dsc-hx400-review/specifications/"
-)
-expect("IR Sony DSC-HX400 name", name_dsc, "Sony DSC-HX400")
-```
-
----
-
-## TE21-03: No test for mpix preservation in merge
-
+**File:** `tests/test_parsers_offline.py`
 **Severity:** LOW | **Confidence:** HIGH
 
-The merge function does not preserve `mpix` when new data has `mpix=None`. There is no test for this scenario.
+The `test_merge_field_preservation` test verifies that year values are correctly preserved or overridden, but it does NOT verify the year-change diagnostic log. The existing test `test_create_camera_key_year_mismatch` tests the year-change scenario but only checks the final data values, not the log output.
 
-**Fix:** Add test case where new spec has `mpix=None` but existing has `mpix=33.0`.
+After the C22-01 bug (year-change `elif` attached to wrong `if`), there is no test that would catch this regression because:
+1. The data values are correct (year is properly set)
+2. The log is only a diagnostic — not testable via the current test framework
+
+**Fix:** Add a test that captures stdout during merge and verifies the year-change log is printed when years differ and pitch is preserved:
+
+```python
+def test_merge_year_change_log():
+    import io, contextlib
+    # Case: new pitch is None, existing pitch is set, years differ
+    existing = [derive("Cam Y", "fixed", (5.0, 3.7), 10.0, 2020, pitch_val=2.0)]
+    new = [derive("Cam Y", "fixed", (5.0, 3.7), 10.0, 2021, pitch_val=None)]
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        merged = pp.merge_camera_data(new, existing)
+    expect("year change log printed", "Year changed" in buf.getvalue(), True)
+```
+
+---
+
+## TE22-02: No test for Sony DSC hyphen normalisation
+
+**File:** `tests/test_parsers_offline.py`
+**Severity:** LOW | **Confidence:** MEDIUM
+
+The test for Sony DSC-HX400 expects "Sony DSC HX400" (space between DSC and HX400), which tests the URL-derived name path. But there is no test for the Model Name path where "Sony DSC-HX400" would retain the hyphen. If a DSC-hyphen normalizer is added, it needs a test.
 
 ---
 
 ## Summary
 
-- TE21-01 (MEDIUM): test_merge_field_preservation missing SpecDerived assertions
-- TE21-02 (MEDIUM): No test for Sony RX/DSC/HX/WX/TX/QX naming
-- TE21-03 (LOW): No test for mpix preservation in merge
+- TE22-01 (LOW): No test for year-change log in merge
+- TE22-02 (LOW): No test for Sony DSC hyphen normalisation

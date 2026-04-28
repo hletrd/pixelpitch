@@ -1,59 +1,40 @@
-# Verifier Review (Cycle 21) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 22) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
 
-## V21-01: SpecDerived stale fields after merge — verified with live data
-**Severity:** HIGH | **Confidence:** HIGH (reproduced with live CSV)
+## V22-01: Year-change log unreachable — verified by code inspection
 
-Verified against the actual `dist/camera-data.csv` (1742 records). 532 cameras (30.5%) have no size and 567 (32.5%) have no pitch. When these cameras are merged with new data that also has missing fields, the C20-03 fix preserves `Spec` fields but the `SpecDerived` fields remain None, causing "unknown" display in the rendered HTML.
+**File:** `pixelpitch.py`, lines 428-437
+**Severity:** MEDIUM | **Confidence:** HIGH (static analysis confirmed)
 
-**Evidence:**
-```
-spec_new = Spec(name='Test Cam', category='fixed', type='1/2.3', size=None, pitch=None, mpix=10.0, year=2020)
-derived_new = pp.derive_spec(spec_new)
-# derived_new.size=None, derived_new.area=None, derived_new.pitch=None
+Verified the `elif` attachment issue by inspecting the code structure:
 
-spec_existing = Spec(name='Test Cam', category='fixed', type='1/2.3', size=(5.0, 3.7), pitch=2.0, mpix=10.0, year=2020)
-derived_existing = pp.derive_spec(spec_existing)
-# derived_existing.size=(5.0, 3.7), derived_existing.area=18.5, derived_existing.pitch=2.0
-
-merged = pp.merge_camera_data([derived_new], [derived_existing])
-# merged[0].spec.size=(5.0, 3.7) — preserved (Spec level)
-# merged[0].size=None — NOT preserved (SpecDerived level)
-# merged[0].spec.pitch=2.0 — preserved (Spec level)
-# merged[0].pitch=None — NOT preserved (SpecDerived level)
+```python
+# Line 428
+if new_spec.pitch is None and existing_spec.pitch is not None:
+    new_spec.pitch = existing_spec.pitch
+# Line 429-437
+elif (
+    new_spec.spec.year is not None
+    and existing_spec.spec.year is not None
+    and new_spec.spec.year != existing_spec.spec.year
+):
+    print(...)
 ```
 
-The template accesses `spec.size` (SpecDerived) and `spec.pitch` (SpecDerived), not `spec.spec.size` (Spec) or `spec.spec.pitch` (Spec). So the preserved values are invisible to users.
+The `elif` on line 429 is syntactically attached to the `if` on line 428 (SpecDerived pitch preservation), not to the `if` on line 417 (Spec year preservation). This means:
 
----
+- When `new_spec.pitch is None and existing_spec.pitch is not None` → the `if` fires (pitch preserved), `elif` skipped
+- When `new_spec.pitch is not None` → the `elif` is evaluated (year change logged if applicable)
+- When `new_spec.pitch is None and existing_spec.pitch is None` → the `elif` is evaluated
 
-## V21-02: Sony RX naming — verified misnaming
-**Severity:** MEDIUM | **Confidence:** HIGH (reproduced)
+The year value itself is NOT affected — new data's year always takes precedence. Only the diagnostic message is affected.
 
-Tested: `_parse_camera_name({'Model Name': 'Sony RX100 VII'}, url)` returns `'Sony Rx100 Vii'` instead of `'Sony RX100 VII'`. The `.title()` method capitalizes only the first letter of each word, converting 'rx' to 'Rx' instead of 'RX'.
-
-**Evidence:** Direct Python execution confirms misnaming for RX100, RX10, RX0, RX1, HX400, WX350, TX30, QX1, DSC-RX100.
-
----
-
-## V21-03: mpix not preserved — verified data loss
-**Severity:** LOW | **Confidence:** HIGH (reproduced)
-
-Tested: Merging new spec with `mpix=None` against existing spec with `mpix=33.0` loses the megapixel count. The camera shows "unknown" resolution in the rendered HTML.
-
-**Evidence:**
-```
-spec_new = Spec(name='Test', category='mirrorless', type=None, size=(35.9, 23.9), pitch=5.12, mpix=None, year=2020)
-merged = pp.merge_camera_data([pp.derive_spec(spec_new)], [derived_existing])
-# merged[0].spec.mpix = None (not preserved)
-```
+**Correctness impact:** None for data. Medium for observability.
 
 ---
 
 ## Summary
 
-- V21-01 (HIGH): SpecDerived stale fields after merge — verified, template shows "unknown"
-- V21-02 (MEDIUM): Sony RX/DSC/HX/WX/TX/QX misnaming — verified
-- V21-03 (LOW): mpix not preserved in merge — verified
+- V22-01 (MEDIUM): Year-change log unreachable due to `elif` attachment — verified, no data impact

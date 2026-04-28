@@ -1,88 +1,90 @@
-# Aggregate Review (Cycle 21) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 22) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-20 Status
+## Cycle 1-21 Status
 
-All previous fixes confirmed still working. No regressions. Gate tests pass. C20-01 (pixel_pitch crash guard), C20-02 (Sony FX naming), and C20-03 (merge field preservation) fixes verified in code.
+All previous fixes confirmed still working. No regressions. Gate tests pass. C21-01 (SpecDerived stale fields), C21-02 (Sony RX/DSC naming), C21-03 (mpix preservation), and C21-04 (test coverage) fixes verified in code.
 
-**However:** C20-03 fix is partially broken — see C21-01 below.
-
-## Cross-Agent Agreement Matrix (Cycle 21 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 22 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| SpecDerived fields stale after merge (C20-03 regression) | code-reviewer, critic, verifier, tracer, debugger, test-engineer, architect, designer | HIGH |
-| Sony RX/DSC/HX/WX/TX/QX misnamed by `.title()` | code-reviewer, critic, verifier, tracer, debugger, test-engineer | MEDIUM |
-| mpix not preserved in merge when new has None | code-reviewer, critic, verifier, test-engineer | LOW |
-| test_merge_field_preservation doesn't verify SpecDerived | code-reviewer, test-engineer | MEDIUM |
+| Year-change `elif` attached to wrong `if` (C21-01 regression) | code-reviewer, critic, verifier, tracer, debugger, test-engineer, architect | MEDIUM |
+| Sony DSC hyphen inconsistency between Model Name and URL paths | code-reviewer, test-engineer | LOW |
+| No test for year-change log in merge | test-engineer | LOW |
+| No test for Sony DSC hyphen normalisation | test-engineer | LOW |
+| Field preservation logic is ad-hoc/fragile | architect, critic | LOW (architectural) |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C21-01: SpecDerived fields stale after merge — C20-03 regression
+### C22-01: Year-change `elif` attached to wrong `if` — C21-01 regression
 
-**Sources:** C21-01, C21-CR01, V21-01, T21-01, D21-01, TE21-01, A21-01, D21-01
-**Severity:** HIGH | **Confidence:** HIGH (8-agent consensus)
+**Sources:** C22-01, C22-CR01, V22-01, T22-01, D22-01, TE22-01, A22-01
+**Severity:** MEDIUM | **Confidence:** HIGH (7-agent consensus)
 
-The C20-03 fix added field preservation for `type`, `size`, and `pitch` at the `Spec` level (`new_spec.spec.*`). However, the `SpecDerived` fields (`new_spec.size`, `new_spec.area`, `new_spec.pitch`) were NOT updated to match. The Jinja2 template reads from `SpecDerived` fields, so the preserved values are invisible in the rendered HTML — cameras show "unknown" for sensor size and pixel pitch.
+The C21-01 fix inserted SpecDerived field preservation code between the Spec year-preservation `if` and the year-change `elif`. This changed the `elif`'s parent from the year-preservation `if` to the SpecDerived pitch-preservation `if`.
 
-This affects 30.5% of cameras (532 with no size) and 32.5% (567 with no pitch) in the current dataset.
-
-**Fix:** Add SpecDerived field preservation in `merge_camera_data`:
+**Before C21-01 (correct):**
 ```python
-if new_spec.size is None and existing_spec.size is not None:
-    new_spec.size = existing_spec.size
-if new_spec.area is None and existing_spec.area is not None:
-    new_spec.area = existing_spec.area
+if new_spec.spec.year is None and existing_spec.spec.year is not None:
+    new_spec.spec.year = existing_spec.spec.year
+elif (new_spec.spec.year != existing_spec.spec.year):
+    print("Year changed...")  # This fires when years differ
+```
+
+**After C21-01 (broken):**
+```python
+if new_spec.spec.year is None and ...:
+    ...
 if new_spec.pitch is None and existing_spec.pitch is not None:
     new_spec.pitch = existing_spec.pitch
+elif (new_spec.spec.year != existing_spec.spec.year):
+    print("Year changed...")  # Only fires when pitch is NOT None
 ```
+
+**Impact:** Data correctness is NOT affected — years are still correctly set. Only the diagnostic log message is partially suppressed. When pitch is preserved from existing data, the year-change log is silently skipped.
+
+**Fix:** Convert the `elif` to a standalone `if` after all preservation logic.
 
 ---
 
-### C21-02: Sony RX/DSC/HX/WX/TX/QX series cameras misnamed by `.title()`
+### C22-02: Sony DSC hyphen inconsistency between Model Name and URL paths
 
-**Sources:** C21-02, C21-CR02, V21-02, T21-02, D21-02, TE21-02
-**Severity:** MEDIUM | **Confidence:** HIGH (6-agent consensus)
+**Sources:** C22-02, TE22-02
+**Severity:** LOW | **Confidence:** MEDIUM (2-agent consensus)
 
-The C20-02 fix only addressed the FX series. The same `.title()` issue affects all Sony multi-letter uppercase series: RX, HX, WX, TX, QX, and DSC. These are all converted to lowercase second letter by `.title()` (e.g., "rx100" -> "Rx100" instead of "RX100").
+When the Sony name starts with "Sony" and falls through to URL-based parsing, hyphens in "DSC-HX400" become spaces. But when the name comes from "Model Name", the hyphen is preserved. This could create dedup mismatches.
 
-**Fix:** Add general Sony uppercase series normalizers after the existing FX normalizer:
-```python
-cleaned = re.sub(r'\bRx(\d)', r'RX\1', cleaned)
-cleaned = re.sub(r'\bHx(\d)', r'HX\1', cleaned)
-cleaned = re.sub(r'\bWx(\d)', r'WX\1', cleaned)
-cleaned = re.sub(r'\bTx(\d)', r'TX\1', cleaned)
-cleaned = re.sub(r'\bQx(\d)', r'QX\1', cleaned)
-cleaned = re.sub(r'\bDsc\b', r'DSC', cleaned)
-```
+**Fix:** Add `cleaned = re.sub(r'\bDSC-', 'DSC ', cleaned)` after the DSC uppercase normalizer.
 
 ---
 
-### C21-03: mpix not preserved by merge when new data has mpix=None
+### C22-03: No test for year-change log in merge
 
-**Sources:** C21-03, C21-CR03, V21-03, TE21-03
-**Severity:** LOW | **Confidence:** HIGH (4-agent consensus)
+**Sources:** TE22-01
+**Severity:** LOW | **Confidence:** HIGH
 
-The merge function preserves `type`, `size`, `pitch`, and `year` but NOT `mpix`. When a new source has `mpix=None` but existing data has `mpix=33.0`, the megapixel count is lost and the camera shows "unknown" resolution.
-
-**Fix:** Add mpix preservation:
-```python
-if new_spec.spec.mpix is None and existing_spec.spec.mpix is not None:
-    new_spec.spec.mpix = existing_spec.spec.mpix
-```
+The merge function logs year changes, but no test verifies this diagnostic output. The C22-01 bug would have been caught if there was a test capturing stdout during merge.
 
 ---
 
-### C21-04: test_merge_field_preservation doesn't verify SpecDerived fields
+### C22-04: No test for Sony DSC hyphen normalisation
 
-**Sources:** C21-04, TE21-01
-**Severity:** MEDIUM | **Confidence:** HIGH (2-agent consensus)
+**Sources:** TE22-02
+**Severity:** LOW | **Confidence:** MEDIUM
 
-The test only checks `spec.spec.*` (Spec-level) fields, not `spec.*` (SpecDerived-level) fields. This allowed the C21-01 bug to go undetected.
+Dependent on C22-02 fix. If a DSC-hyphen normalizer is added, it needs a test.
 
-**Fix:** Add assertions for SpecDerived fields in the test.
+---
+
+### C22-05: Field preservation logic is ad-hoc and fragile (architectural)
+
+**Sources:** A22-01, C22-CR01
+**Severity:** LOW | **Confidence:** HIGH (architectural, not a bug)
+
+The merge function has 8 separate `if` statements for field preservation. This is fragile — inserting code in the middle (as C21-01 did) can break conditional chains. A generic helper would be more maintainable. However, this is a code quality improvement, not a correctness fix.
 
 ---
 
@@ -92,8 +94,7 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 4 actionable (1 HIGH, 2 MEDIUM, 1 LOW)
-- Cross-agent consensus findings (3+ agents): 3 (C21-01, C21-02, C21-03)
-- 1 HIGH finding: SpecDerived stale fields after merge
-- 2 MEDIUM findings: Sony RX/DSC naming, test gap for SpecDerived
-- 1 LOW finding: mpix not preserved in merge
+- Total distinct new findings: 5 (1 MEDIUM, 4 LOW)
+- Cross-agent consensus findings (3+ agents): 1 (C22-01)
+- 1 MEDIUM finding: Year-change `elif` misattachment
+- 4 LOW findings: DSC hyphen, test gaps, architectural concern

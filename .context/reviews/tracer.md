@@ -1,45 +1,38 @@
-# Tracer Review (Cycle 21) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 22) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
 
-## T21-01: Data flow from merge preservation to template rendering — stale SpecDerived fields traced
+## T22-01: Year-change log flow traced — `elif` misattachment from C21-01
 
 **Trace:**
-1. `merge_camera_data()` preserves `spec.type` from existing -> `new_spec.spec.type = existing_spec.spec.type`
-2. `merge_camera_data()` preserves `spec.size` from existing -> `new_spec.spec.size = existing_spec.spec.size`
-3. `merge_camera_data()` preserves `spec.pitch` from existing -> `new_spec.spec.pitch = existing_spec.spec.pitch`
-4. BUT: `new_spec.size` (SpecDerived) remains None
-5. BUT: `new_spec.area` (SpecDerived) remains None
-6. BUT: `new_spec.pitch` (SpecDerived) remains None
-7. Template accesses `spec.size` (SpecDerived) -> None -> "unknown"
-8. Template accesses `spec.pitch` (SpecDerived) -> None -> "unknown"
-9. Template accesses `spec.spec.mpix` (Spec) -> None if not preserved -> "unknown"
+1. Pre-C21-01 code structure (after C20-03):
+   ```
+   if spec.year is None: preserve year       (line ~418)
+   elif years differ:      print year change  (line ~419)
+   if spec.size is None:  preserve size       (new in C20-03)
+   if spec.pitch is None: preserve pitch      (new in C20-03)
+   ```
+2. C21-01 fix inserted SpecDerived preservation BETWEEN spec.year and the year elif:
+   ```
+   if spec.year is None: preserve year               (line 417)
+   if spec.size is None:  preserve spec.size          (line 411)
+   if spec.pitch is None: preserve spec.pitch         (line 413)
+   if spec.mpix is None:  preserve spec.mpix          (line 415)
+   if derived.size is None:  preserve derived.size    (line 424)
+   if derived.area is None:  preserve derived.area    (line 426)
+   if derived.pitch is None: preserve derived.pitch   (line 428)
+   elif years differ:      print year change          (line 429) ← WRONG ATTACHMENT
+   ```
+3. The `elif` is now syntactically part of the `if derived.pitch is None` block
+4. Year change log only fires when `derived.pitch is NOT None` (elif condition)
 
-**Root cause:** The C20-03 fix preserved fields at the Spec level but ignored the SpecDerived level. The data model has two layers: Spec (input) and SpecDerived (computed). The merge function must preserve both.
+**Root cause:** The C21-01 fix inserted code above the year-change `elif` without recognizing it was part of a conditional chain. The insertion changed the `elif`'s parent from the year-preservation `if` to the pitch-preservation `if`.
 
-**Fix point:** Add SpecDerived field preservation after Spec field preservation in `merge_camera_data`.
-
----
-
-## T21-02: Sony RX naming corruption flow traced
-
-**Trace:**
-1. IR spec page: `_parse_camera_name({'Model Name': 'Sony RX100 VII'}, url)`
-2. Name starts with "Sony" -> enters Sony-specific branch
-3. URL slug extracted: "sony-rx100-vii" -> `.replace("-", " ")` -> "sony rx100 vii"
-4. `.title()` -> "Sony Rx100 Vii" (lowercase 'x' capitalized, 'ii' -> 'Ii')
-5. Roman numeral normalizer: "Ii" -> "II" -> "Sony Rx100 Vii" -> "Sony Rx100 VII"
-6. FX normalization: no match
-7. No RX normalization -> returns "Sony Rx100 VII" (wrong 'x' case)
-
-**Root cause:** `.title()` capitalizes every word-initial letter including 'x' in 'rx'. Only FX was normalized, not RX/DSC/HX/WX/TX/QX.
-
-**Fix point:** Add RX/DSC/HX/WX/TX/QX normalizations after the existing FX normalization.
+**Fix point:** Convert the `elif` to a standalone `if` after all preservation logic.
 
 ---
 
 ## Summary
 
-- T21-01: SpecDerived stale fields — full data flow traced, fix at merge_camera_data
-- T21-02: Sony RX naming — same pattern as FX, fix at _parse_camera_name
+- T22-01: Year-change `elif` misattachment traced to C21-01 insertion — fix: convert to standalone `if`

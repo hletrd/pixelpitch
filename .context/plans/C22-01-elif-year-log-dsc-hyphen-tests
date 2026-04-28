@@ -1,0 +1,54 @@
+# Plan C22-01: Fix Year-Change `elif` Misattachment, Sony DSC Hyphen, Test Gaps
+
+**Status:** completed
+**Priority:** P2 (1 MEDIUM diagnostic regression, 2 LOW correctness, 2 LOW test gaps)
+**Findings addressed:** C22-01, C22-02, C22-03, C22-04
+
+## Problem
+
+1. **C22-01 (MEDIUM):** The C21-01 fix inserted SpecDerived field preservation code between the Spec year-preservation `if` and the year-change `elif`. The `elif` is now attached to the SpecDerived pitch-preservation `if` instead of the year-preservation `if`. This means the year-change diagnostic log is partially suppressed — it only fires when the SpecDerived pitch is NOT None. Data correctness is NOT affected, but observability is degraded.
+
+2. **C22-02 (LOW):** When a Sony camera name comes from the "Model Name" field (e.g., "Sony DSC-HX400"), the hyphen in "DSC-HX400" is preserved. When it comes from the URL slug, the hyphen becomes a space, producing "Sony DSC HX400". This inconsistency could create dedup mismatches between sources.
+
+3. **C22-03 (LOW):** No test verifies the year-change diagnostic log in `merge_camera_data`. The C22-01 bug would have been caught by such a test.
+
+4. **C22-04 (LOW):** No test for the Sony DSC hyphen normalisation (dependent on C22-02 fix).
+
+## Implementation Steps
+
+### Step 1: Fix year-change `elif` misattachment (C22-01)
+- [x] Convert the `elif` to a standalone `if` after all SpecDerived preservation logic
+- [x] The year-change check is now independent of pitch preservation
+- [x] Commit: 4ecf4d7
+
+### Step 2: Add Sony DSC hyphen normalizer (C22-02)
+- [x] Add `cleaned = re.sub(r'\bDSC-', 'DSC ', cleaned)` after the DSC uppercase normalizer in both code paths of `_parse_camera_name()` in `sources/imaging_resource.py`
+- [x] Commit: 2afa1e9
+
+### Step 3: Add test for year-change log (C22-03)
+- [x] Add `test_merge_year_change_log` that captures stdout during merge and verifies "Year changed" is printed when years differ and pitch is preserved from existing data
+- [x] Commit: 25351e2
+
+### Step 4: Add test for Sony DSC hyphen normalisation (C22-04)
+- [x] Add test case where Model Name is "Sony DSC-HX400" and verify output is "Sony DSC HX400" (space, not hyphen)
+- [x] Add test case where URL slug is "sony-dsc-wx350" and verify output is "Sony DSC WX350"
+- [x] Commit: 25351e2
+
+### Step 5: Verify all fixes
+- [x] Run gate tests — ALL PASS (108 checks)
+- [x] Verify no regressions
+
+## Exit Criteria
+- Year-change log printed when years differ regardless of pitch state -- VERIFIED
+- Sony DSC-HX400 normalised to "Sony DSC HX400" (space) in both Model Name and URL paths -- VERIFIED
+- Test verifies year-change log output -- VERIFIED
+- Test verifies DSC hyphen normalisation -- VERIFIED
+- All gate tests pass -- VERIFIED
+
+## Deferred Findings
+
+### C22-05: Field preservation logic is ad-hoc and fragile (architectural)
+- **File:** `pixelpitch.py`, `merge_camera_data()`
+- **Severity:** LOW | **Confidence:** HIGH (architectural, not a bug)
+- **Reason:** Extracting a generic `_preserve_none_fields()` helper is a refactoring improvement, not a correctness fix. The current code works correctly after the C22-01 fix. Refactoring carries risk of introducing new bugs in the merge logic (the most critical path in the application). The benefit (declarative field list) does not outweigh the risk at this time.
+- **Re-open if:** More fields are added to Spec/SpecDerived and the `if` chain grows beyond 12 statements, or another insertion bug occurs.
