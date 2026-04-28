@@ -1028,11 +1028,20 @@ CATEGORIES = [
 def _load_per_source_csvs(output_dir: Path) -> List[SpecDerived]:
     """Read dist/camera-data-{source}.csv for every registered source.
 
-    These are produced by `python pixelpitch.py source <name>` runs and
-    serve as caches between deployments. Missing files are silently
-    skipped — failure of one source must not block the build.
+    These files are produced by `python pixelpitch.py source <name>`
+    runs and serve as caches between deployments. They are NOT
+    authoritative for `matched_sensors`: that column was computed
+    against whatever `sensors.json` was current at write time, and
+    `sensors.json` may have drifted since (sensor rename, removal,
+    or megapixel list edit). On load we therefore refresh
+    matched_sensors against the current `sensors.json` so the merged
+    output reflects current sensor data (F54-01). Per-row `id` is
+    likewise dropped so `merge_camera_data` can assign globally
+    unique ids. Missing files are silently skipped — failure of one
+    source must not block the build.
     """
     extras: List[SpecDerived] = []
+    sensors_db: Optional[dict] = None  # lazy-loaded on first use
     for src in SOURCE_REGISTRY:
         path = output_dir / f"camera-data-{src}.csv"
         if not path.exists():
@@ -1044,10 +1053,26 @@ def _load_per_source_csvs(output_dir: Path) -> List[SpecDerived]:
             print(f"  could not read {path.name}: {e}")
             continue
         parsed = parse_existing_csv(content)
-        # Per-source CSVs carry their own ids — clear them so merge gives
-        # globally unique ids.
+        # Per-source CSVs carry their own ids and possibly stale
+        # matched_sensors — clear ids so merge gives globally unique
+        # ones, and refresh matched_sensors against current
+        # sensors.json (F54-01). When sensors_db is empty (load
+        # failure) or the row has no size, matched_sensors falls
+        # back to None ("not checked"), which preserves the
+        # merge_camera_data contract for matched_sensors fallback.
         for d in parsed:
             d.id = None
+            if d.size is not None:
+                if sensors_db is None:
+                    sensors_db = load_sensors_database()
+                if sensors_db:
+                    d.matched_sensors = match_sensors(
+                        d.size[0], d.size[1], d.spec.mpix, sensors_db
+                    )
+                else:
+                    d.matched_sensors = None
+            else:
+                d.matched_sensors = None
         extras.extend(parsed)
         print(f"  loaded {len(parsed)} records from {path.name}")
     return extras
