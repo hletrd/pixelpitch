@@ -44,7 +44,7 @@ ACTIONCAM_URL = "https://geizhals.eu/?cat=dvcamac&hloc=de&hloc=pl&hloc=uk&hloc=e
 # PITCH_UM_RE matches µm, μm (Greek mu), "microns", "um", and HTML entities.
 # MPIX_RE matches "Megapixel", "MP", "Mega pixels" (case-insensitive).
 # TYPE_FRACTIONAL_RE matches fractional-inch sensor types with various suffixes.
-from sources import TYPE_FRACTIONAL_RE, SIZE_MM_RE, PITCH_UM_RE, MPIX_RE, strip_bom
+from sources import TYPE_FRACTIONAL_RE, SIZE_MM_RE, PITCH_UM_RE, MPIX_RE, strip_bom  # noqa: E402
 
 # from http://en.wikipedia.org/wiki/Image_sensor_format
 TYPE_SIZE: dict[str, Tuple[float, float]] = {

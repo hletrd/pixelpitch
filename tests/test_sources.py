@@ -20,9 +20,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sources.apotelyt import fetch_one as apotelyt_fetch
-from sources.imaging_resource import fetch_one as ir_fetch_one, _spec_url
-from sources.gsmarena import fetch_phone
+from sources.apotelyt import fetch_one as apotelyt_fetch  # noqa: E402
+from sources.imaging_resource import fetch_one as ir_fetch_one, _spec_url  # noqa: E402
+from sources.gsmarena import fetch_phone  # noqa: E402
 
 REF = {
     "Sony A7 IV":       {"size": (35.9, 23.9), "mpix": 33.0, "pitch": 5.12, "tol": 0.10},

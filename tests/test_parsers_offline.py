@@ -22,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from sources import imaging_resource, apotelyt, gsmarena, openmvg
+from sources import imaging_resource, apotelyt, gsmarena, openmvg  # noqa: E402
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
