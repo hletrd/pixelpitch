@@ -1255,6 +1255,20 @@ def test_match_sensors():
     matches4 = pp.match_sensors(36.0, 24.0, 61.0, {})
     expect("empty db", len(matches4), 0)
 
+    # megapixels=0.0 → must not crash (ZeroDivisionError guard)
+    matches5 = pp.match_sensors(36.0, 24.0, 0.0, sensors_db)
+    expect("match with zero mpix: no crash", isinstance(matches5, list), True)
+    expect("match with zero mpix: size-only match",
+           "IMX455" in matches5, True)
+
+    # width=0.0 → must return [] (not crash)
+    matches6 = pp.match_sensors(0.0, 24.0, 61.0, sensors_db)
+    expect("match with zero width", matches6, [])
+
+    # height=0.0 → must return [] (not crash)
+    matches7 = pp.match_sensors(36.0, 0.0, 61.0, sensors_db)
+    expect("match with zero height", matches7, [])
+
 
 def test_load_sensors_database():
     section("load_sensors_database error handling")

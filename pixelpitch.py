@@ -214,7 +214,7 @@ def match_sensors(
     size_tolerance: float = 2,
     megapixel_tolerance: float = 5,
 ) -> List[str]:
-    if not sensors_db or width is None or height is None:
+    if not sensors_db or width is None or height is None or width <= 0 or height <= 0:
         return []
 
     matches = []
@@ -240,7 +240,7 @@ def match_sensors(
             )
             if megapixel_match:
                 matches.append(sensor_name)
-        elif megapixels is None or not sensor_megapixels:
+        elif megapixels is None or not sensor_megapixels or megapixels <= 0:
             # No megapixel data available — match on size alone (lower confidence)
             matches.append(sensor_name)
 
