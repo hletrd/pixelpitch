@@ -162,6 +162,7 @@ def _parse_camera_name(fields: dict[str, str], fallback_url: str) -> Optional[st
             cleaned,
         )
         cleaned = cleaned.replace("Sony Zv ", "Sony ZV-")
+        cleaned = re.sub(r"\bFx(\d)", r"FX\1", cleaned)
         return normalise_name(cleaned)
 
     if name:
@@ -181,6 +182,7 @@ def _parse_camera_name(fields: dict[str, str], fallback_url: str) -> Optional[st
             cleaned,
         )
         cleaned = cleaned.replace("Sony Zv ", "Sony ZV-")
+        cleaned = re.sub(r"\bFx(\d)", r"FX\1", cleaned)
     return normalise_name(cleaned)
 
 

@@ -144,6 +144,27 @@ def test_imaging_resource():
     expect("IR Sony fallback ZV name",
            name_sony_fb_zv, "Sony ZV-E10")
 
+    # Sony FX series naming — .title() converts "fx3" to "Fx3";
+    # the normalizer must correct this to "FX3"
+    name_fx3 = imaging_resource._parse_camera_name(
+        {"Model Name": "Sony FX3"},
+        "https://www.imaging-resource.com/cameras/sony-fx3-review/specifications/"
+    )
+    expect("IR Sony FX3 name", name_fx3, "Sony FX3")
+
+    name_fx30 = imaging_resource._parse_camera_name(
+        {"Model Name": "Sony FX30"},
+        "https://www.imaging-resource.com/cameras/sony-fx30-review/specifications/"
+    )
+    expect("IR Sony FX30 name", name_fx30, "Sony FX30")
+
+    # FX fallback from URL with empty Model Name
+    name_fx_fb = imaging_resource._parse_camera_name(
+        {"Model Name": ""},
+        "https://www.imaging-resource.com/cameras/sony-fx6-review/specifications/"
+    )
+    expect("IR Sony FX6 fallback name", name_fx_fb, "Sony FX6")
+
 
 # --------------------------------------------------------------------------
 # Apotelyt — Sony A7 IV fixture
