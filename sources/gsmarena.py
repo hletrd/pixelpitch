@@ -47,7 +47,7 @@ LENS_RE = re.compile(
     r"[^,]*?(?P<role>wide|ultrawide|ultra ?wide|telephoto|tele|periscope|macro|depth)?",
     re.IGNORECASE,
 )
-SENSOR_FORMAT_RE = re.compile(r'(1/[\d.]+)"', re.IGNORECASE)
+SENSOR_FORMAT_RE = re.compile(r'(1/[\d.]+)(?:\"|″)', re.IGNORECASE)
 PITCH_RE = re.compile(r"([\d.]+)\s*(?:µm|μm|um)", re.IGNORECASE)
 
 # fractional inch → (width_mm, height_mm). Uses the central TYPE_SIZE table
