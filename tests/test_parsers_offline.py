@@ -1711,6 +1711,72 @@ def test_gsmarena_select_main_lens():
         expect("no role tag: picks untagged over ultrawide",
                result4.startswith("48 MP"), True)
 
+    # Decimal MP values — regex split must not break at the decimal point
+    # (regression test for C45-01: \b word boundary broke "12.2 MP" into
+    # "12." and "2 MP", causing mpix=2.0 instead of 12.2)
+    cam_decimal = '12.2 MP, f/1.9, (wide), 1/2.55", 1.25µm'
+    result5 = gsmarena._select_main_lens(cam_decimal)
+    expect("decimal MP: returns a result", result5 is not None, True)
+    if result5:
+        expect("decimal MP: starts with full '12.2 MP'",
+               result5.startswith("12.2 MP"), True)
+
+    # Decimal MP periscope lens
+    cam_periscope = "10.7 MP, f/4.3, 240mm (periscope)"
+    result6 = gsmarena._select_main_lens(cam_periscope)
+    expect("decimal periscope: returns a result", result6 is not None, True)
+    if result6:
+        expect("decimal periscope: starts with full '10.7 MP'",
+               result6.startswith("10.7 MP"), True)
+
+    # Decimal MP depth camera
+    cam_depth = "0.3 MP, f/2.4, (depth)"
+    result7 = gsmarena._select_main_lens(cam_depth)
+    expect("decimal depth: returns a result", result7 is not None, True)
+    if result7:
+        expect("decimal depth: starts with full '0.3 MP'",
+               result7.startswith("0.3 MP"), True)
+
+    # Multi-lens with mixed integer and decimal MP
+    cam_mixed = '50 MP, f/1.7, (wide), 1/1.3", 0.6µm\n12.2 MP, f/2.2, (ultrawide), 1/2.55", 1.4µm'
+    result8 = gsmarena._select_main_lens(cam_mixed)
+    expect("mixed int/decimal: returns a result", result8 is not None, True)
+    if result8:
+        expect("mixed int/decimal: picks 50 MP wide over 12.2 MP ultrawide",
+               result8.startswith("50 MP"), True)
+
+
+def test_gsmarena_decimal_mp():
+    """Verify _phone_to_spec correctly handles decimal megapixel camera values.
+
+    Regression test for C45-01: the regex split in _select_main_lens broke
+    decimal MP values, causing wrong mpix (12.2→2.0) and lost sensor type.
+    """
+    section("GSMArena decimal MP in _phone_to_spec")
+
+    # Decimal MP main camera with full sensor info
+    fields = {
+        "Main Camera": '12.2 MP, f/1.9, 25mm (wide), 1/2.55", 1.25µm, dual pixel PDAF, OIS'
+    }
+    spec = gsmarena._phone_to_spec("Google Pixel 7", fields)
+    expect("decimal MP: spec is not None", spec is not None, True)
+    if spec:
+        expect("decimal MP: mpix=12.2", spec.mpix, 12.2, tol=0.1)
+        expect("decimal MP: type=1/2.55", spec.type, "1/2.55")
+        expect("decimal MP: pitch=1.25", spec.pitch, 1.25, tol=0.01)
+        expect("decimal MP: category", spec.category, "smartphone")
+        expect("decimal MP: spec.size is None (type-derived)", spec.size, None)
+
+    # Decimal MP with integer secondary lenses
+    fields2 = {
+        "Quad": '50 MP, f/1.7, (wide), 1/1.3", 0.6µm\n10.7 MP, f/4.3, 240mm (periscope), 1/3.52", 1.12µm\n12 MP, f/2.2, (ultrawide), 1/2.55", 1.4µm'
+    }
+    spec2 = gsmarena._phone_to_spec("Test Phone", fields2)
+    expect("mixed MP: spec is not None", spec2 is not None, True)
+    if spec2:
+        expect("mixed MP: picks 50 MP wide", spec2.mpix, 50.0, tol=0.1)
+        expect("mixed MP: type=1/1.3", spec2.type, "1/1.3")
+
 
 # --------------------------------------------------------------------------
 # create_camera_key — year mismatch across sources must not produce duplicates
@@ -1965,6 +2031,7 @@ def main():
     # test_cined_format_coverage removed — FORMAT_TO_MM dict removed from cined.py
     test_about_html_rendering()
     test_gsmarena_select_main_lens()
+    test_gsmarena_decimal_mp()
     test_create_camera_key_year_mismatch()
     test_category_dedup()
     test_merge_field_preservation()
