@@ -1043,7 +1043,10 @@ def fetch_source(name: str, limit: Optional[int], output_dir: Path) -> None:
     if limit is not None:
         kwargs["limit"] = limit
     if name == "gsmarena":
-        max_pages = int(os.environ.get("GSMARENA_MAX_PAGES_PER_BRAND", "2"))
+        try:
+            max_pages = int(os.environ.get("GSMARENA_MAX_PAGES_PER_BRAND", "2"))
+        except (ValueError, TypeError):
+            max_pages = 2
         kwargs["max_pages_per_brand"] = max_pages
 
     raw_specs = module.fetch(**kwargs)
