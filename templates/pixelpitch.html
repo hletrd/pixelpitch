@@ -273,6 +273,11 @@
         return true;
       }
 
+      // Negative pixel pitch is physically impossible — malformed data.
+      if (pitch < 0) {
+        return true;
+      }
+
       // There are only a few manufacturers that produce medium format cameras
       if (sensorWidth > 36 || sensorHeight > 24) {
         const trustedBrands = ['hasselblad', 'phase one', 'leica', 'fujifilm', 'pentax'];
