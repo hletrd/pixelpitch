@@ -1,8 +1,8 @@
-# Performance Review (Cycle 55)
+# Performance Review (Cycle 56)
 
 **Reviewer:** perf-reviewer
 **Date:** 2026-04-29
-**HEAD:** `f08c3c4`
+**HEAD:** `e8d5414`
 
 ## Hot-path inventory
 
@@ -12,21 +12,22 @@ source `fetch()`s, `extract_specs`.
 
 ## Findings
 
-### F55-PR-01: `_load_per_source_csvs` per-row `match_sensors` — INFORMATIONAL
+### F56-PR-01: `_load_per_source_csvs` per-row `match_sensors` (carry-over) — INFORMATIONAL
 
-- **File:** `pixelpitch.py:1080-1082`
-- **Detail:** ~1000 rows × 5 sources × ~200 sensors per call ≈ 1M
-  comparisons. Sub-second on commodity hardware. Same complexity
-  class as the deferred F49-04 entry. No new action.
+- Same as F55-PR-01 / deferred F49-04. Sub-second on commodity HW.
 
-### F55-PR-02: `match_sensors` `sorted()` per call — INFORMATIONAL
+### F56-PR-02: `match_sensors` `sorted()` per call (carry-over) — INFORMATIONAL
 
-- **File:** `pixelpitch.py:253`
-- **Detail:** Per-call list-sort allocates trivially. Not a hotspot.
+- Same as F55-PR-02. Trivial allocation.
 
-### F55-PR-03: `parse_existing_csv` 6× `_safe_float` per row — INFORMATIONAL
+### F56-PR-03: `parse_existing_csv` 6× `_safe_float` per row (carry-over) — INFORMATIONAL
 
-- **File:** `pixelpitch.py:414-432`
-- **Detail:** ~36k float-parse attempts on full load; <100 ms.
+- Same as F55-PR-03. <100 ms on full load.
+
+### F56-PR-04: C55-01 cache-preservation does NOT change call count of `match_sensors` — INFORMATIONAL
+
+- When sensors_db is empty, `match_sensors` is never called. Net
+  perf effect: tiny improvement (one fewer per-row call) on the
+  empty-db path. Not actionable.
 
 ## No new actionable performance issues this cycle.

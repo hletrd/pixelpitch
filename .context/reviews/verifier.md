@@ -1,35 +1,39 @@
-# Verifier Review (Cycle 55)
+# Verifier Review (Cycle 56)
 
 **Reviewer:** verifier
 **Date:** 2026-04-29
-**HEAD:** `f08c3c4`
+**HEAD:** `e8d5414`
 
 ## Evidence
 
 - `flake8 .` → 0 errors.
 - `python3 -m tests.test_parsers_offline` → all sections pass,
-  including the new `_load_per_source_csvs refresh against
-  sensors.json` test added in C54-01.
-- `git log --oneline` shows clean fine-grained commits.
+  including the C54-01 `_load_per_source_csvs refresh against
+  sensors.json` and the C55-01 `_load_per_source_csvs cache
+  fallback when sensors.json missing` and `parse_existing_csv BOM
+  has_id detection` sections.
+- `git log --oneline f08c3c4..e8d5414` shows clean fine-grained
+  commits: 9131fd8 (fix), 216bb96 (test), 81bc999 (docs), e8d5414
+  (review docs).
 
-## C54-01 contract verified
+## C55-01 contract verified
 
-Docstring claims "On load we therefore refresh matched_sensors".
-Code at `pixelpitch.py:1074-1086` is consistent with this when
-sensors_db is non-empty. When empty, matched_sensors is set to
-`None` (drops cache); the contract is silent on that path.
+Docstring at `pixelpitch.py:1041-1057` claims the per-source CSV's
+matched_sensors column is treated as a cache that is refreshed
+when sensors.json is loadable and *preserved* as a fallback when
+not. Code at `pixelpitch.py:1073-1087` is consistent.
 
 ## Findings
 
-### F55-V-01: docstring silent on sensors_db-empty fallback (drops cache) — LOW
+### F56-V-01: docstring says "preserved as a softer-fail fallback" — accurately reflects code — VERIFIED
 
-- See F55-CRIT-01 / F55-DOC-01. Same root cause.
+### F56-V-02: no boundary tolerance test for `match_sensors` (carry-over) — LOW
 
-### F55-V-02: no test for `match_sensors` boundary tolerance — LOW
+- Carried over from F55-V-02. Already deferred (deferred.md F55-02).
 
-- **File:** tests/test_parsers_offline.py (gap)
-- **Detail:** `match_sensors` uses `<= 2%` size, `<= 5%` mpix. No
-  boundary test asserts exactly-2% / exactly-5% behavior.
-- **Severity:** LOW. **Confidence:** HIGH.
+### F56-V-03: cache-preservation regression test asserts the right contract — VERIFIED
+
+- The new test mocks `load_sensors_database` to return `{}` and
+  asserts the parsed value is preserved.
 
 ## Behavior not contradicted by code: clean.

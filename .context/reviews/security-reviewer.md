@@ -1,10 +1,10 @@
-# Security Review (Cycle 55)
+# Security Review (Cycle 56)
 
 **Reviewer:** security-reviewer
 **Date:** 2026-04-29
-**HEAD:** `f08c3c4`
+**HEAD:** `e8d5414`
 
-## Attack surface
+## Attack surface (unchanged from C55)
 
 - HTTP `http_get` outbound only; no inbound network surface.
 - Jinja2 with autoescape for HTML/XML.
@@ -15,16 +15,18 @@
 
 ## Findings
 
-### F55-SR-01: `parse_existing_csv` broad `except Exception` — LOW (informational)
+### F56-SR-01: C55-01 cache-fallback does not introduce new injection risk — INFORMATIONAL
 
-- Bare-row preview is 50-char truncated to stdout (CI logs).
-  No PII. Acceptable.
+- The preserved matched_sensors values come from the per-source CSV
+  which is itself produced by `write_csv` with `;`-in-name guard.
+  No untrusted-user input is propagated.
 
-### F55-SR-02: `http_get` unbounded redirects — RE-AFFIRMED DEFERRED (C10-07).
+### F56-SR-02: `parse_existing_csv` broad `except Exception` (carry-over) — LOW
 
-### F55-SR-03: `_create_browser` `--no-sandbox` — INFORMATIONAL
+- 50-char truncated to stdout. No PII. Acceptable.
 
-- Required because CI image runs as root. Throwaway browser, fixed
-  geizhals.eu URLs only.
+### F56-SR-03: `http_get` unbounded redirects (deferred C10-07) — RE-AFFIRMED.
+
+### F56-SR-04: `_create_browser` `--no-sandbox` (carry-over) — INFORMATIONAL.
 
 ## No new exploitable issues this cycle.

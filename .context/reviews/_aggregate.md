@@ -1,108 +1,100 @@
-# Aggregate Review (Cycle 55) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 56) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-29
-**HEAD:** `f08c3c4` (after C54-01)
+**HEAD:** `e8d5414` (after C55-01)
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic,
 verifier, test-engineer, tracer, architect, debugger,
 document-specialist, designer.
 
-## Cycle 1–54 Status
+## Cycle 1–55 Status
 
-All previous fixes confirmed still working at HEAD `f08c3c4`. Both
+All previous fixes confirmed still working at HEAD `e8d5414`. Both
 gates pass:
 
 - `flake8 .` → 0 errors (also enforced in CI).
 - `python3 -m tests.test_parsers_offline` → all sections green
-  (including the new C54-01 `_load_per_source_csvs refresh
-  against sensors.json` section).
+  (including the C54-01 `_load_per_source_csvs refresh against
+  sensors.json` and C55-01 `_load_per_source_csvs cache fallback
+  when sensors.json missing` and `parse_existing_csv BOM has_id
+  detection` sections).
 
-No regressions.
+No regressions. Cycle 55's primary finding (F55-01: cache discard
+on sensors.json empty) is fixed and verified.
 
-## Cycle 55 New Findings
+## Cycle 56 New Findings
 
-### F55-01 (consensus): `_load_per_source_csvs` drops cached matched_sensors when sensors.json fails to load — LOW
+### F56-01 (gap): no test for `_load_per_source_csvs` size-less branch — LOW
 
-- **Flagged by:** code-reviewer (F55-CR-02 partial), critic
-  (F55-CRIT-01), verifier (F55-V-01), test-engineer (F55-TE-01),
-  tracer (F55-T-01), architect (F55-A-01), debugger (F55-D-01),
-  document-specialist (F55-DOC-01).
-- **File:** `pixelpitch.py:1074-1086`
-- **Detail:** When `load_sensors_database()` returns `{}` (file
-  missing or invalid JSON), `_load_per_source_csvs` resets every
-  parsed row's matched_sensors to `None`, discarding the cache. By
-  contrast, `merge_camera_data`'s existing-only branch (line 615-628)
-  leaves matched_sensors untouched when sensors_db is empty. The two
-  paths disagree on cache fallback semantics.
-- **Fix:** In `_load_per_source_csvs`, when sensors_db is empty,
-  leave the parsed matched_sensors untouched (keep the cache as a
-  fallback). When sensors_db is non-empty, refresh as today. Update
-  the docstring. Add a unit test that mocks `load_sensors_database`
-  to return `{}` and asserts the cache is preserved.
-- **Severity:** LOW (sensors.json failure is rare; in CI the file
-  is always present).
-- **Confidence:** MEDIUM.
-
-### F55-02 (test gap): no test for `match_sensors` boundary tolerance — LOW
-
-- **Flagged by:** verifier, test-engineer.
-- **File:** `tests/test_parsers_offline.py` (gap).
-- **Detail:** `match_sensors` uses `<= 2%` size, `<= 5%` mpix. No
-  test pins the boundary behavior.
-- **Severity:** LOW (test gap). **Confidence:** HIGH.
-
-### F55-03 (test gap): no direct BOM test for `parse_existing_csv` — LOW
-
-- **Flagged by:** test-engineer.
-- **File:** `tests/test_parsers_offline.py` (gap).
-- **Detail:** Add regression test prepending `﻿` to a CSV and
-  asserting has_id detection still works.
+- **Flagged by:** test-engineer (F56-TE-01), debugger (F56-D-04),
+  tracer (F56-T-02), architect (F56-A-01).
+- **File:** `tests/test_parsers_offline.py` (gap),
+  `pixelpitch.py:1084-1087`
+- **Detail:** When a per-source CSV row has no size (empty
+  width/height cells), `_load_per_source_csvs` forces
+  `matched_sensors = None` to honor `derive_spec`'s "size unknown
+  means not checked" sentinel. No test pins this branch.
+- **Fix:** Add a test that loads a per-source CSV with a row
+  whose width/height are empty, mocks `load_sensors_database` to
+  return a non-empty dict, and asserts the parsed row's
+  `matched_sensors` is `None` (not the cached value).
 - **Severity:** LOW. **Confidence:** HIGH.
 
-### F55-04 (latent contract): `merge_camera_data` mutates input `existing_specs` items — LOW
+### F56-02 (gap): no test for empty-cache-string + empty-sensors-db preservation — LOW
 
-- **Flagged by:** code-reviewer (F55-CR-03).
-- **File:** `pixelpitch.py:622-628`
-- **Detail:** `existing_spec.matched_sensors = ...` mutates the
-  caller's list items. No current caller observes the mutation, but
-  the contract is brittle.
-- **Severity:** LOW (latent). **Confidence:** HIGH.
-- **Disposition:** Defer; gated on a future caller actually
-  reusing `existing_specs`.
-
-### F55-05 (parse robustness): hand-edited blank-leading-cell defeats `has_id` detection — LOW
-
-- **Flagged by:** code-reviewer (F55-CR-01).
-- **File:** `pixelpitch.py:371-372`
-- **Detail:** A spreadsheet user inserting a blank column before id
-  defeats `header[0] == "id"`.
+- **Flagged by:** test-engineer (F56-TE-03).
+- **File:** `tests/test_parsers_offline.py` (gap)
+- **Detail:** A row with `matched_sensors = []` parsed from `""`
+  should be preserved when sensors_db is empty. Untested.
 - **Severity:** LOW. **Confidence:** MEDIUM.
-- **Disposition:** Defer; user-edited CSVs are out of scope per
-  current data flow (CSVs are produced by write_csv).
+- **Fix:** Add an assertion in the existing C55-01 test section.
 
-### F55-06 (cleanup): `_load_per_source_csvs` and `merge_camera_data` should share a refresh helper — LOW
+### F56-03 (cosmetic): docstring should call out size-less drop — LOW
 
-- **Flagged by:** architect (F55-A-01).
-- **Files:** `pixelpitch.py:615-628`, `pixelpitch.py:1074-1086`
-- **Disposition:** Bundled into F55-01 fix. After resolving F55-01,
-  consider extracting `_refresh_matched_sensors`.
+- **Flagged by:** code-reviewer (F56-CR-01).
+- **File:** `pixelpitch.py:1041-1057`
+- **Detail:** Docstring says "When the row has no sensor size,
+  matched_sensors is set to `None`". This is accurate, but does
+  not state that it overrides any *cached* value. Tighten wording.
+- **Severity:** LOW. **Confidence:** HIGH.
+- **Fix:** Add "(overriding any cached value)" to the docstring.
 
-### F55-DOC-02: README does not mention smartphone / cinema pages — LOW
+### F56-04 (cleanup, gated): refresh-helper extraction across merge & per-source-load
+
+- **Flagged by:** critic (F56-CRIT-01), architect (F56-A-01).
+- **Files:** `pixelpitch.py:613-628`, `pixelpitch.py:1071-1087`
+- **Disposition:** Carry-over of F55-06 deferral. Two branches
+  agree on empty-db fallback (preserve cache) but disagree on
+  size-less rows (merge keeps; per-source-load forces None per
+  derive_spec contract). Refactor is small and risky.
+- **Severity:** LOW. **Confidence:** HIGH.
+- **Disposition:** Re-defer.
+
+### F56-DOC-03: deferred.md is growing, no periodic sweep
 
 - **Flagged by:** document-specialist.
-- **File:** `README.md`
+- **File:** `.context/plans/deferred.md`
 - **Severity:** LOW. **Confidence:** MEDIUM.
+- **Disposition:** Defer; periodic sweep is fine.
+
+## Carry-over deferred (no action this cycle)
+
+- F32 monolith, F55-CRIT-03 / F56-CRIT-02 test monolith.
+- F49-04 perf, F55-PR-01..03 perf, F56-PR-04 informational.
+- C10-07 redirects, C10-08 debug port.
+- F35..F40 UI carry-overs.
+- F55-A-02 / F56-A-02 category list duplication.
+- F55-04 (existing_specs in-place mutation), F55-05 (hand-edited
+  blank-leading-cell defeats has_id).
 
 ## Cross-Agent Agreement Matrix
 
-| Finding   | Flagged By                                                                                  | Severity |
-|-----------|---------------------------------------------------------------------------------------------|----------|
-| F55-01    | code-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, document-specialist | LOW (HIGH consensus on existence) |
-| F55-02    | verifier, test-engineer                                                                     | LOW |
-| F55-03    | test-engineer                                                                               | LOW |
-| F55-04    | code-reviewer                                                                               | LOW |
-| F55-05    | code-reviewer                                                                               | LOW |
-| F55-06    | architect (gated on F55-01)                                                                 | LOW |
-| F55-DOC-02 | document-specialist                                                                        | LOW |
+| Finding   | Flagged By                                                    | Severity |
+|-----------|---------------------------------------------------------------|----------|
+| F56-01    | test-engineer, debugger, tracer, architect                    | LOW |
+| F56-02    | test-engineer                                                 | LOW |
+| F56-03    | code-reviewer                                                 | LOW |
+| F56-04    | critic, architect                                             | LOW (defer) |
+| F56-DOC-03 | document-specialist                                          | LOW (defer) |
 
 ## AGENT FAILURES
 
@@ -111,7 +103,7 @@ No agents failed.
 ## Summary statistics
 
 - 11 reviewer perspectives executed.
-- 7 findings produced this cycle (1 actionable
-  correctness/consistency, 2 actionable test gaps, 4 cosmetic /
-  cleanup / deferral candidates).
+- 5 findings produced this cycle (1 actionable docstring tighten,
+  2 actionable test gaps, 2 cleanup carry-overs deferred).
 - 0 new HIGH/CRITICAL findings.
+- 0 regressions vs cycle 55.

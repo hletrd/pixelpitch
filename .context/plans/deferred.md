@@ -271,3 +271,35 @@ These findings from the review are explicitly deferred. Each entry records:
 - **Re-open if:** A third refresh callsite is added, or the two paths converge to identical semantics.
 
 ---
+
+## F56-CR-02: `merge_camera_data` size-mismatch warning has no rounding tolerance
+- **File:** `pixelpitch.py`, lines 539-557
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Reason:** Sub-percent rounding drift between source updates (e.g., `(23.6, 15.6)` vs `(23.7, 15.7)`) prints a warning. Adding a tolerance threshold (e.g., 0.5%) is subjective and would mask genuine source-data corrections. Current behavior is correct; the warning is informational only and goes to CI logs. No data is lost.
+- **Re-open if:** CI logs become unreadable due to mismatch noise, or a real correction is hidden by tolerance choice.
+
+---
+
+## F56-CRIT-02: `tests/test_parsers_offline.py` is now 2456-line monolith
+- **File:** `tests/test_parsers_offline.py`
+- **Severity:** LOW | **Confidence:** HIGH (architectural, not a bug)
+- **Reason:** Same class as deferred F32 (`pixelpitch.py` monolith) and F55-CRIT-03. Splitting into multiple test modules adds harness complexity and risk of regressions in the gate command (`python3 -m tests.test_parsers_offline`). The current file is structured by section markers and remains greppable. No correctness concern.
+- **Re-open if:** Gate runtime exceeds 30s, or test discovery adopts pytest with proper module separation.
+
+---
+
+## F56-A-02: render_html category lists duplicated across multiple call sites
+- **File:** `pixelpitch.py`, lines 1148-1164
+- **Severity:** LOW | **Confidence:** HIGH (refactor opportunity)
+- **Reason:** Geizhals categories and source-only categories are hardcoded in multiple spots inside `render_html`. Adding a new category requires edits in several places. Consolidating into a single source of truth is a refactor that touches the most critical render path; risk outweighs benefit at the current category count (~9). Carry-over of F55-A-02.
+- **Re-open if:** A new category is added and the duplication causes a missed update, or the count grows past ~15.
+
+---
+
+## F56-DOC-03: `.context/plans/deferred.md` is growing; no periodic sweep
+- **File:** `.context/plans/deferred.md`
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Reason:** 25+ entries from cycles 8 through 56 are documented in deferred.md. No entry has been re-opened or pruned even when the underlying rationale has shifted. A periodic sweep (annual) would be hygiene; not a correctness concern.
+- **Re-open if:** A reviewer finds a deferred item that should now be actionable based on changed circumstances, or the file grows past ~50 entries.
+
+---
