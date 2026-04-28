@@ -227,17 +227,18 @@
     // Table with pitch column: Name, [Category,] Sensor Size, Resolution, Pixel Pitch, Year
     $('#table_with_pitch').tablesorter($.extend({}, tsBase, {
       headers: {
-        0: { sorter: "text" },
-        1: { sorter: "text" },
+        0: { sorter: "text" },  // Name
         {% if page == "all" %}
-        2: { sorter: "sensor-width" },
+        1: { sorter: "text" },        // Category
+        2: { sorter: "sensor-width" }, // Sensor Size
+        3: { sorter: "digit" },        // Resolution
+        4: { sorter: "digit" },        // Pixel Pitch
+        5: { sorter: "digit" }         // Year
         {% else %}
-        2: { sorter: "sensor-width" },
-        {% endif %}
-        3: { sorter: "digit" },
-        4: { sorter: "digit" },
-        {% if page == "all" %}
-        5: { sorter: "digit" }
+        1: { sorter: "sensor-width" }, // Sensor Size
+        2: { sorter: "digit" },        // Resolution
+        3: { sorter: "digit" },        // Pixel Pitch
+        4: { sorter: "digit" }         // Year
         {% endif %}
       }
     }));
@@ -245,15 +246,16 @@
     // Table without pitch column: Name, [Category,] Sensor Size, Resolution, Year
     $('#table_without_pitch').tablesorter($.extend({}, tsBase, {
       headers: {
-        0: { sorter: "text" },
-        1: { sorter: "text" },
+        0: { sorter: "text" },  // Name
         {% if page == "all" %}
-        2: { sorter: "sensor-width" },
-        3: { sorter: "digit" },
-        4: { sorter: "digit" }
+        1: { sorter: "text" },        // Category
+        2: { sorter: "sensor-width" }, // Sensor Size
+        3: { sorter: "digit" },        // Resolution
+        4: { sorter: "digit" }         // Year
         {% else %}
-        2: { sorter: "sensor-width" },
-        3: { sorter: "digit" }
+        1: { sorter: "sensor-width" }, // Sensor Size
+        2: { sorter: "digit" },        // Resolution
+        3: { sorter: "digit" }         // Year
         {% endif %}
       }
     }));
