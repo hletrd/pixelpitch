@@ -1,7 +1,7 @@
 # Plan: Cycle 28 Findings — IR Pitch ValueError Guard, CineD Year Validation, DRY Consistency
 
 **Created:** 2026-04-28
-**Status:** ACTIVE
+**Status:** COMPLETED
 **Source Reviews:** CR28-01, CRIT28-01, V28-02, TR28-01, DBG28-01, TE28-01, V28-03, DBG28-02, CRIT28-02, ARCH28-01, CR28-02, DOC28-01
 
 ---
@@ -30,10 +30,11 @@ The C26-02 fix added ValueError guards to `size` (line 229) and `mpix` (line 246
 
 2. Run gate tests to verify no regressions.
 
-### Verification
+### Verification — DONE
 
-- Gate tests pass
-- Manually verify: `IR_PITCH_RE.search("5.1.2 microns")` matches "5.1.2", but the guard catches the ValueError
+- Gate tests (`python -m tests.test_parsers_offline`) — all checks passed
+- Manually verified: `IR_PITCH_RE.search("5.1.2 microns")` matches "5.1.2", and the try/except catches the ValueError
+- Commit: 62c8123
 
 ---
 
@@ -61,10 +62,11 @@ The CineD year parsing uses `int(year_m.group(1))` without range validation. The
 
 2. Run gate tests to verify no regressions.
 
-### Verification
+### Verification — DONE
 
-- Gate tests pass
+- Gate tests (`python -m tests.test_parsers_offline`) — all checks passed
 - The CineD source is browser-dependent, so offline testing is limited. The `parse_year` fallback already validates 19xx/20xx.
+- Commit: 707013a
 
 ---
 
@@ -104,11 +106,12 @@ After the C25-01 and C26-01 centralization of shared regex patterns, 3 source mo
 
 4. Run gate tests to verify no regressions.
 
-### Verification
+### Verification — DONE
 
-- Gate tests pass
+- Gate tests (`python -m tests.test_parsers_offline`) — all checks passed
 - Each source module's existing tests still pass (Apotelyt fixture, GSMArena fixture)
 - The shared patterns are strict supersets of the local patterns, so no data loss
+- Commit: 7d86a85 (combined with Tasks 4-5)
 
 ---
 
@@ -134,10 +137,11 @@ if "MP" in v and PITCH_UM_RE.search(v):
 
 This handles all µm/μm/um variants consistently.
 
-### Verification
+### Verification — DONE
 
-- Gate tests pass
+- Gate tests (`python -m tests.test_parsers_offline`) — all checks passed
 - The GSMArena fixture test still passes
+- Commit: 7d86a85 (combined with Task 3-5)
 
 ---
 
@@ -161,10 +165,11 @@ Add a comment above line 66:
 PITCH_UM_RE = re.compile(r"([\d.]+)\s*(?:µm|um|microns?|μm|&micro;m|&#0?956;m)", re.IGNORECASE)
 ```
 
-### Verification
+### Verification — DONE
 
-- Visual check that comment matches the regex pattern
-- Gate tests pass
+- Visual check: comment matches the regex pattern
+- Gate tests (`python -m tests.test_parsers_offline`) — all checks passed
+- Commit: 7d86a85 (combined with Tasks 3-4)
 
 ---
 
