@@ -1,12 +1,12 @@
 # Plan: Cycle 46 Findings — matched_sensors Merge Preservation & LENS_RE Dead Code
 
 **Created:** 2026-04-28
-**Status:** PENDING
+**Status:** COMPLETED
 **Source Reviews:** CR46-01, CRIT46-01, V46-01, TR46-01, ARCH46-01, DBG46-01, TE46-01, CR46-02
 
 ---
 
-## Task 1: Fix derive_spec to return matched_sensors=None when sensors_db unavailable — C46-01 (core)
+## Task 1: Fix derive_spec to return matched_sensors=None when sensors_db unavailable — C46-01 (core) [COMPLETED]
 
 **Finding:** C46-01 (7-agent consensus)
 **Severity:** MEDIUM | **Confidence:** HIGH
@@ -42,7 +42,7 @@ This makes the semantics clear:
 
 ---
 
-## Task 2: Add matched_sensors preservation in merge_camera_data — C46-01 (merge)
+## Task 2: Add matched_sensors preservation in merge_camera_data — C46-01 (merge) [COMPLETED]
 
 **Finding:** C46-01
 **Severity:** MEDIUM | **Confidence:** HIGH
@@ -68,7 +68,7 @@ This follows the same pattern as the other field preservation checks.
 
 ---
 
-## Task 3: Handle matched_sensors=None in write_csv — C46-01 (output)
+## Task 3: Handle matched_sensors=None in write_csv — C46-01 (output) [COMPLETED - NO CHANGE NEEDED]
 
 **Finding:** C46-01
 **Severity:** LOW | **Confidence:** HIGH
@@ -102,7 +102,7 @@ Wait — let me double-check. If `matched_sensors` is `None`, then `if derived.m
 
 ---
 
-## Task 4: Add matched_sensors preservation test — TE46-01
+## Task 4: Add matched_sensors preservation test — TE46-01 [COMPLETED]
 
 **Finding:** TE46-01
 **Severity:** MEDIUM | **Confidence:** HIGH
@@ -148,7 +148,7 @@ expect("merge: [] from checked db does not preserve existing",
 
 ---
 
-## Task 5: Remove LENS_RE dead code from gsmarena.py — C46-02
+## Task 5: Remove LENS_RE dead code from gsmarena.py — C46-02 [COMPLETED]
 
 **Finding:** CR46-02
 **Severity:** LOW | **Confidence:** HIGH
