@@ -426,7 +426,10 @@ def merge_camera_data(
                 new_spec.area = existing_spec.area
             if new_spec.pitch is None and existing_spec.pitch is not None:
                 new_spec.pitch = existing_spec.pitch
-            elif (
+            # Log year changes (independent of field preservation above).
+            # This was previously an elif attached to the year-preservation
+            # if, but the C21-01 SpecDerived insertion broke that chain.
+            if (
                 new_spec.spec.year is not None
                 and existing_spec.spec.year is not None
                 and new_spec.spec.year != existing_spec.spec.year
