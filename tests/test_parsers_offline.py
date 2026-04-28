@@ -2224,6 +2224,58 @@ def test_record_id_parse_tolerance():
             expect(f"id-tolerance: row {i} id", parsed[i].id, want)
 
 
+def test_load_per_source_csvs_refresh():
+    """`_load_per_source_csvs` must refresh matched_sensors against
+    current sensors.json (F54-01).
+
+    Per-source CSVs were written by `fetch_source` against whatever
+    sensors.json was current at that time. If sensors.json drifts
+    (sensor renamed/removed), the file's matched_sensors column is
+    stale. The loader must:
+      - clear per-row id (existing behavior)
+      - drop the missing-file case silently
+      - replace stale matched_sensors with names from current
+        sensors.json (or [] / None if there is no match)
+      - drop sensor names that no longer exist in sensors.json
+
+    Regression-guards F54-01 / F54-DOC-01.
+    """
+    section("_load_per_source_csvs refresh against sensors.json")
+    import tempfile
+    from pathlib import Path
+    import pixelpitch as pp
+
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp)
+
+        # File 1: openmvg with a 36x24mm 24MP camera and a stale sensor
+        # name that does NOT exist in sensors.json. The refresh must
+        # drop "FAKE_SENSOR_DOES_NOT_EXIST" and replace it with the
+        # actual matches (which include IMX094 et al.).
+        csv_openmvg = (
+            "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+            "sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n"
+            "0,Test FullFrame 24MP,dslr,,36.00,24.00,864.00,24.0,6.00,2020,"
+            "FAKE_SENSOR_DOES_NOT_EXIST\n"
+        )
+        (out / "camera-data-openmvg.csv").write_text(csv_openmvg, encoding="utf-8")
+
+        # File 2: missing — must not raise.
+
+        loaded = pp._load_per_source_csvs(out)
+
+        expect("refresh: 1 row loaded", len(loaded), 1)
+        if loaded:
+            expect("refresh: id cleared", loaded[0].id, None)
+            ms = loaded[0].matched_sensors or []
+            expect("refresh: stale FAKE_SENSOR dropped",
+                   "FAKE_SENSOR_DOES_NOT_EXIST" in ms, False)
+            # The 36x24mm 24MP row should match at least one sensor in
+            # sensors.json (e.g. IMX094 at 36.0x24.0 with 24.0 MP).
+            expect("refresh: matched_sensors non-empty after refresh",
+                   len(ms) > 0, True)
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -2269,6 +2321,7 @@ def main():
     test_matched_sensors_parse_tolerance()
     test_year_parse_tolerance()
     test_record_id_parse_tolerance()
+    test_load_per_source_csvs_refresh()
 
     print("\n" + ("=" * 60))
     if _failures:
