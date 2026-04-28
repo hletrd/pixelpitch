@@ -1,86 +1,121 @@
-# Code Review (Cycle 20) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 21) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-19 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-20 fixes, focusing on NEW issues
 
-## C20-01: `pixel_pitch()` crashes with ZeroDivisionError when mpix=0.0
-**File:** `pixelpitch.py`, line 182
-**Severity:** MEDIUM | **Confidence:** HIGH
+## C21-01: `merge_camera_data` preserves `Spec` fields but NOT `SpecDerived` fields — stale data in rendered HTML
 
-The `pixel_pitch()` function divides by `mpix * 10**6` without checking for zero. When `mpix=0.0`, this crashes with `ZeroDivisionError`. While 0 MP cameras don't exist in practice, the function should handle the edge case gracefully rather than crashing the entire pipeline.
+**File:** `pixelpitch.py`, lines 403-410
+**Severity:** HIGH | **Confidence:** HIGH (reproduced)
 
-**Concrete failure scenario:** If any source returns a spec with `mpix=0.0` and `pitch=None`, the `derive_spec()` function will call `pixel_pitch(area, 0.0)` and crash, halting the entire render.
+The C20-03 fix added field preservation for `type`, `size`, and `pitch` at the `Spec` level (`new_spec.spec.*`). However, the `SpecDerived` fields (`new_spec.size`, `new_spec.area`, `new_spec.pitch`) are NOT updated to match. The Jinja2 template reads from `SpecDerived` fields, not `Spec` fields, so the preserved values are invisible in the rendered HTML.
 
-**Fix:** Add a guard in `pixel_pitch()`:
+**Concrete failure scenario:**
+1. Camera "Sony A7 IV" has `size=(35.9, 23.9)`, `pitch=5.12` in the existing CSV
+2. A new source (e.g., IR) has the same camera with `size=None`, `pitch=None`
+3. After merge: `spec.spec.size=(35.9, 23.9)` (preserved), but `spec.size=None` (NOT updated)
+4. Template reads `spec.size` -> shows "unknown" instead of "35.9 × 23.9 mm"
+5. Similarly, `spec.spec.pitch=5.12` but `spec.pitch=None` -> shows "unknown" instead of "5.12 µm"
+
+**Evidence:**
 ```python
-def pixel_pitch(area: float, mpix: float) -> float:
-    if mpix <= 0:
-        return 0.0
-    return 1000 * sqrt(area / (mpix * 10**6))
+spec_new = Spec(name='Test Cam', category='fixed', type='1/2.3', size=None, pitch=None, mpix=10.0, year=2020)
+derived_new = pp.derive_spec(spec_new)
+spec_existing = Spec(name='Test Cam', category='fixed', type='1/2.3', size=(5.0, 3.7), pitch=2.0, mpix=10.0, year=2020)
+derived_existing = pp.derive_spec(spec_existing)
+merged = pp.merge_camera_data([derived_new], [derived_existing])
+m = merged[0]
+# m.spec.size = (5.0, 3.7)  <- preserved at Spec level (correct)
+# m.size = None               <- NOT updated at SpecDerived level (BUG)
+# m.spec.pitch = 2.0          <- preserved at Spec level (correct)
+# m.pitch = None              <- NOT updated at SpecDerived level (BUG)
+```
+
+**Fix:** Also preserve `SpecDerived` fields alongside `Spec` fields in `merge_camera_data`:
+```python
+if new_spec.size is None and existing_spec.size is not None:
+    new_spec.size = existing_spec.size
+if new_spec.area is None and existing_spec.area is not None:
+    new_spec.area = existing_spec.area
+if new_spec.pitch is None and existing_spec.pitch is not None:
+    new_spec.pitch = existing_spec.pitch
 ```
 
 ---
 
-## C20-02: `pixel_pitch()` crashes with ValueError when mpix < 0
-**File:** `pixelpitch.py`, line 182
-**Severity:** LOW | **Confidence:** HIGH
+## C21-02: Sony RX/DSC/HX/WX/TX/QX series cameras misnamed — same `.title()` issue as C20-02 but broader
 
-If `mpix` is negative, `sqrt(area / (mpix * 10**6))` computes sqrt of a negative number, raising `ValueError`. Same for negative area. This is a defensive programming issue — while negative values shouldn't occur in practice, the math function should be robust.
+**File:** `sources/imaging_resource.py`, lines 158-165
+**Severity:** MEDIUM | **Confidence:** HIGH (reproduced)
 
-**Fix:** Same guard as C20-01 — `if mpix <= 0` covers both cases.
+The C20-02 fix added `re.sub(r'\bFx(\d)', r'FX\1', cleaned)` to fix the FX naming issue. However, the same `.title()` issue affects ALL Sony multi-letter uppercase series: RX, HX, WX, TX, QX, and DSC. These are all converted to lowercase second letter by `.title()` (e.g., "rx100" -> "Rx100" instead of "RX100").
 
----
+**Concrete failure scenario:** A user searches for "Sony RX100 VII" on the All Cameras page and doesn't find it because it's listed as "Sony Rx100 Vii". If another source (Apotelyt) produces the correct name "Sony RX100 VII", the merge treats them as different cameras (different keys), creating a duplicate entry.
 
-## C20-03: Sony FX series cameras misnamed by `_parse_camera_name`
-**File:** `sources/imaging_resource.py`, lines 156-164
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-The `_parse_camera_name()` function applies `.title()` to URL slugs, which converts "fx3" to "Fx3". The function has a special-case replacement for "Sony Zv " -> "Sony ZV-" but no equivalent for Sony FX series. This causes Sony cinema cameras like FX3, FX6, FX30 to appear as "Sony Fx3", "Sony Fx6", "Sony Fx30" — incorrect capitalization.
-
-**Concrete failure scenario:** A user searches for "Sony FX3" on the All Cameras page and doesn't find it because it's listed as "Sony Fx3".
-
-**Fix:** Add FX-series normalization similar to ZV. Use a regex for robustness:
+**Evidence:**
 ```python
+name = imaging_resource._parse_camera_name(
+    {'Model Name': 'Sony RX100 VII'},
+    'https://www.imaging-resource.com/cameras/sony-rx100-vii-review/specifications/'
+)
+# Returns "Sony Rx100 Vii" instead of "Sony RX100 VII"
+```
+
+**Fix:** Add a general Sony uppercase series normalizer:
+```python
+# After the existing FX normalizer:
 cleaned = re.sub(r'\bFx(\d)', r'FX\1', cleaned)
+# Add:
+cleaned = re.sub(r'\bRx(\d)', r'RX\1', cleaned)
+cleaned = re.sub(r'\bHx(\d)', r'HX\1', cleaned)
+cleaned = re.sub(r'\bWx(\d)', r'WX\1', cleaned)
+cleaned = re.sub(r'\bTx(\d)', r'TX\1', cleaned)
+cleaned = re.sub(r'\bQx(\d)', r'QX\1', cleaned)
+cleaned = re.sub(r'\bDsc\b', r'DSC', cleaned)
 ```
 
 ---
 
-## C20-04: `merge_camera_data` does not preserve type/size/pitch from existing data when new data has None
-**File:** `pixelpitch.py`, lines 397-412
+## C21-03: `mpix` field is NOT preserved by merge when new data has `mpix=None`
+
+**File:** `pixelpitch.py`, lines 403-410
 **Severity:** LOW | **Confidence:** HIGH
 
-The merge function has explicit logic to preserve `year` from existing data when the new data has `year=None`. However, it does NOT preserve `type`, `size`, or `pitch` in the same way. When a new spec has `type=None` but the existing spec had `type='1/2.3'`, the type is lost.
+The merge function preserves `type`, `size`, `pitch`, and `year` from existing data when new data has None. However, `mpix` has no such preservation logic. When a new source has `mpix=None` but existing data has `mpix=33.0`, the megapixel count is lost and the camera shows "unknown" resolution.
 
-**Concrete failure scenario:** Camera "Test Cam" has type='1/2.3' from a previous Geizhals fetch. In the next run, Geizhals doesn't provide the type (field missing), but openMVG has the same camera without a type. The merge uses the new spec, losing the type.
+**Concrete failure scenario:** Camera "Canon R5" has `mpix=45.0` in the existing CSV. A new source fetch returns the camera without effective megapixels. After merge, `mpix=None` -> camera shows "unknown" resolution.
 
-**Fix:** Add field-level merge logic similar to year:
+**Fix:** Add mpix preservation:
 ```python
-if new_spec.spec.type is None and existing_spec.spec.type is not None:
-    new_spec.spec.type = existing_spec.spec.type
-if new_spec.spec.size is None and existing_spec.spec.size is not None:
-    new_spec.spec.size = existing_spec.spec.size
-if new_spec.spec.pitch is None and existing_spec.spec.pitch is not None:
-    new_spec.spec.pitch = existing_spec.spec.pitch
+if new_spec.spec.mpix is None and existing_spec.spec.mpix is not None:
+    new_spec.spec.mpix = existing_spec.spec.mpix
 ```
 
 ---
 
-## C20-05: 259 duplicate (name, category) pairs in dist/camera-data.csv from stale data
-**File:** `dist/camera-data.csv`
-**Severity:** LOW | **Confidence:** HIGH (stale artifact, not a code bug)
+## C21-04: `test_merge_field_preservation` only validates `Spec` fields, not `SpecDerived` fields
 
-The current CSV has 259 duplicate (name, category) pairs. These are artifacts from previous CI runs before the merge dedup logic was fixed. The current `merge_camera_data` code correctly deduplicates — running `merge_camera_data([], existing)` reduces 1742 records to 1472 with 0 duplicates. The next CI run will clean this up.
+**File:** `tests/test_parsers_offline.py`, lines 676-718
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-No code fix needed — this is a data artifact that will be resolved on the next deployment.
+The test added in C20-03 checks `merged_t[0].spec.type`, `merged_s[0].spec.size`, and `merged_p[0].spec.pitch` (Spec-level fields). It does NOT check `merged_t[0].size`, `merged_s[0].area`, or `merged_p[0].pitch` (SpecDerived-level fields). This is why the C21-01 bug went undetected — the test passes but doesn't verify the fields that the template actually uses.
+
+**Fix:** Add assertions for SpecDerived fields:
+```python
+expect("merge: preserves derived.size from existing",
+       merged_s[0].size, (5.0, 3.7), tol=0.01)
+expect("merge: preserves derived.area from existing",
+       merged_s[0].area, 18.5, tol=0.01)
+expect("merge: preserves derived.pitch from existing",
+       merged_p[0].pitch, 2.0, tol=0.01)
+```
 
 ---
 
 ## Summary
 
-- C20-01 (MEDIUM): `pixel_pitch()` ZeroDivisionError when mpix=0
-- C20-02 (LOW): `pixel_pitch()` ValueError when mpix < 0 (same fix as C20-01)
-- C20-03 (MEDIUM): Sony FX cameras misnamed as "Fx3"/"Fx6"/"Fx30"
-- C20-04 (LOW): Merge doesn't preserve type/size/pitch from existing data
-- C20-05 (LOW): Stale CSV duplicates (will resolve on next CI run)
+- C21-01 (HIGH): SpecDerived fields stale after merge — data shows as "unknown" in rendered HTML
+- C21-02 (MEDIUM): Sony RX/DSC/HX/WX/TX/QX naming — same .title() issue as C20-02 but broader
+- C21-03 (LOW): mpix not preserved by merge when new data has None
+- C21-04 (MEDIUM): test_merge_field_preservation doesn't verify SpecDerived fields

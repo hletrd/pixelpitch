@@ -1,0 +1,79 @@
+# Plan C21-01: SpecDerived Stale Fields, Sony RX/DSC Naming, mpix Preservation, Test Gaps
+
+**Status:** in-progress
+**Priority:** P0 (1 HIGH regression from C20-03, 2 MEDIUM, 1 LOW)
+**Findings addressed:** C21-01, C21-02, C21-03, C21-04
+
+## Problem
+
+1. **C21-01 (HIGH):** The C20-03 fix preserves `Spec` fields (`type`, `size`, `pitch`) when new data has None, but does NOT update the corresponding `SpecDerived` fields (`size`, `area`, `pitch`). The Jinja2 template reads from `SpecDerived` fields, so cameras show "unknown" for sensor size and pixel pitch even though the data exists at the `Spec` level. This affects 30.5% of cameras (532) for size and 32.5% (567) for pitch.
+
+2. **C21-02 (MEDIUM):** Sony RX/DSC/HX/WX/TX/QX series cameras are misnamed by `.title()` in `_parse_camera_name()`. The C20-02 fix only addressed FX series. All other Sony multi-letter uppercase series (RX, HX, WX, TX, QX, DSC) have the same issue. E.g., "Sony RX100 VII" becomes "Sony Rx100 VII".
+
+3. **C21-03 (LOW):** `mpix` is not preserved by `merge_camera_data` when new data has `mpix=None` but existing data has a value. Other fields (type, size, pitch, year) are preserved.
+
+4. **C21-04 (MEDIUM):** `test_merge_field_preservation` only checks `Spec`-level fields, not `SpecDerived`-level fields. This test gap allowed the C21-01 bug to go undetected.
+
+## Implementation Steps
+
+### Step 1: Fix SpecDerived stale fields after merge (C21-01)
+- [ ] Add SpecDerived field preservation in `merge_camera_data()` after Spec-level preservation:
+  ```python
+  if new_spec.size is None and existing_spec.size is not None:
+      new_spec.size = existing_spec.size
+  if new_spec.area is None and existing_spec.area is not None:
+      new_spec.area = existing_spec.area
+  if new_spec.pitch is None and existing_spec.pitch is not None:
+      new_spec.pitch = existing_spec.pitch
+  ```
+- [ ] Add test assertions for SpecDerived fields in test_merge_field_preservation
+- [ ] Verify existing tests still pass
+- [ ] Commit
+
+### Step 2: Fix Sony RX/DSC/HX/WX/TX/QX naming (C21-02)
+- [ ] Add Sony uppercase series normalizers in `_parse_camera_name()` after the existing FX normalizer:
+  ```python
+  cleaned = re.sub(r'\bRx(\d)', r'RX\1', cleaned)
+  cleaned = re.sub(r'\bHx(\d)', r'HX\1', cleaned)
+  cleaned = re.sub(r'\bWx(\d)', r'WX\1', cleaned)
+  cleaned = re.sub(r'\bTx(\d)', r'TX\1', cleaned)
+  cleaned = re.sub(r'\bQx(\d)', r'QX\1', cleaned)
+  cleaned = re.sub(r'\bDsc\b', r'DSC', cleaned)
+  ```
+- [ ] Apply the same normalizers in the fallback Sony path (lines 179-185)
+- [ ] Add test cases for Sony RX100 VII, Sony DSC-HX400
+- [ ] Verify existing Sony naming tests still pass
+- [ ] Commit
+
+### Step 3: Add mpix preservation in merge (C21-03)
+- [ ] Add mpix preservation in `merge_camera_data()`:
+  ```python
+  if new_spec.spec.mpix is None and existing_spec.spec.mpix is not None:
+      new_spec.spec.mpix = existing_spec.spec.mpix
+  ```
+- [ ] Add test case for mpix preservation
+- [ ] Verify existing merge tests still pass
+- [ ] Commit
+
+### Step 4: Update test_merge_field_preservation (C21-04)
+- [ ] Add SpecDerived-level assertions alongside existing Spec-level assertions
+- [ ] Add test for mpix preservation
+- [ ] Add test for Sony RX/DSC naming
+- [ ] Verify all gate tests pass
+- [ ] Commit
+
+### Step 5: Update docstring
+- [ ] Update `merge_camera_data` docstring to document all preserved fields (type, size, pitch, mpix, year) and SpecDerived field preservation
+- [ ] Commit
+
+### Step 6: Verify all fixes
+- [ ] Run gate tests — ALL PASS
+- [ ] Verify no regressions
+- [ ] Push all commits
+
+## Exit Criteria
+- SpecDerived.size/area/pitch preserved from existing data when new data has None -- VERIFIED
+- Sony RX100 VII named "Sony RX100 VII" not "Sony Rx100 VII" -- VERIFIED
+- mpix preserved from existing data when new data has None -- VERIFIED
+- test_merge_field_preservation checks SpecDerived fields -- VERIFIED
+- All gate tests pass -- VERIFIED

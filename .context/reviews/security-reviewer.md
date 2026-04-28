@@ -1,16 +1,13 @@
-# Security Review (Cycle 20)
+# Security Review (Cycle 21)
 
 **Reviewer:** security-reviewer
 **Date:** 2026-04-28
 
 ## Findings
 
-No NEW security issues found. Previous security findings remain deferred:
-- C10-07: HTTP redirect chain not validated (LOW, deferred)
-- C10-08: Remote debugging port on macOS browser (LOW, deferred)
-- F34: `importlib.import_module` with user-controllable input (LOW, mitigated by whitelist, deferred)
+No NEW security issues found. Previous security findings remain deferred (C10-07: HTTP redirect chain not validated, C10-08: remote debugging port, F34: importlib with user-controllable input).
 
-The Jinja2 autoescape is correctly enabled (`select_autoescape(["html", "xml"])`). No `|safe` filters found in templates. The `data-name` attribute uses `|e` for proper escaping. CDN SRI hashes are in place.
+The C20-03 field preservation in merge does not introduce any new attack surface. The SpecDerived stale fields issue (C21-01) is a data correctness bug, not a security issue.
 
 ---
 

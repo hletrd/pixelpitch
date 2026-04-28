@@ -1,22 +1,18 @@
-# Designer Review (Cycle 20) — UI/UX Review
+# Designer Review (Cycle 21) — UI/UX Review
 
 **Reviewer:** designer
 **Date:** 2026-04-28
 
-## Findings
+## D21-01: SpecDerived stale fields cause "unknown" display for preserved data
 
-No NEW UI/UX issues found. Previous findings remain deferred:
-- F35: Box plot hardcoded dimensions (LOW, deferred)
-- F36: No skip-to-content link (LOW, deferred)
-- F37: Filter dropdown doesn't show current state (LOW, deferred)
-- F38: No loading indicator for large datasets (LOW, deferred)
-- F39: Navbar has 9 items (LOW, deferred)
-- C11-08: Scatter plot year axis label overlap (LOW, deferred)
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The C19-01 fix (tablesorter column indices) is working correctly. The tablesorter now uses conditional Jinja2 blocks for "all" vs category pages.
+When the merge function preserves `spec.size` and `spec.pitch` at the Spec level but not the SpecDerived level, cameras that should display sensor size and pixel pitch show "unknown" instead. This is a user-facing data quality issue that makes the site appear less comprehensive than it actually is.
+
+**Impact:** 30.5% of cameras (532) have no size in the current CSV. Many of these could display preserved data if the SpecDerived fields were properly updated. Users relying on the site for sensor comparisons would see gaps in the data that don't actually exist.
 
 ---
 
 ## Summary
 
-No new actionable findings.
+- D21-01 (MEDIUM): "unknown" display for cameras with preserved data — user-facing data gap

@@ -1,19 +1,20 @@
-# Architect Review (Cycle 20) — Architectural/Design Risks
+# Architect Review (Cycle 21) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
 
-## A20-01: Merge function field preservation is ad-hoc, not schema-driven
-**Severity:** LOW | **Confidence:** HIGH
+## A21-01: SpecDerived stale fields reveal a deeper data model design issue
 
-The `merge_camera_data` function has special-case logic for `year` preservation but not for `type`, `size`, or `pitch`. This ad-hoc approach means each field's merge behavior must be individually coded and tested. A schema-driven merge (e.g., a merge strategy per field: "prefer new", "prefer existing if new is None", "prefer non-None") would be more maintainable and less error-prone.
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-However, this is an architectural improvement, not a correctness fix. The current behavior works correctly for the primary use case (Geizhals data is always more complete than source data).
+The C21-01 bug (SpecDerived fields stale after merge) reveals a deeper architectural issue: the `Spec` / `SpecDerived` split creates two sources of truth for the same data. `Spec` holds input values; `SpecDerived` holds computed values. When merge modifies `Spec` fields, `SpecDerived` fields become stale.
 
-**Recommendation:** Document the merge behavior for each field. Consider a field-level merge strategy if the source diversity grows.
+The current fix (preserving both Spec and SpecDerived fields) is pragmatic but perpetuates the dual-source-of-truth problem. A more robust approach would be to re-derive `SpecDerived` from `Spec` after any merge operation. However, this has a subtle complication: `derive_spec` computes `SpecDerived.size` from `spec.type` when `spec.size` is None, which could produce different results than the preserved `spec.size`.
+
+**Recommendation:** The pragmatic fix (preserving SpecDerived fields) is correct for now. If the source diversity grows, consider making `SpecDerived` a pure computed view with no independent state, so it's always consistent with `Spec`.
 
 ---
 
 ## Summary
 
-No new actionable findings beyond what code-reviewer and critic already identified.
+- A21-01 (MEDIUM): Spec/SpecDerived dual-source-of-truth design issue — pragmatic fix is acceptable

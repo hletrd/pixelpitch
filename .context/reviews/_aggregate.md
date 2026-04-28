@@ -1,81 +1,88 @@
-# Aggregate Review (Cycle 20) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 21) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-19 Status
+## Cycle 1-20 Status
 
-All previous fixes confirmed still working. No regressions. Gate tests pass (105 checks). C19-01 (tablesorter column indices) and C19-02 (env var error handling) fixes verified in code.
+All previous fixes confirmed still working. No regressions. Gate tests pass. C20-01 (pixel_pitch crash guard), C20-02 (Sony FX naming), and C20-03 (merge field preservation) fixes verified in code.
 
-## Cross-Agent Agreement Matrix (Cycle 20 New Findings)
+**However:** C20-03 fix is partially broken — see C21-01 below.
+
+## Cross-Agent Agreement Matrix (Cycle 21 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| `pixel_pitch()` ZeroDivisionError when mpix=0 | code-reviewer, critic, verifier, tracer, debugger, test-engineer | MEDIUM |
-| Sony FX series misnamed by `_parse_camera_name` | code-reviewer, critic, verifier, tracer, debugger, test-engineer | MEDIUM |
-| Merge doesn't preserve type/size/pitch from existing | code-reviewer, critic, verifier, architect | LOW |
-| Stale CSV duplicates (259 pairs) | code-reviewer | LOW (data artifact) |
+| SpecDerived fields stale after merge (C20-03 regression) | code-reviewer, critic, verifier, tracer, debugger, test-engineer, architect, designer | HIGH |
+| Sony RX/DSC/HX/WX/TX/QX misnamed by `.title()` | code-reviewer, critic, verifier, tracer, debugger, test-engineer | MEDIUM |
+| mpix not preserved in merge when new has None | code-reviewer, critic, verifier, test-engineer | LOW |
+| test_merge_field_preservation doesn't verify SpecDerived | code-reviewer, test-engineer | MEDIUM |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C20-01: `pixel_pitch()` crashes with ZeroDivisionError when mpix=0.0
-**Sources:** C20-01, C20-02, CR20-02, V20-01, T20-01, D20-01, TE20-01
-**Severity:** MEDIUM | **Confidence:** HIGH (7-agent consensus)
+### C21-01: SpecDerived fields stale after merge — C20-03 regression
 
-The `pixel_pitch()` function divides by `mpix * 10**6` without checking for zero or negative values. When `mpix=0.0`, ZeroDivisionError. When `mpix<0`, ValueError (sqrt of negative). The `derive_spec()` function has no try/except guard, so this crashes the entire render pipeline.
+**Sources:** C21-01, C21-CR01, V21-01, T21-01, D21-01, TE21-01, A21-01, D21-01
+**Severity:** HIGH | **Confidence:** HIGH (8-agent consensus)
 
-**Concrete failure scenario:** A source HTML page contains "0.0 Megapixels" (placeholder or data error). The regex matches, producing mpix=0.0. `derive_spec` calls `pixel_pitch(area, 0.0)` and the entire `python pixelpitch.py` command crashes.
+The C20-03 fix added field preservation for `type`, `size`, and `pitch` at the `Spec` level (`new_spec.spec.*`). However, the `SpecDerived` fields (`new_spec.size`, `new_spec.area`, `new_spec.pitch`) were NOT updated to match. The Jinja2 template reads from `SpecDerived` fields, so the preserved values are invisible in the rendered HTML — cameras show "unknown" for sensor size and pixel pitch.
 
-**Fix:** Add guard in `pixel_pitch()`:
+This affects 30.5% of cameras (532 with no size) and 32.5% (567 with no pitch) in the current dataset.
+
+**Fix:** Add SpecDerived field preservation in `merge_camera_data`:
 ```python
-def pixel_pitch(area: float, mpix: float) -> float:
-    if mpix <= 0:
-        return 0.0
-    return 1000 * sqrt(area / (mpix * 10**6))
+if new_spec.size is None and existing_spec.size is not None:
+    new_spec.size = existing_spec.size
+if new_spec.area is None and existing_spec.area is not None:
+    new_spec.area = existing_spec.area
+if new_spec.pitch is None and existing_spec.pitch is not None:
+    new_spec.pitch = existing_spec.pitch
 ```
 
 ---
 
-### C20-02: Sony FX series cameras misnamed by `_parse_camera_name`
-**Sources:** C20-03, CR20-01, V20-02, T20-02, D20-02, TE20-02
+### C21-02: Sony RX/DSC/HX/WX/TX/QX series cameras misnamed by `.title()`
+
+**Sources:** C21-02, C21-CR02, V21-02, T21-02, D21-02, TE21-02
 **Severity:** MEDIUM | **Confidence:** HIGH (6-agent consensus)
 
-The `_parse_camera_name()` function applies `.title()` to URL slugs, converting "fx3" to "Fx3" instead of "FX3". The function has special-case replacement for "Sony Zv " -> "Sony ZV-" but no equivalent for Sony FX series. This causes cameras like FX3, FX6, FX30 to appear with incorrect capitalization.
+The C20-02 fix only addressed the FX series. The same `.title()` issue affects all Sony multi-letter uppercase series: RX, HX, WX, TX, QX, and DSC. These are all converted to lowercase second letter by `.title()` (e.g., "rx100" -> "Rx100" instead of "RX100").
 
-**Impact:** Users searching for "Sony FX3" won't find it. If other sources produce the correct name "Sony FX3", the merge treats them as different cameras (different merge keys), creating duplicate entries.
-
-**Fix:** Add FX-series normalization:
+**Fix:** Add general Sony uppercase series normalizers after the existing FX normalizer:
 ```python
-cleaned = re.sub(r'\bFx(\d)', r'FX\1', cleaned)
+cleaned = re.sub(r'\bRx(\d)', r'RX\1', cleaned)
+cleaned = re.sub(r'\bHx(\d)', r'HX\1', cleaned)
+cleaned = re.sub(r'\bWx(\d)', r'WX\1', cleaned)
+cleaned = re.sub(r'\bTx(\d)', r'TX\1', cleaned)
+cleaned = re.sub(r'\bQx(\d)', r'QX\1', cleaned)
+cleaned = re.sub(r'\bDsc\b', r'DSC', cleaned)
 ```
 
 ---
 
-### C20-03: `merge_camera_data` doesn't preserve type/size/pitch from existing data when new data has None
-**Sources:** C20-04, CR20-03, V20-03, A20-01
+### C21-03: mpix not preserved by merge when new data has mpix=None
+
+**Sources:** C21-03, C21-CR03, V21-03, TE21-03
 **Severity:** LOW | **Confidence:** HIGH (4-agent consensus)
 
-The merge function has explicit logic to preserve `year` from existing data when new data has `year=None`. However, `type`, `size`, and `pitch` have no such preservation. When a new spec has `type=None` but existing had `type='1/2.3'`, the type is lost.
+The merge function preserves `type`, `size`, `pitch`, and `year` but NOT `mpix`. When a new source has `mpix=None` but existing data has `mpix=33.0`, the megapixel count is lost and the camera shows "unknown" resolution.
 
-**Fix:** Add field-level merge logic similar to year:
+**Fix:** Add mpix preservation:
 ```python
-if new_spec.spec.type is None and existing_spec.spec.type is not None:
-    new_spec.spec.type = existing_spec.spec.type
-if new_spec.spec.size is None and existing_spec.spec.size is not None:
-    new_spec.spec.size = existing_spec.spec.size
-if new_spec.spec.pitch is None and existing_spec.spec.pitch is not None:
-    new_spec.spec.pitch = existing_spec.spec.pitch
+if new_spec.spec.mpix is None and existing_spec.spec.mpix is not None:
+    new_spec.spec.mpix = existing_spec.spec.mpix
 ```
 
 ---
 
-### C20-04: 259 duplicate (name, category) pairs in dist/camera-data.csv
-**Sources:** C20-05
-**Severity:** LOW | **Confidence:** HIGH (data artifact, not code bug)
+### C21-04: test_merge_field_preservation doesn't verify SpecDerived fields
 
-The current CSV has 259 duplicate pairs from previous CI runs before the merge dedup logic was fixed. Running `merge_camera_data([], existing)` reduces 1742 records to 1472 with 0 duplicates. The next CI deployment will clean this up.
+**Sources:** C21-04, TE21-01
+**Severity:** MEDIUM | **Confidence:** HIGH (2-agent consensus)
 
-**No code fix needed.**
+The test only checks `spec.spec.*` (Spec-level) fields, not `spec.*` (SpecDerived-level) fields. This allowed the C21-01 bug to go undetected.
+
+**Fix:** Add assertions for SpecDerived fields in the test.
 
 ---
 
@@ -84,8 +91,9 @@ The current CSV has 259 duplicate pairs from previous CI runs before the merge d
 No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
-- Total distinct new findings: 3 actionable (2 MEDIUM, 1 LOW) + 1 data artifact
-- Cross-agent consensus findings (3+ agents): 3 (C20-01, C20-02, C20-03)
-- 2 MEDIUM findings: pixel_pitch crash, Sony FX misnaming
-- 1 LOW finding: merge field preservation
-- 1 data artifact: stale CSV duplicates (no code fix needed)
+
+- Total distinct new findings: 4 actionable (1 HIGH, 2 MEDIUM, 1 LOW)
+- Cross-agent consensus findings (3+ agents): 3 (C21-01, C21-02, C21-03)
+- 1 HIGH finding: SpecDerived stale fields after merge
+- 2 MEDIUM findings: Sony RX/DSC naming, test gap for SpecDerived
+- 1 LOW finding: mpix not preserved in merge
