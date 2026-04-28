@@ -111,7 +111,11 @@ def _parse_camera_page(page, url: str) -> Optional[Spec]:
 
     mpix = round(pixels[0] * pixels[1] / 1_000_000, 1) if pixels else None
     year_m = re.search(r"Release Date.{0,40}?(\d{4})", body_text, re.IGNORECASE)
-    year = int(year_m.group(1)) if year_m else parse_year(body_text[:500])
+    if year_m:
+        y = int(year_m.group(1))
+        year = y if 1900 <= y <= 2100 else None
+    else:
+        year = parse_year(body_text[:500])
 
     if not (size or mpix):
         return None
