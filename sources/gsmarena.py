@@ -41,15 +41,6 @@ SPEC_ROW_RE = re.compile(
     re.DOTALL | re.IGNORECASE,
 )
 
-# Lens entry inside Main Camera value
-LENS_RE = re.compile(
-    r"(?P<mp>[\d.]+)\s*MP[^,]*,"  # 50 MP,
-    r"\s*f/(?P<f>[\d.]+)[^,]*,"   # f/1.7,
-    r"[^,]*?(?P<role>wide|ultrawide|ultra ?wide|telephoto|tele|periscope|macro|depth)?",
-    re.IGNORECASE,
-)
-
-
 
 def _parse_spec_table(html: str) -> dict[str, str]:
     fields: dict[str, str] = {}
