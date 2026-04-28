@@ -233,7 +233,7 @@ def match_sensors(
         if not (width_match and height_match):
             continue
 
-        if megapixels is not None and sensor_megapixels:
+        if megapixels is not None and megapixels > 0 and sensor_megapixels:
             megapixel_match = any(
                 abs(megapixels - mp) / megapixels * 100 <= megapixel_tolerance
                 for mp in sensor_megapixels
