@@ -244,9 +244,12 @@ def fetch(
 
     specs: list[Spec] = []
     for i, s in enumerate(slugs):
-        spec = fetch_phone(s)
-        if spec:
-            specs.append(spec)
+        try:
+            spec = fetch_phone(s)
+            if spec:
+                specs.append(spec)
+        except Exception as ex:
+            print(f"  gsmarena: failed {s}: {ex}")
         if (i + 1) % 25 == 0:
             print(f"  gsmarena: {i + 1}/{len(slugs)} fetched, kept {len(specs)}")
         time.sleep(sleep_seconds)
