@@ -267,6 +267,11 @@
       const category = row.attr('data-category') || '';
       const name = row.attr('data-name') || '';
 
+      // NaN pitch is malformed data — the || 0 fallback hides it otherwise.
+      if (isNaN(parseFloat(row.attr('data-pitch')))) {
+        return true;
+      }
+
       // There is no consumer camera with a pixel pitch over 10 µm.
       // Even Kodak/onsemi's KAF-16803 and GSENSE4040 has a pixel pitch of 9 µm.
       if (pitch > 10) {
