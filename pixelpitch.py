@@ -1167,7 +1167,7 @@ def main():
             page.quit()
             specs_sorted = sorted_by(all_specs, "pitch")
             for spec in specs_sorted:
-                if spec.pitch:
+                if spec.pitch is not None:
                     prettyprint(spec)
         elif cmd in ("--help", "-h"):
             print("Usage: python pixelpitch.py [command] [args]")
