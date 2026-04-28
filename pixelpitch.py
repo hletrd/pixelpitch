@@ -266,7 +266,12 @@ def load_csv(output_dir: Path) -> Optional[str]:
 
 
 def _safe_float(s: str) -> Optional[float]:
-    """Parse a float string, returning None for NaN/inf/empty."""
+    """Parse a float string, returning None for NaN/inf/empty.
+
+    Note: negative values are returned as-is; callers that require
+    positive-only values (e.g. pitch, mpix, area) must apply their
+    own ``val <= 0`` check.
+    """
     if not s:
         return None
     try:
@@ -340,12 +345,23 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
             size = None
             width = _safe_float(width_str)
             height = _safe_float(height_str)
+            # Reject non-positive physical dimensions
+            if width is not None and width <= 0:
+                width = None
+            if height is not None and height <= 0:
+                height = None
             if width is not None and height is not None:
                 size = (width, height)
 
             area = _safe_float(area_str)
+            if area is not None and area <= 0:
+                area = None
             mpix = _safe_float(mpix_str)
+            if mpix is not None and mpix <= 0:
+                mpix = None
             pitch = _safe_float(pitch_str)
+            if pitch is not None and pitch <= 0:
+                pitch = None
             year = None
             if year_str:
                 try:
