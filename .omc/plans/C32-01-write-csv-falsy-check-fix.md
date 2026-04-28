@@ -1,7 +1,7 @@
 # Plan: Cycle 32 Findings — write_csv Falsy Check Fix
 
 **Created:** 2026-04-28
-**Status:** PENDING
+**Status:** COMPLETED
 **Source Reviews:** CR32-01, CRIT32-01, V32-02, TR32-01, DBG32-01, TE32-01
 
 ---
@@ -40,11 +40,12 @@ For float fields (area, mpix, pitch), the value `0.0` is falsy but is a valid fl
    - Write to CSV, read back
    - Assert mpix and pitch are preserved as `0.0` (not `None`)
 
-### Verification
+### Verification — DONE
 
-- Gate tests (`python -m tests.test_parsers_offline`) — all checks must pass
-- New test case must pass
-- Existing CSV round-trip test must still pass
+- Gate tests (`python -m tests.test_parsers_offline`) — all checks passed
+- New test case passes (0.0 mpix and 0.0 pitch preserved through round-trip)
+- Existing CSV round-trip test still passes
+- Commit: 3f1363a
 
 ---
 
