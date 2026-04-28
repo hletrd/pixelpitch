@@ -320,6 +320,36 @@ def test_gsmarena_unicode_quotes():
     expect("no-space inch suffix match", m6.group(1) if m6 else None, "1/2.3")
 
 
+def test_mpix_re_format_handling():
+    """Verify centralized MPIX_RE matches 'Megapixel', 'MP', and 'Mega pixels'."""
+    section("MPIX_RE format handling")
+    from sources import MPIX_RE
+
+    # Classic "Megapixel" — must still work
+    m1 = MPIX_RE.search("33.0 Megapixel")
+    expect("MPIX_RE matches Megapixel", m1.group(1) if m1 else None, "33.0")
+
+    # "MP" abbreviation
+    m2 = MPIX_RE.search("33.0 MP")
+    expect("MPIX_RE matches MP", m2.group(1) if m2 else None, "33.0")
+
+    # "Mega pixels" with space
+    m3 = MPIX_RE.search("33.0 Mega pixels")
+    expect("MPIX_RE matches Mega pixels", m3.group(1) if m3 else None, "33.0")
+
+    # "Megapixels" plural
+    m4 = MPIX_RE.search("32.7 Megapixels")
+    expect("MPIX_RE matches Megapixels", m4.group(1) if m4 else None, "32.7")
+
+    # "effective Megapixels" prefix
+    m5 = MPIX_RE.search("effective 45.7 Megapixels")
+    expect("MPIX_RE matches effective prefix", m5.group(1) if m5 else None, "45.7")
+
+    # Case-insensitive: "mp" lowercase
+    m6 = MPIX_RE.search("24.2 mp")
+    expect("MPIX_RE matches lowercase mp", m6.group(1) if m6 else None, "24.2")
+
+
 # --------------------------------------------------------------------------
 # openMVG — synthesise a small CSV and parse via the CSV parser
 
@@ -1283,6 +1313,7 @@ def main():
     test_merge_field_preservation()
     test_merge_year_change_log()
     test_sony_dsc_hyphen_normalisation()
+    test_mpix_re_format_handling()
 
     print("\n" + ("=" * 60))
     if _failures:

@@ -39,13 +39,12 @@ RANGEFINDER_URL = "https://geizhals.eu/?cat=dcamsp&xf=1480_Messsucher&hloc=de&hl
 CAMCORDER_URL = "https://geizhals.eu/?cat=dvcam&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=205&fcols=195&fcols=3373&sort=artikel"
 ACTIONCAM_URL = "https://geizhals.eu/?cat=dvcamac&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=5023&fcols=5025&fcols=5036&sort=artikel"
 
-MPIX_RE = re.compile(r"([\d\.]+)\s*Megapixel")
-
 # Shared regex patterns from sources/__init__.py — single source of truth.
 # SIZE_MM_RE matches "Ax Bmm" with ASCII x, Unicode ×, and optional spaces.
 # PITCH_UM_RE matches µm, μm (Greek mu), "microns", "um", and HTML entities.
+# MPIX_RE matches "Megapixel", "MP", "Mega pixels" (case-insensitive).
 # TYPE_FRACTIONAL_RE matches fractional-inch sensor types with various suffixes.
-from sources import TYPE_FRACTIONAL_RE, SIZE_MM_RE, PITCH_UM_RE
+from sources import TYPE_FRACTIONAL_RE, SIZE_MM_RE, PITCH_UM_RE, MPIX_RE
 
 # from http://en.wikipedia.org/wiki/Image_sensor_format
 TYPE_SIZE: dict[str, Tuple[float, float]] = {
