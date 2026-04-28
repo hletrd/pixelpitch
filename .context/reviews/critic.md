@@ -1,22 +1,26 @@
-# Critic — Cycle 49
+# Critic — Cycle 50
 
 **Date:** 2026-04-29
+**HEAD:** `ed45eed`
 
 ## Multi-perspective critique
 
-After 48 review cycles the codebase has been heavily massaged. Critique of the current state:
+After 49 review cycles the codebase has been heavily massaged. Cycle 50 critique:
 
-### Process critiques
+### F50-01 — `git pull --rebase || true` is process-noise, not safety
+- File: `.github/workflows/github-pages.yml:108`
+- The defensive `|| true` is the kind of CI write that "looks safe" but produces hard-to-debug failure modes (silent green rebase + red push). The trade-off (suppress conflict noise) is unfavorable: the workflow runs once a month, so the practical cost of an explicit failure is one operator email per multi-year coincidence. Recommend dropping `|| true`.
 
-- **F49-06: The orchestrator GATES list flake8, but CI does not (MEDIUM / HIGH).** Cycle 48 fixed 33 flake8 errors at root. Without CI enforcement, the asymmetry between local gate work and remote enforcement creates unbounded technical debt — the cleanup has a half-life of one merge cycle.
-- **F49-07: 48 review cycles for a 1.3K-line script is past diminishing returns (INFO).** Recent cycle aggregates note "no new findings" or trivial cleanup. Healthy projects know when to declare a feature done.
+### Process critique (carry-forward)
+
+- 50 review cycles for a 1.3K-line script is well past diminishing returns. Cycles are now mining process hygiene and defensive style rather than logic bugs. Healthy projects know when to declare done; this loop is orchestrator-driven, so the cycle count is structural rather than discretionary.
 
 ### Code-design critiques carried forward
 
-- F32 (1300-line monolith) — deferred for valid reasons.
+- F32 (1.3K-line monolith) — deferred for valid reasons.
 - F31 (no Source Protocol) — deferred for valid reasons.
 - C22-05 (ad-hoc field preservation) — deferred for risk-aversion reasons.
 
 ## Summary
 
-Single actionable critique this cycle: F49-06 (CI does not run flake8). Other critiques are about the review process itself, not code defects.
+Single actionable critique this cycle: F50-01 (drop the `|| true` mask). Other critiques are about the review-loop process, not code defects.

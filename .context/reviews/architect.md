@@ -1,24 +1,33 @@
-# Architect — Cycle 49
+# Architect — Cycle 50
 
 **Date:** 2026-04-29
+**HEAD:** `ed45eed`
 
 ## Architectural state
 
-- Single 1.3K-line orchestrator (`pixelpitch.py`) — CLI, scrape coordination, merge engine, CSV I/O, HTML render.
-- Per-source modules in `sources/` follow uniform `fetch(limit=...) -> list[Spec]` contract.
-- Shared regex/helpers exposed from `sources/__init__.py`.
+Layered structure:
+1. `models.py` — pure data
+2. `sources/` — fetchers (returns `Spec`)
+3. `pixelpitch.py` — derivation, merge, render
+4. `templates/` — view
+5. CI — `.github/workflows/github-pages.yml`
 
 ## Findings
 
-### F49-11: CI quality-gate definition does not match orchestrator GATES (MEDIUM / HIGH)
-- **Detail:** Orchestrator declares `GATES: flake8 + tests.test_parsers_offline`. CI declares only the test gate. Architectural inconsistency that erodes CI's role as the source of truth for "does master build?"
-- **Architectural fix:** Bring CI in line with orchestrator GATES (add flake8 step).
-- **Confidence:** HIGH
+No new architectural findings this cycle. F32 (1291-line monolith) remains deferred; the file's growth this cycle is +0 LOC.
 
-### Carried-forward architectural items
+## Confirmations
 
-F31, F32, C22-05 remain validly deferred per documented exit criteria.
+- `SOURCE_REGISTRY` boundary is clean: each source returns `list[Spec]` and is independent of `pixelpitch.py` derivation logic.
+- `merge_camera_data` is the single integration seam — well-documented, well-tested.
+- CI now enforces both gates declared by the orchestrator (flake8 + tests). The pipeline's structural invariants match the orchestrator's contract.
+
+## Architectural smells (deferred / acknowledged)
+
+- F32: `pixelpitch.py` monolith — deferred, threshold for re-open at 1500 LOC; current 1291.
+- C22-05: ad-hoc field preservation — deferred, threshold at 12+ if statements; currently ~10.
+- F31: no Source Protocol — deferred.
 
 ## Summary
 
-Architecture stable. Single new finding: process gap between local and remote gates (F49-11, same surface as F49-06/F49-08).
+Architecture stable. No new risks introduced this cycle.

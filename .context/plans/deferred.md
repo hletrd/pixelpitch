@@ -225,11 +225,10 @@ These findings from the review are explicitly deferred. Each entry records:
 
 ---
 
-## F49-02: `git pull --rebase || true` swallows rebase failures in CI
-- **File:** `.github/workflows/github-pages.yml`, line 100
+## F49-02: `git pull --rebase || true` swallows rebase failures in CI — RE-OPENED in C50-01
+- **File:** `.github/workflows/github-pages.yml`, line 108
 - **Severity:** LOW | **Confidence:** HIGH (logic), LOW (impact)
-- **Reason:** The CI workflow uses defensive `|| true` after `git pull --rebase`. If a rebase fails, the failure is masked, and the subsequent `git push` will exit non-zero on non-fast-forward — at which point the workflow step itself fails noisily. So the worst-case behavior is "noisy failure" rather than silent data loss. The workflow runs monthly and is idempotent (it commits regenerated CSVs), so practical risk is low.
-- **Re-open if:** A rebase conflict is observed in CI logs without surfacing as a workflow failure, or the workflow becomes more frequent (daily / hourly).
+- **Status:** Re-opened cycle 50 as F50-01 after consensus across code-reviewer / critic / verifier / tracer. Implementation plan: `C50-01-rebase-mask-and-matched-sensors-roundtrip.md`.
 
 ---
 
