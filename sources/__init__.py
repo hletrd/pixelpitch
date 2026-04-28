@@ -87,7 +87,7 @@ def normalise_name(name: str) -> str:
 # UTF-8 BOM (U+FEFF).  Using the escape sequence rather than the literal
 # character guards against editors or CI pipelines that silently strip or
 # normalise the invisible BOM glyph when re-encoding source files.
-_BOM = '﻿'
+_BOM = '\ufeff'
 
 
 def strip_bom(text: str) -> str:
