@@ -1,27 +1,24 @@
-# Architect Review — Cycle 48
+# Architect — Cycle 49
 
 **Date:** 2026-04-29
-**Reviewer:** architect
 
-## Architectural Assessment
+## Architectural state
 
-The codebase architecture has not changed since cycle 47. Layering is clean: `models.py` (data shapes) → `sources/*` (per-source parsers) → `pixelpitch.py` (merge, derive, render). No circular imports.
+- Single 1.3K-line orchestrator (`pixelpitch.py`) — CLI, scrape coordination, merge engine, CSV I/O, HTML render.
+- Per-source modules in `sources/` follow uniform `fetch(limit=...) -> list[Spec]` contract.
+- Shared regex/helpers exposed from `sources/__init__.py`.
 
-## New Findings (Cycle 48)
+## Findings
 
-### F48-ARCH-01: `pixelpitch.py:47` E402 — `sys.path` insert before `models` import is intentional
-- **File:** `pixelpitch.py:47`
-- **Severity:** LOW | **Confidence:** HIGH
-- **Why it's flagged:** flake8 E402 — module-level imports after a non-import statement.
-- **Why it's intentional:** The `sys.path.insert` is required to make `models` importable when run as a script.
-- **Fix:** Add a targeted `# noqa: E402` to the affected import line(s) so the lint gate stays clean without restructuring imports. Same applies to `tests/test_parsers_offline.py:25` and `tests/test_sources.py:23-25`.
+### F49-11: CI quality-gate definition does not match orchestrator GATES (MEDIUM / HIGH)
+- **Detail:** Orchestrator declares `GATES: flake8 + tests.test_parsers_offline`. CI declares only the test gate. Architectural inconsistency that erodes CI's role as the source of truth for "does master build?"
+- **Architectural fix:** Bring CI in line with orchestrator GATES (add flake8 step).
+- **Confidence:** HIGH
 
-## Confirmation
+### Carried-forward architectural items
 
-No new structural issues. Source registry still serves as a clean contract.
+F31, F32, C22-05 remain validly deferred per documented exit criteria.
 
-## Confidence Summary
+## Summary
 
-| Finding     | Severity | Confidence |
-|-------------|----------|------------|
-| F48-ARCH-01 | LOW      | HIGH       |
+Architecture stable. Single new finding: process gap between local and remote gates (F49-11, same surface as F49-06/F49-08).

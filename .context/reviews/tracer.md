@@ -1,21 +1,27 @@
-# Tracer Review — Cycle 48
+# Tracer — Cycle 49
 
 **Date:** 2026-04-29
-**Reviewer:** tracer
 
-## Causal Trace
+## Causal traces
 
-Followed the `merge_camera_data` → `derive_spec` → `write_csv` flow with the new matched_sensors=None sentinel from cycle 46. No anomalies. The flow is deterministic and the field-level preservation logic matches the per-field tests in `tests/test_parsers_offline.py`.
+### Trace A: A new flake8 violation reaches master
 
-## New Findings (Cycle 48)
+Hypothesis: Without CI gate, a flake8 violation in PR merges to master.
 
-No new causal-flow issues.
+Evidence chain:
+1. Local developer runs flake8 — clean (cycle 48 baseline).
+2. PR adds a new module with unused imports (F401).
+3. CI runs `python -m tests.test_parsers_offline` — passes (no lint check).
+4. PR merges. Master accumulates the violation.
+5. Monthly scheduled run deploys without failure.
+6. Next review-plan-fix cycle discovers the regression.
 
-## Confirmation
+Conclusion: F49-08 is real and reachable.
 
-- matched_sensors None vs [] sentinel preserved end-to-end.
-- pitch sentinel, type-size derivation, GSMArena decimal MP fix from cycle 45 still hold.
+### Trace B: matched_sensors preservation across CSV round-trip
 
-## Confidence Summary
+Verified post-C46-01 fix correctly preserves matched_sensors when sensors_db is unavailable. No regression.
 
-No new findings.
+## Summary
+
+Single actionable causal finding: F49-08 (gate enforcement gap).

@@ -1,22 +1,23 @@
-# Performance Review — Cycle 48
+# Performance Reviewer — Cycle 49
 
 **Date:** 2026-04-29
-**Reviewer:** perf-reviewer
 
 ## Inventory
 
-Reviewed all hot paths: `pixelpitch.py` rendering pipeline, `merge_camera_data`, sensor matching, `derive_spec`, all `sources/*` HTTP fetchers and parsers, and CSV write.
+`pixelpitch.py`, `sources/*.py`, templates, tests.
 
-## Findings (Cycle 48)
+## Findings
 
-No new performance regressions found this cycle. The previously-reviewed concerns (single-pass merge, no thread-safety risk in single-process generator, GSMArena pagination capped) remain stable.
+### F49-04: `merge_camera_data` re-runs `match_sensors` per existing-only camera (LOW / MEDIUM)
+- **File:** `pixelpitch.py:532-547`
+- **Detail:** Linear scan of the sensor DB per existing-only camera. ~1000 cameras × ~200 sensors = ~200k comparisons. Acceptable; an indexed lookup would cut this further but is not necessary at current scale.
+- **Confidence:** MEDIUM
+- **Fix:** Optional — pre-build a `(width_rounded, height_rounded) -> sensors` index.
 
-## Confirmation
+### F49-05: Source CSVs re-parsed every render (INFO / HIGH)
+- **File:** `pixelpitch.py:_load_per_source_csvs`
+- **Detail:** Every render re-reads every per-source CSV. Negligible at current scale (~5 sources × ~500 rows).
 
-- Sensor-matching loop still O(N×M) but bounded by N≈hundreds, M≈hundreds; no regression.
-- `merge_camera_data` still does full re-match per call when DB available, deemed acceptable per F27 deferral.
-- HTML rendering is template-based; Jinja2 environment cached via lazy global (tracked as deferred F26).
+## Summary
 
-## Confidence Summary
-
-No new findings. Status quo from Cycle 47 holds.
+No performance regressions introduced this cycle. Pipeline completes in seconds.

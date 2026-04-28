@@ -1,29 +1,27 @@
-# Debugger Review — Cycle 48
+# Debugger — Cycle 49
 
 **Date:** 2026-04-29
-**Reviewer:** debugger
 
-## Latent Bug Surface
+## Latent bug surface scan
 
-After 47 cycles, latent bug surface is small. The cycle 46 matched_sensors=None sentinel and cycle 45 decimal-MP regex fix closed the most recent surfaces.
+I traced every public function in `pixelpitch.py` and the source modules for failure modes:
 
-## New Findings (Cycle 48)
+- `derive_spec`: Exhaustive branch coverage for None size, None type, NaN/inf size, zero/negative pitch, zero/negative mpix. All paths produce well-defined output.
+- `merge_camera_data`: All field-preservation paths post-C22-01 correctly chained as independent `if`s.
+- `parse_existing_csv`: Padded value lists prevent IndexError. has_id detection is robust.
+- `write_csv`: All format strings guarded by `is not None and isfinite(...) and ... > 0`.
+- `_select_main_lens`: Post-C45-01 decimal-MP split is correct.
+- `_create_browser`: Cross-platform paths handled.
+- `http_get`: Retry logic bounded; final failure returns None.
 
-### F48-DEBUG-01: `pixelpitch.py:1240` f-string with no placeholder
-- **File:** `pixelpitch.py:1240`
-- **Severity:** LOW | **Confidence:** HIGH
-- **Why it's a problem:** F541 — `f"..."` with no `{}` substitution. While not a bug, it's a code smell often indicating either a placeholder was deleted from a string or the `f` was added by mistake. Worth confirming intent.
-- **Fix:** Convert to plain string if intentional, or restore the missing placeholder.
+## New debugger findings this cycle
 
-### F48-DEBUG-02: `merged2` unused — possible missed assertion
-- **File:** `tests/test_parsers_offline.py:1271`
-- **Severity:** LOW | **Confidence:** MEDIUM
-- **Why it's a problem:** F841. If the test author intended `merged2` to verify a post-merge state, the assertion is missing. Otherwise dead code.
-- **Fix:** Confirm and either add assertion or drop assignment.
+None — no latent bugs found by inspection. All previously suspicious surfaces have been remediated by cycles 1-48.
 
-## Confidence Summary
+## Adjacent debt
 
-| Finding      | Severity | Confidence |
-|--------------|----------|------------|
-| F48-DEBUG-01 | LOW      | HIGH       |
-| F48-DEBUG-02 | LOW      | MEDIUM     |
+F49-08 / F49-11 (CI lint gap) means future bug regressions could be invisible. Not a current bug, a process gap.
+
+## Summary
+
+Zero new latent bugs.

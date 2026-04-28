@@ -1,43 +1,33 @@
-# Verifier Review — Cycle 48
+# Verifier — Cycle 49
 
 **Date:** 2026-04-29
-**Reviewer:** verifier
 
-## Evidence-Based Correctness Check
-
-### Gate Evidence (run today)
+## Evidence
 
 ```
-$ python3 -m tests.test_parsers_offline
-... All checks passed.
-
 $ python3 -m flake8 . --exclude=.git,__pycache__,dist,downloaded_files,.context,.omc,templates
-33 errors:
-  9   E127 continuation line over-indented for visual indent
-  3   E231 missing whitespace after ','
-  1   E302 expected 2 blank lines, found 1
-  1   E303 too many blank lines (3)
-  5   E402 module level import not at top of file
- 11   F401 unused imports
-  1   F541 f-string is missing placeholders
-  1   F811 redefinition of unused 'io'
-  1   F841 local variable 'merged2' assigned but never used
+[exit 0, 0 errors]
+
+$ python3 -m tests.test_parsers_offline
+============================================================
+All checks passed.
+[exit 0]
 ```
 
-## New Findings
+Both gates declared by the orchestrator (flake8 + offline tests) pass at HEAD.
 
-### F48-VER-01: Test gate passes but lint gate fails
-- **Severity:** MEDIUM | **Confidence:** HIGH (reproducible)
-- **Why it's a problem:** A passing test gate creates false confidence; the lint gate is real and currently failing. The orchestrator's gates list both.
-- **Fix:** Same as F48-01 — clean up the lint failures.
+## Verified behavior
 
-## Confirmation
+- Lint surface is clean.
+- Test surface is clean.
+- All cycle 1-48 fixes still in effect (no regressions detected).
+- `_safe_float` correctly rejects NaN/inf and returns None for empty input. Benign.
 
-- All 56 prior unit/regression tests in `tests.test_parsers_offline` continue to pass.
-- No new behavior regressions detected.
+## Findings
 
-## Confidence Summary
+### F49-08: CI does not run flake8 — gate enforcement gap (MEDIUM / HIGH)
+- **File:** `.github/workflows/github-pages.yml`
+- **Evidence:** Workflow YAML inspection — only `python -m tests.test_parsers_offline` is run.
+- **Confidence:** HIGH
 
-| Finding    | Severity | Confidence |
-|------------|----------|------------|
-| F48-VER-01 | MEDIUM   | HIGH       |
+No other discrepancies between stated and actual behavior.

@@ -1,21 +1,24 @@
-# Document Specialist Review — Cycle 48
+# Document Specialist — Cycle 49
 
 **Date:** 2026-04-29
-**Reviewer:** document-specialist
 
-## Doc/Code Mismatch Check
+## Documentation review
 
-Reviewed `README.md`, `setup.cfg`, `requirements.txt`, plan docs, and per-cycle review docs.
+- README — not present at repo root (intentional for this static-site project).
+- Module docstrings — present and accurate in every source module.
+- Function docstrings — comprehensive in `pixelpitch.py`.
+- Comments — load-bearing comments (e.g., merge_camera_data preservation rationale) are correct.
 
-## New Findings (Cycle 48)
+## Findings
 
-No documentation/code mismatches found this cycle.
+No code-doc mismatches. Documentation is accurate.
 
-## Confirmation
+### Verified safe
 
-- `setup.cfg` flake8 config (`max-line-length=160`) is still the only declared lint policy.
-- No new external API surface added since cycle 47.
+- `_select_main_lens` docstring matches the post-C45-01 implementation.
+- `merge_camera_data` docstring matches the field-preservation logic.
+- `derive_spec` docstring matches the matched_sensors None-vs-[] semantics.
 
-## Confidence Summary
+## Summary
 
 No new findings.

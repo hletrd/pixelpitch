@@ -1,24 +1,27 @@
-# Security Review — Cycle 48
+# Security Reviewer — Cycle 49
 
 **Date:** 2026-04-29
-**Reviewer:** security-reviewer
 
 ## Inventory
 
-Examined: HTTP fetchers in `sources/*`, template rendering & autoescape settings in `pixelpitch.py`, CSV writer, CDN script tags, robots.txt, GitHub Actions workflow.
+- HTTP code: `sources/__init__.py:http_get`
+- Browser code: `pixelpitch.py:_create_browser`
+- Templating: Jinja2 with `select_autoescape(["html", "xml"])` — autoescape ON
+- CI: `.github/workflows/github-pages.yml`
 
-## Findings (Cycle 48)
+## Findings
 
-No new security findings.
+No new security findings this cycle.
 
-## Confirmation
+## Verified safe
 
-- Jinja2 `autoescape=True` enabled (verified at `pixelpitch.py` template environment).
-- All CDN `<script>`/`<link>` tags carry SRI hashes and `crossorigin="anonymous"` (verified via templates).
-- `importlib.import_module` for source dispatch is whitelisted by `SOURCE_REGISTRY` (deferred F34 still bounded).
-- `http_get` uses bounded retries; no auth/secret material in repo.
-- CSV write rejects non-finite floats (cycle 40 fix still active).
+- Jinja2 autoescape enabled (`pixelpitch.py:889`); user-derived strings (camera names) cannot inject HTML.
+- HTTP redirects via `urllib.request.urlopen` tracked under deferred C10-07 (low risk in CI-only context).
+- Remote debugging port is local-only macOS path (deferred C10-08).
+- `importlib.import_module` is whitelist-gated by `SOURCE_REGISTRY` (deferred F34).
+- No secrets in source tree.
+- Subresource integrity hashes verified on all CDN assets (deferred C9-07).
 
-## Confidence Summary
+## Summary
 
-No new findings. Existing posture acceptable.
+Risk surface unchanged from cycle 48.

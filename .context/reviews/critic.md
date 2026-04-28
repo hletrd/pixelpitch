@@ -1,27 +1,22 @@
-# Critic Review — Cycle 48
+# Critic — Cycle 49
 
 **Date:** 2026-04-29
-**Reviewer:** critic
 
-## Multi-Perspective Critique
+## Multi-perspective critique
 
-After 47 prior review cycles, the codebase is mature. The single critical gap this cycle: the project's own declared lint gate (flake8) is failing with 33 errors. The review aggregate from cycle 47 reported "zero new findings" but did not actually run the lint gate. This is a self-discipline gap in the review process itself.
+After 48 review cycles the codebase has been heavily massaged. Critique of the current state:
 
-## New Findings
+### Process critiques
 
-### F48-CRIT-01: Review process did not enforce its own gates
-- **Severity:** MEDIUM | **Confidence:** HIGH
-- **Why it's a problem:** Cycle 47 aggregate claimed all is well, yet `flake8` (declared gate in `setup.cfg`) reports 33 errors. The review fan-out should have surfaced this.
-- **Fix:** This cycle adds the missing finding (F48-01) and triggers the implementation step to clean up.
+- **F49-06: The orchestrator GATES list flake8, but CI does not (MEDIUM / HIGH).** Cycle 48 fixed 33 flake8 errors at root. Without CI enforcement, the asymmetry between local gate work and remote enforcement creates unbounded technical debt — the cleanup has a half-life of one merge cycle.
+- **F49-07: 48 review cycles for a 1.3K-line script is past diminishing returns (INFO).** Recent cycle aggregates note "no new findings" or trivial cleanup. Healthy projects know when to declare a feature done.
 
-### F48-CRIT-02: Repeated `models.SpecDerived` / `models.Spec` imports in tests but never used
-- **File:** `tests/test_parsers_offline.py` lines 594, 666, 845, 977, 1244, 1822, 1856
-- **Severity:** LOW | **Confidence:** HIGH
-- **Why it's a problem:** Suggests copy-paste pattern in test scaffolding without subsequent cleanup. The linter flags it, and removing them is trivial.
+### Code-design critiques carried forward
 
-## Confidence Summary
+- F32 (1300-line monolith) — deferred for valid reasons.
+- F31 (no Source Protocol) — deferred for valid reasons.
+- C22-05 (ad-hoc field preservation) — deferred for risk-aversion reasons.
 
-| Finding     | Severity | Confidence |
-|-------------|----------|------------|
-| F48-CRIT-01 | MEDIUM   | HIGH       |
-| F48-CRIT-02 | LOW      | HIGH       |
+## Summary
+
+Single actionable critique this cycle: F49-06 (CI does not run flake8). Other critiques are about the review process itself, not code defects.

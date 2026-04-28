@@ -224,3 +224,19 @@ These findings from the review are explicitly deferred. Each entry records:
 - **Re-open if:** More fields are added to Spec/SpecDerived and the `if` chain grows beyond 12 statements, or another insertion bug occurs.
 
 ---
+
+## F49-02: `git pull --rebase || true` swallows rebase failures in CI
+- **File:** `.github/workflows/github-pages.yml`, line 100
+- **Severity:** LOW | **Confidence:** HIGH (logic), LOW (impact)
+- **Reason:** The CI workflow uses defensive `|| true` after `git pull --rebase`. If a rebase fails, the failure is masked, and the subsequent `git push` will exit non-zero on non-fast-forward — at which point the workflow step itself fails noisily. So the worst-case behavior is "noisy failure" rather than silent data loss. The workflow runs monthly and is idempotent (it commits regenerated CSVs), so practical risk is low.
+- **Re-open if:** A rebase conflict is observed in CI logs without surfacing as a workflow failure, or the workflow becomes more frequent (daily / hourly).
+
+---
+
+## F49-04: `merge_camera_data` re-runs `match_sensors` per existing-only camera
+- **File:** `pixelpitch.py`, lines 532-547
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Reason:** Linear sensor-DB scan per existing-only camera (~1000 cameras × ~200 sensors = ~200k comparisons). Acceptable at current scale; render pipeline still completes in seconds. An indexed lookup (`(width_rounded, height_rounded) -> sensors`) would cut this further but adds complexity in a file already flagged as monolithic (F32 deferred). Performance-only; not a correctness issue.
+- **Re-open if:** Render time exceeds 30s on the merge step, or sensor DB grows past 5000 entries.
+
+---
