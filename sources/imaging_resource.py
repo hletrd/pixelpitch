@@ -281,9 +281,12 @@ def fetch(limit: Optional[int] = None, sleep_seconds: float = 0.5) -> list[Spec]
 
     specs: list[Spec] = []
     for i, u in enumerate(urls):
-        spec = fetch_one(_spec_url(u))
-        if spec:
-            specs.append(spec)
+        try:
+            spec = fetch_one(_spec_url(u))
+            if spec:
+                specs.append(spec)
+        except Exception as ex:
+            print(f"  imaging-resource: failed {_spec_url(u)}: {ex}")
         if (i + 1) % 25 == 0:
             print(f"  imaging-resource: {i + 1}/{len(urls)} fetched, kept {len(specs)}")
         time.sleep(sleep_seconds)

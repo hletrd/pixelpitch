@@ -163,9 +163,12 @@ def fetch(limit: Optional[int] = None, sleep_seconds: float = 0.4) -> list[Spec]
         urls = urls[:limit]
     specs: list[Spec] = []
     for i, u in enumerate(urls):
-        s = fetch_one(u)
-        if s:
-            specs.append(s)
+        try:
+            s = fetch_one(u)
+            if s:
+                specs.append(s)
+        except Exception as ex:
+            print(f"  apotelyt: failed {u}: {ex}")
         if (i + 1) % 25 == 0:
             print(f"  apotelyt: {i + 1}/{len(urls)} fetched, kept {len(specs)}")
         time.sleep(sleep_seconds)
