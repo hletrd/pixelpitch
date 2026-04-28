@@ -176,7 +176,12 @@ def sensor_size_from_type(
 
 
 def pixel_pitch(area: float, mpix: float) -> float:
-    if mpix <= 0:
+    """Compute pixel pitch (µm) from sensor area (mm²) and megapixels.
+
+    Returns 0.0 when mpix <= 0 or area <= 0 (physically meaningless
+    inputs) instead of raising ``ValueError`` from ``sqrt``.
+    """
+    if mpix <= 0 or area <= 0:
         return 0.0
     return 1000 * sqrt(area / (mpix * 10**6))
 
