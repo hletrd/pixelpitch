@@ -594,6 +594,42 @@ def test_parse_existing_csv():
     expect("BOM: record id", parsed8[0].id, 8)
     expect("BOM: category", parsed8[0].spec.category, "mirrorless")
 
+    # Year validation: year=0 should be rejected (treated as None)
+    csv_y0 = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+        "megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Test,mirrorless,,36.00,24.00,864.00,45.0,5.00,0,\n"
+    )
+    parsed_y0 = pp.parse_existing_csv(csv_y0)
+    expect("year=0 rejected", parsed_y0[0].spec.year, None)
+
+    # Year validation: negative year should be rejected
+    csv_neg = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+        "megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Test,mirrorless,,36.00,24.00,864.00,45.0,5.00,-1,\n"
+    )
+    parsed_neg = pp.parse_existing_csv(csv_neg)
+    expect("year=-1 rejected", parsed_neg[0].spec.year, None)
+
+    # Year validation: year outside range should be rejected
+    csv_far = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+        "megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Test,mirrorless,,36.00,24.00,864.00,45.0,5.00,99999,\n"
+    )
+    parsed_far = pp.parse_existing_csv(csv_far)
+    expect("year=99999 rejected", parsed_far[0].spec.year, None)
+
+    # Year validation: valid year still accepted
+    csv_valid = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+        "megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Test,mirrorless,,36.00,24.00,864.00,45.0,5.00,2021,\n"
+    )
+    parsed_valid = pp.parse_existing_csv(csv_valid)
+    expect("year=2021 accepted", parsed_valid[0].spec.year, 2021)
+
 
 # --------------------------------------------------------------------------
 # CSV round-trip test

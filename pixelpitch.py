@@ -333,7 +333,14 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
             area = float(area_str) if area_str else None
             mpix = float(mpix_str) if mpix_str else None
             pitch = float(pitch_str) if pitch_str else None
-            year = int(year_str) if year_str else None
+            year = None
+            if year_str:
+                try:
+                    y = int(year_str)
+                    if 1900 <= y <= 2100:
+                        year = y
+                except ValueError:
+                    pass
             matched_sensors = sensors_str.split(";") if sensors_str else []
 
             spec = Spec(name, category, type_str, size, pitch, mpix, year)
