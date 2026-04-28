@@ -917,9 +917,24 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
             mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None and isfinite(spec.mpix) and spec.mpix > 0 else ""
             pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None and isfinite(derived.pitch) and derived.pitch > 0 else ""
             year_str = str(spec.year) if spec.year is not None else ""
-            sensors_str = (
-                ";".join(derived.matched_sensors) if derived.matched_sensors else ""
-            )
+            # The matched_sensors round-trip uses ';' as delimiter (write_csv
+            # joins, parse_existing_csv splits). The contract is: sensor names
+            # must not contain ';'. Currently always true for sensors.json. If
+            # a future entry violates this, drop the offending element and warn
+            # rather than silently fragmenting on parse-back.
+            if derived.matched_sensors:
+                safe_sensors = []
+                for s in derived.matched_sensors:
+                    if ";" in s:
+                        print(
+                            f"Warning: dropping matched sensor with ';' "
+                            f"delimiter from {spec.name[:40]}: {s!r}"
+                        )
+                        continue
+                    safe_sensors.append(s)
+                sensors_str = ";".join(safe_sensors)
+            else:
+                sensors_str = ""
 
             writer.writerow([
                 id_str, spec.name, category_str, type_str, width_str,
