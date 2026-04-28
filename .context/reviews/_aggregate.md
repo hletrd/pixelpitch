@@ -1,80 +1,77 @@
-# Aggregate Review (Cycle 16) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 17) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-15 Status
+## Cycle 1-16 Status
 
-All previous fixes confirmed still working. No regressions in previously-fixed items.
+All previous fixes confirmed still working. No regressions in previously-fixed items. Gate tests pass (98 checks).
 
-## Cross-Agent Agreement Matrix (Cycle 16 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 17 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| sensor_size_from_type crashes on invalid input (1/0, 1/, 1/0.0) | code-reviewer, security-reviewer, critic, verifier, tracer, architect, debugger, test-engineer | MEDIUM |
-| merge_camera_data doesn't dedup among new_specs | code-reviewer, perf-reviewer, critic, verifier, tracer, architect, debugger, test-engineer, designer | MEDIUM |
-| Pentax DSLR regex misses 10+ models | code-reviewer, critic, verifier, tracer, debugger, designer, test-engineer | LOW |
-| digicamdb alias creates duplicate source CSVs | code-reviewer, critic, architect | LOW |
-| http_get doesn't catch OSError subclasses | security-reviewer, debugger, test-engineer | LOW |
-| No tests for sensor_size_from_type invalid inputs | test-engineer | LOW |
-| No tests for merge_camera_data duplicate new_specs | test-engineer | LOW |
-| Docstring gaps for sensor_size_from_type and merge_camera_data | document-specialist | LOW |
+| Pentax KP/KF/K-r/K-x still misclassified (C16-03 fix incomplete) | code-reviewer, critic, verifier, tracer, debugger, designer, test-engineer | MEDIUM |
+| Nikon Df missed by DSLR regex | code-reviewer, critic, verifier, tracer, debugger, designer, test-engineer | LOW |
+| GSMArena SENSOR_FORMAT_RE doesn't match Unicode quotes | code-reviewer, tracer, debugger, test-engineer, document-specialist | LOW |
+| openMVG docstring says "Pentax K-*" but regex is broader | document-specialist | LOW |
+| sensors_db loaded unconditionally in merge | perf-reviewer | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C16-01: `sensor_size_from_type` crashes on invalid fractional sensor types (1/0, 1/0.0, 1/)
-**Sources:** C16-01, S16-01, CR16-01, V16-01, T16-01, A16-03, D16-01, TE16-01, DS16-01
-**Severity:** MEDIUM | **Confidence:** HIGH (9-agent consensus)
+### C17-01: Pentax KP, KF, K-r, K-x still misclassified as mirrorless — C16-03 fix incomplete
+**Sources:** C17-01, CR17-01, V17-01, T17-01, D17-01, UX17-01, TE17-01, A17-01 (context), DS17-01 (doc)
+**Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
 
-The function computes `1 / float(typ[2:])` for types starting with `1/` that are not in the lookup table. If `typ` is `"1/0"`, `"1/0.0"`, or `"1/"`, this raises `ZeroDivisionError` or `ValueError`. These exceptions propagate through `derive_spec` -> `derive_specs`, crashing the entire render pipeline.
+The C16-03 fix changed `Pentax\s+K[-\s]\d` to `Pentax\s+K[-\s]?\d+[A-Za-z]*`. This regex still requires at least one digit after K[-\s]?. Four Pentax DSLR models have no digit in that position:
+- **Pentax KP** — letter directly after K
+- **Pentax KF** — letter directly after K
+- **Pentax K-r** — hyphen + letter (no digit)
+- **Pentax K-x** — hyphen + letter (no digit)
 
-Reproduced: `Spec(name='Test', category='fixed', type='1/0', size=None, ...)` -> `derive_spec()` -> `ZeroDivisionError`.
+All four are DSLRs. Verified: `_DSLR_NAME_RE.search()` returns None for all four.
 
-**Fix:** Wrap the computation in a try/except block in `sensor_size_from_type` and return None on any arithmetic or conversion error. Add tests.
-
----
-
-### C16-02: `merge_camera_data` does not deduplicate among `new_specs` — duplicate entries when same camera appears in multiple sources with same category
-**Sources:** C16-02, P16-01, CR16-02, V16-02, T16-02, A16-01, D16-02, TE16-02, UX16-01, DS16-02
-**Severity:** MEDIUM | **Confidence:** HIGH (10-agent consensus)
-
-When two entries in `new_specs` have the same `create_camera_key` result (e.g., a camera from both Geizhals DSLR and openMVG DSLR), both are appended to `merged_specs` without deduplication. This produces visible duplicate rows on the All Cameras page.
-
-Reproduced: Two specs with same name+category in new_specs -> 2 entries in merged result instead of 1.
-
-This is a regression risk from the C15-01 fix: now that openMVG correctly classifies Canon EOS xxxD cameras as DSLR, they overlap with Geizhals DSLR data.
-
-**Fix:** Track seen keys among new_specs within the merge loop. When a duplicate key is encountered, merge/replace instead of appending.
+**Fix:** Change `Pentax\s+K[-\s]?\d+[A-Za-z]*` to `Pentax\s+K[-\s]?[\dA-Za-z]+[A-Za-z]*` to allow letters or digits after K[-\s]?. Add test cases for Pentax KP and KF.
 
 ---
 
-### C16-03: Pentax DSLR regex misses models without hyphen (K3, K5, K7, K1) and letter-suffix models (KP, KF, K-r, K-x) and multi-digit models (K-30, K-50, K-70, K100D, etc.)
-**Sources:** C16-03, CR16-03, V16-03, T16-03, D16-03, UX16-02, TE16-03
+### C17-02: Nikon Df missed by DSLR regex
+**Sources:** C17-02, CR17-02, V17-02, T17-02, D17-02, UX17-02, TE17-02
 **Severity:** LOW | **Confidence:** HIGH (7-agent consensus)
 
-The Pentax pattern `Pentax\s+K[-\s]\d` requires a hyphen/space between K and the first digit, and only matches a single digit. It misses at least 10 Pentax DSLR models. The `Pentax\s+\d{1,2}D` pattern also misses `Pentax 645Z`.
+The Nikon pattern `Nikon\s+D\d{1,4}` requires at least one digit after D. Nikon Df has no digit — it's a letter-only suffix. The Df is a well-known retro-style DSLR.
 
-**Fix:** Change `Pentax\s+K[-\s]\d` to `Pentax\s+K[-\s]?\d+\w?` or more precisely `Pentax\s+K[-\s]?\d+[A-Za-z]*`. Also add `Pentax\s+645[A-Z]` for the medium-format line.
-
----
-
-### C16-04: `digicamdb` source is a pure alias for openMVG — potential duplicate source CSVs
-**Sources:** C16-04, CR16-04, A16-02
-**Severity:** LOW | **Confidence:** HIGH (3-agent consensus)
-
-The digicamdb module delegates to openmvg.fetch(). If both source CSVs exist, every camera appears twice in the data, compounding C16-02.
-
-**Fix:** Remove digicamdb from SOURCE_REGISTRY (it's a no-op alias), or add a guard to skip if openmvg CSV already exists.
+**Fix:** Add `|Nikon\s+Df` to the regex alternation. Add test case.
 
 ---
 
-### C16-05: `http_get` does not catch `OSError` subclasses (ConnectionResetError, SSLError)
-**Sources:** S16-02, D16-04, TE16-04
-**Severity:** LOW | **Confidence:** MEDIUM (3-agent consensus)
+### C17-03: GSMArena SENSOR_FORMAT_RE doesn't match Unicode curly quotes
+**Sources:** C17-03, T17-03, D17-03, TE17-03, DS17-02
+**Severity:** LOW | **Confidence:** MEDIUM (5-agent consensus)
 
-While urllib typically wraps these as URLError, edge cases exist where the underlying socket error leaks through. Adding `OSError` to the except clause would make the function more robust.
+The regex `r'(1/[\d.]+)"'` requires ASCII double-quote. Some web pages use Unicode right double quotation mark (U+2033). The central `TYPE_FRACTIONAL_RE` handles this correctly. When GSMArena pages use curly quotes, the sensor type is lost silently.
 
-**Fix:** Add `OSError` to the except clause in `http_get`.
+**Fix:** Change the regex to `r'(1/[\d.]+)(?:\"|″)'` or reuse `TYPE_FRACTIONAL_RE`.
+
+---
+
+### C17-04: openMVG docstring says "Pentax K-*" but regex is now broader
+**Sources:** DS17-01
+**Severity:** LOW | **Confidence:** HIGH
+
+After the C16-03 fix, the regex matches K3, K5, K7 (no hyphen) as well as K-1, K-30 (with hyphen). The docstring still says "Pentax K-*" which implies only hyphenated models.
+
+**Fix:** Update docstring to say "Pentax K-mount (K3, K-1, KP, etc.)".
+
+---
+
+### C17-05: sensors_db loaded unconditionally in merge_camera_data
+**Sources:** P17-01
+**Severity:** LOW | **Confidence:** HIGH
+
+`load_sensors_database()` is always called even when no existing-only cameras need sensor matching. Minor inefficiency — the file is small and the parse is fast.
+
+**Fix (if desired):** Lazy-load — only call when existing-only cameras are found.
 
 ---
 
@@ -83,8 +80,8 @@ While urllib typically wraps these as URLError, edge cases exist where the under
 No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
-- Total distinct new findings: 5 (2 MEDIUM, 3 LOW)
-- Cross-agent consensus findings (3+ agents): 5
-- All cycle 1-15 fixes remain intact
-- 2 MEDIUM findings are NEW (not regressions from previous fixes)
-- C16-02 is partially triggered by the C15-01 fix (openMVG now correctly classifies Canon xxxD as DSLR, creating more overlap with Geizhals)
+- Total distinct new findings: 5 (1 MEDIUM, 4 LOW)
+- Cross-agent consensus findings (3+ agents): 3
+- All cycle 1-16 fixes remain intact
+- 1 MEDIUM finding is a carry-over from incomplete C16-03 fix (Pentax letter-only models)
+- Gate tests pass (98 checks)

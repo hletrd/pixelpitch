@@ -1,49 +1,39 @@
-# Critic Review (Cycle 16) — Multi-Perspective Critique
+# Critic Review (Cycle 17) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository critique after cycles 1-15 fixes
+**Scope:** Full repository critique after cycles 1-16 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-15) — Confirmed Resolved
-All previous fixes remain intact. No regressions detected.
+## Previously Fixed (Cycles 1-16) — Confirmed Resolved
+
+- CR16-01 (sensor_size_from_type crash): Fixed — try/except guard confirmed.
+- CR16-02 (merge dedup): Fixed — `seen_new_keys` set confirmed working.
+- CR16-03 (Pentax regex): Partially fixed — `K[-\s]?\d+[A-Za-z]*` now covers K3, K5, K-30, K100D etc., but still misses KP, KF, K-r, K-x (no digit after K or after hyphen).
+- CR16-04 (digicamdb alias): Fixed — removed from SOURCE_REGISTRY.
 
 ## New Findings
 
-### CR16-01: `sensor_size_from_type` is a crash waiting to happen — defensive programming gap
-**File:** `pixelpitch.py`, lines 152-165
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-Same as C16-01/S16-01. The function performs arithmetic on user-derived data (sensor type strings from HTML parsing) without any error handling. This violates the principle of failing gracefully. Any source HTML containing an unusual sensor type format would crash the entire pipeline. The fix is simple: wrap the computation in try/except and return None on failure.
-
----
-
-### CR16-02: `merge_camera_data` lacks self-dedup for new_specs — a fundamental correctness issue
-**File:** `pixelpitch.py`, lines 349-407
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-Same as C16-02. The merge function deduplicates against existing data but not among its own inputs. This is a fundamental design oversight: when the same camera appears in multiple sources with the same category, the user sees duplicate rows on the All Cameras page. The function should dedup among new_specs before or during the merge loop.
-
----
-
-### CR16-03: Pentax DSLR regex is incomplete — multiple model families missed
+### CR17-01: Pentax KP/KF/K-r/K-x STILL misclassified — C16-03 fix was incomplete
 **File:** `sources/openmvg.py`, line 47
-**Severity:** LOW | **Confidence:** HIGH
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-Same as C16-03. The `Pentax\s+K[-\s]\d` pattern is overly restrictive. It misses at least 10 Pentax DSLR models that lack the hyphen or have letter suffixes. The fix is to broaden the regex to `Pentax\s+K[-\s]?\d+\w?` or similar.
+The C16-03 fix changed the regex to `Pentax\s+K[-\s]?\d+[A-Za-z]*` which requires at least one digit. Pentax KP and KF have a letter directly after K (no digit). Pentax K-r and K-x have a hyphen followed by a letter (no digit). All four are DSLRs. This is a carry-over from the incomplete fix.
+
+**Fix:** Change to `Pentax\s+K[-\s]?[\dA-Za-z]+[A-Za-z]*` to allow letters or digits after K[-\s]?.
 
 ---
 
-### CR16-04: digicamdb alias creates silent duplication risk
-**File:** `sources/digicamdb.py`; `pixelpitch.py`, line 985
+### CR17-02: Nikon Df — a known DSLR missed by the regex
+**File:** `sources/openmvg.py`, line 46
 **Severity:** LOW | **Confidence:** HIGH
 
-Same as C16-04. The digicamdb source is a pure alias for openMVG. Having both in SOURCE_REGISTRY means a manual `python pixelpitch.py source digicamdb` creates an identical CSV, compounding the merge dedup issue.
+The Nikon Df is a well-known retro DSLR with no digit after "D". The regex `Nikon\s+D\d{1,4}` requires at least one digit. If the Df appears in the openMVG database, it would be classified as mirrorless.
+
+**Fix:** Add `|Nikon\s+Df` to the regex alternation.
 
 ---
 
 ## Summary
-- NEW findings: 4 (2 MEDIUM, 2 LOW)
-- CR16-01: sensor_size_from_type crash — MEDIUM
-- CR16-02: merge_camera_data self-dedup missing — MEDIUM
-- CR16-03: Pentax regex incomplete — LOW
-- CR16-04: digicamdb alias duplication — LOW
+- NEW findings: 2 (1 MEDIUM, 1 LOW)
+- CR17-01: Pentax KP/KF/K-r/K-x STILL misclassified — MEDIUM
+- CR17-02: Nikon Df missed by DSLR regex — LOW

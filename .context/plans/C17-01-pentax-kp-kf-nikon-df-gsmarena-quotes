@@ -1,0 +1,59 @@
+# Plan C17-01: Pentax KP/KF/K-r/K-x, Nikon Df, GSMArena Quotes, Docstring
+
+**Status:** completed
+**Priority:** P1 (1 MEDIUM correctness bug, 4 LOW robustness/doc fixes)
+**Findings addressed:** C17-01, C17-02, C17-03, C17-04, C17-05
+
+## Problem
+
+1. **C17-01 (MEDIUM):** The Pentax DSLR regex `Pentax\s+K[-\s]?\d+[A-Za-z]*` requires at least one digit after K[-\s]?. Four Pentax DSLR models (KP, KF, K-r, K-x) have no digit in that position and are misclassified as "mirrorless" by the openMVG heuristic. This is a carry-over from the incomplete C16-03 fix.
+
+2. **C17-02 (LOW):** The Nikon DSLR regex `Nikon\s+D\d{1,4}` requires at least one digit after D. The Nikon Df (a well-known retro DSLR) has no digit and is misclassified as "mirrorless".
+
+3. **C17-03 (LOW):** GSMArena's `SENSOR_FORMAT_RE` regex `r'(1/[\d.]+)"'` only matches ASCII double-quote characters, not Unicode curly quotes (U+2033). This causes silent data loss on pages that use curly quotes.
+
+4. **C17-04 (LOW):** The openMVG docstring says "Pentax K-*" but after C16-03 and C17-01 fixes, the regex is much broader. The docstring should reflect this.
+
+5. **C17-05 (LOW):** `load_sensors_database()` is called unconditionally in `merge_camera_data` even when no existing-only cameras need sensor matching. Minor inefficiency.
+
+## Implementation Steps
+
+### Step 1: Fix Pentax KP/KF/K-r/K-x DSLR regex (C17-01)
+- [x] Change `Pentax\s+K[-\s]?\d+[A-Za-z]*` to `Pentax\s+K[-\s]?[\dA-Za-z]+[A-Za-z]*` in `_DSLR_NAME_RE`
+- [x] Add test cases: Pentax KP (dslr)
+- [x] Verify existing Pentax K3 and 645Z tests still pass
+- [x] Commit: f3a6489 (combined with Step 2)
+
+### Step 2: Fix Nikon Df DSLR regex (C17-02)
+- [x] Add `|Nikon\s+Df` to the `_DSLR_NAME_RE` alternation
+- [x] Add test case: Nikon Df (dslr)
+- [x] Verify existing Nikon tests still pass
+- [x] Commit: f3a6489 (combined with Step 1)
+
+### Step 3: Fix GSMArena SENSOR_FORMAT_RE for Unicode quotes (C17-03)
+- [x] Change `r'(1/[\d.]+)"'` to `r'(1/[\d.]+)(?:\"|″)'` in `sources/gsmarena.py`
+- [x] Verify existing GSMArena tests still pass
+- [x] Commit: d7afb20
+
+### Step 4: Update openMVG docstring (C17-04)
+- [x] Update the docstring to reflect broader Pentax coverage: "Pentax K-mount (K3, K-1, KP, etc.)"
+- [x] Also mention Nikon Df
+- [x] Commit: 29926d8
+
+### Step 5: Lazy-load sensors_db in merge_camera_data (C17-05)
+- [x] Change `sensors_db = load_sensors_database()` to lazy-load only when existing-only cameras need matching
+- [x] Verify existing merge tests still pass
+- [x] Commit: 929aed7
+
+### Step 6: Verify all fixes
+- [x] Run gate tests — ALL PASS (100 checks)
+- [x] Verify no regressions
+- [x] Push all commits
+
+## Exit Criteria
+- Pentax KP and KF classified as "dslr" — verified by test
+- Nikon Df classified as "dslr" — verified by test
+- GSMArena regex matches Unicode curly quotes
+- openMVG docstring reflects actual regex coverage
+- sensors_db only loaded when needed
+- All gate tests pass

@@ -1,46 +1,35 @@
-# Architect Review (Cycle 16) — Architectural/Design Risks, Coupling, Layering
+# Architect Review (Cycle 17) — Architectural/Design Risks, Coupling, Layering
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository architecture re-review after cycles 1-15 fixes
+**Scope:** Full repository architecture re-review after cycles 1-16 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-15) — Confirmed Resolved
-All previous architectural fixes remain intact.
+## Previously Fixed (Cycles 1-16) — Confirmed Resolved
+
+- A16-01 (merge input dedup contract): Fixed — `seen_new_keys` set and updated docstring.
+- A16-02 (digicamdb registry DRY): Fixed — removed from SOURCE_REGISTRY.
+- A16-03 (sensor_size_from_type validation): Fixed — try/except with proper docstring.
 
 ## New Findings
 
-### A16-01: `merge_camera_data` has no deduplication contract for its input — architectural gap
-**File:** `pixelpitch.py`, lines 349-407
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-The function's contract is: "merge new camera data with existing camera data." It deduplicates against existing data but assumes new_specs is already deduplicated. This implicit precondition is not documented or enforced. When multiple sources contribute the same camera (same name + category), the function produces duplicates.
-
-Architecturally, the function should either:
-1. Document that new_specs must be pre-deduplicated, OR
-2. Handle duplicates in new_specs internally
-
-Option 2 is more robust because callers should not need to know about this precondition.
-
----
-
-### A16-02: `digicamdb` source module is a pure alias — violates DRY at the registry level
-**File:** `sources/digicamdb.py`; `pixelpitch.py`, line 985
+### A17-01: DSLR classification heuristic in openMVG is fragile — regex-based approach has ongoing maintenance burden
+**File:** `sources/openmvg.py`, lines 42-53
 **Severity:** LOW | **Confidence:** HIGH
 
-The digicamdb module delegates entirely to openmvg.fetch(), creating identical Spec objects. Having both in SOURCE_REGISTRY means the same data could be fetched and stored twice. This is not a DRY violation in code (the module is trivial), but it IS a DRY violation at the data level — two source CSVs with identical content.
+The openMVG source has no body-type field, so DSLR classification relies on a regex heuristic (`_DSLR_NAME_RE`). Each new camera naming pattern requires a regex update. The C16-03 fix partially addressed Pentax models, but KP, KF, K-r, K-x are still missed (C17-01). Nikon Df is also missed (C17-02). This pattern of incremental regex fixes will continue as new camera models are released.
 
----
+From an architectural standpoint, the regex approach is inherently fragile. A more robust approach would be:
+1. Maintain a curated DSLR name list alongside the regex
+2. Or use the openMVG dataset's own metadata if it adds a body-type field in the future
+3. Or accept the heuristic limitation and classify edge cases as "mirrorless" (which is less wrong than the alternative)
 
-### A16-03: `sensor_size_from_type` lacks input validation — defensive programming gap
-**File:** `pixelpitch.py`, lines 152-165
-**Severity:** MEDIUM | **Confidence:** HIGH
+However, for the current data scale and update frequency, the regex approach is pragmatic. The ongoing maintenance cost is low (a few model names per year).
 
-The function performs arithmetic on parsed input without validation. From an architectural perspective, any function that processes external data (from HTML parsing) should validate its inputs and fail gracefully rather than crashing. The fix is to add a try/except block.
+**Fix (if desired):** No architectural change recommended. Continue with regex fixes for known gaps (C17-01, C17-02).
 
 ---
 
 ## Summary
-- NEW findings: 3 (2 MEDIUM, 1 LOW)
-- A16-01: merge_camera_data input dedup contract gap — MEDIUM
-- A16-02: digicamdb registry-level DRY violation — LOW
-- A16-03: sensor_size_from_type defensive programming gap — MEDIUM
+- NEW findings: 1 (LOW)
+- A17-01: DSLR regex heuristic has ongoing maintenance cost — LOW (informational)
+- No architectural regressions

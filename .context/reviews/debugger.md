@@ -1,57 +1,56 @@
-# Debugger Review (Cycle 16) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 17) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository latent bug review after cycles 1-15 fixes
+**Scope:** Full repository latent bug review after cycles 1-16 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-15) — Confirmed Resolved
-All previous fixes remain intact. No regressions.
+## Previously Fixed (Cycles 1-16) — Confirmed Resolved
+
+- D16-01 (sensor_size_from_type crash): Fixed — try/except guard confirmed.
+- D16-02 (merge dedup): Fixed — seen_new_keys set confirmed.
+- D16-03 (Pentax regex): Partially fixed — K3, K5 etc. work, but KP/KF/K-r/K-x still missed.
+- D16-04 (http_get OSError): Fixed — OSError in except clause.
 
 ## New Findings
 
-### D16-01: `sensor_size_from_type` — unhandled ZeroDivisionError/ValueError on malformed input
-**File:** `pixelpitch.py`, lines 152-165
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-Same as C16-01. The function crashes on `1/0`, `1/0.0`, `1/` sensor type values. This is a latent bug that has never triggered in production because source data has never contained these values, but it represents a crash vector.
-
-**Failure mode:** CI build fails silently — no HTML output, no error reporting to the user.
-
----
-
-### D16-02: `merge_camera_data` — duplicate entries when same camera appears in multiple sources with same category
-**File:** `pixelpitch.py`, lines 349-407
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-Same as C16-02. This is a regression risk from the C15-01 fix: now that openMVG correctly classifies Canon EOS xxxD cameras as DSLR, they overlap with Geizhals DSLR data and produce duplicate entries.
-
-**Failure mode:** User sees the same camera twice on the All Cameras page.
-
----
-
-### D16-03: Pentax DSLR regex misses multiple model families
+### D17-01: Pentax KP, KF, K-r, K-x still misclassified — C16-03 fix incomplete
 **File:** `sources/openmvg.py`, line 47
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+Same root cause as C17-01/V17-01. The regex `Pentax\s+K[-\s]?\d+[A-Za-z]*` requires at least one digit after K[-\s]?. Pentax KP and KF have a letter directly after K; K-r and K-x have a letter after the hyphen. All are DSLRs.
+
+**Failure mode:** These cameras appear under "Mirrorless" on the website instead of "DSLR". If also present in Geizhals as DSLR, they create duplicate entries.
+
+**Fix:** Change to `Pentax\s+K[-\s]?[\dA-Za-z]+[A-Za-z]*`.
+
+---
+
+### D17-02: Nikon Df — letter-suffix DSLR not matched by regex
+**File:** `sources/openmvg.py`, line 46
 **Severity:** LOW | **Confidence:** HIGH
 
-Same as C16-03. 10+ Pentax DSLR models are missed by the regex.
+The regex `Nikon\s+D\d{1,4}` requires digits after D. Nikon Df has no digit.
 
-**Failure mode:** Pentax K3, K5, K7, KP, KF etc. appear under Mirrorless instead of DSLR.
+**Failure mode:** Nikon Df appears under "Mirrorless" instead of "DSLR" on the website.
+
+**Fix:** Add `|Nikon\s+Df` to the regex alternation.
 
 ---
 
-### D16-04: `http_get` does not catch OSError subclasses (ConnectionResetError, SSLError)
-**File:** `sources/__init__.py`, lines 48-61
+### D17-03: GSMArena SENSOR_FORMAT_RE doesn't match Unicode quotes — silent data loss
+**File:** `sources/gsmarena.py`, line 50
 **Severity:** LOW | **Confidence:** MEDIUM
 
-Same as S16-02. While urllib typically wraps these as URLError, edge cases exist where the underlying socket error leaks through.
+The regex `r'(1/[\d.]+)"'` requires ASCII double-quote. Unicode curly quotes (U+2033) are not matched.
 
-**Failure mode:** Source fetch step crashes with unhandled exception, causing `continue-on-error: true` to skip the source, but the error message is confusing.
+**Failure mode:** A GSMArena page using curly quotes for sensor format silently loses the sensor type and size data for that phone. The phone still appears but with "unknown" sensor size.
+
+**Fix:** Add Unicode quote variant to the regex.
 
 ---
 
 ## Summary
-- NEW findings: 4 (2 MEDIUM, 2 LOW)
-- D16-01: sensor_size_from_type crash — MEDIUM
-- D16-02: merge_camera_data duplicate — MEDIUM
-- D16-03: Pentax regex misses — LOW
-- D16-04: http_get exception gap — LOW
+- NEW findings: 3 (1 MEDIUM, 2 LOW)
+- D17-01: Pentax KP/KF/K-r/K-x misclassification — MEDIUM
+- D17-02: Nikon Df misclassification — LOW
+- D17-03: GSMArena Unicode quote data loss — LOW

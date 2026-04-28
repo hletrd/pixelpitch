@@ -1,77 +1,81 @@
-# Code Review (Cycle 16) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 17) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-15 fixes, focusing on NEW issues missed or introduced by previous fixes
+**Scope:** Full repository re-review after cycles 1-16 fixes, focusing on NEW issues missed or introduced by previous fixes
 
-## Previously Fixed (Cycles 1-15) — Confirmed Resolved
+## Previously Fixed (Cycles 1-16) — Confirmed Resolved
 
-All previous fixes remain intact. C15-01 (Canon xxxD regex), C15-02 (Samsung NX removal), C15-03 (rangefinder dedup), C15-04 (BOM defense), C15-05 (Sigma SD regex), C15-06 (docstring update) all verified as correctly applied and tested.
+All previous fixes remain intact and working. Gate tests pass (98 checks). C16-01 through C16-05 all verified as correctly applied.
 
 ## New Findings
 
-### C16-01: `sensor_size_from_type` crashes on invalid fractional sensor types (1/0, 1/0.0, 1/)
-**File:** `pixelpitch.py`, lines 152-165 (`sensor_size_from_type`)
+### C17-01: Pentax KP, KF, K-r, K-x still misclassified as mirrorless — C16-03 fix was incomplete
+**File:** `sources/openmvg.py`, line 47 (`Pentax\s+K[-\s]?\d+[A-Za-z]*`)
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The function computes `1 / float(typ[2:])` for types starting with `1/` that are not in the lookup table. If `typ` is `"1/0"` or `"1/0.0"`, this raises `ZeroDivisionError`. If `typ` is `"1/"`, this raises `ValueError` (empty string to float). Both exceptions are uncaught and propagate through `derive_spec` -> `derive_specs`, crashing the entire render pipeline.
+The C16-03 fix changed `Pentax\s+K[-\s]\d` to `Pentax\s+K[-\s]?\d+[A-Za-z]*`. This regex requires at least one digit after K (or K-). It still misses Pentax models that have NO digit between K and the suffix:
+- **Pentax KP** (letter directly after K, no digit)
+- **Pentax KF** (letter directly after K, no digit)
+- **Pentax K-r** (hyphen + letter, no digit)
+- **Pentax K-x** (hyphen + letter, no digit)
 
-The `SENSOR_TYPE_RE` regex `(1/[\d\.]+)\"` can match `1/0`, `1/0.0` from source HTML. If a source provides `type="1/0"` and no size, the crash path is triggered.
+All four are DSLRs. Verified by testing `_DSLR_NAME_RE.search()` against these names — all return None.
 
-**Concrete failure:** A malformed GSMArena or Geizhals page containing `1/0"` in the sensor field would crash `python pixelpitch.py` during the render step, producing no output.
+**Concrete failure:** If any of these cameras appear in the openMVG database with sensor width >= 20mm, they are classified as "mirrorless" instead of "dslr".
 
-**Fix:** Wrap the computation in a try/except block and return None on any arithmetic or conversion error.
-
----
-
-### C16-02: `merge_camera_data` does not deduplicate among `new_specs` — duplicate entries when same camera appears in multiple sources with the same category
-**File:** `pixelpitch.py`, lines 349-407 (`merge_camera_data`)
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-The merge loop iterates `new_specs` linearly and checks each against `existing_by_key`. If two entries in `new_specs` have the same `create_camera_key` result (e.g., a camera from both Geizhals mirrorless and openMVG mirrorless), both are appended to `merged_specs`. There is no deduplication among `new_specs` themselves.
-
-Verified by test: feeding two specs with the same name+category into `merge_camera_data([], ...)` produces 2 entries instead of 1.
-
-**Concrete failure:** If a camera like "Canon EOS 250D" appears in both the Geizhals DSLR category and the openMVG source CSV (also classified as DSLR by the C15-01 fix), the All Cameras page shows it twice.
-
-**Fix:** Before appending to `merged_specs`, track seen keys among new_specs. If a key has already been processed in the current batch, skip or merge instead of appending again.
+**Fix:** Change `Pentax\s+K[-\s]?\d+[A-Za-z]*` to `Pentax\s+K[-\s]?[\dA-Za-z]+[A-Za-z]*` to allow letters or digits immediately after K[-\s]?.
 
 ---
 
-### C16-03: Pentax DSLR regex misses models without hyphen (K3, K5, K7, K1) and letter-suffix models (KP, KF, K-r, K-x) and medium-format (645D, 645Z)
-**File:** `sources/openmvg.py`, line 47 (`Pentax\s+K[-\s]\d`)
+### C17-02: Nikon Df and Nikon D-suffix models (D3X, D3S, D4S, D5X) missed by DSLR regex
+**File:** `sources/openmvg.py`, line 46 (`Nikon\s+D\d{1,4}`)
 **Severity:** LOW | **Confidence:** HIGH
 
-The Pentax pattern `Pentax\s+K[-\s]\d` requires a hyphen or space between K and the first digit. It misses:
-- Pentax K3, K5, K7, K1 (no hyphen: 4 models)
-- Pentax KP, KF (letter suffix, not digit)
-- Pentax K-r, K-x (letter after hyphen)
-- Pentax K-30, K-50, K-70 (2 digits after hyphen — `\d` only matches 1)
-- Pentax K100D, K200D, K10D, K20D (2+ digits + D suffix)
+The Nikon pattern `Nikon\s+D\d{1,4}` only matches D followed by 1-4 digits. It misses:
+- **Nikon Df** — no digits after D (DSLR)
+- **Nikon D3X** — letter suffix (the regex `\d{1,4}` matches "3" but the "X" is not captured, which is fine for classification but means the match stops at "D3" not "D3X". Actually, this IS classified correctly since the regex only needs to match the prefix.)
+- **Nikon D3S** — same as above, classified correctly
 
-The `Pentax\s+\d{1,2}D` pattern only matches 1-2 digit models (645D) but the `\d` before D in names like `K100D` is part of the K-mount naming, not the medium-format line. `Pentax 645Z` is also missed (Z suffix instead of D).
+Wait - actually `Nikon\s+D\d{1,4}` would match "Nikon D3" in "Nikon D3X" since the regex doesn't require word boundary at the end. And `\b` at the start ensures it doesn't match inside other words. So D3X, D3S etc. are actually classified correctly.
 
-**Concrete failure:** Pentax K3, K5, K7, KP, KF, K-r, K-x (all DSLRs) would be classified as mirrorless by the openMVG heuristic if they appear in the dataset with sensor width >= 20mm.
+However, **Nikon Df** is genuinely missed — it has no digits after D.
 
-**Fix:** Change `Pentax\s+K[-\s]\d` to `Pentax\s+K[-\s]?\d+\w?` or more precisely `Pentax\s+K[-\s]?\d+[A-Za-z]*` to cover all K-mount naming variants.
+**Concrete failure:** If "Nikon Df" appears in the openMVG database with sensor width >= 20mm, it is classified as "mirrorless" instead of "dslr". The Df is a well-known retro-style DSLR.
+
+**Fix:** Add `|Nikon\s+Df` to the DSLR regex alternation, or change `Nikon\s+D\d{1,4}` to `Nikon\s+D[\d]{1,4}[A-Za-z]?|Nikon\s+Df`.
 
 ---
 
-### C16-04: `digicamdb` source is an alias for openMVG but registered as a separate source — potential for identical duplicate CSVs
-**File:** `sources/digicamdb.py`, line 21; `pixelpitch.py`, line 985 (`SOURCE_REGISTRY`)
-**Severity:** LOW | **Confidence:** HIGH
+### C17-03: GSMArena SENSOR_FORMAT_RE doesn't match Unicode curly quotes
+**File:** `sources/gsmarena.py`, line 50 (`SENSOR_FORMAT_RE`)
+**Severity:** LOW | **Confidence:** MEDIUM
 
-The digicamdb module delegates entirely to `openmvg.fetch()`, returning the same data. Both are registered in `SOURCE_REGISTRY`. If a user runs `python pixelpitch.py source digicamdb --out dist`, the resulting `camera-data-digicamdb.csv` would contain identical records to `camera-data-openmvg.csv`. When both are loaded by `_load_per_source_csvs`, every camera from these sources appears twice in `new_specs`, compounding the C16-02 merge dedup bug.
+The regex `r'(1/[\d.]+)"'` requires a literal ASCII double-quote character after the fractional format. Some web pages use Unicode right double quotation mark (`″`, U+2033) or other quote variants. The central `TYPE_FRACTIONAL_RE` in `sources/__init__.py` handles this correctly with `(?:\"|inch|-inch|-type|\s*type|″)`.
 
-The CI workflow only fetches `openmvg`, so this only triggers on manual fetch. But it's still a design flaw.
+Verified: `SENSOR_FORMAT_RE.search('1/1.3″')` returns None, while `TYPE_FRACTIONAL_RE.search('1/1.3″')` matches.
 
-**Fix:** Either remove `digicamdb` from `SOURCE_REGISTRY` (since it's a no-op alias), or make it a redirect that skips CSV creation if `camera-data-openmvg.csv` already exists.
+**Concrete failure:** A GSMArena page that uses curly quotes for sensor format would fail to extract the sensor type, losing the `type` field and potentially the `size` if it's not in PHONE_TYPE_SIZE.
+
+**Fix:** Change the regex to `r'(1/[\d.]+)(?:\"|″)'` or reuse `TYPE_FRACTIONAL_RE` from `sources/__init__.py`.
+
+---
+
+### C17-04: deduplicate_specs loses year information for color variants
+**File:** `pixelpitch.py`, lines 596-597
+**Severity:** LOW | **Confidence:** MEDIUM
+
+When color variants are unified (same specs but different names like "Sony A7 IV schwarz" and "Sony A7 IV silber"), the code takes `year = min(years)`. But if the color variants have different years (e.g., black version released 2021, silver version released 2022), the min() is taken. This is arguably correct (earliest release year), but it silently drops the later year without any indication.
+
+Verified: `deduplicate_specs` with two color variants with years 2021 and 2022 produces year=2021.
+
+This is a design decision rather than a bug. The earliest year is arguably the correct one for "first available" semantics. Keeping as informational.
 
 ---
 
 ## Summary
-- NEW findings: 4 (2 MEDIUM, 2 LOW)
-- C16-01: sensor_size_from_type crashes on 1/0 etc. — MEDIUM
-- C16-02: merge_camera_data doesn't dedup among new_specs — MEDIUM
-- C16-03: Pentax DSLR regex misses many models — LOW
-- C16-04: digicamdb alias creates duplicate source CSVs — LOW
+- NEW findings: 3 (1 MEDIUM, 2 LOW)
+- C17-01: Pentax KP/KF/K-r/K-x still misclassified — incomplete C16-03 fix — MEDIUM
+- C17-02: Nikon Df missed by DSLR regex — LOW
+- C17-03: GSMArena SENSOR_FORMAT_RE doesn't match Unicode quotes — LOW
+- C17-04: deduplicate_specs year selection — informational only (not a bug)
