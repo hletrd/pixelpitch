@@ -1,67 +1,76 @@
-# Code Reviewer Report — Cycle 53
+# Code Reviewer — Cycle 54
 
-**Date:** 2026-04-29
-**HEAD:** `1c968dd` (cycle 52 docs commit)
-**Scope:** Whole repository.
+**HEAD:** `93851b0`
+**Scope:** Whole repository, with focus on `pixelpitch.py`,
+`sources/`, and `tests/test_parsers_offline.py`.
 
-## Status of prior fixes
+## Inventory
 
-All cycles 1–52 fixes verified still in place.
+- `pixelpitch.py` (1378 lines)
+- `models.py` (27 lines)
+- `sources/__init__.py` (110)
+- `sources/apotelyt.py` (183)
+- `sources/cined.py` (149)
+- `sources/digicamdb.py` (32)
+- `sources/gsmarena.py` (269)
+- `sources/imaging_resource.py` (302)
+- `sources/openmvg.py` (129)
+- `tests/test_parsers_offline.py` (2283)
+- `tests/test_sources.py` (111)
 
-- `flake8 .` → 0 errors.
-- `python3 -m tests.test_parsers_offline` → all sections green
-  (matched_sensors + year + id parse-tolerance).
+## Findings
 
-## New finding F53-01: `_safe_int_id` returns unbounded big-int on extreme float strings — LOW
+### F54-01 — `_load_per_source_csvs` does not re-derive sensor matches against current `sensors.json` — LOW
 
-- **File:** `pixelpitch.py:318-337`
-- **Repro:** `_safe_int_id("1e308")` → 309-digit Python integer.
-- **Why it's a problem:** `parse_existing_csv` stores the result on
-  `SpecDerived.id`. `merge_camera_data` carries this through
-  (`new_spec.id = existing_spec.id` at line 516) before sequential
-  reassignment. Asymmetric with `_safe_year`, which has both an
-  `isfinite` guard AND a 1900-2100 range guard. `_safe_int_id` has
-  only the `isfinite` guard.
-- **Failure scenario:** Excel rewrites a small integer column as
-  scientific notation (`1.0E+308`) → next CI run parses, propagates a
-  309-digit id through merge. Sequential reassignment in `main()`
-  overwrites it before write_csv, so committed CSV is safe — but
-  any code path that reads `spec.id` between parse and reassignment
-  sees garbage. Defense-in-depth class with F52-01/F52-02.
-- **Fix:** Add a sanity range guard to `_safe_int_id`: reject ids
-  outside `[0, 10**6]`. The merge step regenerates ids in `[0, N)`
-  where N is the camera count (~1000), so 10**6 is a comfortable
-  upper bound. Mirror `_safe_year`'s post-conversion range check.
-- **Confidence:** MEDIUM
-- **Severity:** LOW (recoverable; sequential reassignment masks
-  most failure modes)
+- **File:** `pixelpitch.py:1028-1053`
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Description:** `_load_per_source_csvs` reads each
+  `dist/camera-data-{source}.csv` via `parse_existing_csv` and only
+  clears the per-row `id`. The `matched_sensors` column is parsed from
+  the file as-is. Per-source CSVs were written by `fetch_source` (line
+  1296-1305) via `derive_specs` against whatever `sensors.json` was
+  current at that time. If `sensors.json` is later edited (sensor
+  renamed, removed, or megapixel list trimmed) but the per-source CSV
+  is not regenerated, the stale matched_sensors will be merged into
+  the final dataset by `merge_camera_data` and will surface in
+  `dist/camera-data.csv` and the rendered HTML.
+- **Repro path:**
+  1. Run `python pixelpitch.py source openmvg` to write
+     `dist/camera-data-openmvg.csv` with `matched_sensors=IMX455`.
+  2. Edit `sensors.json` to rename `IMX455` to `IMX455A`.
+  3. Run `python pixelpitch.py html dist`. The freshly rendered
+     output will still show the old `IMX455` token because
+     `_load_per_source_csvs` did not re-match.
+- **Fix:** After parsing, call `derive_spec(d.spec, sensors_db)`
+  (lazy-loaded) to refresh `matched_sensors`, OR explicitly clear
+  `matched_sensors=None` so `merge_camera_data` falls back to
+  existing CSV matches. Document the chosen semantics.
 
-## New finding F53-02: no test for `_safe_year` / `_safe_int_id` non-finite-from-string edge — LOW
+### F54-02 — `merge_camera_data` overwrites a valid new id with a None existing id — LOW (theoretical)
 
-- **File:** `tests/test_parsers_offline.py` (gap)
-- **Detail:** Current year/id tolerance tests cover `"abc"`, `""`,
-  `"2023.0"`, ` 2023 `. They do not exercise `"nan"`, `"inf"`,
-  `"-inf"`, `"1e308"`. The implementation handles them via
-  `isfinite`/range guards, but absence of tests means a future
-  refactor could silently regress.
-- **Fix:** Extend the year-tolerance and id-tolerance test sections
-  with rows for those scientific-notation edges.
-- **Confidence:** HIGH
-- **Severity:** LOW (test gap; defense-in-depth)
+- **File:** `pixelpitch.py:524`
+- **Severity:** LOW | **Confidence:** LOW
+- **Description:** `new_spec.id = existing_spec.id` blindly copies
+  the id even when `existing_spec.id is None`. In current call sites
+  this is harmless because line 623-624 reassigns sequential ids
+  before `write_csv`. Defense-in-depth would be
+  `new_spec.id = existing_spec.id if existing_spec.id is not None
+  else new_spec.id`.
+- **Severity:** LOW (mitigated by sequential reassignment).
 
-## Sweep for commonly-missed issues
+## Final sweep — commonly missed issue types
 
-- Reviewed every `*.py` under `pixelpitch.py`, `models.py`,
-  `sources/*.py`, `tests/*.py`. No new logic bugs found beyond F53-01
-  and F53-02.
-- `pixelpitch.py:1370` lines, still under the F32 threshold (1500
-  lines) recorded in `deferred.md`.
-- `_safe_float` already enforces `isfinite`, so all numeric columns
-  except `record_id` are non-finite-safe.
+- Logic bugs: F54-01 (stale matched_sensors).
+- Edge cases: F54-02 (None id overwrite).
+- Race conditions: N/A (single-threaded).
+- Error handling: parse_existing_csv broad except is intentional and
+  documented.
+- Invariant violations: F54-01 violates the implicit "rendered output
+  reflects current sensors.json" invariant.
+- Test gaps: no test asserts that per-source CSV parse + merge
+  refreshes matched_sensors.
 
-## Confidence summary
+## Confirmed clean
 
-| Finding | Confidence | Severity |
-|---------|------------|----------|
-| F53-01  | MEDIUM     | LOW      |
-| F53-02  | HIGH       | LOW      |
+- All previously flagged issues C8-C53 still fixed at HEAD.
+- Both gates pass at HEAD.

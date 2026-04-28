@@ -1,26 +1,36 @@
-# Performance Reviewer — Cycle 53
+# Performance Reviewer — Cycle 54
 
-**Date:** 2026-04-29
-**HEAD:** `1c968dd`
+**HEAD:** `93851b0`
 
-No new performance issues found this cycle.
+## Inventory
 
-## Existing surface (recap from prior cycles, still LOW priority)
+Reviewed all hot paths: scrape (`extract_entries`), per-source
+fetchers (`sources/*.py`), CSV round-trip (`parse_existing_csv`,
+`write_csv`), merge (`merge_camera_data`), and HTML render.
 
-- `merge_camera_data` re-runs `match_sensors` per existing-only
-  camera (~1000 × 200 = 200k comparisons). Tracked as F49-04 in
-  `.context/plans/deferred.md`. Render still finishes in seconds
-  at current scale.
-- `openmvg.fetch` re-fetches the full CSV every CI run. Tracked as
-  F40 in `deferred.md`.
-- `pixelpitch.py` line count: 1370. Below F32 threshold of 1500.
+## Findings
 
-## F53-PERF-01 (note, not a finding)
+### No new performance issues in cycle 54
 
-`_safe_int_id("1e308")` produces a 309-digit Python big-int. Memory
-~150 bytes single-row. Not a perf concern; correctness owned by
-code-reviewer F53-01.
+- `merge_camera_data` is O(N) with a dict lookup; no degradation.
+- `match_sensors` is O(N_sensors × N_cameras), unchanged from prior
+  cycles. ~80 sensors × ~1000 cameras = 80k comparisons, runs in
+  well under a second.
+- `parse_existing_csv` per-row work added by C50-C53 (whitespace
+  strip + dedupe in matched_sensors, `_safe_year`, `_safe_int_id`)
+  is constant-time per row. Total cost negligible.
+- No new allocations or copies introduced since C53.
 
-## Verdict
+### Watch list (no action)
 
-No new perf findings. Both gates pass. No regressions.
+- `sensors_db` lazy-load in `merge_camera_data` (line 602-610) is
+  correctly scoped: only loaded when there is at least one
+  existing-only camera.
+- `_load_per_source_csvs` reads each per-source CSV synchronously.
+  At ~6 source files of ~1000 rows each, this is ~25 ms.
+
+## Final sweep
+
+No flagged performance issues this cycle. F54-01 (code-reviewer)
+would add a `derive_spec` call per per-source row; this is still
+O(N) and the extra cost is negligible given current data sizes.

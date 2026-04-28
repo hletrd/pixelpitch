@@ -1,36 +1,33 @@
-# Debugger — Cycle 53
+# Debugger — Cycle 54
 
-**Date:** 2026-04-29
-**HEAD:** `1c968dd`
+**HEAD:** `93851b0`
 
-## Latent-bug sweep
+## Latent bug surface scan
 
-### F53-01 (consensus with code-reviewer): `_safe_int_id` accepts arbitrary huge ints
+### F54-D01 — same as F54-01 (stale matched_sensors) — LOW
 
-Reproduced via interactive probe. See `verifier.md` for the trace.
+Verified against the merge logic. Not a crash bug; data drift only.
 
-### Edge case probes for `_safe_year`
+### F54-D02 — `merge_camera_data` line 537 references uninitialized field on first miss — re-verified safe
 
-- `"-2023"` → `int(...)` succeeds → range guard fails → None. OK.
-- `"+2023"` → 2023 → in range → 2023. OK.
-- `"2023.5"` → ValueError on int → float OK → 2023.5 → int(2023.5)
-  → 2023. Within range. OK (truncation, acceptable).
-- `"2023e0"` → falls through → 2023.0 → 2023. OK.
+`new_spec.size = existing_spec.size` is guarded by the outer
+`if new_spec.spec.size is None` check on line 528. existing_spec is
+always defined inside the `if key in existing_by_key` block. Safe.
 
-### Row-keep vs. row-skip on parse error
+### F54-D03 — None propagation through `derive_spec` — re-verified safe
 
-`parse_existing_csv` has a broad `except Exception` (line 446) that
-drops the row. After F50/F51/F52, only an unforeseen path triggers
-this. Not a new finding.
+`derive_spec` correctly returns `matched_sensors=None` when
+`sensors_db` is unavailable or `size` is unknown. Sentinel
+distinguishes "not checked" from "checked, found nothing".
 
-### Failure modes confirmed
+## Failure-mode sweep
 
-- BOM stripped before split. OK.
-- Empty CSV → []. OK.
-- 1-row CSV → []. OK.
-- Missing trailing columns padded. OK.
+- `parse_existing_csv` broad except: lines 454-457 catches all and
+  prints. Stable since C49.
+- `_safe_int_id` and `_safe_year` are guarded against
+  Excel-hand-edits; both have `isfinite` + range guards.
+- `pixel_pitch` returns 0.0 for invalid inputs; `derive_spec`
+  converts 0.0 to None.
+- `match_sensors` requires positive width/height; guarded.
 
-## Verdict
-
-One latent bug confirmed (F53-01). Agreement with code-reviewer.
-No other latent bugs found.
+## No new crash bugs.

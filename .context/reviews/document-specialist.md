@@ -1,41 +1,32 @@
-# Document Specialist — Cycle 53
+# Document Specialist — Cycle 54
 
-**Date:** 2026-04-29
-**HEAD:** `1c968dd`
+**HEAD:** `93851b0`
 
-## Doc-vs-code check
+## Doc/code mismatch sweep
 
-### `_safe_int_id` docstring vs. code (pixelpitch.py:319-337)
+### F54-DOC-01 — `_load_per_source_csvs` docstring says "caches" but treats them as authoritative — LOW
 
-Docstring (line 324) says:
-> Same Excel-hand-edit class as `_safe_year`.
+- **File:** `pixelpitch.py:1028-1053`
+- **Severity:** LOW | **Confidence:** HIGH
+- **Detail:** Docstring (lines 1031-1033) says: "These are produced
+  by `python pixelpitch.py source <name>` runs and serve as caches
+  between deployments." But the function trusts the file's
+  matched_sensors column verbatim — see F54-01. The doc and code
+  disagree on whether per-source CSVs are caches or authoritative.
+- **Fix:** Resolved when F54-01 implementation lands.
 
-Reality:
-- `_safe_year` has BOTH `isfinite` AND a 1900-2100 range guard.
-- `_safe_int_id` has ONLY the `isfinite` guard.
+### F54-DOC-02 — `merge_camera_data` docstring does not document matched_sensors preservation — LOW (cosmetic)
 
-Doc/code mismatch (F53-DOC-01). Fix lands with F53-01: add the range
-guard to `_safe_int_id`, then the docstring is accurate. Severity LOW.
+- **File:** `pixelpitch.py:475-497`
+- **Severity:** LOW | **Confidence:** HIGH
+- **Detail:** The behavior added in C46 (preserve existing
+  matched_sensors when new is None, treat [] as authoritative)
+  is implemented correctly but not described in the docstring.
+- **Fix:** One-paragraph addition. Cosmetic.
 
-## Other doc/code checks
+## Confirmed clean
 
-- `parse_existing_csv` docstring — accurate.
-- `_safe_year` docstring — accurate.
-- `_safe_float` docstring — accurate.
-- `merge_camera_data` docstring — accurate.
-
-## CLAUDE.md / AGENTS.md cross-check
-
-Repo has no project-level CLAUDE.md. User-global CLAUDE.md governs:
-GPG-sign, conventional commits + gitmoji, no `--no-verify`, no
-Co-Authored-By, fine-grained commits, `git pull --rebase` before push.
-
-Recent commit messages are compliant. No process drift.
-
-## Verdict
-
-| Finding     | Severity | Confidence |
-|-------------|----------|------------|
-| F53-DOC-01  | LOW      | HIGH       |
-
-Bound to the F53-01 fix.
+- `_safe_year` and `_safe_int_id` docstrings were synced with code
+  in C52-C53. Re-checked, accurate.
+- README.md and templates carry no library-version claims that
+  could drift.

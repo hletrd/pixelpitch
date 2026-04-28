@@ -1,87 +1,96 @@
-# Aggregate Review (Cycle 53) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 54) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-29
-**HEAD:** `1c968dd`
+**HEAD:** `93851b0`
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic,
 verifier, test-engineer, tracer, architect, debugger, document-specialist,
 designer.
 
-## Cycle 1–52 Status
+## Cycle 1–53 Status
 
 All previous fixes confirmed still working. Both gates pass at HEAD
-`1c968dd`:
+`93851b0`:
 
-- `flake8 .` → 0 errors (also enforced in CI by
-  `.github/workflows/github-pages.yml`).
-- `python3 -m tests.test_parsers_offline` → all sections green
-  (matched_sensors + year + id parse-tolerance).
+- `flake8 .` → 0 errors (also enforced in CI).
+- `python3 -m tests.test_parsers_offline` → all sections green.
 
 No regressions detected.
 
-## Cycle 53 New Findings
+## Cycle 54 New Findings
 
-### F53-01 (consensus): `_safe_int_id` lacks the post-conversion range guard `_safe_year` has — LOW
+### F54-01 (consensus): `_load_per_source_csvs` does not refresh `matched_sensors` against current `sensors.json` — LOW
 
-- **Flagged by:** code-reviewer, critic, verifier, tracer, debugger,
-  document-specialist (as F53-DOC-01)
-- **File:** `pixelpitch.py:318-337`
-- **Repro:** `_safe_int_id("1e308")` returns a 309-digit Python big-int
-  (because `int(float("1e308"))` is finite — `isfinite` does not trip).
-- **Failure scenario:** Excel rewrites a small integer column as
-  scientific notation on save (`1.0E+308`). `parse_existing_csv`
-  produces a 309-digit `record_id`. The value propagates through
-  `merge_camera_data` (`new_spec.id = existing_spec.id`) until
-  `main()` reassigns sequential ids before `write_csv`. Committed CSV
-  is safe, but the original id-to-row mapping for that row is lost,
-  and any code path that reads `spec.id` between parse and reassignment
-  sees garbage. Asymmetric with `_safe_year`, which DOES range-guard
-  (1900-2100). Same defense-in-depth round-trip class as
-  C50/C51/C52.
-- **Fix:** Mirror `_safe_year`'s range guard in `_safe_int_id`.
-  Reject ids outside `[0, 10**6]` (sequential reassignment makes
-  larger values nonsensical anyway). Update docstring to note the
-  range guard so the doc/code mismatch (F53-DOC-01) is also closed.
-- **Confidence:** MEDIUM
-- **Severity:** LOW (recoverable; sequential reassignment masks
-  most failure modes)
+- **Flagged by:** code-reviewer, critic, verifier, tracer, architect
+  (as F54-A01), debugger (as F54-D01), document-specialist (as
+  F54-DOC-01).
+- **File:** `pixelpitch.py:1028-1053`
+- **Repro:** Per-source CSV is written with `matched_sensors=["S0"]`;
+  `sensors.json` is later edited (S0 renamed/removed); next
+  `python pixelpitch.py html dist` run leaves the stale `S0` in
+  the merged output because `_load_per_source_csvs` parses the file
+  verbatim and `merge_camera_data` only re-matches **existing-only**
+  cameras (not those re-introduced via per-source CSVs).
+- **Fix options:**
+  1. Refresh: after `parse_existing_csv`, call `derive_spec(d.spec,
+     sensors_db)` (with lazy-load) to re-compute matched_sensors.
+  2. Drop on load: set `d.matched_sensors = None` and let
+     `merge_camera_data` fall back to existing CSV matches (which
+     may also be stale, so this is weaker).
+  Option 1 is preferred. Update the `_load_per_source_csvs`
+  docstring to declare per-source CSVs as caches.
+- **Severity:** LOW (informational column, self-healing on next
+  per-source fetch).
+- **Confidence:** MEDIUM (architectural inconsistency, no observed
+  user impact yet).
 
-### F53-02: no `nan`/`inf`/`1e308` row in year/id parse-tolerance tests — LOW
+### F54-T01: no test asserts `_load_per_source_csvs` semantics — LOW
 
-- **Flagged by:** code-reviewer, test-engineer
-- **File:** `tests/test_parsers_offline.py` (gap)
-- **Detail:** Existing tests cover `"abc"`, `""`, `"2023.0"`, ` 2023 `.
-  Missing: `"nan"`, `"inf"`, `"-inf"`, `"1e308"`. Future refactor
-  could silently regress the `isfinite` / range guards.
-- **Fix:** Extend the year-tolerance and id-tolerance test sections
-  with rows for these scientific-notation edges.
-- **Confidence:** HIGH
-- **Severity:** LOW (test gap)
+- **Flagged by:** test-engineer.
+- **File:** `tests/test_parsers_offline.py` (gap).
+- **Detail:** No coverage for per-source CSV load behavior:
+  id-clearing, matched_sensors-handling, missing-file tolerance.
+- **Fix:** Add a temp-file based unit test exercising
+  `_load_per_source_csvs`. Should be authored alongside F54-01 fix
+  to lock in the chosen semantics.
+- **Severity:** LOW (test gap).
+- **Confidence:** HIGH.
 
-### F53-DOC-01: `_safe_int_id` docstring claims symmetry with `_safe_year` but lacks the range guard — LOW
+### F54-02 (cosmetic, low confidence): `merge_camera_data` overwrites a valid new id with a None existing id — LOW
 
-- **Flagged by:** document-specialist
-- **File:** `pixelpitch.py:319-326`
-- **Detail:** Doc/code mismatch. Resolved when F53-01 lands.
-- **Fix:** Update docstring as part of F53-01 commit.
-- **Severity:** LOW (cosmetic, gate-bound to F53-01)
-- **Confidence:** HIGH
+- **Flagged by:** code-reviewer.
+- **File:** `pixelpitch.py:524`
+- **Detail:** `new_spec.id = existing_spec.id` blindly copies the id
+  even when `existing_spec.id is None`. Mitigated by sequential
+  reassignment at line 623-624.
+- **Severity:** LOW (mitigated).
+- **Confidence:** LOW.
 
-### F53-03 (cosmetic, not actionable this cycle): test assert messages do not encode rejection reason — LOW
+### F54-DOC-01: `_load_per_source_csvs` docstring "caches" claim contradicts implementation — LOW (cosmetic)
 
-- **Flagged by:** test-engineer
-- **Detail:** Recommendation only. Existing assert messages are
-  enough for a single failing case.
-- **Severity:** LOW (cosmetic)
-- **Confidence:** LOW
+- **Flagged by:** document-specialist.
+- **File:** `pixelpitch.py:1031-1033`
+- **Fix:** Update docstring to describe whichever semantics F54-01
+  picks. Gate-bound to F54-01.
+- **Severity:** LOW (cosmetic).
+
+### F54-DOC-02: `merge_camera_data` docstring does not document matched_sensors preservation — LOW (cosmetic)
+
+- **Flagged by:** document-specialist.
+- **File:** `pixelpitch.py:475-497`
+- **Fix:** Add a paragraph describing the C46 behavior (preserve
+  existing matched_sensors when new is None; treat [] as
+  authoritative).
+- **Severity:** LOW (cosmetic).
 
 ## Cross-Agent Agreement Matrix
 
-| Finding   | Flagged By                                                                  | Highest Severity |
-|-----------|-----------------------------------------------------------------------------|------------------|
-| F53-01    | code-reviewer, critic, verifier, tracer, debugger, document-specialist       | LOW              |
-| F53-02    | code-reviewer, test-engineer                                                  | LOW              |
-| F53-DOC-01| document-specialist                                                           | LOW (cosmetic)   |
-| F53-03    | test-engineer                                                                 | LOW (cosmetic)   |
+| Finding   | Flagged By                                                                            | Highest Severity |
+|-----------|---------------------------------------------------------------------------------------|------------------|
+| F54-01    | code-reviewer, critic, verifier, tracer, architect, debugger, document-specialist     | LOW (HIGH consensus on existence) |
+| F54-T01   | test-engineer                                                                         | LOW (test gap)   |
+| F54-02    | code-reviewer                                                                         | LOW (cosmetic)   |
+| F54-DOC-01| document-specialist                                                                   | LOW (cosmetic)   |
+| F54-DOC-02| document-specialist                                                                   | LOW (cosmetic)   |
 
 ## AGENT FAILURES
 
@@ -90,9 +99,8 @@ No agents failed.
 ## Summary statistics
 
 - 11 reviewer perspectives executed.
-- 4 findings produced this cycle (1 actionable correctness, 1 actionable
-  test gap, 1 doc/code mismatch gate-bound to F53-01, 1 cosmetic
-  recommendation).
+- 5 findings produced this cycle (1 actionable correctness/architecture,
+  1 actionable test gap, 1 cosmetic id-overwrite, 2 doc/code mismatches
+  gate-bound to F54-01).
 - 0 new HIGH/CRITICAL findings.
-- 0 deferred items added (F53-03 is a recommendation only, not a
-  finding requiring a deferral entry).
+- 0 deferred items added.

@@ -1,35 +1,43 @@
-# Critic — Cycle 53
+# Critic — Cycle 54
 
-**Date:** 2026-04-29
-**HEAD:** `1c968dd`
+**HEAD:** `93851b0`
 
-## Cross-perspective critique
+## Multi-perspective critique
 
-Cycles 50–52 converged on a coherent theme — defending
-`parse_existing_csv` against Excel hand-edits of
-`dist/camera-data.csv`:
+### Correctness perspective
 
-- C50: `write_csv` rejects `;` in matched_sensors (round-trip).
-- C51: `parse_existing_csv` strips/dedups matched_sensors tokens.
-- C52: `_safe_year` + `_safe_int_id` tolerate `"X.0"` floats.
+After the C46-C53 round-trip hardening, the CSV parse/write/merge
+chain is mostly defensive. The remaining gap is **F54-01**:
+`_load_per_source_csvs` trusts the per-source CSV's
+`matched_sensors` column verbatim. The codebase has two competing
+intents for per-source CSVs:
 
-## Remaining gap: F53-01 `_safe_int_id` is still loose
+1. **Cache**: regenerate freely from upstream + sensors.json on each
+   `python pixelpitch.py source <name>` run.
+2. **Authoritative store**: the CSV is the truth, downstream consumers
+   trust it.
 
-The C52 implementation added an `isfinite` check to the float
-fallback for record_id but skipped a range guard. Side-by-side
-with `_safe_year`, the asymmetry is the bug: `_safe_year` rejects
-`"3000"`, `_safe_int_id` accepts arbitrary huge ints. Same
-defense-in-depth round-trip class as C50/C52.
+Today the code does (1) on write but (2) on read.
 
-Consensus with code-reviewer F53-01.
+### Maintainability perspective
 
-## Process critique
+`pixelpitch.py` is 1378 lines (no growth this cycle). Deferred F32
+(monolith refactor) still applicable.
 
-The cycle-52 docs commit `1c968dd` correctly bundled the 12 review
-files + aggregate + plan. F52-03 is satisfied. No new process
-complaints.
+### Doc/code consistency
 
-## Verdict
+- `_safe_int_id` docstring (lines 318-330) was updated in C53 to
+  match the implementation. Re-checked, accurate.
+- `merge_camera_data` docstring (lines 475-497) does NOT mention
+  the matched_sensors preservation behavior added in C46. Cosmetic.
 
-One LOW correctness finding (F53-01, agreement) and one LOW test-gap
-finding (F53-02). No disagreement with other reviewers.
+## Findings
+
+### F54-01 (consensus, see code-reviewer): per-source CSV matched_sensors are stale — LOW
+
+This is an architectural inconsistency: declare per-source CSVs as
+caches and refresh on load, OR formalize them as the source of truth.
+
+## Final sweep
+
+No additional new findings.

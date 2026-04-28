@@ -1,48 +1,32 @@
-# Verifier — Cycle 53
+# Verifier — Cycle 54
 
-**Date:** 2026-04-29
-**HEAD:** `1c968dd`
+**HEAD:** `93851b0`
 
-## Evidence collected
+## Evidence-based verification
 
-### Gates
+### Gates at HEAD
 
-- `flake8 .` → exit 0, zero errors.
-- `python3 -m tests.test_parsers_offline` → all sections green
-  (matched_sensors parse tolerance, year parse tolerance, id parse
-  tolerance).
+- `flake8 .` → 0 errors. Verified.
+- `python3 -m tests.test_parsers_offline` → all sections green.
+  Verified at run time this cycle.
 
-### Behavior probes
+### Behavior verification — round-trip preservation (C46-C53)
 
-```
-_safe_year("")        → None
-_safe_year("  ")      → None
-_safe_year(" 2023 ")  → 2023
-_safe_year("2023.0")  → 2023
-_safe_year("abc")     → None
-_safe_year("nan")     → None
-_safe_year("inf")     → None
-_safe_year("3000")    → None  (range guard)
-_safe_year("1e308")   → None  (isfinite check)
+- `matched_sensors` round-trip: semicolon-delimited, whitespace +
+  dedup tolerant. Verified.
+- Year / id parse tolerance for Excel-coerced numeric strings.
+  Tests cover `"2023.0"`, `"5.0"`, `" 5 "`, `"nan"`, `"inf"`,
+  `"1e308"`, negative, out-of-range. Verified.
+- `_safe_int_id` range guard `[0, 1_000_000]`. Verified by test.
 
-_safe_int_id("")      → None
-_safe_int_id("  ")    → None
-_safe_int_id("5.7")   → 5
-_safe_int_id("-3")    → -3
-_safe_int_id("1e308") → 309-digit big-int   ← anomaly
-```
+### Stated vs actual behavior
 
-`int(float("1e308"))` is finite (largest finite IEEE 754 double
-≈1.797e308), so the `isfinite` check does NOT trip. Result
-propagates through merge. Confirms code-reviewer F53-01.
+- F54-01: `_load_per_source_csvs` docstring says "serve as caches
+  between deployments" but the code trusts the file's
+  matched_sensors column verbatim. **Verified** as a real
+  doc-vs-code mismatch.
 
-## Confidence in current state
+## Findings
 
-- Cycle-52 fixes verified working.
-- One new LOW correctness gap (F53-01).
-- One new LOW test gap (F53-02).
-- All other reviewer claims verified against source.
-
-## Verdict
-
-State at HEAD `1c968dd` is in known-good shape modulo F53-01/F53-02.
+I confirm F54-01 with **MEDIUM** confidence. No additional new
+findings.

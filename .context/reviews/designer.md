@@ -1,27 +1,29 @@
-# Designer — Cycle 53
+# Designer — Cycle 54
 
-**Date:** 2026-04-29
-**HEAD:** `1c968dd`
+**HEAD:** `93851b0`
 
-UI/UX review applied where present.
+## UI/UX review scope check
 
-## Surface
+This repo emits a static HTML site under `dist/` from Jinja2
+templates in `templates/`. UI/UX review is in scope.
 
-- `templates/index.html`
-- `templates/pixelpitch.html`
-- `templates/about.html`
-- Bootstrap CSS (CDN, SRI), jQuery, D3, tablesorter.
+The build is offline-rendered. The dev server is `python -m
+http.server` over the `dist/` directory. The cycle's run context
+does not include `agent-browser` setup, and the deploy mode is
+`none`, so I review templates statically.
 
-No dev server is configured (static-site generator). Live-browser
-review skipped — would require populating `dist/` first
-(`python3 -m pixelpitch`), which depends on network for sensor
-scraping.
+## Findings
 
-## Static template review
+### No new UI/UX issues this cycle
 
-No template changes since cycle 52. Designer findings F35-F39 all
-remain deferred (see `deferred.md`). No re-opens.
+- Templates: `index.html`, `pixelpitch.html`, `about.html`. All use
+  Jinja2 autoescape (`select_autoescape(["html", "xml"])`).
+- SRI hashes on CDN resources: present (C8-01, commit 447ee5a).
+- `temporalCoverage` LD+JSON metadata: present (C8-03).
+- Sort UX (sorted_by) only exposes descending; F18 deferred.
+- No new responsive, contrast, or focus-state regressions
+  introduced this cycle (no template diff).
 
-## Verdict
+## Final sweep
 
-No new UI/UX findings this cycle.
+No findings.
