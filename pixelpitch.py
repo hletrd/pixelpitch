@@ -464,10 +464,14 @@ def merge_camera_data(
                 if new_spec.size is not None and new_spec.size != new_spec.spec.size:
                     new_spec.size = existing_spec.size
                     new_spec.area = existing_spec.area
-                    # Note: derived.pitch is NOT overridden here because the
-                    # pitch consistency check below (lines 498-501) already
-                    # ensures derived.pitch tracks spec.pitch when the latter
-                    # is preserved from existing.
+                    # derived.pitch must also be overridden because pixel pitch
+                    # is computed from area (pitch = f(area, mpix)). When area
+                    # changes, the pitch based on the old area is wrong.
+                    # The pitch consistency check below (lines 498-501) only
+                    # handles the case where spec.pitch (direct measurement) is
+                    # preserved. When spec.pitch is None, the pitch was computed
+                    # from the old (wrong) area and must be corrected here.
+                    new_spec.pitch = existing_spec.pitch
             if new_spec.spec.pitch is None and existing_spec.spec.pitch is not None:
                 new_spec.spec.pitch = existing_spec.spec.pitch
                 # Validate preserved pitch: non-positive or non-finite values
