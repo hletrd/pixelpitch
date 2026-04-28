@@ -725,6 +725,14 @@ def test_pixel_pitch():
     pitch3 = pp.pixel_pitch(1.0, 1.0)
     expect("1mm2 1MP pitch", pitch3, 1.0, tol=0.01)
 
+    # Edge case: zero mpix — must return 0.0, not crash
+    pitch4 = pp.pixel_pitch(864.0, 0.0)
+    expect("zero mpix pitch", pitch4, 0.0)
+
+    # Edge case: negative mpix — must return 0.0, not crash
+    pitch5 = pp.pixel_pitch(864.0, -1.0)
+    expect("negative mpix pitch", pitch5, 0.0)
+
 
 # --------------------------------------------------------------------------
 # match_sensors

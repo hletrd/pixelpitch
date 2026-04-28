@@ -179,6 +179,8 @@ def sensor_size_from_type(
 
 
 def pixel_pitch(area: float, mpix: float) -> float:
+    if mpix <= 0:
+        return 0.0
     return 1000 * sqrt(area / (mpix * 10**6))
 
 
