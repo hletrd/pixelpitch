@@ -44,7 +44,8 @@ PITCH_RE = re.compile(r"([\d\.]+)µm")
 MPIX_RE = re.compile(r"([\d\.]+)\s*Megapixel")
 
 # Canonical fractional-inch sensor type regex — matches "1/x.y" followed by
-# any recognized suffix (ASCII/Unicode quotes, "inch", "-type", etc.).
+# any recognized suffix: ASCII/Unicode quotes (" ″), optional-space + "inch",
+# "-inch", optional-space + "type", or "-type".
 # Replaces the former SENSOR_TYPE_RE (ASCII-only) and SENSOR_FORMAT_RE
 # (GSMArena-specific) with a single source of truth from sources/__init__.py.
 from sources import TYPE_FRACTIONAL_RE
@@ -533,6 +534,7 @@ def parse_sensor_field(sensor_text: str) -> dict:
         "Kleinbild, CMOS 36.0x24.0mm, 6.94µm Pixelgröße"
         "CMOS 1/3.1\", 1.09µm Pixelgröße"
         "APS-C, CMOS 23.5x15.6mm"
+        "CMOS 1\", 2.4µm Pixelgröße"
         "CMOS"
     """
     result = {"type": None, "size": None, "pitch": None}
@@ -544,6 +546,9 @@ def parse_sensor_field(sensor_text: str) -> dict:
     type_match = TYPE_FRACTIONAL_RE.search(sensor_text)
     if type_match:
         result["type"] = type_match.group(1)
+    elif re.search(r'\b1["″](?:\s|,|$)|\b1[- ]inch\b', sensor_text):
+        # Bare 1-inch format (not fractional 1/x.y).  TYPE_SIZE has key "1".
+        result["type"] = "1"
 
     # Extract sensor dimensions (e.g. "36.0x24.0mm")
     size_match = SIZE_RE.search(sensor_text)

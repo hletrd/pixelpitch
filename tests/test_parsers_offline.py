@@ -312,6 +312,12 @@ def test_gsmarena_unicode_quotes():
     # No match for bare number without suffix
     m4 = TYPE_FRACTIONAL_RE.search('1/2.3 other')
     expect("no suffix no match", m4 is None, True)
+    # Space+inch suffix ("1/2.3 inch")
+    m5 = TYPE_FRACTIONAL_RE.search('1/2.3 inch')
+    expect("space+inch suffix match", m5.group(1) if m5 else None, "1/2.3")
+    # "inch" without space still matches (subsumed by \s*inch)
+    m6 = TYPE_FRACTIONAL_RE.search('1/2.3inch')
+    expect("no-space inch suffix match", m6.group(1) if m6 else None, "1/2.3")
 
 
 # --------------------------------------------------------------------------
@@ -916,6 +922,40 @@ def test_sensor_size_from_type():
     expect("1/-1 returns None (negative diagonal)", result12, None)
 
 
+def test_parse_sensor_field():
+    section("parse_sensor_field")
+    import pixelpitch as pp
+
+    # Fractional-inch sensor type
+    result1 = pp.parse_sensor_field('CMOS 1/2.3"')
+    expect("fractional type 1/2.3", result1["type"], "1/2.3")
+
+    # Bare 1-inch sensor type (not fractional 1/x.y)
+    result2 = pp.parse_sensor_field('CMOS 1"')
+    expect("bare 1-inch type", result2["type"], "1")
+
+    # 1-inch with -inch suffix
+    result3 = pp.parse_sensor_field('CMOS 1-inch')
+    expect("1-inch suffix type", result3["type"], "1")
+
+    # 1-inch with " inch" (space before inch)
+    result4 = pp.parse_sensor_field('CMOS 1 inch')
+    expect("1 inch suffix type", result4["type"], "1")
+
+    # Fractional type takes precedence over bare 1-inch
+    result5 = pp.parse_sensor_field('CMOS 1/1.7"')
+    expect("fractional takes precedence", result5["type"], "1/1.7")
+
+    # Empty input
+    result6 = pp.parse_sensor_field('')
+    expect("empty input type", result6["type"], None)
+
+    # With mm dimensions and type
+    result7 = pp.parse_sensor_field('CMOS 1", 13.2x8.8mm')
+    expect("1-inch with mm dims type", result7["type"], "1")
+    expect("1-inch with mm dims size", result7["size"], (13.2, 8.8), tol=0.01)
+
+
 # --------------------------------------------------------------------------
 # pixel_pitch
 
@@ -1206,6 +1246,7 @@ def main():
     test_deduplicate_specs()
     test_merge_camera_data()
     test_sensor_size_from_type()
+    test_parse_sensor_field()
     test_pixel_pitch()
     test_match_sensors()
     test_load_sensors_database()
