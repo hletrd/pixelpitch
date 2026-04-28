@@ -2358,6 +2358,85 @@ def test_load_per_source_csvs_cache_fallback():
         pp.load_sensors_database = original
 
 
+def test_load_per_source_csvs_size_less_drops_cache():
+    """`_load_per_source_csvs` must drop the matched_sensors cache for
+    rows with no sensor size, even when `sensors.json` loads successfully
+    (F56-01).
+
+    The size-less branch honors `derive_spec`'s contract that
+    `matched_sensors is None` when the size is unknown ("not checked").
+    A future refactor that conflates the cache-fallback path with the
+    size-less path would silently re-introduce stale cached values on
+    rows that have lost their size data; this test pins the contract.
+
+    The companion C55-01 test already covers the size-less branch under
+    an EMPTY sensors_db. This test covers the size-less branch under a
+    NON-EMPTY sensors_db, ensuring the behavior is sensors_db-independent.
+
+    Regression-guards F56-01.
+    """
+    section("_load_per_source_csvs size-less row drops cache (sensors_db non-empty)")
+    import tempfile
+    from pathlib import Path
+    import pixelpitch as pp
+
+    # Monkeypatch load_sensors_database to return a non-empty dict so we
+    # exercise the "sensors_db loadable" code path. The size-less row
+    # must still drop to None.
+    original = pp.load_sensors_database
+    pp.load_sensors_database = lambda: {
+        "FAKE_SENSOR": {
+            "type": "FF",
+            "sensor_width_mm": 36.0,
+            "sensor_height_mm": 24.0,
+            "megapixels": [24.0],
+        },
+    }
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            csv = (
+                "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+                "sensor_area_mm2,megapixels,pixel_pitch_um,year,"
+                "matched_sensors\n"
+                "0,Sized Camera,dslr,,36.00,24.00,864.00,24.0,6.00,"
+                "2020,FAKE_SENSOR\n"
+                "1,No Size Cached,dslr,,,,,,,,STALE_CACHE\n"
+            )
+            (out / "camera-data-openmvg.csv").write_text(csv, encoding="utf-8")
+
+            loaded = pp._load_per_source_csvs(out)
+            expect("size-less-drop: rows loaded", len(loaded), 2)
+
+            by_name = {d.spec.name: d for d in loaded}
+            sized = by_name.get("Sized Camera")
+            no_size = by_name.get("No Size Cached")
+
+            if sized is not None:
+                # Sanity: with sensors_db loadable, the sized row's cache
+                # is refreshed against the DB. The fake sensor matches.
+                expect(
+                    "size-less-drop: sized row matched against sensors_db",
+                    sized.matched_sensors,
+                    ["FAKE_SENSOR"],
+                )
+            if no_size is not None:
+                # The size-less row's cache is dropped regardless of
+                # sensors_db loadability.
+                expect(
+                    "size-less-drop: no-size matched_sensors reset to None",
+                    no_size.matched_sensors,
+                    None,
+                )
+                expect(
+                    "size-less-drop: no-size size remains None",
+                    no_size.size,
+                    None,
+                )
+    finally:
+        pp.load_sensors_database = original
+
+
 def test_parse_existing_csv_bom_has_id_detection():
     """`parse_existing_csv` must detect the `id` schema even when the
     input begins with a UTF-8 BOM (F55-03).
@@ -2441,6 +2520,7 @@ def main():
     test_record_id_parse_tolerance()
     test_load_per_source_csvs_refresh()
     test_load_per_source_csvs_cache_fallback()
+    test_load_per_source_csvs_size_less_drops_cache()
     test_parse_existing_csv_bom_has_id_detection()
 
     print("\n" + ("=" * 60))
