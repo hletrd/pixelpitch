@@ -491,10 +491,12 @@ def test_sorted_by_zero_values():
 
 
 # --------------------------------------------------------------------------
-# Template rendering: 0.0 pitch/mpix must render as numbers, not "unknown"
+# Template rendering: 0.0 pitch/mpix are physically impossible and must
+# render as "unknown" (not as numeric values), consistent with JS
+# isInvalidData treating pitch===0 as invalid.
 
 def test_template_zero_pitch_rendering():
-    """Verify pixelpitch.html template renders 0.0 pitch/mpix as numbers, not 'unknown'."""
+    """Verify pixelpitch.html template renders 0.0 pitch/mpix as 'unknown'."""
     section("template 0.0 value rendering")
     import pixelpitch as pp
     from models import Spec
@@ -511,15 +513,15 @@ def test_template_zero_pitch_rendering():
         title="Test", specs=[d], page="fixed", date=date,
     )
 
-    # 0.0 mpix must render as "0.0 MP", not "unknown"
-    expect("template: 0.0 mpix renders as number",
-           "0.0 MP" in html, True)
-    expect("template: 0.0 mpix not 'unknown'",
-           'unknown' not in html.split("0.0 MP")[0][-50:] if "0.0 MP" in html else True, True)
+    # 0.0 mpix is physically impossible — must render as "unknown", not "0.0 MP"
+    expect("template: 0.0 mpix renders as unknown",
+           "0.0 MP" not in html, True)
+    expect("template: 0.0 mpix shows unknown text",
+           "unknown" in html, True)
 
-    # 0.0 pitch must render as "0.0 µm", not "unknown"
-    expect("template: 0.0 pitch renders as number",
-           "0.0" in html and "µm" in html, True)
+    # 0.0 pitch is physically impossible — must render as "unknown", not "0.0 µm"
+    expect("template: 0.0 pitch renders as unknown",
+           "0.0 µm" not in html and "0.0 µm" not in html, True)
 
 
 # --------------------------------------------------------------------------
