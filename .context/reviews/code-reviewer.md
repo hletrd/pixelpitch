@@ -1,60 +1,65 @@
-# Code Review (Cycle 31) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 32) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-30 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-31 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-C30-01 (GSMArena per-phone try/except) and C30-02 (deduplicate_specs DRY) both implemented and verified. All previous fixes stable.
+C31-01 through C31-04 all implemented and verified. All previous fixes stable.
 
 ## New Findings
 
-### CR31-01: merge_camera_data can leave spec.pitch and derived.pitch inconsistent
+### CR32-01: write_csv uses truthy checks instead of None checks for float fields
 
-**File:** `pixelpitch.py`, lines 413-432
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-When `merge_camera_data` preserves `spec.pitch` from existing data (because new has None), it does NOT update `derived.pitch` if `derived.pitch` was already computed from area+mpix in the new data. This leaves `spec.pitch` and `derived.pitch` pointing at different values.
-
-**Concrete scenario:**
-1. openMVG provides camera "X" with `spec.pitch=None`, `spec.size=(5.0, 3.7)`, `spec.mpix=10.0`
-2. `derive_spec()` computes `derived.pitch = pixel_pitch(18.5, 10.0)` = ~1.36um
-3. Existing CSV has same camera with `spec.pitch=2.0`, `derived.pitch=2.0` (direct measurement from Geizhals)
-4. Merge preserves `spec.pitch=2.0` from existing (new has None)
-5. Merge does NOT preserve `derived.pitch` because new's `derived.pitch=1.36` is not None
-6. Result: `spec.pitch=2.0`, `derived.pitch=1.36` — inconsistent
-7. Template displays `derived.pitch=1.36`, ignoring the more authoritative `spec.pitch=2.0`
-8. On next CSV write, `derived.pitch=1.36` is persisted, permanently losing the 2.0 measurement
-
-**Fix:** After all Spec field preservation, if `spec.pitch` was changed (preserved from existing) and `derived.pitch` was computed (not directly from `spec.pitch`), update `derived.pitch` to match `spec.pitch`. Alternatively, re-derive `derived.pitch` from the updated spec fields.
-
----
-
-### CR31-02: BOM check uses literal character instead of escape sequence
-
-**File:** `pixelpitch.py`, line 276; `sources/openmvg.py`, line 67
+**File:** `pixelpitch.py`, lines 824-827
 **Severity:** LOW-MEDIUM | **Confidence:** HIGH
 
-Both files compare `csv_content[0] == "﻿"` using the literal BOM character (U+FEFF) inside the string literal. If the source file is re-encoded by an editor or tool that strips or mangles the BOM character, the comparison silently fails and BOM-prefixed CSVs produce mangled headers (e.g., `"﻿id"` instead of `"id"`), causing 0-row parses.
+Four fields in `write_csv` use Python truthiness (`if x`) instead of explicit None checks (`if x is not None`):
 
-**Fix:** Replace `csv_content[0] == "﻿"` with `csv_content.startswith('﻿')` using the explicit escape sequence `﻿`. Same for openmvg.py line 67.
+```python
+area_str = f"{derived.area:.2f}" if derived.area else ""       # line 824
+mpix_str = f"{spec.mpix:.1f}" if spec.mpix else ""             # line 825
+pitch_str = f"{derived.pitch:.2f}" if derived.pitch else ""    # line 826
+year_str = str(spec.year) if spec.year else ""                 # line 827
+```
+
+For float fields (area, mpix, pitch), the value `0.0` is falsy but is a valid float. If any field is ever `0.0`, it would be written as an empty string to CSV and read back as `None` by `parse_existing_csv`, causing silent data loss on CSV round-trip.
+
+**Concrete scenario:**
+1. Camera with `spec.mpix=0.0` (e.g., from a parser bug or edge case)
+2. `write_csv` writes `""` for mpix (because `bool(0.0) is False`)
+3. `parse_existing_csv` reads `""` and produces `None`
+4. Data lost: the camera's mpix field changes from `0.0` to `None` on next build
+
+**Likelihood:** Very low in practice — no real camera has 0.0 MP/area/pitch. But `pixel_pitch()` can return `0.0` when `mpix <= 0`, and this value would be silently dropped.
+
+**Fix:** Replace truthy checks with explicit None checks:
+```python
+area_str = f"{derived.area:.2f}" if derived.area is not None else ""
+mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None else ""
+pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None else ""
+year_str = str(spec.year) if spec.year is not None else ""
+```
 
 ---
 
-### CR31-03: Spec and SpecDerived constructed with positional args in parse_existing_csv and extract_specs
+### CR32-02: IR_MPIX_RE can match partial decimal numbers from malformed input
 
-**File:** `pixelpitch.py`, lines 346-347 and 625
+**File:** `sources/imaging_resource.py`, line 47
 **Severity:** LOW | **Confidence:** MEDIUM
 
-`parse_existing_csv` creates `Spec(name, category, type_str, size, pitch, mpix, year)` and `SpecDerived(spec, size, area, pitch, matched_sensors, record_id)` using positional arguments. Similarly, `extract_specs` at line 625 creates `Spec(name, category, typ, size, pitch, mpix, year=None)`. If the dataclass field order changes, these would silently produce wrong objects. The C30-02 fix addressed `deduplicate_specs()` with `dataclasses.replace()`, but these parser code paths still use positional args.
+The `IR_MPIX_RE` pattern is `r"(\d+\.?\d*)"` — it matches any integer or decimal number. Unlike the centralized `MPIX_RE` which requires a unit suffix (MP, Megapixel, etc.), `IR_MPIX_RE` has no suffix requirement.
 
-**Fix:** Use keyword arguments: `Spec(name=name, category=category, type=type_str, size=size, pitch=pitch, mpix=mpix, year=year)` and similarly for SpecDerived.
+When applied to text containing a leading-dot decimal (e.g., `".5"` from malformed HTML stripping), it matches `"5"` instead of rejecting the input or matching `"0.5"`. The centralized `MPIX_RE` does NOT have this issue — `MPIX_RE.search('.5')` returns `None`.
+
+**Concrete scenario:** If the "Effective Megapixels" field on an IR spec page contains malformed text like "approx. 5" (with a trailing dot), the regex would match `"5"` from the decimal portion, not from the intended number. However, in practice, the IR spec pages consistently produce clean numeric values.
+
+**Fix:** Add a suffix requirement or use a more restrictive pattern. At minimum, require that the matched number is preceded by a non-dot character or start of string.
 
 ---
 
 ## Summary
 
-- CR31-01 (MEDIUM): merge_camera_data spec.pitch/derived.pitch inconsistency after field preservation
-- CR31-02 (LOW-MEDIUM): BOM check uses literal U+FEFF instead of '﻿' escape
-- CR31-03 (LOW): Spec/SpecDerived positional args in parsers — fragile if field order changes
+- CR32-01 (LOW-MEDIUM): write_csv falsy checks silently drop 0.0 float values
+- CR32-02 (LOW): IR_MPIX_RE matches partial decimals without unit suffix

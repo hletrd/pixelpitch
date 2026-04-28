@@ -1,89 +1,65 @@
-# Aggregate Review (Cycle 31) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 32) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-30 Status
+## Cycle 1-31 Status
 
-All previous fixes confirmed still working. No regressions. Gate tests pass (all checks). C30-01 and C30-02 both implemented and verified.
+All previous fixes confirmed still working. No regressions. Gate tests pass (all checks). C31-01 through C31-04 all implemented and verified.
 
-## Cross-Agent Agreement Matrix (Cycle 31 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 32 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| merge_camera_data spec/derived pitch inconsistency | code-reviewer, critic, verifier, tracer, architect, debugger, test-engineer | MEDIUM |
-| BOM literal character fragility in two files | code-reviewer, critic, verifier, debugger, architect | LOW-MEDIUM |
-| Spec/SpecDerived positional args in parsers | code-reviewer | LOW |
-| derive_spec() missing docstring | document-specialist | LOW |
-| BOM check duplication across modules | architect | LOW |
+| write_csv falsy checks silently drop 0.0 float values | code-reviewer, critic, verifier, tracer, debugger, test-engineer | LOW-MEDIUM |
+| IR_MPIX_RE matches partial decimals without unit suffix | code-reviewer | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C31-01: merge_camera_data can leave spec.pitch and derived.pitch inconsistent
+### C32-01: write_csv uses truthy checks instead of None checks for float fields
 
-**Sources:** CR31-01, CRIT31-01, V31-02, TR31-01, ARCH31-01, DBG31-01, TE31-01
-**Severity:** MEDIUM | **Confidence:** HIGH (7-agent consensus)
+**Sources:** CR32-01, CRIT32-01, V32-02, TR32-01, DBG32-01, TE32-01
+**Severity:** LOW-MEDIUM | **Confidence:** HIGH (6-agent consensus)
 
-When `merge_camera_data` preserves `spec.pitch` from existing data (because new has None), it does NOT update `derived.pitch` if `derived.pitch` was already computed from area+mpix in the new data. The template and write_csv both read `derived.pitch`, so the computed approximation silently overwrites the authoritative measurement.
+Four fields in `write_csv` use Python truthiness (`if x`) instead of explicit None checks (`if x is not None`):
+
+```python
+area_str = f"{derived.area:.2f}" if derived.area else ""       # line 824
+mpix_str = f"{spec.mpix:.1f}" if spec.mpix else ""             # line 825
+pitch_str = f"{derived.pitch:.2f}" if derived.pitch else ""    # line 826
+year_str = str(spec.year) if spec.year else ""                 # line 827
+```
+
+For float fields, `0.0` is falsy but is a valid float distinct from `None`. If any field is ever `0.0`, it would be written as empty string and read back as `None` by `parse_existing_csv`, causing silent data loss on CSV round-trip.
 
 **Concrete scenario:**
-1. openMVG provides camera "X" with `spec.pitch=None`, `spec.size=(5.0, 3.7)`, `spec.mpix=10.0`
-2. `derive_spec()` computes `derived.pitch ~= 1.36`
-3. Existing CSV has same camera with `spec.pitch=2.0`, `derived.pitch=2.0` (direct Geizhals measurement)
-4. Merge preserves `spec.pitch=2.0` from existing (correct) but `derived.pitch` stays at 1.36 (wrong)
-5. Template displays 1.36, write_csv persists 1.36 — the 2.0 measurement is permanently lost
+1. `pixel_pitch(area, mpix)` returns `0.0` when `mpix <= 0`
+2. `write_csv` writes `""` for pitch (because `bool(0.0) is False`)
+3. `parse_existing_csv` reads `""` and produces `None`
+4. Data lost: pitch changes from `0.0` to `None` on next build
 
-**Fix:** After all Spec field preservation in merge_camera_data, if `spec.pitch` is not None, set `derived.pitch = spec.pitch` regardless of what derived.pitch was computed to be.
+**Verified:** Confirmed via test with `Spec(mpix=0.0)` — CSV row shows empty mpix field.
 
----
-
-### C31-02: BOM check uses literal U+FEFF character instead of escape sequence
-
-**Sources:** CR31-02, CRIT31-02, V31-03, DBG31-02, ARCH31-02
-**Severity:** LOW-MEDIUM | **Confidence:** HIGH (5-agent consensus)
-
-**Files:** `pixelpitch.py` line 276; `sources/openmvg.py` line 67
-
-Both files compare `csv_content[0] == "﻿"` using the literal BOM character (U+FEFF). If the source file is re-encoded by a tool that normalizes Unicode, the literal disappears and the comparison silently breaks, causing BOM-prefixed CSVs to produce 0-row parses.
-
-**Fix:** Replace literal BOM with the escape sequence `'﻿'` in both files. Use `csv_content.startswith('﻿')` for clarity.
+**Fix:** Replace truthy checks with explicit None checks:
+```python
+area_str = f"{derived.area:.2f}" if derived.area is not None else ""
+mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None else ""
+pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None else ""
+year_str = str(spec.year) if spec.year is not None else ""
+```
 
 ---
 
-### C31-03: Spec and SpecDerived constructed with positional args in parsers
+### C32-02: IR_MPIX_RE matches partial decimals without requiring unit suffix
 
-**Sources:** CR31-03
+**Sources:** CR32-02
 **Severity:** LOW | **Confidence:** MEDIUM (1 agent)
 
-**Files:** `pixelpitch.py` lines 346-347 and 625; also all source modules
+The `IR_MPIX_RE` pattern `r"(\d+\.?\d*)"` matches any number without requiring a unit suffix (MP, Megapixel, etc.). Unlike the centralized `MPIX_RE` which requires a suffix, `IR_MPIX_RE` can match partial decimal numbers from malformed input (e.g., `.5` matches as `5`). The centralized `MPIX_RE` correctly rejects `.5` (returns None).
 
-If the dataclass field order changes, positional construction silently produces wrong objects. The C30-02 fix addressed `deduplicate_specs()` with `dataclasses.replace()`, but parser code paths still use positional args.
+In practice, IR spec pages produce clean numeric values, so this is unlikely to cause real issues. But it's an inconsistency between the two regex patterns.
 
-**Fix:** Use keyword arguments for Spec and SpecDerived construction in all parser code paths.
-
----
-
-### C31-04: derive_spec() missing docstring — pitch priority logic undocumented
-
-**Sources:** DOC31-01
-**Severity:** LOW | **Confidence:** HIGH (1 agent)
-
-**File:** `pixelpitch.py`, lines 680-704
-
-The function has non-obvious priority logic: `derived.pitch` is set to `spec.pitch` when available, otherwise computed from area+mpix. This is critical for understanding the merge consistency issue but is undocumented.
-
-**Fix:** Add a docstring explaining the pitch priority.
-
----
-
-### C31-05: BOM check duplication across two modules
-
-**Sources:** ARCH31-02
-**Severity:** LOW | **Confidence:** HIGH (1 agent, subsumed by C31-02)
-
-The BOM-stripping logic is duplicated in `pixelpitch.py` and `sources/openmvg.py`. The fix for C31-02 should also centralize the BOM check into a shared utility.
-
-**Fix:** Extract `strip_bom(text: str) -> str` into `sources/__init__.py` and call it from both files.
+**Fix:** Add a suffix requirement or use the centralized `MPIX_RE` in the IR parser where appropriate.
 
 ---
 
@@ -93,7 +69,6 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 5 (1 MEDIUM, 1 LOW-MEDIUM, 3 LOW)
-- Cross-agent consensus findings (3+ agents): 2 (C31-01 with 7 agents, C31-02 with 5 agents)
-- 7-agent consensus: 1 (C31-01)
-- 5-agent consensus: 1 (C31-02)
+- Total distinct new findings: 2 (1 LOW-MEDIUM, 1 LOW)
+- Cross-agent consensus findings (3+ agents): 1 (C32-01 with 6 agents)
+- 6-agent consensus: 1 (C32-01)
