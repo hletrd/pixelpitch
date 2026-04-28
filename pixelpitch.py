@@ -719,7 +719,7 @@ def derive_spec(
     else:
         area = None
 
-    if spec.pitch:
+    if spec.pitch is not None:
         pitch = spec.pitch
     elif spec.mpix is not None and area is not None:
         pitch = pixel_pitch(area, spec.mpix)
@@ -749,9 +749,9 @@ def sorted_by(
     specs: list[SpecDerived], key: str = "pitch", reverse: bool = True
 ) -> list[SpecDerived]:
     key_functions = {
-        "pitch": lambda c: c.pitch if c.pitch else -1,
-        "area": lambda c: c.area if c.area else -1,
-        "mpix": lambda c: c.spec.mpix if c.spec.mpix else -1,
+        "pitch": lambda c: c.pitch if c.pitch is not None else -1,
+        "area": lambda c: c.area if c.area is not None else -1,
+        "mpix": lambda c: c.spec.mpix if c.spec.mpix is not None else -1,
         "name": lambda c: c.spec.name,
     }
     return sorted(specs, key=key_functions[key], reverse=reverse)
@@ -769,12 +769,12 @@ def prettyprint(derived: SpecDerived) -> None:
     else:
         print("unknown sensor size", end="")
 
-    if spec.mpix:
+    if spec.mpix is not None:
         print(f", {spec.mpix:.1f} MP", end="")
     else:
         print(", unknown resolution", end="")
 
-    if derived.pitch:
+    if derived.pitch is not None:
         print(f", {derived.pitch:.1f}µm pixel pitch", end="")
 
     print()
