@@ -1001,6 +1001,10 @@ def test_parse_sensor_field():
     result11 = pp.parse_sensor_field('CMOS 5.12 microns')
     expect("PITCH handles microns suffix", result11["pitch"], 5.12, tol=0.01)
 
+    # PITCH_UM_RE handles lowercase ASCII "um"
+    result_um = pp.parse_sensor_field('CMOS 5.12um')
+    expect("PITCH handles um", result_um["pitch"], 5.12, tol=0.01)
+
     # ValueError guard: malformed float in dimension string
     result12 = pp.parse_sensor_field('CMOS 36.0.1x24.0mm')
     expect("malformed size returns None", result12["size"], None)
