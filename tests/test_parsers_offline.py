@@ -165,6 +165,41 @@ def test_imaging_resource():
     )
     expect("IR Sony FX6 fallback name", name_fx_fb, "Sony FX6")
 
+    # Sony RX series naming — .title() converts "rx" to "Rx";
+    # the normalizer must correct this to "RX"
+    name_rx100 = imaging_resource._parse_camera_name(
+        {"Model Name": "Sony RX100 VII"},
+        "https://www.imaging-resource.com/cameras/sony-rx100-vii-review/specifications/"
+    )
+    expect("IR Sony RX100 VII name", name_rx100, "Sony RX100 VII")
+
+    name_rx10 = imaging_resource._parse_camera_name(
+        {"Model Name": "Sony RX10 IV"},
+        "https://www.imaging-resource.com/cameras/sony-rx10-iv-review/specifications/"
+    )
+    expect("IR Sony RX10 IV name", name_rx10, "Sony RX10 IV")
+
+    # Sony DSC series naming — .title() converts "dsc" to "Dsc"
+    name_dsc = imaging_resource._parse_camera_name(
+        {"Model Name": "Sony DSC-HX400"},
+        "https://www.imaging-resource.com/cameras/sony-dsc-hx400-review/specifications/"
+    )
+    expect("IR Sony DSC-HX400 name", name_dsc, "Sony DSC HX400")
+
+    # Sony HX series — within DSC name
+    name_hx = imaging_resource._parse_camera_name(
+        {"Model Name": "Sony DSC-WX350"},
+        "https://www.imaging-resource.com/cameras/sony-dsc-wx350-review/specifications/"
+    )
+    expect("IR Sony DSC-WX350 name", name_hx, "Sony DSC WX350")
+
+    # RX fallback from URL with empty Model Name
+    name_rx_fb = imaging_resource._parse_camera_name(
+        {"Model Name": ""},
+        "https://www.imaging-resource.com/cameras/sony-rx1r-ii-review/specifications/"
+    )
+    expect("IR Sony RX1R II fallback name", name_rx_fb, "Sony RX1R II")
+
 
 # --------------------------------------------------------------------------
 # Apotelyt — Sony A7 IV fixture
@@ -696,13 +731,21 @@ def test_merge_field_preservation():
     merged_s = pp.merge_camera_data(new_s, existing_s)
     expect("merge: preserves size from existing",
            merged_s[0].spec.size, (5.0, 3.7), tol=0.01)
+    # SpecDerived fields must also be preserved (template reads these)
+    expect("merge: preserves derived.size from existing",
+           merged_s[0].size, (5.0, 3.7), tol=0.01)
+    expect("merge: preserves derived.area from existing",
+           merged_s[0].area, 18.5, tol=0.01)
 
     # Pitch preservation: new has None, existing has pitch
-    existing_p = [derive("Cam P", "fixed", (5.0, 3.7), 10.0, 2020, pitch_val=2.0)]
-    new_p = [derive("Cam P", "fixed", (5.0, 3.7), 10.0, 2020, pitch_val=None)]
+    # Need mpix=None so derive_spec doesn't compute pitch from area+mpix
+    existing_p = [derive("Cam P", "fixed", (5.0, 3.7), None, 2020, pitch_val=2.0)]
+    new_p = [derive("Cam P", "fixed", (5.0, 3.7), None, 2020, pitch_val=None)]
     merged_p = pp.merge_camera_data(new_p, existing_p)
     expect("merge: preserves pitch from existing",
            merged_p[0].spec.pitch, 2.0, tol=0.01)
+    expect("merge: preserves derived.pitch from existing",
+           merged_p[0].pitch, 2.0, tol=0.01)
 
     # New values still override existing values
     existing_ov = [derive("Cam OV", "fixed", (5.0, 3.7), 10.0, 2020,
@@ -716,6 +759,13 @@ def test_merge_field_preservation():
            merged_ov[0].spec.size, (7.6, 5.7), tol=0.01)
     expect("merge: new pitch overrides existing",
            merged_ov[0].spec.pitch, 3.0, tol=0.01)
+
+    # mpix preservation: new has None, existing has mpix
+    existing_mpx = [derive("Cam M", "fixed", (5.0, 3.7), 10.0, 2020)]
+    new_mpx = [derive("Cam M", "fixed", (5.0, 3.7), None, 2020)]
+    merged_mpx = pp.merge_camera_data(new_mpx, existing_mpx)
+    expect("merge: preserves mpix from existing",
+           merged_mpx[0].spec.mpix, 10.0, tol=0.1)
 
 
 # --------------------------------------------------------------------------
