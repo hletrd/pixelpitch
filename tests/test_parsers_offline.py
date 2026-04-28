@@ -1102,6 +1102,41 @@ def test_merge_field_preservation():
     expect("merge: derived.pitch consistent with spec.pitch",
            merged_pc[0].pitch, 2.0, tol=0.01)
 
+    # matched_sensors preservation: new has None (sensors_db unavailable),
+    # existing has ['IMX455'] — must preserve from existing.
+    existing_ms = SpecDerived(
+        spec=Spec(name='Cam MS', category='dslr', type=None,
+                  size=(36.0, 24.0), pitch=None, mpix=45.0, year=2020),
+        size=(36.0, 24.0), area=864.0, pitch=4.39,
+        matched_sensors=['IMX455'], id=0
+    )
+    # derive_spec with empty sensors_db returns matched_sensors=None
+    new_ms = pp.derive_spec(
+        Spec(name='Cam MS', category='dslr', type=None,
+             size=(36.0, 24.0), pitch=None, mpix=45.0, year=2020),
+        sensors_db={}
+    )
+    merged_ms = pp.merge_camera_data([new_ms], [existing_ms])
+    expect("merge: preserves matched_sensors from existing when new is None",
+           merged_ms[0].matched_sensors, ['IMX455'])
+
+    # matched_sensors=[] is authoritative (checked, found nothing) — should NOT
+    # be overridden by existing data.  Create a sensors_db with no match.
+    existing_ms2 = SpecDerived(
+        spec=Spec(name='Cam MS2', category='dslr', type=None,
+                  size=(36.0, 24.0), pitch=None, mpix=45.0, year=2020),
+        size=(36.0, 24.0), area=864.0, pitch=4.39,
+        matched_sensors=['IMX455'], id=0
+    )
+    new_ms2 = pp.derive_spec(
+        Spec(name='Cam MS2', category='dslr', type=None,
+             size=(36.0, 24.0), pitch=None, mpix=45.0, year=2020),
+        sensors_db={'NOMATCH': {'sensor_width_mm': 99.0, 'sensor_height_mm': 99.0, 'megapixels': [99.0]}}
+    )
+    merged_ms2 = pp.merge_camera_data([new_ms2], [existing_ms2])
+    expect("merge: [] from checked db does not preserve existing",
+           merged_ms2[0].matched_sensors, [])
+
 
 # --------------------------------------------------------------------------
 # merge_camera_data year-change log
