@@ -1,32 +1,47 @@
-# Architect Review (Cycle 40) — Architectural/Design Risks
+# Architect Review (Cycle 41) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-ARCH39-01 fixed. Template uses `> 0` positivity guard for physical quantities.
+ARCH40-01 fixed. `derive_spec` converts computed 0.0 sentinel to None.
 
 ## New Findings
 
-### ARCH40-01: `pixel_pitch` 0.0 sentinel leaks through `derive_spec` — contract mismatch
+### ARCH41-01: `derive_spec` has inconsistent validation between direct and computed pitch paths — contract gap
 
-**File:** `pixelpitch.py`, lines 178-187 (pixel_pitch), 757-762 (derive_spec)
+**File:** `pixelpitch.py`, lines 759-769
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-`pixel_pitch()` returns 0.0 as a sentinel for "invalid input" rather than raising an exception or returning None. This is a deliberate design choice (documented in the docstring). However, `derive_spec` does not account for this sentinel — it treats the 0.0 return as a valid computed value and stores it in `derived.pitch`.
+`derive_spec` now validates the *computed* pitch path (converting `pixel_pitch()`'s 0.0 sentinel to None), but the *direct* pitch path (`spec.pitch is not None`) performs no validation at all. This creates an inconsistency in the output contract:
 
-This violates the boundary contract: `pixel_pitch`'s output domain includes 0.0 as a special value, but `derive_spec`'s consumer contract expects that `derived.pitch` is either None (unknown) or a positive finite value (valid measurement). The 0.0 value is neither.
+- Computed path: `derived.pitch` is guaranteed to be None or a positive finite value
+- Direct path: `derived.pitch` can be 0.0, negative, or NaN
 
-The downstream consequences cascade:
-1. `selectattr('pitch', 'ne', None)` includes 0.0 — wrong table section
-2. `write_csv` writes "0.00" — round-trip data loss (parse rejects 0.0)
-3. JS `isInvalidData` hides the row (pitch===0)
+This contract gap means downstream consumers cannot rely on a uniform contract for `derived.pitch`. The fix should be a single validation step applied to both paths, not just one.
 
-**Fix:** `derive_spec` should convert 0.0 returns from `pixel_pitch()` to None, establishing the correct contract that `derived.pitch` is either a positive finite value or None.
+**Fix:** Add a unified `_validate_positive_float` helper used by both paths:
+
+```python
+def _validate_positive_float(val: Optional[float]) -> Optional[float]:
+    """Return val if it is a positive finite number, else None."""
+    if val is not None and isfinite(val) and val > 0:
+        return val
+    return None
+```
+
+Then in `derive_spec`:
+```python
+pitch = _validate_positive_float(spec.pitch) if spec.pitch is not None else None
+if pitch is None and spec.mpix is not None and area is not None:
+    pitch = _validate_positive_float(pixel_pitch(area, spec.mpix))
+```
+
+This establishes a uniform contract: `derived.pitch` is always None or a positive finite value, regardless of input path.
 
 ---
 
 ## Summary
 
-- ARCH40-01 (MEDIUM): `pixel_pitch` 0.0 sentinel leaks through `derive_spec` — contract mismatch between computation and data model
+- ARCH41-01 (MEDIUM): `derive_spec` has inconsistent validation between direct and computed pitch paths — contract gap

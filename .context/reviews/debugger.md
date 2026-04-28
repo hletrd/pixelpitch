@@ -1,32 +1,57 @@
-# Debugger Review (Cycle 40) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 41) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-DBG39-01 fixed. Template renders "unknown" for negative/NaN pitch/mpix.
+DBG40-01 fixed. `derive_spec` converts computed 0.0 sentinel to None.
 
 ## New Findings
 
-### DBG40-01: `derive_spec` produces pitch=0.0 from computed path — CSV round-trip data loss
+### DBG41-01: `derive_spec` direct pitch path lacks validation — 0.0, negative, NaN propagate undetected
 
-**File:** `pixelpitch.py`, lines 757-762; lines 839-872 (write_csv)
+**File:** `pixelpitch.py`, line 759-760
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode:**
-1. Camera has `spec.pitch=None, spec.mpix=0.0, spec.size=(5.0, 3.7)`
-2. `derive_spec` computes: `pixel_pitch(18.5, 0.0) = 0.0`, stores as `derived.pitch=0.0`
-3. `write_csv` writes "0.00" for pitch column
-4. `parse_existing_csv` reads "0.00", `_safe_float` returns 0.0, positivity check rejects it (0.0 <= 0), sets pitch=None
-5. Data loss: camera that had `derived.pitch=0.0` now has `derived.pitch=None`
+**Failure mode (0.0 direct pitch):**
+1. `Spec(pitch=0.0)` (e.g., from legacy CSV data before positivity checks)
+2. `derive_spec`: `pitch = spec.pitch = 0.0` — no validation
+3. `write_csv` writes "0.00" — `isfinite(0.0)` is True, passes through
+4. `parse_existing_csv` rejects 0.0 — data loss on round-trip
+5. Template: camera in wrong table section (selectattr includes 0.0)
 
-This is a silent data corruption on CSV round-trip. The `pitch=0.0` value is lost and becomes `pitch=None`. While the 0.0 value itself is meaningless (it's a sentinel), the data model inconsistency could cause issues if the round-trip is used for incremental updates — `merge_camera_data` would treat the None pitch differently from 0.0 pitch.
+**Failure mode (negative direct pitch):**
+1. `Spec(pitch=-1.0)` (e.g., from corrupted data)
+2. `derive_spec`: `pitch = spec.pitch = -1.0` — no validation
+3. `write_csv` writes "-1.00" — `isfinite(-1.0)` is True
+4. `parse_existing_csv` rejects -1.0 — data loss on round-trip
 
-**Fix:** In `derive_spec`, convert `pixel_pitch()`'s 0.0 return to None. This ensures `write_csv` writes an empty string for pitch, and `parse_existing_csv` reads it back as None — consistent round-trip.
+**Failure mode (NaN direct pitch):**
+1. `Spec(pitch=nan)` (e.g., from float arithmetic error)
+2. `derive_spec`: `pitch = spec.pitch = nan` — no validation
+3. `write_csv`: `isfinite(nan)` is False — writes empty string (safe)
+4. Template: `nan > 0` is False — renders "unknown" (safe for display)
+5. But `selectattr('pitch', 'ne', None)` with NaN is unpredictable in Jinja2
+
+The C40 fix only addressed the computed path. These are the same class of bug but on the direct path.
+
+**Fix:** Validate `spec.pitch` in `derive_spec`: reject non-finite or non-positive values.
+
+---
+
+### DBG41-02: `write_csv` isfinite guard insufficient — 0.0 and negative values pass through
+
+**File:** `pixelpitch.py`, lines 866-868
+**Severity:** LOW | **Confidence:** HIGH
+
+The C40 fix added `isfinite()` checks for mpix, pitch, and area in `write_csv`. But `isfinite(0.0)` is True and `isfinite(-1.0)` is True. For physically meaningful quantities (mpix, pitch, area), these values are invalid and should not be written to the CSV, consistent with `parse_existing_csv`'s rejection of <=0 values.
+
+**Fix:** Replace `isfinite` with positivity checks (`> 0`) for mpix, pitch, and area in `write_csv`.
 
 ---
 
 ## Summary
 
-- DBG40-01 (MEDIUM): `derive_spec` pitch=0.0 causes CSV round-trip data loss (0.0 -> None)
+- DBG41-01 (MEDIUM): `derive_spec` direct pitch path lacks validation — 0.0, negative, NaN propagate undetected
+- DBG41-02 (LOW): `write_csv` isfinite guard insufficient — 0.0 and negative values pass through

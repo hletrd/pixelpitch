@@ -1,12 +1,14 @@
 # Plan: Cycle 38 Findings — Zero-Pitch Template "unknown" Rendering
 
 **Created:** 2026-04-28
-**Status:** PENDING
+**Status:** COMPLETED
 **Source Reviews:** CR38-01, CRIT38-01, V38-02, TR38-01, ARCH38-01, DBG38-01, DES38-01, TE38-01
 
 ---
 
-## Task 1: Update Jinja2 template to render "unknown" for `pitch=0.0` — C38-01 (core)
+## Task 1: Update Jinja2 template to render "unknown" for `pitch=0.0` — C38-01 (core) — DONE
+
+Commit: 5b17620
 
 **Finding:** C38-01 (8-agent consensus)
 **Severity:** MEDIUM | **Confidence:** HIGH
@@ -56,7 +58,9 @@ A 0.0 µm pixel pitch is physically impossible. The template should render "unkn
 
 ---
 
-## Task 2: Update `test_template_zero_pitch_rendering` to expect "unknown" — TE38-01
+## Task 2: Update `test_template_zero_pitch_rendering` to expect "unknown" — TE38-01 — DONE
+
+Commit: a058eab
 
 **Finding:** TE38-01
 **Severity:** LOW | **Confidence:** HIGH
@@ -75,7 +79,7 @@ The test currently asserts that 0.0 pitch renders as "0.0 µm" and 0.0 mpix rend
 
 ---
 
-## Task 3: Update `test_sorted_by_zero_values` to reflect "unknown" rendering for 0.0 pitch
+## Task 3: Update `test_sorted_by_zero_values` to reflect "unknown" rendering for 0.0 pitch — DONE
 
 **Finding:** Follow-up from Task 1
 **Severity:** LOW | **Confidence:** HIGH

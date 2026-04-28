@@ -1,39 +1,47 @@
-# Critic Review (Cycle 40) — Multi-Perspective Critique
+# Critic Review (Cycle 41) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-CRIT39-01 fixed. Template uses `> 0` guard. But the fix was narrow — it only addressed the template rendering, not the upstream data flow.
+CRIT40-01 fixed. `derive_spec` converts computed 0.0 sentinel to None. But the fix was narrow — only the computed path.
 
 ## New Findings
 
-### CRIT40-01: C39 fix addressed rendering but not the upstream data flow — `derive_spec` still produces 0.0 sentinel pitch
+### CRIT41-01: C40 fix was incomplete — `derive_spec` still propagates invalid direct `spec.pitch` values
 
-**File:** `pixelpitch.py`, lines 757-762; `templates/pixelpitch.html`, line 183
+**File:** `pixelpitch.py`, lines 759-760; `templates/pixelpitch.html`, line 183
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C39 fix changed the template guard from `!= 0.0` to `> 0`. This correctly renders "unknown" for 0.0 pitch/mpix values. However, the root cause was never addressed: `derive_spec` still produces `derived.pitch = 0.0` when `pixel_pitch()` returns its 0.0 sentinel. This 0.0 value then:
+The C40 fix addressed the computed path: when `pixel_pitch()` returns 0.0, `derive_spec` converts it to None. But the direct path (`spec.pitch is not None`) was left unguarded. This means:
 
-1. Passes through `selectattr('pitch', 'ne', None)` — the camera appears in the "with pitch" table instead of "without pitch"
-2. Flows through `write_csv` — the CSV contains "0.00" for pitch
-3. Gets picked up by `parse_existing_csv` — which correctly rejects 0.0 pitch (positivity check)
-4. This creates a data loss on CSV round-trip: pitch=0.0 becomes pitch=None
+1. `Spec(pitch=0.0)` → `derived.pitch = 0.0` — still passes through selectattr
+2. `Spec(pitch=-1.0)` → `derived.pitch = -1.0` — negative pitch in data model
+3. `Spec(pitch=nan)` → `derived.pitch = nan` — NaN in data model
 
-The correct fix is to stop the 0.0 sentinel at its source. `derive_spec` should convert `pixel_pitch()`'s 0.0 return to None. The `pixel_pitch` function's 0.0 sentinel is an internal implementation detail that should not leak past `derive_spec`.
+The template `> 0` guard renders these as "unknown", but the camera is still in the wrong section. The `write_csv` `isfinite` guard catches NaN but not 0.0 or negative values.
 
-**Fix:** In `derive_spec`, after computing pitch from `pixel_pitch()`, convert 0.0 to None:
-```python
-pitch = pixel_pitch(area, spec.mpix)
-if pitch == 0.0:
-    pitch = None
-```
+This is the same class of bug as CRIT40-01, but on the direct path. The correct fix is a unified validation in `derive_spec` that applies to both paths, establishing the contract that `derived.pitch` is always either None or a positive finite value.
 
-This is the correct architectural fix — it eliminates the 0.0 sentinel at the boundary between the computation layer and the data model, rather than patching each downstream consumer.
+**Fix:** In `derive_spec`, validate `spec.pitch` the same as computed pitch: reject non-finite or non-positive values by converting to None.
+
+---
+
+### CRIT41-02: `write_csv` positivity gap — `isfinite` insufficient for physical quantities
+
+**File:** `pixelpitch.py`, lines 866-868
+**Severity:** LOW | **Confidence:** HIGH
+
+The C40 fix added `isfinite()` checks for mpix, pitch, and area in `write_csv`. But `isfinite(0.0)` and `isfinite(-1.0)` both return True. For physical quantities, these values are just as invalid as inf/nan. The `parse_existing_csv` function correctly rejects them (positivity check), creating a data loss on round-trip.
+
+The fix is simple: replace `isfinite(x)` with `x > 0` for all physical quantity fields. This is consistent with `parse_existing_csv` and ensures lossless round-trips.
+
+**Fix:** Replace `isfinite` checks with `> 0` checks in `write_csv` for mpix, pitch, and area.
 
 ---
 
 ## Summary
 
-- CRIT40-01 (MEDIUM): C39 fix was narrow — `derive_spec` still produces 0.0 sentinel pitch that leaks through selectattr and write_csv
+- CRIT41-01 (MEDIUM): C40 fix incomplete — derive_spec still propagates invalid direct spec.pitch values
+- CRIT41-02 (LOW): write_csv isfinite guard insufficient for physical quantities — 0.0 and negative values pass
