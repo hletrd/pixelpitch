@@ -14,7 +14,7 @@ import re
 import sys
 
 from collections import defaultdict
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from datetime import datetime, timezone
 from math import isfinite, sqrt
 from pathlib import Path

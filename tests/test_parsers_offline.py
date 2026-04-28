@@ -591,7 +591,7 @@ def test_parse_existing_csv_negative_values():
 def test_merge_multi_source():
     section("merge_camera_data multi-source")
     import pixelpitch as pp
-    from models import Spec, SpecDerived
+    from models import Spec
 
     def derive(name, category, size, mpix, year):
         spec = Spec(name=name, category=category, type=None,
@@ -663,7 +663,6 @@ def test_csv_schema():
 def test_parse_existing_csv():
     section("parse_existing_csv")
     import pixelpitch as pp
-    from models import Spec, SpecDerived
 
     # has_id=True, 11 columns (happy path with sensors)
     csv1 = (
@@ -842,7 +841,7 @@ def test_csv_round_trip():
     section("CSV round-trip (write_csv → parse_existing_csv)")
     import tempfile
     import pixelpitch as pp
-    from models import Spec, SpecDerived
+    from models import Spec
 
     spec1 = Spec(name="Test, Camera", category="mirrorless", type="1/2.3",
                   size=(35.9, 23.9), pitch=5.12, mpix=33.0, year=2021)
@@ -974,7 +973,7 @@ def test_deduplicate_specs():
 def test_merge_camera_data():
     section("merge_camera_data")
     import pixelpitch as pp
-    from models import Spec, SpecDerived
+    from models import Spec
 
     def derive(name, category, size, mpix, year):
         spec = Spec(name=name, category=category, type=None,
@@ -1238,10 +1237,9 @@ def test_merge_gsmarena_measured_preserved():
 
 def test_merge_year_change_log():
     section("merge_camera_data year-change log")
-    import io
     import contextlib
     import pixelpitch as pp
-    from models import Spec, SpecDerived
+    from models import Spec
 
     def derive(name, category, size, mpix, year, pitch_val=None):
         spec = Spec(name=name, category=category, type=None,
@@ -1819,7 +1817,7 @@ def test_gsmarena_decimal_mp():
 def test_create_camera_key_year_mismatch():
     section("create_camera_key year mismatch")
     import pixelpitch as pp
-    from models import Spec, SpecDerived
+    from models import Spec
 
     def derive(name, category, size, mpix, year):
         spec = Spec(name=name, category=category, type=None,
@@ -1853,7 +1851,7 @@ def test_create_camera_key_year_mismatch():
 def test_category_dedup():
     section("category dedup across Geizhals categories")
     import pixelpitch as pp
-    from models import Spec, SpecDerived
+    from models import Spec
 
     def derive(name, category, size, mpix, year):
         spec = Spec(name=name, category=category, type=None,
