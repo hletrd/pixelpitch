@@ -821,10 +821,10 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
             type_str = spec.type or ""
             width_str = f"{derived.size[0]:.2f}" if derived.size else ""
             height_str = f"{derived.size[1]:.2f}" if derived.size else ""
-            area_str = f"{derived.area:.2f}" if derived.area else ""
-            mpix_str = f"{spec.mpix:.1f}" if spec.mpix else ""
-            pitch_str = f"{derived.pitch:.2f}" if derived.pitch else ""
-            year_str = str(spec.year) if spec.year else ""
+            area_str = f"{derived.area:.2f}" if derived.area is not None else ""
+            mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None else ""
+            pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None else ""
+            year_str = str(spec.year) if spec.year is not None else ""
             sensors_str = (
                 ";".join(derived.matched_sensors) if derived.matched_sensors else ""
             )

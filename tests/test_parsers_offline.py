@@ -702,6 +702,27 @@ def test_csv_round_trip():
     expect("round-trip None size", parsed_back[1].size, None)
     expect("round-trip None mpix", parsed_back[1].spec.mpix, None)
 
+    # 0.0 value preservation: float fields that are 0.0 must survive
+    # the CSV round-trip (not silently dropped by falsy checks).
+    spec_zero = Spec(name="Zero MP Cam", category="fixed", type=None,
+                     size=(5.0, 3.7), pitch=0.0, mpix=0.0, year=2020)
+    d_zero = pp.derive_spec(spec_zero)
+    d_zero.id = 2
+
+    with tempfile.NamedTemporaryFile("w+", suffix=".csv", delete=False) as f:
+        out_path_zero = Path(f.name)
+    try:
+        pp.write_csv([d_zero], out_path_zero)
+        csv_zero_text = out_path_zero.read_text(encoding="utf-8")
+    finally:
+        out_path_zero.unlink(missing_ok=True)
+
+    parsed_zero = pp.parse_existing_csv(csv_zero_text)
+    expect("round-trip 0.0 mpix preserved",
+           parsed_zero[0].spec.mpix, 0.0, tol=0.01)
+    expect("round-trip 0.0 pitch preserved",
+           parsed_zero[0].pitch, 0.0, tol=0.01)
+
 
 # --------------------------------------------------------------------------
 # deduplicate_specs
