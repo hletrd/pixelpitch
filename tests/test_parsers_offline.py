@@ -713,8 +713,8 @@ def test_deduplicate_specs():
 
     # Color variants with same specs → unified
     specs = [
-        Spec("Sony A7 IV schwarz", "mirrorless", None, (35.9, 23.9), 5.12, 33.0, 2021),
-        Spec("Sony A7 IV silber", "mirrorless", None, (35.9, 23.9), 5.12, 33.0, 2021),
+        Spec(name="Sony A7 IV schwarz", category="mirrorless", type=None, size=(35.9, 23.9), pitch=5.12, mpix=33.0, year=2021),
+        Spec(name="Sony A7 IV silber", category="mirrorless", type=None, size=(35.9, 23.9), pitch=5.12, mpix=33.0, year=2021),
     ]
     deduped = pp.deduplicate_specs(specs)
     expect("color variants unified", len(deduped), 1)
@@ -722,23 +722,23 @@ def test_deduplicate_specs():
 
     # Color variants with different specs → kept separate
     specs2 = [
-        Spec("Cam schwarz", "fixed", None, (5.0, 3.7), 2.0, 10.0, 2020),
-        Spec("Cam silber", "fixed", None, (6.0, 4.5), 3.0, 12.0, 2020),
+        Spec(name="Cam schwarz", category="fixed", type=None, size=(5.0, 3.7), pitch=2.0, mpix=10.0, year=2020),
+        Spec(name="Cam silber", category="fixed", type=None, size=(6.0, 4.5), pitch=3.0, mpix=12.0, year=2020),
     ]
     deduped2 = pp.deduplicate_specs(specs2)
     expect("different specs kept separate", len(deduped2), 2)
 
     # Parenthetical suffixes stripped (using non-EXTRAS parenthetical)
     specs3 = [
-        Spec("Canon R5 (Wi-Fi)", "mirrorless", None, (36.0, 24.0), 4.39, 45.0, 2020),
+        Spec(name="Canon R5 (Wi-Fi)", category="mirrorless", type=None, size=(36.0, 24.0), pitch=4.39, mpix=45.0, year=2020),
     ]
     deduped3 = pp.deduplicate_specs(specs3)
     expect("parens stripped", deduped3[0].name, "Canon R5")
 
     # Exact duplicates without EXTRAS → deduplicated
     specs4 = [
-        Spec("Nikon Z9", "mirrorless", None, (35.9, 23.9), 4.35, 45.7, 2021),
-        Spec("Nikon Z9", "mirrorless", None, (35.9, 23.9), 4.35, 45.7, 2021),
+        Spec(name="Nikon Z9", category="mirrorless", type=None, size=(35.9, 23.9), pitch=4.35, mpix=45.7, year=2021),
+        Spec(name="Nikon Z9", category="mirrorless", type=None, size=(35.9, 23.9), pitch=4.35, mpix=45.7, year=2021),
     ]
     deduped4 = pp.deduplicate_specs(specs4)
     expect("exact duplicates removed", len(deduped4), 1)
@@ -749,22 +749,22 @@ def test_deduplicate_specs():
 
     # Same specs but different categories -> both kept
     specs5 = [
-        Spec("Canon R5", "mirrorless", None, (36.0, 24.0), 4.39, 45.0, 2020),
-        Spec("Canon R5", "dslr", None, (36.0, 24.0), 4.39, 45.0, 2020),
+        Spec(name="Canon R5", category="mirrorless", type=None, size=(36.0, 24.0), pitch=4.39, mpix=45.0, year=2020),
+        Spec(name="Canon R5", category="dslr", type=None, size=(36.0, 24.0), pitch=4.39, mpix=45.0, year=2020),
     ]
     deduped5 = pp.deduplicate_specs(specs5)
     expect("different categories kept separate", len(deduped5), 2)
 
     # Multi-paren name: only last parenthetical should be stripped
     specs6 = [
-        Spec("Canon EOS (R5) (Kit)", "mirrorless", None, (36.0, 24.0), 4.39, 45.0, 2020),
+        Spec(name="Canon EOS (R5) (Kit)", category="mirrorless", type=None, size=(36.0, 24.0), pitch=4.39, mpix=45.0, year=2020),
     ]
     deduped6 = pp.deduplicate_specs(specs6)
     expect("multi-paren: inner parens preserved", deduped6[0].name, "Canon EOS (R5)")
 
     # EXTRAS word inside a name should NOT match (word boundary test)
     specs7 = [
-        Spec("Polaroid BodyCam One", "fixed", None, (5.0, 3.7), 2.0, 10.0, 2020),
+        Spec(name="Polaroid BodyCam One", category="fixed", type=None, size=(5.0, 3.7), pitch=2.0, mpix=10.0, year=2020),
     ]
     deduped7 = pp.deduplicate_specs(specs7)
     expect("EXTRAS word inside name not matched", deduped7[0].name, "Polaroid BodyCam One")

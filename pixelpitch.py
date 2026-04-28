@@ -342,8 +342,11 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
                     pass
             matched_sensors = sensors_str.split(";") if sensors_str else []
 
-            spec = Spec(name, category, type_str, size, pitch, mpix, year)
-            derived = SpecDerived(spec, size, area, pitch, matched_sensors, record_id)
+            spec = Spec(name=name, category=category, type=type_str,
+                        size=size, pitch=pitch, mpix=mpix, year=year)
+            derived = SpecDerived(spec=spec, size=size, area=area,
+                                  pitch=pitch, matched_sensors=matched_sensors,
+                                  id=record_id)
             specs.append(derived)
 
         except Exception as e:
@@ -630,7 +633,8 @@ def extract_specs(entries: list[str], category: str) -> list[Spec]:
                 if type_match:
                     typ = type_match.group(1)
 
-        specs.append(Spec(name, category, typ, size, pitch, mpix, year=None))
+        specs.append(Spec(name=name, category=category, type=typ,
+                          size=size, pitch=pitch, mpix=mpix, year=None))
 
     specs = deduplicate_specs(specs)
     return specs
@@ -726,7 +730,8 @@ def derive_spec(
     if sensors_db and size:
         matched_sensors = match_sensors(size[0], size[1], spec.mpix, sensors_db)
 
-    return SpecDerived(spec, size, area, pitch, matched_sensors)
+    return SpecDerived(spec=spec, size=size, area=area,
+                       pitch=pitch, matched_sensors=matched_sensors)
 
 
 def derive_specs(specs: list[Spec]) -> list[SpecDerived]:
