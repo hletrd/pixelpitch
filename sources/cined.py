@@ -18,9 +18,8 @@ fields are present. If only the format class is given (no explicit mm
 dimensions), we leave ``spec.size`` as None so that ``merge_camera_data``
 can preserve more accurate measured values from Geizhals when available.
 The template will show "unknown" for sensor size when no measured data
-exists for the camera — this is more honest than presenting FORMAT_TO_MM
-approximations as if they were measured. The ``FORMAT_TO_MM`` table is
-kept for the regex coverage test only.
+exists for the camera — this is more honest than presenting approximations
+as if they were measured data.
 """
 
 from __future__ import annotations
@@ -33,23 +32,6 @@ from . import Spec, normalise_name, parse_year, SIZE_MM_RE as SIZE_RE
 
 DATABASE_URL = "https://www.cined.com/camera-database/"
 RES_RE = re.compile(r"(\d{3,5})\s*[x×]\s*(\d{3,5})")
-
-FORMAT_TO_MM: dict[str, tuple[float, float]] = {
-    "full frame": (36.0, 24.0),
-    "super 35": (24.89, 18.66),
-    "super 35 mm": (24.89, 18.66),
-    "super35": (24.89, 18.66),
-    "aps-c": (23.6, 15.7),
-    "micro four thirds": (17.3, 13.0),
-    "four thirds": (17.3, 13.0),
-    "1\"": (13.2, 8.8),
-    "1-inch": (13.2, 8.8),
-    "1 inch": (13.2, 8.8),
-    "2/3\"": (8.8, 6.6),
-    "2/3-inch": (8.8, 6.6),
-    "medium format": (43.8, 32.9),
-}
-
 
 def _create_browser():
     """Reuse the existing DrissionPage browser helper from pixelpitch.
@@ -89,13 +71,6 @@ def _parse_camera_page(page, url: str) -> Optional[Spec]:
     name_m = re.search(r"<h1[^>]*>([^<]+)</h1>", text)
     name = normalise_name(name_m.group(1)) if name_m else url.rstrip("/").rsplit("/", 1)[-1]
 
-    fmt_m = re.search(
-        r"(Full Frame|Super[- ]?35(?:\s*mm)?|APS-C|Micro Four Thirds|Four Thirds|1\"|1[- ]inch|2/3\"|2/3[- ]inch|Medium Format)",
-        body_text,
-        re.IGNORECASE,
-    )
-    fmt = fmt_m.group(1) if fmt_m else ""
-
     size = None
     s = SIZE_RE.search(body_text)
     if s:
@@ -103,20 +78,6 @@ def _parse_camera_page(page, url: str) -> Optional[Spec]:
             size = (float(s.group(1)), float(s.group(2)))
         except ValueError:
             size = None
-    if size is None and fmt:
-        # Don't set spec.size from FORMAT_TO_MM lookup — the lookup
-        # provides approximate dimensions from the format class name.
-        # Setting spec.size from the lookup prevents merge_camera_data
-        # from preserving more accurate measured values from Geizhals
-        # (because the merge only preserves existing spec.size when
-        # new spec.size is None). Leave spec.size = None; the template
-        # will show "unknown" for sensor size when no Geizhals data
-        # exists, which is more honest than showing an approximation
-        # as if it were measured data.
-        # Note: we also don't set spec.type because format class names
-        # like "Super 35" or "APS-C" are not fractional-inch types that
-        # TYPE_SIZE understands.
-        pass
 
     pixels = None
     px = RES_RE.search(body_text)
