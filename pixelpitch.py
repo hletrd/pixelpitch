@@ -370,7 +370,15 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
                         year = y
                 except ValueError:
                     pass
-            matched_sensors = [s for s in sensors_str.split(";") if s] if sensors_str else []
+            # Tolerate whitespace and duplicates in the matched_sensors column.
+            # write_csv emits clean tokens, but a hand-edited CSV may introduce
+            # `IMX455; IMX571` (leading space) or `IMX455;IMX455` (duplicate).
+            # Strip each element, drop empties, and dedup while preserving order.
+            if sensors_str:
+                _raw = (s.strip() for s in sensors_str.split(";"))
+                matched_sensors = list(dict.fromkeys(s for s in _raw if s))
+            else:
+                matched_sensors = []
 
             spec = Spec(name=name, category=category, type=type_str,
                         size=size, pitch=pitch, mpix=mpix, year=year)
