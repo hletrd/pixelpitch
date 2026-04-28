@@ -33,7 +33,6 @@ TAG_RE = re.compile(r"<[^>]+>")
 WS_RE = re.compile(r"\s+")
 
 
-
 def _gather_urls() -> list[str]:
     body = http_get(SITEMAP_INDEX)
     if not body:

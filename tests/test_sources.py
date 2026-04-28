@@ -29,7 +29,7 @@ REF = {
     "Sony ZV-E10":      {"size": (23.5, 15.6), "mpix": 24.2, "pitch": 3.92, "tol": 0.10},
     "Nikon Z9":         {"size": (35.9, 23.9), "mpix": 45.7, "pitch": 4.35, "tol": 0.10},
     "Canon R5":         {"size": (36.0, 24.0), "mpix": 45.0, "pitch": 4.39, "tol": 0.10},
-    "Fujifilm GFX 100S":{"size": (43.8, 32.9), "mpix": 102.0,"pitch": 3.76, "tol": 0.10},
+    "Fujifilm GFX 100S": {"size": (43.8, 32.9), "mpix": 102.0, "pitch": 3.76, "tol": 0.10},
     "OM System OM-1":   {"size": (17.4, 13.0), "mpix": 20.4, "pitch": 3.36, "tol": 0.20},
 }
 

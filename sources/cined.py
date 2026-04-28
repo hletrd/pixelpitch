@@ -33,6 +33,7 @@ from . import Spec, normalise_name, parse_year, SIZE_MM_RE as SIZE_RE
 DATABASE_URL = "https://www.cined.com/camera-database/"
 RES_RE = re.compile(r"(\d{3,5})\s*[x×]\s*(\d{3,5})")
 
+
 def _create_browser():
     """Reuse the existing DrissionPage browser helper from pixelpitch.
 

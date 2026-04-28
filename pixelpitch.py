@@ -1237,7 +1237,7 @@ def main():
             render_html(output_dir, skip_geizhals=skip_geizhals)
         elif cmd == "source":
             if len(sys.argv) < 3:
-                print(f"Usage: python pixelpitch.py source <name> [--limit N] [--out DIR]")
+                print("Usage: python pixelpitch.py source <name> [--limit N] [--out DIR]")
                 print(f"Available sources: {', '.join(sorted(SOURCE_REGISTRY))}")
                 sys.exit(1)
             src = sys.argv[2]

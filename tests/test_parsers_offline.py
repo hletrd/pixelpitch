@@ -389,7 +389,7 @@ def test_openmvg_csv_parser():
     expect("record count", len(specs), 13)
     by_name = {s.name: s for s in specs}
     expect("Canon EOS 5D size",     by_name["Canon EOS 5D"].size,    (36.0, 24.0), tol=0.01)
-    expect("Sony Alpha 7 III size", by_name["Sony Alpha 7 III"].size,(35.6, 23.8), tol=0.01)
+    expect("Sony Alpha 7 III size", by_name["Sony Alpha 7 III"].size, (35.6, 23.8), tol=0.01)
     expect("iPhone 1/2.5 size",     by_name["Apple iPhone (1/2.5\")"].size, (5.75, 4.32), tol=0.01)
     expect("EOS 5D MP",         by_name["Canon EOS 5D"].mpix,    12.7,  tol=0.1)
     expect("EOS 5D category",   by_name["Canon EOS 5D"].category,    "dslr")
@@ -1266,7 +1266,7 @@ def test_merge_year_change_log():
     new2 = [derive("Cam Y2", "fixed", (5.0, 3.7), 10.0, 2021)]
     buf2 = io.StringIO()
     with contextlib.redirect_stdout(buf2):
-        merged2 = pp.merge_camera_data(new2, existing2)
+        pp.merge_camera_data(new2, existing2)
     output2 = buf2.getvalue()
     expect("year-change log without pitch preservation",
            "Year changed" in output2, True)
