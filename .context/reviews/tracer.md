@@ -1,43 +1,37 @@
-# Tracer Review (Cycle 41) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 43) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-TR40-01 fixed. `derive_spec` converts computed 0.0 sentinel to None.
+TR42-01 fixed. `merge_camera_data` now checks derived.size consistency after preserving spec.size from existing.
 
 ## New Findings
 
-### TR41-01: Invalid direct `spec.pitch` values bypass derive_spec validation — data flow trace
+### TR43-01: GSMArena spec.size provenance trace — lookup-table values masquerade as measured data
 
-**Files:** `pixelpitch.py` (derive_spec, merge_camera_data, write_csv), `templates/pixelpitch.html`
+**Files:** `sources/gsmarena.py`, `pixelpitch.py`
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Causal trace for spec.pitch=0.0 direct path:**
+**Full causal trace of the GSMArena spec.size provenance issue:**
 
-1. `Spec(name="Cam", size=(5.0, 3.7), pitch=0.0, mpix=33.0)` — direct pitch=0.0
-2. `derive_spec`: `spec.pitch is not None` → `pitch = spec.pitch = 0.0` (NO validation)
-3. `derived.pitch = 0.0`
-4. Template: `selectattr('pitch', 'ne', None)` — `0.0 != None` is True → camera in "with pitch" table
-5. Template cell: `spec.pitch > 0` → `0.0 > 0` is False → shows "unknown"
-6. Result: Camera with "unknown" pitch in wrong table section
+1. **GSMArena fetch:** `_phone_to_spec` at line 146: `size = PHONE_TYPE_SIZE.get(sensor_type)` — e.g., `size = (9.84, 7.40)` for "1/1.3"
+2. **Spec creation:** `Spec(name="Samsung S25 Ultra", category="smartphone", type="1/1.3", size=(9.84, 7.40), ...)` — `spec.size` is set from the lookup table
+3. **derive_spec:** `spec.size is not None` → `size = spec.size = (9.84, 7.40)` (skips TYPE_SIZE lookup since spec.size already set)
+4. **write_csv:** Writes `9.84,7.40` to `camera-data-gsmarena.csv`
+5. **render_html:** `_load_per_source_csvs` reads the per-source CSV, parses it back into SpecDerived
+6. **merge_camera_data:** `new_spec.spec.size = (9.84, 7.40)` → NOT None → merge condition `new_spec.spec.size is None` is False → Geizhals measured value (9.76, 7.30) is NOT preserved
+7. **Result:** The TYPE_SIZE approximation (9.84, 7.40) permanently replaces the measured Geizhals value (9.76, 7.30)
+8. **write_csv (final):** Writes the wrong values to the master CSV
+9. **Next merge cycle:** The wrong values are now "existing data" — the correct Geizhals value is permanently lost
 
-**Causal trace for spec.pitch=-1.0:**
+**Root cause:** GSMArena treats TYPE_SIZE lookup values as if they were measured sensor dimensions. The `spec.size` field has no provenance tracking, so the merge cannot distinguish "measured" from "approximated" values.
 
-1. `Spec(name="Cam", size=(5.0, 3.7), pitch=-1.0, mpix=33.0)`
-2. `derive_spec`: `spec.pitch is not None` → `pitch = spec.pitch = -1.0` (NO validation)
-3. Template: `selectattr('pitch', 'ne', None)` — `-1.0 != None` is True → camera in "with pitch" table
-4. Template cell: `spec.pitch > 0` → `-1.0 > 0` is False → shows "unknown"
-5. write_csv: `isfinite(-1.0)` is True → writes "-1.00" to CSV
-6. parse_existing_csv: `-1.0 <= 0` → rejects → data loss on round-trip
-
-**Root cause:** `derive_spec` validates the computed pitch path (0.0 sentinel to None) but not the direct pitch path. Any invalid value in `spec.pitch` bypasses the sentinel fix.
-
-**Fix:** In `derive_spec`, validate `spec.pitch` the same as computed pitch: reject non-positive and non-finite values.
+**Fix:** GSMArena should set `spec.size = None` and `spec.type = "1/1.3"`. Let `derive_spec` compute `derived.size` from the type lookup. Then `merge_camera_data` will see `spec.size is None` and correctly preserve the measured Geizhals value.
 
 ---
 
 ## Summary
 
-- TR41-01 (MEDIUM): Invalid direct spec.pitch values bypass derive_spec validation — 0.0, negative, NaN flow through to selectattr, write_csv, and CSV round-trip
+- TR43-01 (MEDIUM): GSMArena spec.size provenance trace — TYPE_SIZE lookup values masquerade as measured data, preventing merge from preserving accurate Geizhals measurements

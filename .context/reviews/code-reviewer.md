@@ -1,108 +1,119 @@
-# Code Review (Cycle 41) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 43) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-40 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-42 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-C40 findings (derive_spec computed 0.0 sentinel, write_csv isfinite guards) confirmed implemented and working. Gate tests pass. No regressions.
+C42-01 through C42-05 all implemented and verified. `merge_camera_data` now has the derived.size consistency check. CLI `--limit` has try/except. Docstring updated. All gate tests pass.
 
 ## New Findings
 
-### CR41-01: `derive_spec` preserves invalid direct `spec.pitch` values (0.0, negative, NaN) — incomplete validation
+### CR43-01: `merge_camera_data` overrides `derived.pitch` from existing even when `spec.pitch` was already preserved — double-write inconsistency
 
-**File:** `pixelpitch.py`, lines 759-760
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-The C40 fix added a 0.0-to-None conversion for the *computed* pitch path (when `spec.pitch is None` and pitch is derived from `pixel_pitch()`). However, the *direct* path — when `spec.pitch` is explicitly set to 0.0, negative, or NaN — is completely unguarded:
-
-```python
-if spec.pitch is not None:
-    pitch = spec.pitch   # <-- no validation
-```
-
-This means:
-- `Spec(pitch=0.0)` → `derived.pitch = 0.0` — passes through selectattr, wrong table section
-- `Spec(pitch=-1.0)` → `derived.pitch = -1.0` — negative pitch in data model
-- `Spec(pitch=nan)` → `derived.pitch = nan` — NaN in data model
-
-The template `> 0` guard renders these as "unknown" in the cell, but the camera is still in the wrong section (selectattr includes 0.0 and -1.0 but not NaN).
-
-**Concrete scenario:**
-```
-Spec(name="Cam", size=(5.0, 3.7), pitch=0.0, mpix=33.0)
-→ derive_spec: pitch = spec.pitch = 0.0  (no validation)
-→ selectattr('pitch', 'ne', None) includes it
-→ Camera in "with pitch" table showing "unknown" — wrong section
-```
-
-**Fix:** In `derive_spec`, validate `spec.pitch` the same way as computed pitch:
-
-```python
-if spec.pitch is not None:
-    pitch = spec.pitch
-    if not isfinite(pitch) or pitch <= 0:
-        pitch = None
-elif spec.mpix is not None and area is not None:
-    pitch = pixel_pitch(area, spec.mpix)
-    if pitch == 0.0:
-        pitch = None
-else:
-    pitch = None
-```
-
----
-
-### CR41-02: `write_csv` writes 0.0 and negative mpix/pitch values — `isfinite` guard insufficient
-
-**File:** `pixelpitch.py`, lines 866-868
+**File:** `pixelpitch.py`, lines 456-467 and 490-501
 **Severity:** LOW | **Confidence:** HIGH
 
-The C40 fix added `isfinite()` checks for mpix, pitch, and area in `write_csv`. However, `isfinite(0.0)` returns True and `isfinite(-1.0)` returns True, so these physically invalid values pass through to the CSV:
-
-- `mpix=0.0` → written as "0.0" → `parse_existing_csv` rejects it → data loss on round-trip
-- `mpix=-5.0` → written as "-5.0" → `parse_existing_csv` rejects it → data loss on round-trip
-- `pitch=0.0` → written as "0.00" → `parse_existing_csv` rejects it → data loss on round-trip
-- `pitch=-1.0` → written as "-1.00" → `parse_existing_csv` rejects it → data loss on round-trip
-
-**Fix:** Replace `isfinite()` with positivity checks in `write_csv`:
-
+When `spec.size` is None and existing has a measured size, the C42-01 fix adds:
 ```python
-mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None and spec.mpix > 0 else ""
-pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None and derived.pitch > 0 else ""
-area_str = f"{derived.area:.2f}" if derived.area is not None and derived.area > 0 else ""
+if new_spec.size is not None and new_spec.size != new_spec.spec.size:
+    new_spec.size = existing_spec.size
+    new_spec.area = existing_spec.area
+    new_spec.pitch = existing_spec.pitch
 ```
 
-This is consistent with `parse_existing_csv`'s positivity checks and ensures the CSV round-trip is lossless.
+This overrides `new_spec.pitch` with `existing_spec.pitch`. But then later, lines 490-501:
+```python
+if new_spec.pitch is None and existing_spec.pitch is not None:
+    new_spec.pitch = existing_spec.pitch
+# Consistency: derived.pitch must always track spec.pitch when the latter is set.
+if (new_spec.spec.pitch is not None
+        and isfinite(new_spec.spec.pitch) and new_spec.spec.pitch > 0
+        and new_spec.pitch != new_spec.spec.pitch):
+    new_spec.pitch = new_spec.spec.pitch
+```
+
+If `existing_spec.pitch` was set from an existing computed value (not from `spec.pitch`), but the new `spec.pitch` was also preserved from existing (line 468-473), then the consistency check at lines 498-501 would overwrite the derived.pitch from line 467 with `spec.pitch`. This is actually correct behavior — `spec.pitch` is authoritative over `derived.pitch`. But the double-write creates a subtle ordering dependency:
+
+1. Line 467: `new_spec.pitch = existing_spec.pitch` (derived.pitch from existing)
+2. Line 468-473: `new_spec.spec.pitch = existing_spec.spec.pitch` (spec.pitch from existing)
+3. Line 498-501: if `spec.pitch != derived.pitch`, override `derived.pitch = spec.pitch`
+
+If `existing_spec.pitch` and `existing_spec.spec.pitch` are different (which can happen if the existing derived.pitch was computed from area+mpix while spec.pitch was a direct measurement), the C42-01 fix writes `existing_spec.pitch` at step 1, but then step 3 overwrites it with `spec.pitch`. The final result is correct (spec.pitch wins), but the intermediate write at step 1 is wasted and misleading to readers.
+
+This is a code clarity issue, not a correctness bug. The fix at step 1 should NOT write `new_spec.pitch = existing_spec.pitch` because the consistency check at step 3 already handles it. Writing `derived.pitch` at step 1 and then overwriting it at step 3 is confusing.
+
+**Fix:** Remove `new_spec.pitch = existing_spec.pitch` from the C42-01 fix block (line 467). The existing pitch consistency logic at lines 490-501 already ensures derived.pitch tracks spec.pitch. The C42-01 fix should only override `derived.size` and `derived.area` (which don't have a later consistency check).
 
 ---
 
-### CR41-03: `merge_camera_data` preserves `spec.pitch=0.0` from existing data — re-introduces sentinel
+### CR43-02: `gsmarena._phone_to_spec` returns Spec with `size` set from `PHONE_TYPE_SIZE` lookup — this becomes `spec.size` in the merged data, masquerading as measured data
 
-**File:** `pixelpitch.py`, lines 449, 471-473
-**Severity:** LOW | **Confidence:** MEDIUM
+**File:** `sources/gsmarena.py`, lines 144-167
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-When merging, `merge_camera_data` preserves `spec.pitch` from existing data if new data has None. If the existing data has `spec.pitch=0.0` (e.g., from an older CSV that predates the positivity check), this 0.0 is preserved and then copied to `derived.pitch` via the consistency check at lines 471-473.
-
-In practice, this is a LOW severity issue because:
-1. Source parsers cannot produce `spec.pitch=0.0` (regexes only match positive floats)
-2. `parse_existing_csv` now rejects 0.0 pitch from CSV input
-3. The only way 0.0 enters is through legacy data or direct API usage
-
-**Fix:** After merging field values, validate pitch just like `derive_spec` should (CR41-01):
-
+When GSMArena provides a sensor type like "1/1.3", `_phone_to_spec` does:
 ```python
-if new_spec.spec.pitch is not None and (not isfinite(new_spec.spec.pitch) or new_spec.spec.pitch <= 0):
-    new_spec.spec.pitch = existing_spec.spec.pitch if existing_spec.spec.pitch is not None and existing_spec.spec.pitch > 0 else None
+size = PHONE_TYPE_SIZE.get(sensor_type) if sensor_type else None
 ```
 
-Or more simply: add a `_validate_pitch` helper that both `derive_spec` and `merge_camera_data` use.
+And returns `Spec(..., size=size, ...)`. This means `spec.size` is set to the TYPE_SIZE lookup value, not None. When this data flows through `derive_spec`:
+```python
+if spec.size is None:
+    size = sensor_size_from_type(spec.type)
+else:
+    size = spec.size
+```
+
+Since `spec.size` is not None, the lookup is skipped and `derived.size = spec.size` directly. This is correct.
+
+But the problem is in `merge_camera_data`: when a Geizhals entry exists with a measured `spec.size` that differs from the TYPE_SIZE value, the merge sees `new_spec.spec.size is NOT None` (because GSMArena set it from the lookup table), so it does NOT preserve the measured Geizhals value:
+
+```python
+if new_spec.spec.size is None and existing_spec.spec.size is not None:
+    new_spec.spec.size = existing_spec.spec.size
+```
+
+This condition is False because `new_spec.spec.size` was set by GSMArena. The measured Geizhals value is silently overwritten by the approximate TYPE_SIZE lookup value. This is a WORSE variant of the C42-01 bug — not only are derived fields inconsistent, the spec.size itself is wrong because the merge never preserves it.
+
+**Concrete scenario:**
+```python
+# Geizhals: measured size from product specs
+existing = Spec(name="Samsung S25 Ultra", category="smartphone", type="1/1.3",
+                size=(9.76, 7.30), pitch=None, mpix=200.0, year=2025)
+
+# GSMArena: size from TYPE_SIZE lookup
+new = Spec(name="Samsung S25 Ultra", category="smartphone", type="1/1.3",
+           size=(9.84, 7.40), pitch=None, mpix=200.0, year=2025)  # from PHONE_TYPE_SIZE
+
+# Merge: new_spec.spec.size = (9.84, 7.40) → NOT None → Geizhals measured value (9.76, 7.30) is LOST
+```
+
+**Fix:** GSMArena should set `spec.size = None` and only use `spec.type` to indicate the sensor format. Let `derive_spec` compute `derived.size` from the type lookup. This way, `merge_camera_data` will correctly preserve the measured Geizhals `spec.size` because `new_spec.spec.size is None` will be True.
+
+Alternatively, if GSMArena should provide the size, it needs a provenance flag to distinguish "measured" from "type-lookup" sizes. But that's a larger refactor. The simpler fix is to not set `spec.size` in GSMArena.
+
+---
+
+### CR43-02b: Same issue exists for `cined.py` — `_parse_camera_page` sets `spec.size` from `FORMAT_TO_MM` lookup
+
+**File:** `sources/cined.py`, lines 94-102
+**Severity:** MEDIUM | **Confidence:** MEDIUM
+
+```python
+if size is None and fmt:
+    size = FORMAT_TO_MM.get(fmt.lower())
+```
+
+This sets `spec.size` from a format lookup table, same as GSMArena. If a cinema camera also appears in Geizhals data with a measured size, the merge will not preserve the Geizhals value because `new_spec.spec.size` is not None.
+
+The same fix applies: don't set `spec.size` from format lookups; use `spec.type` instead and let `derive_spec` handle it.
 
 ---
 
 ## Summary
 
-- CR41-01 (MEDIUM): `derive_spec` preserves invalid direct `spec.pitch` values (0.0, negative, NaN) — computed path fixed but direct path unguarded
-- CR41-02 (LOW): `write_csv` writes 0.0/negative mpix/pitch — `isfinite` guard insufficient, needs positivity check
-- CR41-03 (LOW): `merge_camera_data` preserves `spec.pitch=0.0` from existing data — re-introduces sentinel
+- CR43-01 (LOW): C42-01 fix writes `derived.pitch` from existing but it gets overwritten by the pitch consistency check — redundant write is misleading, should be removed
+- CR43-02 (MEDIUM): GSMArena sets `spec.size` from TYPE_SIZE lookup, preventing merge from preserving measured Geizhals values — silent data loss for phones with measured dimensions
+- CR43-02b (MEDIUM): CineD sets `spec.size` from FORMAT_TO_MM lookup, same issue as GSMArena

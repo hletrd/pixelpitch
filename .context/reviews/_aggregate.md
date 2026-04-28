@@ -1,138 +1,65 @@
-# Aggregate Review (Cycle 41) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 43) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-40 Status
+## Cycle 1-42 Status
 
-All previous fixes confirmed still working. No regressions in core logic. Gate tests pass. C40-01 implemented and verified — `derive_spec` converts computed 0.0 sentinel to None.
+All previous fixes confirmed still working. No regressions in core logic. Gate tests pass. C42 fixes (merge size consistency, CLI --limit guard, docstring update) all verified.
 
-## Cross-Agent Agreement Matrix (Cycle 41 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 43 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| `derive_spec` preserves invalid direct `spec.pitch` values (0.0, negative, NaN) — selectattr misclassification, CSV round-trip data loss | CR41-01, CRIT41-01, V41-02, TR41-01, ARCH41-01, DBG41-01, DES41-01 | MEDIUM |
-| `write_csv` writes 0.0/negative mpix/pitch — `isfinite` guard insufficient for physical quantities | CR41-02, CRIT41-02, V41-03, DBG41-02 | LOW |
-| `merge_camera_data` preserves `spec.pitch=0.0` from existing data — re-introduces sentinel | CR41-03, V41-04 | LOW |
-| No test for `derive_spec` direct `spec.pitch=0.0` → None (existing test expects 0.0) | TE41-01 | LOW |
-| No test for `write_csv` with 0.0/negative mpix/pitch | TE41-02 | LOW |
-| `derive_spec` docstring doesn't document direct-path validation | DOC41-01 | LOW |
+| GSMArena/CineD set spec.size from lookup tables — merge can't preserve measured Geizhals values | CR43-02, CR43-02b, SR43-01, CRIT43-01, V43-02, TR43-01, ARCH43-01, DBG43-01, DBG43-02, DES43-01, DOC43-01, DOC43-02, TE43-01, TE43-02 | MEDIUM |
+| C42-01 fix writes derived.pitch redundantly — consistency check already handles it | CR43-01, CRIT43-02, V43-03, DBG43-03 | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C41-01: `derive_spec` preserves invalid direct `spec.pitch` values (0.0, negative, NaN) — incomplete validation
+### C43-01: GSMArena/CineD set spec.size from lookup tables — merge cannot preserve measured Geizhals values (silent data loss)
 
-**Sources:** CR41-01, CRIT41-01, V41-02, TR41-01, ARCH41-01, DBG41-01, DES41-01
-**Severity:** MEDIUM | **Confidence:** HIGH (7-agent consensus)
+**Sources:** CR43-02, CR43-02b, SR43-01, CRIT43-01, V43-02, TR43-01, ARCH43-01, DBG43-01, DBG43-02, DES43-01, DOC43-01, DOC43-02, TE43-01, TE43-02
+**Severity:** MEDIUM | **Confidence:** HIGH (14-agent consensus)
 
-The C40 fix added a 0.0-to-None conversion for the *computed* pitch path (when `spec.pitch is None` and pitch is derived from `pixel_pitch()`). However, the *direct* path — when `spec.pitch` is explicitly set to 0.0, negative, or NaN — is completely unguarded:
+When GSMArena provides a sensor type like "1/1.3", `_phone_to_spec` sets `spec.size` from the `PHONE_TYPE_SIZE` lookup table (e.g., `(9.84, 7.40)`). Similarly, CineD sets `spec.size` from `FORMAT_TO_MM` when only a format class is known. These lookup-table values are stored as `spec.size`, which `merge_camera_data` treats as authoritative measured data.
 
+The merge condition `if new_spec.spec.size is None and existing_spec.spec.size is not None` only preserves existing measured values when `spec.size is None`. Because GSMArena/CineD set `spec.size` from lookup tables, the condition is False and the Geizhals measured value is never preserved.
+
+**Concrete scenario (verified by code trace):**
 ```python
-if spec.pitch is not None:
-    pitch = spec.pitch   # <-- no validation
+# Geizhals: measured size from product page
+existing = pp.derive_spec(Spec(name="Samsung S25 Ultra", category="smartphone",
+                                type="1/1.3", size=(9.76, 7.30), pitch=None, mpix=200.0, year=2025))
+
+# GSMArena: size from TYPE_SIZE lookup (NOT None)
+new = pp.derive_spec(Spec(name="Samsung S25 Ultra", category="smartphone",
+                           type="1/1.3", size=(9.84, 7.40), pitch=None, mpix=200.0, year=2025))
+
+merged = pp.merge_camera_data([new], [existing])
+# merged.spec.size = (9.84, 7.40)  ← WRONG (TYPE_SIZE lookup, not measured)
+# Measured Geizhals value (9.76, 7.30) is LOST
 ```
 
-This means:
-- `Spec(pitch=0.0)` → `derived.pitch = 0.0` — passes through selectattr, wrong table section
-- `Spec(pitch=-1.0)` → `derived.pitch = -1.0` — negative pitch in data model
-- `Spec(pitch=nan)` → `derived.pitch = nan` — NaN in data model
+**Impact:** The template displays the TYPE_SIZE approximation instead of the measured Geizhals value. The CSV stores wrong values. On the next merge cycle, the correct value is permanently lost.
 
-The template `> 0` guard renders these as "unknown" in the cell, but the camera is still in the wrong section (selectattr includes 0.0 and -1.0 but NaN behavior varies).
+**Fix:** Two parts:
+1. **GSMArena:** Change `_phone_to_spec` to NOT set `spec.size` from `PHONE_TYPE_SIZE`. Instead, set only `spec.type` and leave `spec.size = None`. Let `derive_spec` compute `derived.size` from `spec.type` using the TYPE_SIZE lookup.
+2. **CineD:** Change `_parse_camera_page` to NOT set `spec.size` from `FORMAT_TO_MM`. Instead, set only `spec.type` (mapping format names to fractional-inch types where possible) and leave `spec.size = None`. For formats that don't map to fractional-inch types (e.g., "Super 35", "APS-C"), leave both `spec.size = None` and `spec.type = None` — the data will show "unknown" for size, which is more honest than showing an approximation as if it were measured.
 
-**Concrete scenario:**
-```
-Spec(name="Cam", size=(5.0, 3.7), pitch=0.0, mpix=33.0)
-→ derive_spec: pitch = spec.pitch = 0.0  (no validation)
-→ selectattr('pitch', 'ne', None) includes it
-→ Camera in "with pitch" table showing "unknown" — wrong section
-```
-
-**Fix:** In `derive_spec`, validate `spec.pitch` the same as computed pitch:
-
-```python
-if spec.pitch is not None:
-    pitch = spec.pitch
-    if not isfinite(pitch) or pitch <= 0:
-        pitch = None
-elif spec.mpix is not None and area is not None:
-    pitch = pixel_pitch(area, spec.mpix)
-    if pitch == 0.0:
-        pitch = None
-else:
-    pitch = None
-```
-
-Also update the `derive_spec` docstring to document that both direct and computed paths produce the same contract: `derived.pitch` is either None or a positive finite value.
+Note: For CineD, not all FORMAT_TO_MM entries have corresponding TYPE_SIZE entries (e.g., "Super 35" is not a fractional-inch type). For these, we need a different approach: either add them to TYPE_SIZE (which represents a different measurement convention), or accept that CineD format-class sizes will show as "unknown" in the template when no Geizhals data exists. The latter is more honest.
 
 ---
 
-### C41-02: `write_csv` writes 0.0/negative mpix/pitch — `isfinite` guard insufficient for physical quantities
+### C43-02: C42-01 fix writes derived.pitch redundantly — the pitch consistency check already handles it
 
-**Sources:** CR41-02, CRIT41-02, V41-03, DBG41-02
-**Severity:** LOW | **Confidence:** HIGH
+**Sources:** CR43-01, CRIT43-02, V43-03, DBG43-03
+**Severity:** LOW | **Confidence:** HIGH (4-agent agreement)
 
-The C40 fix added `isfinite()` checks for mpix, pitch, and area in `write_csv`. However, `isfinite(0.0)` returns True and `isfinite(-1.0)` returns True, so these physically invalid values pass through to the CSV:
+The C42-01 fix at `pixelpitch.py` line 467 includes `new_spec.pitch = existing_spec.pitch`. But lines 498-501 already handle derived.pitch consistency by checking if `spec.pitch != derived.pitch` and overriding. Since spec.pitch is preserved from existing at lines 468-473, the consistency check at 498-501 will overwrite derived.pitch if there's a mismatch. The write at line 467 is redundant and creates a subtle ordering dependency.
 
-- `mpix=0.0` → written as "0.0" → `parse_existing_csv` rejects it → data loss on round-trip
-- `mpix=-5.0` → written as "-5.0" → `parse_existing_csv` rejects it → data loss on round-trip
-- `pitch=0.0` → written as "0.00" → `parse_existing_csv` rejects it → data loss on round-trip
-- `pitch=-1.0` → written as "-1.00" → `parse_existing_csv` rejects it → data loss on round-trip
+Not a correctness bug — the final value is correct. But the redundant write is misleading and makes the code harder to reason about.
 
-**Fix:** Replace `isfinite` checks with positivity checks (`> 0`) in `write_csv` for mpix, pitch, and area:
-
-```python
-mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None and spec.mpix > 0 else ""
-pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None and derived.pitch > 0 else ""
-area_str = f"{derived.area:.2f}" if derived.area is not None and derived.area > 0 else ""
-```
-
-This is consistent with `parse_existing_csv`'s positivity checks and ensures the CSV round-trip is lossless.
-
----
-
-### C41-03: `merge_camera_data` preserves `spec.pitch=0.0` from existing data — re-introduces sentinel
-
-**Sources:** CR41-03, V41-04
-**Severity:** LOW | **Confidence:** MEDIUM
-
-When merging, `merge_camera_data` preserves `spec.pitch` from existing data if new data has None. If the existing data has `spec.pitch=0.0` (e.g., from an older CSV that predates the positivity check), this 0.0 is preserved and then copied to `derived.pitch` via the consistency check at lines 471-473.
-
-In practice, this is LOW severity because source parsers cannot produce `spec.pitch=0.0` and `parse_existing_csv` now rejects 0.0 pitch from CSV input. The only way 0.0 enters is through legacy data or direct API usage.
-
-**Fix:** After CR41-01 fix is in place (derive_spec validates direct pitch), this becomes largely moot — `derive_spec` will convert 0.0 to None. However, `merge_camera_data` should also validate preserved pitch values for defense in depth.
-
----
-
-### C41-04: No test for `derive_spec` direct `spec.pitch=0.0` → None (existing test expects 0.0)
-
-**Sources:** TE41-01
-**Severity:** LOW | **Confidence:** HIGH
-
-The existing `test_derive_spec_zero_pitch` tests that `spec.pitch=0.0` is *preserved* as `derived.pitch=0.0`. After C41-01 is fixed, this test needs to be updated to expect `derived.pitch=None`. Additional test cases needed for `spec.pitch=-1.0` and `spec.pitch=nan`.
-
-**Fix:** Update `test_derive_spec_zero_pitch` and add new test cases.
-
----
-
-### C41-05: No test for `write_csv` with 0.0/negative mpix/pitch
-
-**Sources:** TE41-02
-**Severity:** LOW | **Confidence:** MEDIUM
-
-No test verifies that `write_csv` does not write 0.0 or negative values for mpix/pitch to the CSV file. After C41-02 is fixed, tests should verify these produce empty strings in the CSV.
-
-**Fix:** Add test cases for 0.0 and negative values in write_csv.
-
----
-
-### C41-06: `derive_spec` docstring doesn't document direct-path validation
-
-**Sources:** DOC41-01
-**Severity:** LOW | **Confidence:** HIGH
-
-The `derive_spec` docstring documents the computed-path sentinel handling but not the direct-path validation. After C41-01 is fixed, the docstring should be updated to document the uniform output contract.
-
-**Fix:** Update docstring to note that both direct and computed paths produce the same contract: `derived.pitch` is either None or a positive finite value.
+**Fix:** Remove `new_spec.pitch = existing_spec.pitch` from line 467 in the C42-01 fix block. The existing pitch consistency logic at lines 490-501 already ensures derived.pitch tracks spec.pitch.
 
 ---
 
@@ -142,8 +69,8 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 6 (C41-01 through C41-06)
-- Cross-agent consensus findings (3+ agents): 2 (C41-01 with 7 agents, C41-02 with 4 agents)
-- Highest severity: MEDIUM (C41-01)
-- Actionable findings: 6
+- Total distinct new findings: 2 (C43-01, C43-02)
+- Cross-agent consensus findings (3+ agents): 2 (C43-01 with 14 agents, C43-02 with 4 agents)
+- Highest severity: MEDIUM (C43-01)
+- Actionable findings: 2
 - Verified safe / deferred: 0

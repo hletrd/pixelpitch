@@ -1,57 +1,72 @@
-# Debugger Review (Cycle 41) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 43) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-DBG40-01 fixed. `derive_spec` converts computed 0.0 sentinel to None.
+DBG42-01 and DBG42-02 fixed. `merge_camera_data` now has derived.size consistency check. CLI `--limit` has try/except.
 
 ## New Findings
 
-### DBG41-01: `derive_spec` direct pitch path lacks validation — 0.0, negative, NaN propagate undetected
+### DBG43-01: GSMArena spec.size from TYPE_SIZE lookup silently overwrites measured Geizhals values in merge
 
-**File:** `pixelpitch.py`, line 759-760
+**File:** `sources/gsmarena.py`, line 146; `pixelpitch.py`, line 456
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode (0.0 direct pitch):**
-1. `Spec(pitch=0.0)` (e.g., from legacy CSV data before positivity checks)
-2. `derive_spec`: `pitch = spec.pitch = 0.0` — no validation
-3. `write_csv` writes "0.00" — `isfinite(0.0)` is True, passes through
-4. `parse_existing_csv` rejects 0.0 — data loss on round-trip
-5. Template: camera in wrong table section (selectattr includes 0.0)
+**Failure mode (GSMArena phone with type lookup, existing Geizhals measured size):**
 
-**Failure mode (negative direct pitch):**
-1. `Spec(pitch=-1.0)` (e.g., from corrupted data)
-2. `derive_spec`: `pitch = spec.pitch = -1.0` — no validation
-3. `write_csv` writes "-1.00" — `isfinite(-1.0)` is True
-4. `parse_existing_csv` rejects -1.0 — data loss on round-trip
+1. GSMArena provides `Spec(name="Phone X", type="1/1.3", size=(9.84, 7.40), mpix=200.0)` — size from TYPE_SIZE
+2. Geizhals provides measured `spec.size=(9.76, 7.30)` (the actual measured value from the product page)
+3. Merge: `new_spec.spec.size is NOT None` (it's (9.84, 7.40) from TYPE_SIZE) → condition `new_spec.spec.size is None` is False → Geizhals measured value NOT preserved
+4. Result: spec.size=(9.84, 7.40) from TYPE_SIZE lookup, derived.size=(9.84, 7.40) — the measured Geizhals value (9.76, 7.30) is permanently lost
+5. CSV stores wrong values, template shows wrong dimensions
+6. Next merge: wrong values are "existing data" — correct Geizhals value permanently gone
 
-**Failure mode (NaN direct pitch):**
-1. `Spec(pitch=nan)` (e.g., from float arithmetic error)
-2. `derive_spec`: `pitch = spec.pitch = nan` — no validation
-3. `write_csv`: `isfinite(nan)` is False — writes empty string (safe)
-4. Template: `nan > 0` is False — renders "unknown" (safe for display)
-5. But `selectattr('pitch', 'ne', None)` with NaN is unpredictable in Jinja2
+**Reproduction:**
+```python
+import pixelpitch as pp
+from models import Spec
 
-The C40 fix only addressed the computed path. These are the same class of bug but on the direct path.
+existing = pp.derive_spec(Spec(name="Samsung S25 Ultra", category="smartphone",
+                                type="1/1.3", size=(9.76, 7.30), pitch=None, mpix=200.0, year=2025))
+existing.id = 0
 
-**Fix:** Validate `spec.pitch` in `derive_spec`: reject non-finite or non-positive values.
+new = pp.derive_spec(Spec(name="Samsung S25 Ultra", category="smartphone",
+                           type="1/1.3", size=(9.84, 7.40), pitch=None, mpix=200.0, year=2025))
+
+merged = pp.merge_camera_data([new], [existing])
+# merged.spec.size = (9.84, 7.40)  ← WRONG (TYPE_SIZE lookup)
+# merged.size = (9.84, 7.40)       ← WRONG
+# Measured Geizhals value (9.76, 7.30) is LOST
+```
+
+**Fix:** GSMArena should not set `spec.size` from TYPE_SIZE. Set `spec.type` and leave `spec.size = None`.
 
 ---
 
-### DBG41-02: `write_csv` isfinite guard insufficient — 0.0 and negative values pass through
+### DBG43-02: Same issue for CineD FORMAT_TO_MM lookup sizes
 
-**File:** `pixelpitch.py`, lines 866-868
+**File:** `sources/cined.py`, lines 94-102
+**Severity:** MEDIUM | **Confidence:** MEDIUM
+
+Same failure mode as DBG43-01 but for CineD's FORMAT_TO_MM lookup. CineD sets `spec.size` from format class (e.g., "Super 35" → (24.89, 18.66)). If Geizhals has a measured size for a cinema camera that's slightly different, the merge will not preserve it.
+
+---
+
+### DBG43-03: C42-01 fix writes derived.pitch redundantly — wasted write
+
+**File:** `pixelpitch.py`, line 467
 **Severity:** LOW | **Confidence:** HIGH
 
-The C40 fix added `isfinite()` checks for mpix, pitch, and area in `write_csv`. But `isfinite(0.0)` is True and `isfinite(-1.0)` is True. For physically meaningful quantities (mpix, pitch, area), these values are invalid and should not be written to the CSV, consistent with `parse_existing_csv`'s rejection of <=0 values.
+The C42-01 fix includes `new_spec.pitch = existing_spec.pitch` at line 467. But lines 498-501 already handle derived.pitch consistency by checking `spec.pitch != derived.pitch`. Since spec.pitch is also preserved from existing (lines 468-473), the consistency check will overwrite derived.pitch if there's a mismatch. The write at line 467 is redundant.
 
-**Fix:** Replace `isfinite` with positivity checks (`> 0`) for mpix, pitch, and area in `write_csv`.
+Not a correctness bug — the final value is correct. But it's a code clarity issue that could confuse future maintainers.
 
 ---
 
 ## Summary
 
-- DBG41-01 (MEDIUM): `derive_spec` direct pitch path lacks validation — 0.0, negative, NaN propagate undetected
-- DBG41-02 (LOW): `write_csv` isfinite guard insufficient — 0.0 and negative values pass through
+- DBG43-01 (MEDIUM): GSMArena spec.size from TYPE_SIZE silently overwrites measured Geizhals values in merge
+- DBG43-02 (MEDIUM): Same for CineD FORMAT_TO_MM lookup sizes
+- DBG43-03 (LOW): C42-01 fix writes derived.pitch redundantly

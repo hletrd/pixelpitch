@@ -1,49 +1,62 @@
-# Test Engineer Review (Cycle 41)
+# Test Engineer Review (Cycle 43)
 
 **Reviewer:** test-engineer
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-TE40-01 implemented. Tests for derive_spec computed 0.0 pitch pass. TE40-02 implemented. Tests for write_csv non-finite guards pass.
+TE42-01 implemented — `test_merge_size_consistency` added and passing. TE42-02 (CLI --limit test) deferred as LOW.
 
 ## New Findings
 
-### TE41-01: No test for `derive_spec` with direct `spec.pitch=0.0` producing wrong pitch value
+### TE43-01: No test for GSMArena spec.size preventing merge preservation of measured values
 
 **File:** `tests/test_parsers_offline.py`
-**Severity:** LOW | **Confidence:** HIGH
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The existing `test_derive_spec_zero_pitch` tests that `spec.pitch=0.0` is *preserved* as `derived.pitch=0.0`. This test was written before the understanding that 0.0 pitch is physically meaningless and should be treated like None. After CR41-01 is fixed, this test needs to be updated to expect `derived.pitch=None` instead of `derived.pitch=0.0`.
+The GSMArena `_phone_to_spec` function sets `spec.size` from the TYPE_SIZE lookup table. This means when a Geizhals entry with measured `spec.size` is merged with a GSMArena entry, the merge sees `new_spec.spec.size is NOT None` and does NOT preserve the measured Geizhals value. There is no test for this scenario.
 
-The test at line 1345-1346:
+**Fix:** Add a test that creates the scenario: existing data with measured size, new data from GSMArena with type-derived size. Verify that the measured size is preserved (or that the merge correctly handles the conflict).
+
 ```python
-expect("derive_spec: spec.pitch=0.0 preserved over computed",
-       d_zero.pitch, 0.0, tol=0.01)
+def test_merge_gsmarena_size_not_overriding_measured():
+    """Verify merge_camera_data preserves measured Geizhals spec.size
+    even when new data has spec.size from TYPE_SIZE lookup (not None)."""
+    import pixelpitch as pp
+    from models import Spec
+
+    # Existing: measured size from Geizhals (slightly different from TYPE_SIZE)
+    existing_spec = Spec(name='Phone X', category='smartphone', type='1/1.3',
+                         size=(9.76, 7.30), pitch=None, mpix=200.0, year=2025)
+    existing = pp.derive_spec(existing_spec)
+    existing.id = 0
+
+    # New: size from TYPE_SIZE lookup (GSMArena sets spec.size from PHONE_TYPE_SIZE)
+    new_spec = Spec(name='Phone X', category='smartphone', type='1/1.3',
+                    size=(9.84, 7.40), pitch=None, mpix=200.0, year=2025)
+    new = pp.derive_spec(new_spec)
+
+    merged = pp.merge_camera_data([new], [existing])
+    m = merged[0]
+    # Currently: spec.size = (9.84, 7.40) from new data (TYPE_SIZE lookup)
+    # Expected: spec.size = (9.76, 7.30) from existing (measured)
+    # This test will FAIL until the fix is implemented
 ```
-
-After the fix, this should assert `d_zero.pitch is None`.
-
-**Fix:** Update `test_derive_spec_zero_pitch` to expect None for spec.pitch=0.0 direct. Add tests for spec.pitch=-1.0 and spec.pitch=nan direct.
 
 ---
 
-### TE41-02: No test for `write_csv` with 0.0 or negative mpix/pitch
+### TE43-02: No test for merge where new data has BOTH spec.size and spec.type set
 
 **File:** `tests/test_parsers_offline.py`
 **Severity:** LOW | **Confidence:** MEDIUM
 
-The existing `test_write_csv_nonfinite_guards` tests inf and nan but not 0.0 or negative values. After CR41-02 is fixed (positivity checks in write_csv), tests should verify that:
-- `write_csv` with `spec.mpix=0.0` produces empty mpix cell (not "0.0")
-- `write_csv` with `spec.mpix=-5.0` produces empty mpix cell (not "-5.0")
-- `write_csv` with `derived.pitch=0.0` produces empty pitch cell (not "0.00")
-- `write_csv` with `derived.pitch=-1.0` produces empty pitch cell (not "-1.00")
+The existing `test_merge_size_consistency` tests the case where `new_spec.spec.size is None` and `spec.type is set`. There is no test where `new_spec.spec.size` is set (e.g., from a source like GSMArena) AND `spec.type` is also set, and existing data has a measured `spec.size` that differs. This is the CR43-02 scenario.
 
-**Fix:** Add test cases for 0.0 and negative values in write_csv.
+**Fix:** This would be covered by TE43-01.
 
 ---
 
 ## Summary
 
-- TE41-01 (LOW): No test for derive_spec direct spec.pitch=0.0 → None (test currently expects 0.0)
-- TE41-02 (LOW): No test for write_csv with 0.0/negative mpix/pitch
+- TE43-01 (MEDIUM): No test for GSMArena spec.size preventing merge preservation of measured Geizhals values
+- TE43-02 (LOW): No test for merge where new data has both spec.size and spec.type set (covered by TE43-01)

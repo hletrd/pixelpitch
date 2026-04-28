@@ -1,16 +1,18 @@
-# Performance Review (Cycle 41)
+# Performance Review (Cycle 43)
 
 **Reviewer:** perf-reviewer
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-No prior perf findings remain actionable.
+No prior perf findings remain actionable. C42-01 fix (derived.size consistency) uses O(1) field overrides — no performance concern.
 
 ## New Findings
 
-None. The codebase is a static site generator that runs in CI. No memory leaks, no unbounded growth, no UI responsiveness issues. The `selectattr/rejectattr` Jinja2 filters iterate the spec list once each — O(n) with no performance concern even for 1000+ cameras.
+No new actionable performance findings. The codebase is small and the data pipeline is I/O-bound (HTTP fetches). No O(n^2) patterns, no memory leaks, no unnecessary recomputation.
+
+---
 
 ## Summary
 
-No new actionable findings.
+No new performance findings.
