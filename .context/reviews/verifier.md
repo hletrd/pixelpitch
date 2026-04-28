@@ -1,33 +1,40 @@
-# Verifier Review (Cycle 38) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 39) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-37 fixes
 
-## V38-01: Gate tests pass — all checks verified
+## V39-01: Gate tests pass — all checks verified
 
-**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. C37 fixes verified working. No regressions.
+**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. C38 fixes verified working. No regressions.
 
-## V38-02: `isInvalidData` with `pitch === 0` hides rows that `test_template_zero_pitch_rendering` expects to be visible — verified contradiction
+## V39-02: Template `> 0` guard needed — `!= 0.0` is insufficient for negative/NaN/inf
 
-**File:** `templates/pixelpitch.html`, lines 157, 277-279, 84-89
+**File:** `templates/pixelpitch.html`, lines 76-80, 84-88
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Evidence:** Traced the data flow:
-1. Template renders `0.0` pitch as "0.0 µm" (line 84-88: `spec.pitch is not none` is True for 0.0)
-2. Test `test_template_zero_pitch_rendering` asserts "0.0 µm" appears in rendered HTML — PASSES
-3. JS `isInvalidData` returns `true` for `pitch === 0` (line 277-279)
-4. "Hide possibly invalid data" checkbox is checked by default (line 157)
-5. `applyInvalidFilter()` is called on page load (line 327)
-6. Result: rows with `pitch=0.0` are hidden by default
+**Evidence (verified by rendering tests):**
 
-The template correctly renders the value, but JS hides it. Users with default settings never see "0.0 µm". If they uncheck the toggle, they see a physically impossible value displayed as if valid.
+| Input | `!= 0.0` check | Renders as | Expected |
+|-------|---------------|-----------|----------|
+| pitch=0.0 | False | "unknown" | "unknown" |
+| pitch=-1.0 | True | "-1.0 µm" | "unknown" |
+| pitch=NaN | True | "nan µm" | "unknown" |
+| mpix=0.0 | False | "unknown" | "unknown" |
+| mpix=-10.0 | True | "-10.0 MP" | "unknown" |
+| mpix=NaN | True | "nan MP" | "unknown" |
+| mpix=inf | True | "inf MP" | "unknown" |
 
-**Fix:** Template should render "unknown" for `pitch=0.0`, consistent with JS treating it as invalid.
+Replacing `!= 0.0` with `> 0` fixes all cases:
+- `0.0 > 0` → False → "unknown" (correct)
+- `-1.0 > 0` → False → "unknown" (correct)
+- `NaN > 0` → False → "unknown" (correct)
+- `5.12 > 0` → True → "5.12 µm" (correct)
+
+**Fix:** Change `!= 0.0` to `> 0` in both pitch and mpix template guards.
 
 ---
 
 ## Summary
 
-- V38-01: Gate tests pass
-- V38-02 (MEDIUM): `isInvalidData` hides zero-pitch rows that template renders as "0.0 µm" — UX contradiction
+- V39-01: Gate tests pass
+- V39-02 (MEDIUM): Template `!= 0.0` guard insufficient — negative/NaN/inf render as numeric; `> 0` is the correct guard

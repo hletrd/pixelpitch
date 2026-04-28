@@ -1,30 +1,33 @@
-# Critic Review (Cycle 38) — Multi-Perspective Critique
+# Critic Review (Cycle 39) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-37 fixes
 
 ## Previous Findings Status
 
-All C37 findings fixed. `derive_spec` isfinite guard working. No regressions in core logic.
+CRIT38-01 fixed. Template now renders "unknown" for 0.0 pitch/mpix. But the fix was narrow — only 0.0 was addressed, not the broader class of invalid values.
 
 ## New Findings
 
-### CRIT38-01: C37-02 fix created UX contradiction — `isInvalidData` hides zero-pitch rows that template renders as valid numbers
+### CRIT39-01: C38-01 fix was incomplete — same class of bug exists for negative/NaN/inf values
 
-**File:** `templates/pixelpitch.html`, lines 84-89, 277-279
+**File:** `templates/pixelpitch.html`, lines 76-80, 84-88
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C37-02 fix added `pitch === 0` to `isInvalidData`, hiding zero-pitch rows by default. But the template still renders `0.0 µm` as a number (not "unknown"). This is a classic case of a fix introducing a secondary issue: the template and JS filter now disagree on the semantics of `pitch=0.0`.
+The C38-01 fix changed the template guard from `is not none` to `is not none and != 0.0`. This addressed the specific 0.0-sentinel case but missed the broader principle: **physically impossible values should not render as numbers**. The `!= 0.0` check is an allowlist of valid values by exclusion, when it should be a positivity check.
 
-The test `test_template_zero_pitch_rendering` explicitly asserts that 0.0 pitch renders as "0.0 µm", confirming the template behavior. But the JS filter hides it, making the rendering invisible to users with the default toggle state.
+The same class of bug now exists for negative, NaN, and inf values:
+- Negative pitch (`-1.0`) renders as "-1.0 µm" — physically impossible
+- NaN pitch renders as "nan µm" — malformed
+- NaN mpix renders as "nan MP" — malformed
+- inf mpix renders as "inf MP" — malformed
 
-The correct fix is to make the template treat `0.0` pitch the same as `None` — render "unknown". This aligns template rendering with JS filtering semantics. A zero pixel pitch is physically impossible; displaying it as a number is misleading even if visible.
+This is a direct consequence of fixing C38-01 with a narrow `!= 0.0` guard instead of the more robust `> 0` check. The `> 0` guard would have handled 0.0, negative, and NaN in a single condition (since NaN > 0 evaluates to False in Python/Jinja2).
 
-**Fix:** Add `spec.pitch != 0.0` to the template's pitch-rendering condition, so zero pitch displays "unknown" just like None pitch. Keep the JS `pitch === 0` check as defense-in-depth.
+**Fix:** Replace `!= 0.0` with `> 0` in both the pitch and mpix template guards. This is the correct generalization of the C38-01 fix.
 
 ---
 
 ## Summary
 
-- CRIT38-01 (MEDIUM): C37-02 fix created UX contradiction — template renders "0.0 µm" but JS hides the row
+- CRIT39-01 (MEDIUM): C38-01 fix was narrow — `!= 0.0` should be `> 0` to cover negative/NaN/inf

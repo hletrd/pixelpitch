@@ -1,30 +1,27 @@
-# Test Engineer Review (Cycle 38) — Test Coverage, Flaky Tests, TDD
+# Test Engineer Review (Cycle 39)
 
 **Reviewer:** test-engineer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-37 fixes
 
 ## Previous Findings Status
 
-TE37-01 and TE37-02 both implemented. NaN area tests confirmed working.
+TE38-01 implemented. `test_template_zero_pitch_rendering` now expects "unknown" for 0.0 values. Verified passing.
 
 ## New Findings
 
-### TE38-01: `test_template_zero_pitch_rendering` tests the wrong behavior — should test that 0.0 pitch renders as "unknown"
+### TE39-01: No test for negative/NaN pitch/mpix template rendering
 
-**File:** `tests/test_parsers_offline.py`, lines 496-523
+**File:** `tests/test_parsers_offline.py`
 **Severity:** LOW | **Confidence:** HIGH
 
-The test `test_template_zero_pitch_rendering` asserts that 0.0 pitch renders as "0.0 µm" and 0.0 mpix renders as "0.0 MP". However, a 0.0 µm pixel pitch is physically impossible — the correct rendering should be "unknown" (same as None). The test is asserting the wrong expected behavior.
+The `test_template_zero_pitch_rendering` test covers 0.0 values but there is no test verifying that negative, NaN, or inf pitch/mpix also render as "unknown". Since these can enter through the CSV pipeline (via `_safe_float`), the template should be tested against these edge cases.
 
-After fixing the template to render "unknown" for 0.0 pitch, this test needs to be updated to expect "unknown" instead of "0.0 µm". The 0.0 mpix case is less clear — 0.0 MP is also physically impossible, but the mpix field is less critical. I recommend fixing both to "unknown" for consistency.
-
-**Fix:** Update `test_template_zero_pitch_rendering` to verify:
-- 0.0 pitch renders as "unknown" (not "0.0 µm")
-- 0.0 mpix renders as "unknown" (not "0.0 MP")
+**Fix:** Add test cases to `test_template_zero_pitch_rendering` (or a new test function) verifying:
+- Negative pitch renders as "unknown" (not "-1.0 µm")
+- Negative mpix renders as "unknown" (not "-10.0 MP")
 
 ---
 
 ## Summary
 
-- TE38-01 (LOW): `test_template_zero_pitch_rendering` tests wrong behavior — should expect "unknown" for 0.0 values
+- TE39-01 (LOW): No test for negative/NaN pitch/mpix template rendering

@@ -1,35 +1,36 @@
-# Debugger Review (Cycle 38) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 39) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-37 fixes
 
 ## Previous Findings Status
 
-All C37 findings fixed. No regressions in core logic.
+DBG38-01 fixed. Template renders "unknown" for 0.0 pitch/mpix.
 
 ## New Findings
 
-### DBG38-01: C37-02 fix introduced behavioral regression — zero-pitch rows now hidden by default but template still renders "0.0 µm"
+### DBG39-01: C38-01 fix incomplete — negative/NaN pitch still renders as numeric
 
-**File:** `templates/pixelpitch.html`, lines 84-89, 277-279
+**File:** `templates/pixelpitch.html`, lines 84-88
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode:** When a camera has `pitch=0.0` (from `pixel_pitch` returning 0.0 for invalid inputs):
-1. Template renders "0.0 µm" in the table cell
-2. JS `isInvalidData` returns true for `pitch === 0`
-3. "Hide possibly invalid data" is checked by default
-4. Row is hidden on page load
-5. User never sees "0.0 µm" — it's invisible
+**Failure mode:** When a camera has `pitch=-1.0` (from corrupted CSV data through `_safe_float`):
+1. Template renders "-1.0 µm" in the table cell (guard: `!= 0.0` → True)
+2. JS `isInvalidData` returns true for `pitch < 0`
+3. Row is hidden by default
+4. User unchecks "Hide possibly invalid data" → sees "-1.0 µm" as if legitimate
 
-If the user unchecks "Hide possibly invalid data", they see "0.0 µm" displayed as a legitimate value, which is misleading. A zero pixel pitch is physically impossible.
+**Failure mode for NaN pitch:**
+1. Template renders "nan µm" (guard: `!= 0.0` → True, since NaN != 0.0)
+2. JS `isInvalidData` catches `isNaN(parseFloat(...))` → hidden
+3. But HTML source contains "nan µm" — malformed
 
-**Regression:** Before C37-02, zero-pitch rows were visible (rendered as "0.0 µm"). After C37-02, they're hidden by default. The template rendering wasn't updated to match, creating an inconsistency.
+This is the same class of bug as DBG38-01, but the C38-01 fix only addressed 0.0, not the broader set of invalid values.
 
-**Fix:** Update the template to render "unknown" for `pitch=0.0` and `mpix=0.0`, consistent with JS treating these as invalid.
+**Fix:** Change `!= 0.0` to `> 0` in template guards.
 
 ---
 
 ## Summary
 
-- DBG38-01 (MEDIUM): C37-02 introduced regression — zero-pitch rows hidden but template still renders "0.0 µm"
+- DBG39-01 (MEDIUM): C38-01 fix incomplete — negative/NaN pitch still renders as numeric in template

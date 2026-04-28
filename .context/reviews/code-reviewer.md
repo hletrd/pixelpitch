@@ -1,65 +1,117 @@
-# Code Review (Cycle 38) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 39) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-37 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-38 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-All C37 findings confirmed fixed. `derive_spec` isfinite guard working. `isInvalidData` zero-pitch check added. Gate tests pass.
+All C38 findings confirmed fixed. Template renders "unknown" for 0.0 pitch/mpix. Gate tests pass.
 
 ## New Findings
 
-### CR38-01: `isInvalidData` pitch===0 check hides legitimate 0.0 pitch rows — UX contradiction with template rendering
+### CR39-01: Template `!= 0.0` guard incomplete — negative/NaN/inf values render as numeric
 
-**File:** `templates/pixelpitch.html`, lines 277-279
+**File:** `templates/pixelpitch.html`, lines 84-88 (pitch) and 76-80 (mpix)
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C37-02 fix added `if (pitch === 0) { return true; }` to `isInvalidData`. This causes rows with `pitch=0.0` to be hidden when "Hide possibly invalid data" is checked (which is the default state — `checked` on line 157).
+The C38-01 fix changed the template guard from `is not none` to `is not none and != 0.0`. This correctly handles the zero-sentinel case but misses negative, NaN, and inf values:
 
-However, `test_template_zero_pitch_rendering` explicitly verifies that 0.0 pitch renders as "0.0 µm" in the template — NOT as "unknown". The intent of the test is to confirm that 0.0 is a valid numeric display value. But the JS filter then hides those rows by default, making the template rendering moot for users.
+- `pitch = -1.0`: `-1.0 != 0.0` is True, so it renders as "-1.0 µm" — physically impossible
+- `pitch = float('nan')`: `nan != 0.0` is True, renders as "nan µm" — malformed
+- `mpix = -10.0`: `-10.0 != 0.0` is True, renders as "-10.0 MP" — physically impossible
+- `mpix = float('nan')`: `nan != 0.0` is True, renders as "nan MP" — malformed
+- `mpix = float('inf')`: `inf != 0.0` is True, renders as "inf MP" — malformed
 
-The contradiction: the code renders "0.0 µm" in the table, but then hides the row. If 0.0 is truly invalid data that should be hidden, the template should render "unknown" instead. If 0.0 is a valid value, it shouldn't be hidden by default.
+Verified by rendering tests:
+```
+spec.pitch = -1.0 → template renders "-1.0 µm" (BUG)
+spec.pitch = NaN  → template renders "nan µm" (BUG)
+spec.mpix = -10.0 → template renders "-10.0 MP" (BUG)
+spec.mpix = NaN   → template renders "nan MP" (BUG)
+```
 
-Furthermore, `pixel_pitch` returns `0.0` for `mpix=0.0` cameras. If a camera genuinely has zero megapixels listed (which can happen from source data), its computed pitch would be `0.0`, and that row would be hidden.
+**Fix:** Change template guards to use positivity + finiteness checks:
 
-**Fix:** Two options:
-1. (Preferred) Change `pixel_pitch` to return `None` for invalid inputs instead of `0.0`, update template to show "unknown" for `None` pitch, and keep the JS `pitch === 0` check as defense-in-depth. This eliminates the `0.0` sentinel entirely.
-2. Remove the `pitch === 0` check from `isInvalidData` and accept that 0.0 pitch rows are visible (matching the template behavior).
+For pitch (line 84):
+```jinja2
+{% if spec.pitch is not none and spec.pitch > 0 and spec.pitch is finite %}
+```
 
-Option 1 is cleaner but is a larger refactor. Option 2 is simpler but leaves the semantic ambiguity.
+Wait — Jinja2 doesn't have `is finite`. Instead, use the same pattern as Python's `isfinite` by adding a Jinja2 filter, or simply check `> 0` which covers both negative and zero (0.0 is not > 0, NaN comparisons return False, inf > 0 is True but inf pitch shouldn't occur through normal pipeline):
+
+```jinja2
+{% if spec.pitch is not none and spec.pitch > 0 %}
+  {{ spec.pitch|round(1) }} µm
+{% else %}
+  <span class="text-muted">unknown</span>
+{% endif %}
+```
+
+For mpix (line 76):
+```jinja2
+{% if spec.spec.mpix is not none and spec.spec.mpix > 0 %}
+  {{ spec.spec.mpix|round(1) }} MP
+{% else %}
+  <span class="text-muted">unknown</span>
+{% endif %}
+```
+
+The `> 0` check handles: None (skipped by `is not none`), 0.0 (not > 0), negative (not > 0), NaN (NaN > 0 is False). For inf, `inf > 0` is True, but inf mpix/pitch cannot enter the pipeline through normal code paths (source regexes only match digits, `pixel_pitch` returns 0.0 for inf inputs, `derive_spec` nullifies inf sizes). If defense-in-depth against inf is desired, add a Jinja2 custom filter for `isfinite`.
 
 ---
 
-### CR38-02: `match_sensors` ZeroDivisionError when `megapixels=0.0` and `sensor_megapixels` is non-empty
+### CR39-02: `_safe_float` allows negative values through CSV pipeline
 
-**File:** `pixelpitch.py`, line 243
-**Severity:** MEDIUM | **Confidence:** HIGH
+**File:** `pixelpitch.py`, lines 268-276
+**Severity:** LOW | **Confidence:** HIGH
 
 ```python
-megapixel_match = any(
-    abs(megapixels - mp) / megapixels * 100 <= megapixel_tolerance
-    for mp in sensor_megapixels
-)
+def _safe_float(s: str) -> Optional[float]:
+    """Parse a float string, returning None for NaN/inf/empty."""
+    if not s:
+        return None
+    try:
+        val = float(s)
+        return val if isfinite(val) else None
+    except (ValueError, TypeError):
+        return None
 ```
 
-When `megapixels=0.0` (which is `> 0` is False, but `megapixels is not None and megapixels > 0` on line 242 evaluates to `0.0 > 0 = False`), the code skips to the elif branch. So in practice this is currently safe because the guard `megapixels > 0` rejects `0.0`. However, if that guard were ever changed to `megapixels is not None and megapixels >= 0`, a ZeroDivisionError would occur.
+The function correctly rejects NaN and inf (via `isfinite`), but allows negative values through. For fields like pitch, mpix, and area, negative values are physically meaningless. A CSV file containing negative values would pass through `parse_existing_csv` unfiltered, creating the entry vector for CR39-01.
 
-The existing test `test_match_sensors` with `megapixels=0.0` uses the size-only match path (the elif branch), which works. So this is not a current bug, but the division by `megapixels` without a zero guard in the `any()` expression is a latent risk.
-
-**Fix:** Add an explicit `megapixels > 0` guard inside the `any()` expression as defense-in-depth:
-```python
-if megapixels is not None and megapixels > 0 and sensor_megapixels:
-    megapixel_match = any(
-        megapixels > 0 and abs(megapixels - mp) / megapixels * 100 <= megapixel_tolerance
-        for mp in sensor_megapixels
-    )
+Verified:
 ```
-Or more simply, since the outer guard already ensures `megapixels > 0`, no fix is strictly needed. Deferring.
+_safe_float("-1.0") → -1.0  (passes through)
+_safe_float("-10.0") → -10.0 (passes through)
+_safe_float("nan")   → None  (blocked)
+_safe_float("inf")   → None  (blocked)
+```
+
+**Fix:** Option A — Add positivity check to `_safe_float` (but this would change its semantics as a general float parser). Option B (preferred) — Add validation in `parse_existing_csv` after `_safe_float` calls for fields that must be positive (width, height, area, mpix, pitch). Option C — Fix at template level only (CR39-01 fix) since source parsers can't produce negative values anyway.
+
+---
+
+### CR39-03: `data-pitch` attribute leaks invalid values in HTML source
+
+**File:** `templates/pixelpitch.html`, line 50
+**Severity:** LOW | **Confidence:** MEDIUM
+
+```jinja2
+<tr data-pitch="{{ spec.pitch or 0 }}"
+```
+
+When `spec.pitch` is negative (e.g., -1.0), the `or 0` coercion doesn't trigger because -1.0 is truthy. The resulting HTML contains `data-pitch="-1.0"`. Similarly, NaN produces `data-pitch="nan"`. The JS `isInvalidData` function correctly hides these rows, but the HTML source still contains invalid values.
+
+**Fix:** Low priority since JS filters work correctly. If desired, change to:
+```jinja2
+<tr data-pitch="{{ spec.pitch if spec.pitch is not none and spec.pitch > 0 else 0 }}"
+```
 
 ---
 
 ## Summary
 
-- CR38-01 (MEDIUM): `isInvalidData` pitch===0 hides rows that template renders as "0.0 µm" — UX contradiction
-- CR38-02 (LOW): Latent ZeroDivisionError risk in `match_sensors` megapixel matching — currently guarded
+- CR39-01 (MEDIUM): Template `!= 0.0` guard is incomplete — negative/NaN pitch and mpix render as numeric values
+- CR39-02 (LOW): `_safe_float` allows negative values through CSV pipeline
+- CR39-03 (LOW): `data-pitch` attribute leaks invalid values in HTML source
