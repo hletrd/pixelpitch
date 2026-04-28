@@ -1,35 +1,43 @@
-# Code Review (Cycle 45) — Code Quality, Logic, SOLID, Maintainability
+# Code Review — Cycle 46
 
-**Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-44 fixes, focusing on NEW issues
+**Reviewer:** code-reviewer
 
-## Previous Findings Status
+## Review Scope
 
-C44-01 (FORMAT_TO_MM dead code) — COMPLETED. Dict and fmt code removed from cined.py.
-C44-02 (fmt/fmt_m dead code) — COMPLETED. Format extraction regex removed.
+All Python source files (`pixelpitch.py`, `models.py`, `sources/*.py`), templates, and tests.
+
+## Previous Cycle Findings (1-45) Status
+
+All previous fixes confirmed still in place. C45-01 GSMArena decimal MP regex fix working correctly. C44-01 CineD dead code cleanup complete.
 
 ## New Findings
 
-### CR45-01: GSMArena _select_main_lens regex split breaks on decimal MP values — data corruption
+### CR46-01: matched_sensors not preserved in merge_camera_data — data loss
 
-**File:** `sources/gsmarena.py, line 82`
-**Severity:** HIGH | **Confidence:** HIGH
+**File:** `pixelpitch.py`, lines 439-521 (merge_camera_data)
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The `re.split(r'(?=\b\d+(?:\.\d+)?\s*MP\b)', raw)` in `_select_main_lens` uses `\b` before `\d+`. The word boundary `\b` matches between the digit "0" and the decimal point "." in a number like "12.2 MP", causing the split to produce `['12.', '2 MP, f/1.7, ...']` instead of `['12.2 MP, f/1.7, ...']`. The function then selects "2 MP" as the main lens, producing mpix=2.0 instead of 12.2.
+The merge_camera_data function preserves `type`, `size`, `pitch`, `mpix`, `year`, `area` fields from existing data when new data has `None`. However, `matched_sensors` is never checked for preservation. When `derive_spec` is called without `sensors_db` (or with an empty `sensors_db`), it returns `matched_sensors=[]`. The merge code treats `[]` as "we have data" (not `None`), so it overwrites existing sensor matches from the previous CSV with an empty list.
 
-This affects any phone with a decimal-megapixel main camera (e.g., Google Pixel 7 at 12.2 MP, Samsung Galaxy S21 FE at 12.0 MP with decimal representation, various older phones). The bug causes three-fold data corruption:
+**Failure scenario:**
+1. Previous CSV has `matched_sensors=['IMX309', 'IMX366', 'IMX609']` for Canon R5
+2. `sensors.json` is temporarily unavailable (missing/corrupt)
+3. `derive_specs` -> `derive_spec(spec, {})` -> `matched_sensors=[]`
+4. `merge_camera_data` overwrites existing `['IMX309', 'IMX366', 'IMX609']` with `[]`
+5. CSV download loses all sensor match data
 
-1. **mpix wrong**: 12.2 becomes 2.0
-2. **sensor type lost**: The fractional-inch format (e.g., `1/2.55"`) falls after the split point and loses its quote suffix, so `TYPE_FRACTIONAL_RE` no longer matches it
-3. **derived.size wrong**: Without spec.type, derive_spec cannot compute sensor dimensions
+**Root cause:** `matched_sensors=[]` and `matched_sensors=None` are semantically different (empty after checking vs. not checked), but the merge code doesn't distinguish them.
 
-The root cause is that `\b` (word boundary) fires between a digit and a period. The regex `(?=\b\d+(?:\.\d+)?\s*MP\b)` lookbehind hits `\b` at position before "0" in "12.2", then matches `\d+` = "0", which consumes "0" but not ".2", then the remaining "2 MP" starts a new split segment.
-
-**Fix:** Remove the leading `\b` from the regex. The `(?=\d+(?:\.\d+)?\s*MP\b)` pattern will correctly match at the start of a decimal number because `\d+` is greedy and will consume all digits before the optional decimal part. Alternatively, use a negative lookbehind `(?<!\.)` to prevent matching a digit that's part of a decimal number.
+**Fix:** Change `derive_spec` to return `matched_sensors=None` when `sensors_db` is not provided (or is empty), and add a `matched_sensors` preservation check in `merge_camera_data` similar to other fields.
 
 ---
 
-## Summary
+### CR46-02: LENS_RE dead code in gsmarena.py
 
-- CR45-01 (HIGH): GSMArena _select_main_lens regex split breaks on decimal MP values — data corruption
+**File:** `sources/gsmarena.py`, lines 45-50
+**Severity:** LOW | **Confidence:** HIGH
+
+The `LENS_RE` regex is defined at module level but never referenced anywhere in the codebase — not in `gsmarena.py` itself nor in any other module. This is dead code similar to the C44-01 `FORMAT_TO_MM` removal in `cined.py`.
+
+**Fix:** Remove the `LENS_RE` definition entirely.

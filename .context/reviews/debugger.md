@@ -1,36 +1,36 @@
-# Debugger Review (Cycle 45) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review — Cycle 46
 
-**Reviewer:** debugger
 **Date:** 2026-04-28
+**Reviewer:** debugger
 
 ## Previous Findings Status
 
-DBG44-03 (CineD fmt/fmt_m dead code) — COMPLETED. Removed.
+DBG45-01 (GSMArena decimal MP regex) — COMPLETED. Fix applied and tested.
 
 ## New Findings
 
-### DBG45-01: GSMArena _select_main_lens regex split corrupts decimal MP — latent data corruption bug
+### DBG46-01: matched_sensors silently lost in merge_camera_data when sensors_db unavailable
 
-**File:** `sources/gsmarena.py, _select_main_lens, line 82`
-**Severity:** HIGH | **Confidence:** HIGH
+**File:** `pixelpitch.py`, merge_camera_data (lines 439-521)
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode:** When a phone's camera spec page lists a main camera with a decimal MP value (e.g., "12.2 MP"), the `re.split(r'(?=\b\d+(?:\.\d+)?\s*MP\b)', raw)` regex incorrectly splits the value at the decimal point. The word boundary `\b` fires between the integer digit "2" and the decimal point ".", causing the split to produce two fragments: "12." and "2 MP, f/1.7, ...". The function then selects "2 MP" as the main lens, extracting mpix=2.0 instead of 12.2.
+**Failure mode:** When `sensors.json` is missing or corrupt (e.g., during a git merge conflict), `load_sensors_database()` returns `{}`. `derive_spec` then sets `matched_sensors=[]` for all cameras. During merge, the `[]` overwrites existing `matched_sensors` data from the previous CSV because the merge code only preserves `None` values.
 
 **Concrete failure scenario:**
-1. GSMArena fetch runs for Google Pixel 7 (12.2 MP main camera)
-2. _select_main_lens receives "12.2 MP, f/1.9, 25mm (wide), 1/2.55\", 1.25µm, ..."
-3. Split produces: ["12.", "2 MP, f/1.9, 25mm (wide), 1/2.55\", 1.25µm, ..."]
-4. _select_main_lens sorts and picks "2 MP, f/1.9, ..." (wide has priority 0)
-5. _phone_to_spec extracts mpix=2.0 (wrong), type=None (lost), pitch=1.25 (correct by coincidence)
-6. derive_spec cannot compute sensor size because spec.type=None and spec.size=None
-7. The camera appears in the database with mpix=2.0, unknown sensor size, and unknown derived.size
+1. Build succeeds with `sensors.json` available -> Canon R5 gets `matched_sensors=['IMX309', 'IMX366', 'IMX609']`
+2. CSV is written to dist/ with sensor data
+3. Next build: `sensors.json` is missing (git conflict, accidental deletion)
+4. `derive_spec(spec, {})` -> `matched_sensors=[]`
+5. `merge_camera_data` overwrites `['IMX309', 'IMX366', 'IMX609']` with `[]`
+6. CSV loses sensor match data
+7. On subsequent builds (even with sensors.json restored), the sensor data is not in the existing CSV, so it must be re-derived
 
-**Why it was missed for 44 cycles:** The existing test fixture (Galaxy S25 Ultra) only has integer MP values (200, 10, 50, 50). No test exercises decimal MP, and the bug only manifests at runtime when scraping phones with decimal MP main cameras.
+**Why it was missed for 45 cycles:** No test covers `matched_sensors` preservation in merge. The template doesn't display `matched_sensors` (it's in a TODO block), so the bug doesn't produce visible UI changes. It only affects the CSV download.
 
-**Fix:** Remove `\b` from the start of the split regex: `r'(?=\d+(?:\.\d+)?\s*MP\b)'`
+**Fix:** Return `matched_sensors=None` from `derive_spec` when `sensors_db` is falsy. Add `matched_sensors` preservation in `merge_camera_data`.
 
 ---
 
 ## Summary
 
-- DBG45-01 (HIGH): GSMArena _select_main_lens regex split corrupts decimal MP — latent data corruption bug
+- DBG46-01 (MEDIUM): matched_sensors silently lost in merge_camera_data when sensors_db unavailable

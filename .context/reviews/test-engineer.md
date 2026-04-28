@@ -1,38 +1,29 @@
-# Test Engineer Review (Cycle 45) — Test Coverage Gaps, Flaky Tests, TDD
+# Test Engineer Review — Cycle 46
 
-**Reviewer:** test-engineer
 **Date:** 2026-04-28
+**Reviewer:** test-engineer
 
 ## Previous Findings Status
 
-TE44-01, TE44-02 — COMPLETED. test_cined_format_coverage removed after FORMAT_TO_MM removal.
+TE45-01, TE45-02 — COMPLETED. Decimal MP tests added for _select_main_lens and _phone_to_spec.
 
 ## New Findings
 
-### TE45-01: No test for GSMArena _select_main_lens with decimal MP values
+### TE46-01: No test for matched_sensors preservation in merge_camera_data
 
 **File:** `tests/test_parsers_offline.py`
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The existing `test_gsmarena_select_main_lens` test only uses integer MP values (12 MP, 50 MP, 48 MP, 10 MP, 8 MP). There is no test case with decimal MP values like "12.2 MP" or "10.7 MP", which is exactly the input that triggers the regex split bug (CR45-01). A test with decimal MP would have caught this bug earlier.
+The existing `test_merge_field_preservation` test verifies preservation of `type`, `size`, `pitch`, `mpix` from existing data when new has `None`. But there is no test for `matched_sensors` preservation. This gap allowed the matched_sensors merge bug (CR46-01) to go undetected through 45 cycles.
 
-**Fix:** Add test cases for `_select_main_lens` with decimal MP values:
-- `'12.2 MP, f/1.9, (wide), 1/2.55", 1.25µm'` should select the full "12.2 MP" entry
-- `'10.7 MP, f/4.3, 240mm (periscope)'` should select the full "10.7 MP" entry
-- Multi-lens with decimal MP: `'50 MP, f/1.7, (wide)\n12.2 MP, f/2.2, (ultrawide)'` should pick the 50 MP wide lens
+The test should verify:
+1. When new has `matched_sensors=None` and existing has `matched_sensors=['IMX455']`, the merged result preserves `['IMX455']`
+2. When new has `matched_sensors=[]` (from derive_spec with empty sensors_db) and existing has `matched_sensors=['IMX455']`, the merged result should still preserve `['IMX455']` (after the fix makes derive_spec return None for unchecked sensors)
 
-### TE45-02: No test for GSMArena _phone_to_spec with decimal MP
-
-**File:** `tests/test_parsers_offline.py`
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-The existing GSMArena test uses the Galaxy S25 Ultra fixture which has integer MP values (200, 10, 50, 50). There is no test verifying that `_phone_to_spec` correctly extracts decimal MP values, sensor type, and pitch when the camera value contains decimal MP. This is a direct test gap for the CR45-01 bug.
-
-**Fix:** Add a unit test for `_phone_to_spec` with synthetic fields containing decimal MP camera values. Verify mpix, type, and pitch are correctly extracted.
+**Fix:** Add a test case in `test_merge_field_preservation` that verifies `matched_sensors` is preserved from existing data.
 
 ---
 
 ## Summary
 
-- TE45-01 (MEDIUM): No test for GSMArena _select_main_lens with decimal MP values
-- TE45-02 (MEDIUM): No test for GSMArena _phone_to_spec with decimal MP
+- TE46-01 (MEDIUM): No test for matched_sensors preservation in merge_camera_data

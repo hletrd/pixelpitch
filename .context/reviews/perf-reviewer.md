@@ -1,15 +1,15 @@
-# Performance Review (Cycle 45)
+# Performance Review — Cycle 46
 
-**Reviewer:** perf-reviewer
 **Date:** 2026-04-28
+**Reviewer:** perf-reviewer
 
 ## Previous Findings Status
 
-All C44 findings resolved. No regressions.
+All C1-45 findings resolved. No regressions.
 
 ## New Findings
 
-No new performance findings. The GSMArena regex split bug (CR45-01) causes incorrect data but does not have a meaningful performance impact — the split still completes in O(n) time, just with the wrong result.
+No new performance findings. The matched_sensors merge bug (CR46-01) causes data loss but has no performance impact. The LENS_RE dead code (CR46-02) has negligible memory overhead.
 
 ## Summary
 

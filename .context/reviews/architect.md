@@ -1,28 +1,34 @@
-# Architect Review (Cycle 45) — Architectural/Design Risks
+# Architect Review — Cycle 46
 
-**Reviewer:** architect
 **Date:** 2026-04-28
+**Reviewer:** architect
 
 ## Previous Findings Status
 
-ARCH44-01 (FORMAT_TO_MM false coupling) — COMPLETED. Removed.
-ARCH44-02 (CineD format extraction wasted computation) — COMPLETED. Removed.
+ARCH45-01 (GSMArena regex word boundary) — COMPLETED. Fix applied.
 
 ## New Findings
 
-### ARCH45-01: GSMArena _select_main_lens regex split uses word boundary that breaks on decimal numbers — architectural fragility
+### ARCH46-01: matched_sensors field has no sentinel for "not checked" vs "checked, empty"
 
-**File:** `sources/gsmarena.py, _select_main_lens, line 82`
-**Severity:** HIGH | **Confidence:** HIGH
+**File:** `pixelpitch.py` (derive_spec, merge_camera_data), `models.py` (SpecDerived)
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The `_select_main_lens` function splits camera lens entries using a regex with `\b` (word boundary). This is architecturally fragile because it assumes MP values are always integers at word boundaries. In reality, decimal MP values (12.2 MP, 10.7 MP) are common in smartphone specs. The word boundary `\b` fires between a digit and a decimal point, causing the split to occur inside the decimal number rather than before it.
+The `SpecDerived.matched_sensors` field uses `Optional[List[str]]` with default `None`, but `derive_spec` always initializes it as `[]` (empty list) regardless of whether the sensors database was consulted. This creates a semantic ambiguity: `matched_sensors=[]` can mean either "we checked and found no matches" or "we didn't check at all."
 
-This is a parsing/architectural issue: the function's contract ("pick the main wide lens") is violated when the input contains decimal MP values, because the split corrupts the data before the selection logic runs. The architecture has no validation step to detect corrupted fragments (e.g., a fragment that starts with a bare number not followed by "MP").
+This ambiguity causes data loss in `merge_camera_data`, which preserves fields from existing data only when the new value is `None`. Since `derive_spec` always returns `[]` (never `None`), the preservation check `if new_spec.matched_sensors is None and existing_spec.matched_sensors is not None` never triggers, and existing sensor match data is silently overwritten.
 
-**Fix:** Remove `\b` from the start of the split regex. Consider adding a validation step after splitting to reject fragments that don't start with a complete "N MP" pattern (i.e., the first token must be a number immediately followed by "MP").
+The architectural fix is to use the `None` sentinel correctly:
+- `matched_sensors=None` means "not checked" (sensors_db was not available)
+- `matched_sensors=[]` means "checked, found nothing" (sensors_db was consulted but no matches)
+- `matched_sensors=['IMX455']` means "checked, found matches"
+
+This is consistent with how other `Optional` fields work in the codebase (e.g., `spec.size=None` means "unknown" while `spec.size=(36.0, 24.0)` means "known").
+
+**Fix:** In `derive_spec`, set `matched_sensors=None` when `sensors_db` is falsy, and `matched_sensors=[]` only when `sensors_db` was consulted but found no matches. Then add preservation logic in `merge_camera_data`.
 
 ---
 
 ## Summary
 
-- ARCH45-01 (HIGH): GSMArena _select_main_lens regex split uses word boundary that breaks on decimal numbers
+- ARCH46-01 (MEDIUM): matched_sensors field has no sentinel for "not checked" vs "checked, empty"

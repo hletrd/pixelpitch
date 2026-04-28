@@ -1,32 +1,37 @@
-# Critic Review (Cycle 45) — Multi-Perspective Critique
+# Critic Review — Cycle 46
 
-**Reviewer:** critic
 **Date:** 2026-04-28
+**Reviewer:** critic
 
 ## Previous Findings Status
 
-CRIT44-01 (FORMAT_TO_MM dead code) — COMPLETED. Removed.
+CRIT45-01 (GSMArena decimal MP regex) — COMPLETED. Fix applied and tested.
 
 ## New Findings
 
-### CRIT45-01: GSMArena _select_main_lens regex split corrupts decimal MP data — high-severity data integrity bug
+### CRIT46-01: matched_sensors data loss in merge_camera_data — semantic ambiguity between [] and None
 
-**File:** `sources/gsmarena.py, line 82`
-**Severity:** HIGH | **Confidence:** HIGH
+**File:** `pixelpitch.py`, merge_camera_data (lines 439-521)
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The `re.split(r'(?=\b\d+(?:\.\d+)?\s*MP\b)', raw)` regex uses `\b` (word boundary) before `\d+`. This causes a split at the boundary between a digit and a decimal point, breaking "12.2 MP" into "12." and "2 MP". When `_select_main_lens` sorts and picks the lowest-priority (main) lens, it selects the corrupted fragment "2 MP, f/1.7, ..." instead of the correct "12.2 MP, f/1.7, ...".
+The merge_camera_data function has a systematic gap in its field preservation logic: `matched_sensors` is not included in the set of fields checked for preservation from existing data. This is because the field preservation code was written to check `if new_spec.X is None and existing_spec.X is not None`, which works for fields that default to `None` but fails for `matched_sensors` which defaults to `[]` (empty list) rather than `None`.
 
-This is a high-severity data integrity bug because:
-1. It silently corrupts mpix values (12.2 -> 2.0)
-2. It causes TYPE_FRACTIONAL_RE to fail matching because the quote suffix on the sensor format (e.g., `1/2.55"`) gets severed from the numeric prefix
-3. Without spec.type, derive_spec cannot compute sensor dimensions from the type lookup
+The semantic ambiguity is the core problem: `matched_sensors=[]` can mean either "we checked the sensors database and found no matches" (authoritative) or "we did not check the sensors database" (non-authoritative). The current code cannot distinguish these cases.
 
-The bug affects all phones whose main camera has a decimal-megapixel value, including the entire Google Pixel line (Pixel 1-6 at 12.2 MP), various Samsung phones with 12.0 MP decimal representation, and many older smartphones.
+When `derive_spec` is called with `sensors_db=None` (the default for `derive_specs` which loads the DB), it calls `match_sensors` only when `sensors_db` is truthy. When `sensors_db` is `None` or empty, `matched_sensors` is set to `[]` — the same value as "checked and found nothing."
 
-**Fix:** Remove the leading `\b` from the split regex. Change to `r'(?=\d+(?:\.\d+)?\s*MP\b)'`. This allows the greedy `\d+` to consume the full integer part of a decimal number before the optional `.\\d+` group matches the fractional part, preventing the split from occurring inside a decimal number.
+**Concrete failure scenario:**
+1. Previous build cycle: Canon R5 gets `matched_sensors=['IMX309', 'IMX366', 'IMX609']` from sensors_db
+2. This data is written to `camera-data.csv` in dist/
+3. Next build cycle: `sensors.json` is missing/corrupt (e.g., git merge conflict)
+4. `derive_specs` -> `derive_spec(spec, {})` -> `matched_sensors=[]`
+5. `merge_camera_data` overwrites `['IMX309', 'IMX366', 'IMX609']` with `[]`
+6. CSV download loses sensor match information
+
+**Fix:** Make `derive_spec` return `matched_sensors=None` when `sensors_db` is `None` or empty (meaning "not checked"), and `matched_sensors=[]` only when the database was actually consulted. Then add `matched_sensors` preservation in `merge_camera_data` following the same pattern as other fields: preserve from existing when new is `None`.
 
 ---
 
 ## Summary
 
-- CRIT45-01 (HIGH): GSMArena _select_main_lens regex split corrupts decimal MP data
+- CRIT46-01 (MEDIUM): matched_sensors data loss in merge_camera_data — semantic ambiguity between [] and None
