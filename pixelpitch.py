@@ -448,8 +448,16 @@ def merge_camera_data(
                 new_spec.spec.size = existing_spec.spec.size
             if new_spec.spec.pitch is None and existing_spec.spec.pitch is not None:
                 new_spec.spec.pitch = existing_spec.spec.pitch
+                # Validate preserved pitch: non-positive or non-finite values
+                # are invalid and should not be preserved.
+                if not isfinite(new_spec.spec.pitch) or new_spec.spec.pitch <= 0:
+                    new_spec.spec.pitch = None
             if new_spec.spec.mpix is None and existing_spec.spec.mpix is not None:
                 new_spec.spec.mpix = existing_spec.spec.mpix
+                # Validate preserved mpix: non-positive or non-finite values
+                # are invalid and should not be preserved.
+                if not isfinite(new_spec.spec.mpix) or new_spec.spec.mpix <= 0:
+                    new_spec.spec.mpix = None
             if new_spec.spec.year is None and existing_spec.spec.year is not None:
                 new_spec.spec.year = existing_spec.spec.year
             # Preserve SpecDerived fields from existing data if new data has None.
@@ -469,6 +477,7 @@ def merge_camera_data(
             # measurement), derived.pitch must be updated to match — the
             # template and write_csv both read derived.pitch.
             if (new_spec.spec.pitch is not None
+                    and isfinite(new_spec.spec.pitch) and new_spec.spec.pitch > 0
                     and new_spec.pitch != new_spec.spec.pitch):
                 new_spec.pitch = new_spec.spec.pitch
             # Log year changes (independent of field preservation above).
@@ -731,14 +740,19 @@ def derive_spec(
 
     Area: computed as width * height when both are known.
 
-    Pixel pitch: ``spec.pitch`` (direct measurement) always takes
-    precedence.  When ``spec.pitch`` is None but both area and mpix
-    are known, pitch is computed as
+    Pixel pitch: ``spec.pitch`` (direct measurement) takes precedence
+    when it is a positive finite value.  Direct values that are
+    non-finite or non-positive (0.0, negative, NaN, inf) are treated
+    as invalid and converted to None, allowing the computed path to
+    serve as a fallback.  When ``spec.pitch`` is None (or invalid) but
+    both area and mpix are known, pitch is computed as
     ``1000 * sqrt(area / (mpix * 10**6))``.  This computed value is
     an approximation because it does not account for pixel binning or
     gap pixels.  When ``pixel_pitch`` returns 0.0 (sentinel for
     invalid inputs such as non-positive mpix/area or NaN/inf), the
-    computed pitch is set to None instead of propagating the sentinel.
+    computed pitch is also set to None.  The output contract is
+    uniform: ``derived.pitch`` is either None (unknown) or a positive
+    finite value (valid measurement or approximation).
 
     Matched sensors: looked up from ``sensors_db`` when both size
     and the database are available.
@@ -756,7 +770,7 @@ def derive_spec(
     else:
         area = None
 
-    if spec.pitch is not None:
+    if spec.pitch is not None and isfinite(spec.pitch) and spec.pitch > 0:
         pitch = spec.pitch
     elif spec.mpix is not None and area is not None:
         pitch = pixel_pitch(area, spec.mpix)
@@ -863,9 +877,9 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
             type_str = spec.type or ""
             width_str = f"{derived.size[0]:.2f}" if derived.size else ""
             height_str = f"{derived.size[1]:.2f}" if derived.size else ""
-            area_str = f"{derived.area:.2f}" if derived.area is not None and isfinite(derived.area) else ""
-            mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None and isfinite(spec.mpix) else ""
-            pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None and isfinite(derived.pitch) else ""
+            area_str = f"{derived.area:.2f}" if derived.area is not None and isfinite(derived.area) and derived.area > 0 else ""
+            mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None and isfinite(spec.mpix) and spec.mpix > 0 else ""
+            pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None and isfinite(derived.pitch) and derived.pitch > 0 else ""
             year_str = str(spec.year) if spec.year is not None else ""
             sensors_str = (
                 ";".join(derived.matched_sensors) if derived.matched_sensors else ""
