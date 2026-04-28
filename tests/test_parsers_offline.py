@@ -1096,6 +1096,60 @@ def test_merge_field_preservation():
 # --------------------------------------------------------------------------
 # merge_camera_data year-change log
 
+def test_merge_size_consistency():
+    """Verify merge_camera_data keeps spec.size and derived.size consistent
+    when spec.size is preserved from existing but derived.size was type-computed."""
+    section("merge size consistency")
+    import pixelpitch as pp
+    from models import Spec
+
+    # Existing: measured size from Geizhals
+    existing_spec = Spec(name='Test Cam', category='fixed', type='1/2.3',
+                         size=(5.76, 4.29), pitch=None, mpix=12.0, year=2020)
+    existing = pp.derive_spec(existing_spec)
+    existing.id = 0
+
+    # New: type-derived size from source (no explicit size)
+    new_spec = Spec(name='Test Cam', category='fixed', type='1/2.3',
+                    size=None, pitch=None, mpix=12.0, year=2020)
+    new = pp.derive_spec(new_spec)
+
+    merged = pp.merge_camera_data([new], [existing])
+    m = merged[0]
+
+    # spec.size should be preserved from existing (measured value)
+    expect("merge size consistency: spec.size preserved",
+           m.spec.size, (5.76, 4.29), tol=0.01)
+    # derived.size must match spec.size (not the type-computed value)
+    expect("merge size consistency: derived.size matches spec.size",
+           m.size, m.spec.size, tol=0.01)
+    # derived.area must be consistent with derived.size
+    expect("merge size consistency: area consistent",
+           abs(m.area - m.size[0] * m.size[1]) < 0.01, True)
+    # derived.pitch must be consistent with derived.area (or from spec.pitch)
+    if m.spec.pitch is None:
+        expected_pitch = pp.pixel_pitch(m.size[0] * m.size[1], m.spec.mpix)
+        if expected_pitch == 0.0:
+            expected_pitch = None
+        expect("merge size consistency: pitch consistent with correct area",
+               abs(m.pitch - expected_pitch) < 0.01 if m.pitch and expected_pitch else m.pitch == expected_pitch, True)
+
+    # Also test case where TYPE_SIZE matches Geizhals (no inconsistency expected)
+    existing_spec2 = Spec(name='Match Cam', category='fixed', type='1/2.3',
+                          size=(6.17, 4.55), pitch=None, mpix=12.0, year=2020)
+    existing2 = pp.derive_spec(existing_spec2)
+    existing2.id = 0
+
+    new_spec2 = Spec(name='Match Cam', category='fixed', type='1/2.3',
+                     size=None, pitch=None, mpix=12.0, year=2020)
+    new2 = pp.derive_spec(new_spec2)
+
+    merged2 = pp.merge_camera_data([new2], [existing2])
+    m2 = merged2[0]
+    expect("merge size consistency: matching sizes stay consistent",
+           m2.size, m2.spec.size, tol=0.01)
+
+
 def test_merge_year_change_log():
     section("merge_camera_data year-change log")
     import io
@@ -1893,6 +1947,7 @@ def main():
     test_create_camera_key_year_mismatch()
     test_category_dedup()
     test_merge_field_preservation()
+    test_merge_size_consistency()
     test_merge_year_change_log()
     test_sony_dsc_hyphen_normalisation()
     test_mpix_re_format_handling()
