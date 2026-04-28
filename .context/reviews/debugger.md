@@ -1,50 +1,44 @@
-# Debugger Review (Cycle 24) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 25) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-23 fixes
+**Scope:** Full repository re-review after cycles 1-24 fixes
 
 ## Previous Findings Status
 
-All previous bug fixes confirmed still working. No regressions detected.
+DBG24-01 (TYPE_FRACTIONAL_RE space+inch) and DBG24-02 (bare 1-inch) fixed. DBG24-03 (rstrip) remains deferred.
 
 ## New Findings
 
-### DBG24-01: TYPE_FRACTIONAL_RE silently fails on "1/x.y inch" format
+### DBG25-01: parse_sensor_field ValueError crash on malformed float
 
-**File:** `sources/__init__.py`, line 68
-**Severity:** LOW | **Confidence:** HIGH
+**File:** `pixelpitch.py`, lines 556, 561
+**Severity:** MEDIUM | **Confidence:** MEDIUM
 
-**Failure mode:** When a source page uses the format `1/2.3 inch` (space before "inch"), TYPE_FRACTIONAL_RE returns None, causing the sensor type to be lost. The camera then has no sensor size data unless explicit mm dimensions are present.
+**Failure mode:** If `SIZE_RE` matches a string containing multiple dots (e.g., `"36.0.1x24.0mm"` produces group(1)=`"36.0.1"`), `float()` raises `ValueError`. This exception is NOT caught in `parse_sensor_field()` or `extract_specs()`, and propagates to `render_html()` where the outer `try/except Exception` drops the entire Geizhals category.
 
-**Root cause:** The regex pattern has `inch` (no space) and `-inch` alternatives but lacks `\s*inch`. The `\s*type` alternative was added for the "type" suffix, but the corresponding `\s*inch` was not.
+**Root cause:** The regex `[\d\.]+` allows multiple dots, but `float()` requires at most one. No try/except wraps the conversion.
 
-**Impact:** Camera appears with "unknown" sensor data on the website. Not a crash — silent data loss.
+**Impact:** All cameras in the affected category are lost for that deployment. Previous data is preserved via CSV merge, but current Geizhals data for that category is gone.
 
-### DBG24-02: parse_sensor_field silently drops 1-inch sensor type
+**Verified:** `float("36.0.1")` raises `ValueError`.
 
-**File:** `pixelpitch.py`, lines 529-558
-**Severity:** LOW | **Confidence:** HIGH
+### DBG25-02: SIZE_RE does not match Unicode × or spaces — silent data loss
 
-**Failure mode:** When Geizhals sensor field contains `CMOS 1"` without explicit mm dimensions, the 1-inch sensor type is not extracted. TYPE_FRACTIONAL_RE requires `1/x.y` prefix, which the bare `1"` format doesn't match.
+**File:** `pixelpitch.py`, line 42
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-**Root cause:** TYPE_FRACTIONAL_RE was designed only for fractional-inch formats. The bare 1-inch format (`1"`) is a separate designation that isn't handled.
+**Failure mode:** If Geizhals sensor text uses `×` (U+00D7) instead of `x` (U+0078), or includes spaces around `x`, `SIZE_RE` returns None. The sensor dimensions are silently lost.
 
-**Impact:** Camera with 1-inch sensor shows "unknown" sensor size. Not a crash — silent data loss.
+**Root cause:** `SIZE_RE` pattern is `([\d\.]+)x([\d\.]+)mm` — only ASCII lowercase `x`, no spaces. The shared `SIZE_MM_RE` handles both `×` and spaces.
 
-### DBG24-03: _parse_fields rstrip("</") silently strips valid characters
+**Impact:** Camera shows "unknown" sensor size on website.
 
-**File:** `sources/imaging_resource.py`, line 95
-**Severity:** LOW | **Confidence:** HIGH
-
-Previously deferred as C3-08. Re-confirming it remains present. The `rstrip("</")` strips individual characters `<`, `/`, and `"` from the end of values. A value ending in a double-quote (e.g., `3.5"`) would have it stripped.
-
-**Real-world risk:** LOW — Imaging Resource values rarely end in these characters, and the regex/HTML processing usually cleans up tag remnants before this line.
+**Verified:** `SIZE_RE.search('36.0×24.0mm')` returns None.
 
 ---
 
 ## Summary
 
-- DBG24-01 (LOW): TYPE_FRACTIONAL_RE fails on space+inch format — silent data loss
-- DBG24-02 (LOW): parse_sensor_field drops 1-inch sensor type — silent data loss
-- DBG24-03 (LOW): rstrip("</") strips chars not string — previously deferred as C3-08
+- DBG25-01 (MEDIUM): parse_sensor_field ValueError crash on malformed float input
+- DBG25-02 (MEDIUM): SIZE_RE does not match Unicode × or spaces

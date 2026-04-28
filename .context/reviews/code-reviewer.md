@@ -1,50 +1,72 @@
-# Code Review (Cycle 24) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 25) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-23 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-24 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-All previous findings confirmed addressed. C23-01 (body-category fallback tests) implemented and verified.
+All previous findings confirmed addressed. C24-01 through C24-05 implemented or deferred as documented.
 
 ## New Findings
 
-### CR24-01: `merge_camera_data` SpecDerived.size can become inconsistent with Spec.size after merge
+### CR25-01: SIZE_RE and PITCH_RE in pixelpitch.py are less robust than their equivalents in sources/__init__.py
 
-**File:** `pixelpitch.py`, lines 405-428
+**File:** `pixelpitch.py`, lines 42-43
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-When a new spec has `spec.size` set (not None) but `derived.size` is None (which shouldn't happen in normal flow but can occur if `derive_spec` was called with inconsistent inputs), the merge logic only preserves `derived.size` from existing when `new_spec.size is None`. However, the condition checks `new_spec.size` (the Spec field) rather than `new_spec.size` (the SpecDerived field). Due to Python's attribute resolution, `new_spec.size` refers to the SpecDerived field since it shadows `spec.size`.
+The Geizhals-specific regex patterns in `pixelpitch.py` are significantly less robust than the shared patterns in `sources/__init__.py`:
 
-This is actually correct by accident — `new_spec.size` on a SpecDerived object accesses `SpecDerived.size` (which shadows `Spec.size`). But there is a subtle inconsistency: after the merge, `new_spec.spec.size` may differ from `new_spec.size` if only one was preserved. This can happen when:
-- New data provides `spec.size` (the Spec attribute) but not `derived.size` (which is computed from `spec.size` or `spec.type`)
-- OR vice versa: `derived.size` is set but `spec.size` is None
+- `SIZE_RE = re.compile(r"([\d\.]+)x([\d\.]+)mm")` — only matches lowercase `x` with no spaces. Does not match Unicode multiplication sign `×` or spaces around `x`.
+- `SIZE_MM_RE` (sources/__init__.py line 65) — matches `x`, `×`, optional spaces around the separator, case-insensitive.
 
-The `derive_spec` function always keeps them in sync (sets `derived.size` from `spec.size` or `spec.type`), so in normal flows they stay consistent. But after merge, if only one path preserves, they can diverge.
+- `PITCH_RE = re.compile(r"([\d\.]+)µm")` — only matches micro sign (U+00B5) `µ`. Does not match Greek mu (U+03BC) `μ`, "microns", "um", or HTML entities.
+- `PITCH_UM_RE` (sources/__init__.py line 66) — matches all the above variants.
 
-**Concrete failure scenario:** A camera is fetched by source A with `spec.size=(35.9, 23.9)` and `derived.size=(35.9, 23.9)`. Source B provides the same camera but with `spec.size=None` and `derived.size=None`. After merge, both are preserved from existing, so they stay consistent. But if source B somehow has `spec.size=(35.9, 23.9)` but `derived.size=None` (an edge case in the data pipeline), the merge would NOT preserve `derived.size` from existing because `new_spec.size` (the SpecDerived field) would be None... wait, no — `new_spec.size` IS the SpecDerived field. If it's None, the preservation kicks in. So this is correct.
+These inconsistencies were verified by testing:
 
-Actually, on re-analysis: the merge is correct. The real concern is the shadowing — `SpecDerived.size` shadows `Spec.size`, making `spec.spec.size` vs `spec.size` confusing. This is a maintainability issue, not a correctness bug. Downgrading.
+```
+SIZE_RE.search('36.0×24.0mm')  → NO MATCH (Unicode ×)
+SIZE_MM_RE.search('36.0×24.0mm')  → ('36.0', '24.0')
+SIZE_RE.search('36.0 x 24.0mm')  → NO MATCH (spaces)
+SIZE_MM_RE.search('36.0 x 24.0mm')  → ('36.0', '24.0')
 
-**Revised Severity:** LOW | **Confidence:** MEDIUM
+PITCH_RE.search('5.12μm')  → NO MATCH (Greek mu)
+PITCH_UM_RE.search('5.12μm')  → ('5.12',)
+PITCH_RE.search('5.12 microns')  → NO MATCH
+PITCH_UM_RE.search('5.12 microns')  → ('5.12',)
+```
 
-**Fix:** Consider renaming `SpecDerived.size` to `SpecDerived.computed_size` or adding a property to clarify the relationship. This is purely a readability/maintainability concern.
+**Impact:** If Geizhals sensor text ever uses `×` instead of `x`, or `μ` instead of `µ`, or spaces around the dimension separator, the sensor size or pixel pitch is silently lost. The `parse_sensor_field()` function uses the limited patterns.
+
+**Concrete failure scenario:** Geizhals updates their SPA to render sensor fields with Unicode `×` (e.g., `"36.0×24.0mm"`). Every camera's sensor dimensions become `None`. The entire site shows "unknown" for sensor size.
+
+**Fix:** Replace `SIZE_RE` and `PITCH_RE` in `pixelpitch.py` with the shared patterns from `sources/__init__.py` (imported via `from sources import SIZE_MM_RE, PITCH_UM_RE`), or make them equally robust.
 
 ---
 
-### CR24-02: `_parse_fields` in imaging_resource.py uses `rstrip("</")` which strips individual chars, not the string
+### CR25-02: parse_sensor_field has no ValueError guard on float() calls
 
-**File:** `sources/imaging_resource.py`, line 95
-**Severity:** LOW | **Confidence:** HIGH
+**File:** `pixelpitch.py`, lines 556, 561
+**Severity:** MEDIUM | **Confidence:** MEDIUM
 
-The line `value = html_lib.unescape(value).strip().rstrip("</")` uses `rstrip("</")` which strips any trailing `<`, `/`, or `"` characters individually, not the string `"</"`. For example, a value ending in `3.5"` would have the `"` stripped. While in practice most values don't end in these characters, this is a latent bug that could silently mangle data.
+`parse_sensor_field()` calls `float(size_match.group(1))` and `float(pitch_match.group(1))` without try/except. The regex pattern `[\d\.]+` can match strings with multiple dots (e.g., `"36.0.1"`) which `float()` rejects with `ValueError`.
 
-This finding was previously deferred as C3-08 and is still present. Noting it again as it remains unfixed.
+Verified:
+```python
+SIZE_RE.search('36.0.1x24.0mm')  → matches group(1)="36.0.1"
+float("36.0.1")  → ValueError
+```
+
+**Impact:** A single malformed sensor field from Geizhals would raise `ValueError` from `parse_sensor_field` → `extract_specs` → `get_category`. The outer `try/except Exception` in `render_html` would catch it, but the **entire category** (all cameras) would be dropped, not just the single malformed row.
+
+**Concrete failure scenario:** A Geizhals HTML row has a corrupted sensor field with text like `"36.0.1x24.0mm"`. The ValueError propagates up and the entire category (e.g., all mirrorless cameras) is skipped, falling back to previous data.
+
+**Fix:** Wrap the float() calls in try/except ValueError, returning None for unparseable values. This is consistent with the defensive pattern used elsewhere (e.g., `sensor_size_from_type`, `parse_existing_csv`).
 
 ---
 
 ## Summary
 
-- CR24-01 (LOW): `SpecDerived.size` shadows `Spec.size` — maintainability concern (no correctness issue)
-- CR24-02 (LOW): `rstrip("</")` strips chars not string — previously deferred as C3-08, still present
+- CR25-01 (MEDIUM): SIZE_RE and PITCH_RE less robust than shared patterns — inconsistency
+- CR25-02 (MEDIUM): parse_sensor_field float() without ValueError guard — crash risk

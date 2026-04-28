@@ -1,7 +1,7 @@
 # Plan: Cycle 24 Findings — Sensor Type Regex Gaps
 
 **Created:** 2026-04-28
-**Status:** IN PROGRESS
+**Status:** COMPLETED
 **Source Reviews:** CRIT24-01, V24-02, TR24-01, ARCH24-01, DBG24-01, TE24-01, CRIT24-02, V24-03, TR24-02, DBG24-02, TE24-02, DOC24-01
 
 ---
@@ -36,9 +36,10 @@ It matches `1/2.3-inch` and `1/2.3"` but NOT `1/2.3 inch` (space before "inch").
    expect("space+inch suffix match", m5.group(1) if m5 else None, "1/2.3")
    ```
 
-### Verification
-- Gate tests (`python3 -m tests.test_parsers_offline`) must pass
-- New test case must pass
+### Verification — DONE
+- Gate tests (`python3 -m tests.test_parsers_offline`) — all 222 checks passed
+- New test cases pass (space+inch, no-space inch)
+- Commit: 4f667c0
 
 ---
 
@@ -74,9 +75,10 @@ result = pp.parse_sensor_field('CMOS 1"')
 expect("parse_sensor_field bare 1-inch type", result["type"], "1")
 ```
 
-### Verification
-- Gate tests must pass
-- New test case must pass
+### Verification — DONE
+- Gate tests — all 222 checks passed
+- New test cases pass (bare 1", 1-inch, 1 inch, fractional precedence)
+- Commit: 7576314
 
 ---
 
@@ -99,8 +101,9 @@ Update the comment to explicitly list all suffix alternatives:
 # "-inch", optional-space + "type", or "-type".
 ```
 
-### Verification
-- Visual inspection of comment
+### Verification — DONE
+- Comment updated to list all suffix alternatives explicitly
+- Commit: 7576314 (included in Task 2 commit)
 
 ---
 

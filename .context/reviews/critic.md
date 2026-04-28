@@ -1,46 +1,42 @@
-# Critic Review (Cycle 24) — Multi-Perspective Critique
+# Critic Review (Cycle 25) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-23 fixes
+**Scope:** Full repository re-review after cycles 1-24 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-C23-01 (body-category fallback tests) implemented and verified. All previous fixes stable.
+C24-01 (TYPE_FRACTIONAL_RE space+inch) and C24-02 (bare 1-inch type) implemented. All previous fixes stable.
 
 ## New Findings
 
-### CRIT24-01: TYPE_FRACTIONAL_RE does not match "1/x.y inch" (space before "inch")
+### CRIT25-01: SIZE_RE/PITCH_RE inconsistency between pixelpitch.py and sources/__init__.py
 
-**File:** `sources/__init__.py`, line 68
-**Severity:** LOW | **Confidence:** MEDIUM
+**File:** `pixelpitch.py`, lines 42-43 vs `sources/__init__.py`, lines 65-66
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The `TYPE_FRACTIONAL_RE` pattern is `(1/[\d.]+)(?:\"|inch|-inch|-type|\s*type|″)`. It matches `1/2.3-inch` and `1/2.3"` and `1/2.3 type` but NOT `1/2.3 inch` (space before "inch"). The pattern has `\s*type` but lacks the corresponding `\s*inch` alternative.
+The Geizhals path uses more restrictive regex patterns than the shared source patterns. `SIZE_RE` only matches lowercase `x` (not `×` or spaces), and `PITCH_RE` only matches micro sign `µ` (not Greek mu `μ` or "microns"). If Geizhals changes their HTML format, these parsers silently fail while the other source parsers handle the same data correctly.
 
-**Concrete failure scenario:** If a source page uses the format `1/2.3 inch` (with a space), the sensor type is not extracted, and `sensor_size_from_type` is never called. The camera would have `type=None` and `size=None` unless explicit mm dimensions are also present.
+This is a consistency and robustness concern: the same type of data (sensor dimensions, pixel pitch) is parsed with different levels of robustness depending on which source it comes from.
 
-**Real-world risk:** LOW — all current sources use `1/2.3"` (quote) or `1/2.3-inch` (hyphenated) format. The space-before-inch format is uncommon but valid English.
-
-**Fix:** Add `\s*inch` alternative to the regex: `(1/[\d.]+)(?:\"|\s*inch|-inch|-type|\s*type|″)`
+**Fix:** Use the shared patterns from `sources/__init__.py` in `parse_sensor_field()`, or upgrade the local patterns to match the robustness of the shared ones.
 
 ---
 
-### CRIT24-02: parse_sensor_field misses bare 1-inch sensor type ("1"")
+### CRIT25-02: parse_sensor_field missing ValueError guard — entire category at risk
 
-**File:** `pixelpitch.py`, lines 529-558
-**Severity:** LOW | **Confidence:** HIGH
+**File:** `pixelpitch.py`, lines 556, 561
+**Severity:** MEDIUM | **Confidence:** MEDIUM
 
-The `parse_sensor_field` function uses `TYPE_FRACTIONAL_RE` to extract sensor types. This regex only matches fractional-inch formats (`1/x.y` suffix), not the bare 1-inch format (`1"`). When a Geizhals sensor field contains `CMOS 1"` without explicit mm dimensions, the type is not extracted, and no sensor size can be computed.
+If a malformed sensor field produces a regex match that `float()` cannot parse (e.g., "36.0.1"), a `ValueError` propagates up and causes the entire Geizhals category to be dropped. The outer `try/except Exception` in `render_html` catches the error, but the result is that all cameras in that category are lost for that deployment.
 
-**Concrete failure scenario:** A Geizhals entry with sensor text `CMOS 1"` (no mm dims) would produce `type=None, size=None, pitch=None`. The camera appears with "unknown" sensor size on the website.
+Other parsing functions in the codebase (e.g., `parse_existing_csv`, `sensor_size_from_type`) use try/except to gracefully handle unparseable values. This function should follow the same pattern.
 
-**Real-world risk:** LOW — Geizhals shopping site entries typically include explicit mm dimensions. But if a 1-inch sensor camera entry ever lacks mm dimensions, the sensor data is silently lost.
-
-**Fix:** Add a separate regex or check for bare 1-inch format (`1"` or `1-inch`) after the `TYPE_FRACTIONAL_RE` check fails.
+**Fix:** Add try/except ValueError around the float() calls in parse_sensor_field.
 
 ---
 
 ## Summary
 
-- CRIT24-01 (LOW): TYPE_FRACTIONAL_RE misses `1/x.y inch` (space before inch)
-- CRIT24-02 (LOW): parse_sensor_field misses bare 1-inch sensor type
+- CRIT25-01 (MEDIUM): SIZE_RE/PITCH_RE inconsistency — less robust than shared patterns
+- CRIT25-02 (MEDIUM): parse_sensor_field ValueError guard missing — category-wide data loss risk

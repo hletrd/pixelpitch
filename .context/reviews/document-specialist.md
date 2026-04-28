@@ -1,32 +1,26 @@
-# Document Specialist Review (Cycle 24) — Doc/Code Mismatches
+# Document Specialist Review (Cycle 25) — Doc/Code Mismatches
 
 **Reviewer:** document-specialist
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-23 fixes
+**Scope:** Full repository re-review after cycles 1-24 fixes
 
 ## Previous Findings Status
 
-All previously identified doc/code mismatches addressed. No regressions.
+DOC24-01 (TYPE_FRACTIONAL_RE comment) addressed in C24-04.
 
 ## New Findings
 
-### DOC24-01: TYPE_FRACTIONAL_RE comment says "ASCII/Unicode quotes" but also matches -inch and -type suffixes
+### DOC25-01: parse_sensor_field docstring does not mention Unicode × or space handling limitations
 
-**File:** `pixelpitch.py`, lines 47-49
+**File:** `pixelpitch.py`, lines 530-539
 **Severity:** LOW | **Confidence:** MEDIUM
 
-The comment on lines 47-49 says:
-```
-# Canonical fractional-inch sensor type regex — matches "1/x.y" followed by
-# any recognized suffix (ASCII/Unicode quotes, "inch", "-type", etc.).
-```
+The `parse_sensor_field()` docstring shows examples like `"36.0x24.0mm"` and `"6.94µm Pixelgröße"` which only use ASCII `x` and micro sign `µ`. The docstring does not mention that Unicode `×`, Greek mu `μ`, or spaces around `x` are not supported. If the regex is later upgraded to match `SIZE_MM_RE`/`PITCH_UM_RE` behavior, the docstring should be updated to reflect the expanded format support.
 
-While the comment does mention "inch" and "-type", it labels them as "etc." and the primary focus is on quotes. The regex also matches `\s*type` (space+type) which is not mentioned. This is a minor documentation precision issue.
-
-**Fix:** Update comment to explicitly list all suffix alternatives.
+**Fix:** If/when the regex patterns are upgraded, update the docstring to show additional supported formats.
 
 ---
 
 ## Summary
 
-- DOC24-01 (LOW): TYPE_FRACTIONAL_RE comment could more precisely list all matched suffixes
+- DOC25-01 (LOW): parse_sensor_field docstring does not mention format limitations

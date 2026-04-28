@@ -1,55 +1,55 @@
-# Test Engineer Review (Cycle 24) — Test Coverage, Flaky Tests, TDD
+# Test Engineer Review (Cycle 25) — Test Coverage, Flaky Tests, TDD
 
 **Reviewer:** test-engineer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-23 fixes
+**Scope:** Full repository re-review after cycles 1-24 fixes
 
 ## Previous Findings Status
 
-C23-01 (body-category fallback tests) implemented and verified. All test assertions pass.
+C24-01 (TYPE_FRACTIONAL_RE space+inch test) and C24-02 (bare 1-inch test) implemented and passing.
 
 ## New Findings
 
-### TE24-01: No test for TYPE_FRACTIONAL_RE "1/x.y inch" (space+inch) gap
-
-**File:** `tests/test_parsers_offline.py`, `test_gsmarena_unicode_quotes()`
-**Severity:** LOW | **Confidence:** MEDIUM
-
-The existing `test_gsmarena_unicode_quotes` tests TYPE_FRACTIONAL_RE with ASCII quotes, Unicode quotes, `-inch` suffix, and bare number (no suffix). But it does NOT test the space+inch format (`1/2.3 inch`) which is a gap in the regex. Adding a test would document the expected behavior and catch regressions if the regex is updated.
-
-**Fix:** Add test case:
-```python
-m5 = TYPE_FRACTIONAL_RE.search('1/2.3 inch')
-expect("space+inch suffix match", m5.group(1) if m5 else None, "1/2.3")
-```
-(This test would FAIL until the regex is fixed, which is appropriate — it documents the gap.)
-
-### TE24-02: No test for parse_sensor_field with bare 1-inch format
+### TE25-01: No test for SIZE_RE / PITCH_RE inconsistency with shared patterns
 
 **File:** `tests/test_parsers_offline.py`
-**Severity:** LOW | **Confidence:** MEDIUM
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-`parse_sensor_field('CMOS 1"')` returns `{type: None, size: None, pitch: None}` — the 1-inch sensor type is silently lost. There is no test for this case. If the 1-inch format extraction is added, a test should verify it.
+There is no test verifying that `parse_sensor_field` handles Unicode × or Greek mu μ. The existing test `test_parse_sensor_field` only tests with ASCII `x` and micro sign `µ`. If `SIZE_RE` is upgraded to match `SIZE_MM_RE` behavior, tests should verify:
 
-**Fix:** Add test case:
 ```python
-from pixelpitch import parse_sensor_field
-result = parse_sensor_field('CMOS 1"')
-expect("parse_sensor_field bare 1-inch type", result["type"], "1")
-```
-(This test would FAIL until parse_sensor_field is fixed.)
+# SIZE_RE handles × and spaces
+result1 = pp.parse_sensor_field('CMOS 36.0×24.0mm')
+expect("SIZE_RE handles ×", result1["size"], (36.0, 24.0), tol=0.01)
 
-### TE24-03: No test for _parse_fields rstrip("</") data mangling
+result2 = pp.parse_sensor_field('CMOS 36.0 x 24.0 mm')
+expect("SIZE_RE handles spaces", result2["size"], (36.0, 24.0), tol=0.01)
+
+# PITCH_RE handles Greek mu
+result3 = pp.parse_sensor_field('CMOS 5.12μm')
+expect("PITCH_RE handles Greek mu", result3["pitch"], 5.12, tol=0.01)
+```
+
+These tests would FAIL with current code, correctly documenting the gap.
+
+### TE25-02: No test for ValueError guard in parse_sensor_field
 
 **File:** `tests/test_parsers_offline.py`
-**Severity:** LOW | **Confidence:** LOW
+**Severity:** MEDIUM | **Confidence:** MEDIUM
 
-The `_parse_fields` function in `imaging_resource.py` uses `rstrip("</")` which strips individual chars rather than the string `"</"`. No test exists for this. A value ending in `"` (double-quote) or `/` would have those chars silently stripped. This was previously deferred as C3-08.
+No test exists for the case where `float()` is called on a regex match that produces an unparseable string. If a ValueError guard is added, a test should verify it:
+
+```python
+# Malformed dimension string — should not crash
+result = pp.parse_sensor_field('CMOS 36.0.1x24.0mm')
+expect("malformed size returns None for size", result["size"], None)
+```
+
+This test would CRASH with current code (ValueError), correctly documenting the bug.
 
 ---
 
 ## Summary
 
-- TE24-01 (LOW): No test for TYPE_FRACTIONAL_RE space+inch gap
-- TE24-02 (LOW): No test for parse_sensor_field bare 1-inch format
-- TE24-03 (LOW): No test for _parse_fields rstrip data mangling (previously deferred as C3-08)
+- TE25-01 (MEDIUM): No test for SIZE_RE/PITCH_RE Unicode/space handling gap
+- TE25-02 (MEDIUM): No test for ValueError guard in parse_sensor_field

@@ -1,29 +1,33 @@
-# Architect Review (Cycle 24) — Architectural/Design Risks
+# Architect Review (Cycle 25) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-23 fixes
+**Scope:** Full repository re-review after cycles 1-24 fixes
 
 ## Previous Findings Status
 
-All previously identified architectural concerns remain deferred (LOW severity). C22-05 (ad-hoc field preservation) and F32 (monolith) are tracked with exit criteria.
+All previously identified architectural concerns remain deferred (LOW severity). ARCH24-01 (TYPE_FRACTIONAL_RE evolution) addressed by adding space+inch and bare 1-inch support.
 
 ## New Findings
 
-### ARCH24-01: TYPE_FRACTIONAL_RE is a shared regex with evolving requirements
+### ARCH25-01: Duplicate regex patterns with different robustness — DRY violation
 
-**File:** `sources/__init__.py`, line 68
-**Severity:** LOW | **Confidence:** MEDIUM
+**File:** `pixelpitch.py` lines 42-43 vs `sources/__init__.py` lines 65-66
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The `TYPE_FRACTIONAL_RE` regex is imported by both `pixelpitch.py` (line 50) and `gsmarena.py` (line 24). It was designed for fractional-inch formats (`1/x.y"`) but is now also used for bare 1-inch format detection (which it doesn't support). As new source formats are encountered, this single regex accumulates more suffix alternatives, making it harder to reason about.
+The project has two sets of regex patterns for the same conceptual data (sensor dimensions, pixel pitch):
 
-**Current pattern:** `(1/[\d.]+)(?:\"|inch|-inch|-type|\s*type|″)`
-**Gap:** Missing `\s*inch` (space before "inch") and bare `1"` (1-inch sensor) support.
+1. `pixelpitch.py`: `SIZE_RE`, `PITCH_RE` — used by Geizhals parsing (more restrictive)
+2. `sources/__init__.py`: `SIZE_MM_RE`, `PITCH_UM_RE` — used by other source modules (more robust)
 
-**Fix:** Either extend the regex with `\s*inch` alternative, or split into two patterns: one for fractional-inch (1/x.y") and one for bare sensor formats (1"). The latter is a more maintainable approach if more formats are expected.
+This violates DRY. As the sources have evolved, the shared patterns in `sources/__init__.py` have been improved to handle more edge cases (Unicode ×, Greek mu, spaces, multiple suffix variants), while the Geizhals-specific patterns in `pixelpitch.py` have not been updated to match.
+
+The `TYPE_FRACTIONAL_RE` pattern was already centralized (imported from `sources/__init__.py` into `pixelpitch.py`), but `SIZE_RE` and `PITCH_RE` were not similarly centralized.
+
+**Fix:** Import `SIZE_MM_RE` and `PITCH_UM_RE` from `sources` in `pixelpitch.py` (replacing the local `SIZE_RE` and `PITCH_RE`), or centralize all patterns in `sources/__init__.py` and import them. This follows the same pattern already used for `TYPE_FRACTIONAL_RE`.
 
 ---
 
 ## Summary
 
-- ARCH24-01 (LOW): TYPE_FRACTIONAL_RE regex accumulating alternatives — consider splitting
+- ARCH25-01 (MEDIUM): Duplicate regex patterns with different robustness — DRY violation

@@ -1,8 +1,8 @@
-# Tracer Review (Cycle 24) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 25) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-23 fixes
+**Scope:** Full repository re-review after cycles 1-24 fixes
 
 ## Previous Findings Status
 
@@ -10,41 +10,42 @@ All previously traced flows confirmed still correct. No regressions.
 
 ## New Findings
 
-### TR24-01: TYPE_FRACTIONAL_RE space+inch gap — traced data flow impact
+### TR25-01: ValueError in parse_sensor_field traced — entire category lost
 
-**File:** `sources/__init__.py` line 68, consumed by `pixelpitch.py` line 544, `gsmarena.py` line 135
-**Severity:** LOW | **Confidence:** HIGH
-
-**Causal trace:**
-1. A source page contains sensor text with format `1/2.3 inch` (space before "inch")
-2. TYPE_FRACTIONAL_RE.search() returns None (no match)
-3. In `gsmarena._phone_to_spec()`: `fmt_match = TYPE_FRACTIONAL_RE.search(main)` returns None → `sensor_type = None`
-4. `size = PHONE_TYPE_SIZE.get(None)` → `size = None`
-5. Camera has no sensor size → lower data quality, shows "unknown" on website
-
-**Alternative hypothesis:** The same sensor type might also appear in the Geizhals "Typ" field, but GSMArena doesn't have a "Typ" field, so there's no fallback.
-
-**Competing hypothesis:** This format simply doesn't appear in any current source. LOW real-world risk.
-
-### TR24-02: parse_sensor_field 1-inch gap — traced data flow impact
-
-**File:** `pixelpitch.py` lines 529-558, consumed by `extract_specs()` line 593
-**Severity:** LOW | **Confidence:** HIGH
+**File:** `pixelpitch.py` lines 556/561 → `extract_specs` line 598 → `get_category` line 713 → `render_html` lines 862-867
+**Severity:** MEDIUM | **Confidence:** MEDIUM
 
 **Causal trace:**
-1. Geizhals sensor field contains `CMOS 1"` without explicit mm dimensions
-2. `parse_sensor_field()` calls `TYPE_FRACTIONAL_RE.search()` → no match (requires `1/x.y` prefix)
-3. `SIZE_RE.search()` also returns None (no mm dimensions in text)
-4. Result: `{type: None, size: None, pitch: None}`
-5. Camera enters `derive_spec()` with `spec.size=None, spec.type=None`
-6. `sensor_size_from_type(None)` returns None
-7. Camera has no sensor data at all — shows "unknown" on website
+1. Geizhals HTML row has a corrupted sensor field text containing something like `"36.0.1x24.0mm"` (multi-dot value)
+2. `parse_sensor_field()` → `SIZE_RE.search()` matches `"36.0.1"` as group(1)
+3. `float("36.0.1")` raises `ValueError`
+4. ValueError propagates: `parse_sensor_field` → `extract_specs` → `get_category` → `render_html`
+5. `render_html` catches `Exception` and drops the entire category: `category_specs[category] = []`
+6. All cameras in that category are lost for this deployment cycle
 
-**Mitigating factor:** Geizhals typically includes mm dimensions, making this unlikely.
+**Mitigating factor:** The outer `try/except Exception` in `render_html` prevents total failure. Previous data is preserved via the CSV merge. But the current cycle's Geizhals data for that category is completely lost.
+
+**Competing hypothesis:** Geizhals HTML is well-structured and unlikely to produce multi-dot numbers. But defensive coding is warranted since the consequence is category-wide data loss.
+
+**Fix:** Add try/except ValueError in parse_sensor_field around float() calls, returning None for unparseable values (consistent with `parse_existing_csv` and `sensor_size_from_type` patterns).
+
+### TR25-02: SIZE_RE × gap traced — silent data loss on format change
+
+**File:** `pixelpitch.py` line 42, consumed by `parse_sensor_field` line 554
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+**Causal trace:**
+1. Geizhals sensor text contains `"CMOS 36.0×24.0mm"` (Unicode × instead of ASCII x)
+2. `SIZE_RE.search()` returns None (only matches lowercase `x`)
+3. `parse_sensor_field()` returns `size=None`
+4. `derive_spec()` tries `sensor_size_from_type(type)` but type may also be None
+5. Camera has `size=None, area=None, pitch=None` — shows "unknown" on website
+
+**Alternative hypothesis:** Geizhals currently uses ASCII `x` and micro sign `µ` in their German-language site. A format change is unlikely but possible.
 
 ---
 
 ## Summary
 
-- TR24-01 (LOW): TYPE_FRACTIONAL_RE space+inch gap traced — leads to missing sensor size
-- TR24-02 (LOW): parse_sensor_field 1-inch gap traced — leads to all-unknown sensor data
+- TR25-01 (MEDIUM): ValueError in parse_sensor_field → entire category lost
+- TR25-02 (MEDIUM): SIZE_RE × gap → silent data loss on Geizhals format change

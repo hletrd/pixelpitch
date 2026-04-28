@@ -1,89 +1,64 @@
-# Aggregate Review (Cycle 24) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 25) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-23 Status
+## Cycle 1-24 Status
 
-All previous fixes confirmed still working. No regressions. Gate tests pass (123/123 checks). C23-01 (body-category fallback tests) implemented and verified.
+All previous fixes confirmed still working. No regressions. Gate tests pass (222/222 checks). C24-01 (TYPE_FRACTIONAL_RE space+inch) and C24-02 (bare 1-inch type) implemented and verified.
 
-## Cross-Agent Agreement Matrix (Cycle 24 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 25 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| TYPE_FRACTIONAL_RE misses "1/x.y inch" (space+inch) | critic, verifier, tracer, architect, debugger, test-engineer | LOW |
-| parse_sensor_field misses bare 1-inch sensor type ("1") | critic, verifier, tracer, debugger, test-engineer | LOW |
-| _parse_fields rstrip("</") strips chars not string | code-reviewer, debugger | LOW (previously deferred C3-08) |
-| TYPE_FRACTIONAL_RE comment imprecise | document-specialist | LOW |
-| SpecDerived.size shadows Spec.size | code-reviewer | LOW (maintainability, not correctness) |
+| SIZE_RE/PITCH_RE less robust than shared patterns | code-reviewer, critic, verifier, tracer, architect, debugger, test-engineer | MEDIUM |
+| parse_sensor_field ValueError crash on malformed float | code-reviewer, critic, verifier, tracer, debugger, test-engineer | MEDIUM |
+| parse_sensor_field docstring format limitations | document-specialist | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C24-01: TYPE_FRACTIONAL_RE does not match "1/x.y inch" (space before "inch")
+### C25-01: SIZE_RE and PITCH_RE in pixelpitch.py are less robust than shared patterns in sources/__init__.py
 
-**Sources:** CRIT24-01, V24-02, TR24-01, ARCH24-01, DBG24-01, TE24-01
-**Severity:** LOW | **Confidence:** HIGH (6-agent consensus)
+**Sources:** CR25-01, CRIT25-01, V25-02, V25-03, TR25-02, ARCH25-01, DBG25-02, TE25-01
+**Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
 
-The `TYPE_FRACTIONAL_RE` pattern in `sources/__init__.py` line 68 is:
-```
-(1/[\d.]+)(?:\"|inch|-inch|-type|\s*type|″)
-```
+The Geizhals-specific regex patterns in `pixelpitch.py` are significantly less robust than the shared patterns in `sources/__init__.py`:
 
-It has `inch` (no space) and `-inch` but lacks `\s*inch` (space before "inch"). The pattern has `\s*type` but not the corresponding `\s*inch`.
+- `SIZE_RE` (pixelpitch.py line 42): only matches ASCII `x` with no spaces. Does not match Unicode `×` or spaces around separator.
+- `SIZE_MM_RE` (sources/__init__.py line 65): matches `x`, `×`, optional spaces, case-insensitive.
 
-**Impact:** If a source page uses `1/2.3 inch` format, the sensor type is not extracted. Camera shows "unknown" sensor size.
+- `PITCH_RE` (pixelpitch.py line 43): only matches micro sign `µ` (U+00B5). Does not match Greek mu `μ` (U+03BC), "microns", "um", or HTML entities.
+- `PITCH_UM_RE` (sources/__init__.py line 66): matches all the above variants.
 
-**Real-world risk:** LOW — all current sources use `1/2.3"` (quote) or `1/2.3-inch` (hyphenated).
+This is a DRY violation — `TYPE_FRACTIONAL_RE` was already centralized (imported from sources), but `SIZE_RE` and `PITCH_RE` were not.
 
-**Fix:** Change `inch` to `\s*inch` in the regex pattern, and add a test case.
+**Impact:** If Geizhals sensor text uses `×` instead of `x`, or `μ` instead of `µ`, or spaces around dimension separator, sensor data is silently lost.
 
----
-
-### C24-02: parse_sensor_field does not extract bare 1-inch sensor type ("1"")
-
-**Sources:** CRIT24-02, V24-03, TR24-02, DBG24-02, TE24-02
-**Severity:** LOW | **Confidence:** HIGH (5-agent consensus)
-
-`parse_sensor_field()` in `pixelpitch.py` uses `TYPE_FRACTIONAL_RE` which only matches fractional-inch formats (`1/x.y` prefix). The bare 1-inch format (`1"`) is not matched, even though `TYPE_SIZE` has a `"1"` key with value `(13.2, 8.8)`.
-
-**Impact:** Camera with 1-inch sensor and no explicit mm dimensions in Geizhals data shows "unknown" sensor size.
-
-**Real-world risk:** LOW — Geizhals typically includes mm dimensions.
-
-**Fix:** Add a separate check after `TYPE_FRACTIONAL_RE` for bare 1-inch format. Add a test case.
+**Fix:** Import `SIZE_MM_RE` and `PITCH_UM_RE` from `sources` in `pixelpitch.py`, replacing the local `SIZE_RE` and `PITCH_RE`. Follow the same pattern already used for `TYPE_FRACTIONAL_RE`. Update `parse_sensor_field()` and `extract_specs()` to use the imported patterns. Update the `MPIX_RE` in pixelpitch.py similarly (it only matches "Megapixel", not "MP" or "Mega pixels"). Add tests for the expanded format support.
 
 ---
 
-### C24-03: _parse_fields rstrip("</") strips individual chars, not the string
+### C25-02: parse_sensor_field has no ValueError guard on float() calls
 
-**Sources:** CR24-02, DBG24-03, TE24-03
-**Severity:** LOW | **Confidence:** HIGH
+**Sources:** CR25-02, CRIT25-02, V25-04, TR25-01, DBG25-01, TE25-02
+**Severity:** MEDIUM | **Confidence:** MEDIUM (6-agent consensus)
 
-Previously deferred as C3-08. Still present. `rstrip("</")` strips any trailing `<`, `/`, or `"` characters, not the string `"</"`. A value ending in `"` would have it stripped.
+`parse_sensor_field()` calls `float(size_match.group(1))` and `float(pitch_match.group(1))` without try/except. The regex `[\d\.]+` allows multiple dots, and `float("36.0.1")` raises `ValueError`. This exception propagates up through `extract_specs` → `get_category` → `render_html`, where the outer try/except drops the entire Geizhals category.
 
-**Status:** Remains deferred (C3-08). Adding to deferred list for continuity.
+**Impact:** A single malformed sensor field from Geizhals HTML can cause all cameras in that category to be lost for the deployment cycle.
+
+**Fix:** Add try/except ValueError around float() calls in `parse_sensor_field()`, returning None for unparseable values. Add a test for the malformed input case.
 
 ---
 
-### C24-04: TYPE_FRACTIONAL_RE comment could be more precise
+### C25-03: parse_sensor_field docstring does not mention format limitations
 
-**Sources:** DOC24-01
+**Sources:** DOC25-01
 **Severity:** LOW | **Confidence:** MEDIUM
 
-The comment on pixelpitch.py lines 47-49 mentions "ASCII/Unicode quotes" as primary focus and "inch", "-type" as "etc." The `\s*type` alternative is not mentioned.
+The docstring examples only show ASCII `x` and micro sign `µ`. If the regex is upgraded, the docstring should be updated.
 
-**Fix:** Update comment to list all suffix alternatives explicitly.
-
----
-
-### C24-05: SpecDerived.size shadows Spec.size — maintainability concern
-
-**Sources:** CR24-01
-**Severity:** LOW | **Confidence:** MEDIUM
-
-`SpecDerived.size` shadows `Spec.size`, making `spec.size` vs `spec.spec.size` confusing. After merge, both paths are preserved correctly (verified by testing). This is purely a readability/maintainability concern, not a correctness bug.
-
-**Fix:** Consider renaming to clarify the relationship in a future refactor. Not urgent.
+**Status:** Deferred — will be addressed as part of C25-01 fix (regex upgrade implies docstring update).
 
 ---
 
@@ -93,8 +68,7 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 5 (5 LOW)
-- Cross-agent consensus findings (3+ agents): 2 (C24-01, C24-02)
-- 0 MEDIUM findings
-- 0 HIGH findings
-- 5 LOW findings: TYPE_FRACTIONAL_RE gap (6-agent), 1-inch type gap (5-agent), rstrip (3-agent, previously deferred), comment precision (1-agent), SpecDerived shadowing (1-agent)
+- Total distinct new findings: 3 (2 MEDIUM, 1 LOW)
+- Cross-agent consensus findings (3+ agents): 2 (C25-01: 8-agent, C25-02: 6-agent)
+- 2 MEDIUM findings: SIZE_RE/PITCH_RE inconsistency, ValueError guard missing
+- 1 LOW finding: docstring limitations (deferred with C25-01)
