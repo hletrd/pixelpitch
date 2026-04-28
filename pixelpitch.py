@@ -14,7 +14,7 @@ import re
 import sys
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from math import sqrt
 from pathlib import Path
@@ -652,17 +652,7 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
         ):
             years = [s.year for s in grouped_specs if s.year]
             year = min(years) if years else None
-            rest.append(
-                Spec(
-                    unified_name,
-                    ref.category,
-                    ref.type,
-                    ref.size,
-                    ref.pitch,
-                    ref.mpix,
-                    year,
-                )
-            )
+            rest.append(replace(ref, name=unified_name, year=year))
         else:
             rest.extend(grouped_specs)
 
@@ -671,9 +661,7 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
         match = PARENS_RE.search(name)
         if match:
             name = name[: match.start()].strip()
-        return Spec(
-            name, spec.category, spec.type, spec.size, spec.pitch, spec.mpix, spec.year
-        )
+        return replace(spec, name=name)
 
     rest = list(map(remove_parens, rest))
 
