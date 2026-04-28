@@ -419,6 +419,35 @@ def test_openmvg_bom():
         expect("BOM: category", specs[0].category, "dslr")
 
 
+def test_openmvg_negative_dimensions():
+    """Verify openMVG fetch rejects negative sensor dimensions."""
+    section("openMVG negative dimension validation")
+    csv_body = (
+        "CameraMaker,CameraModel,SensorDescription,SensorWidth(mm),"
+        "SensorHeight(mm),SensorWidth(pixels),SensorHeight(pixels)\n"
+        'Canon,EOS Neg,"-1.0 x -1.0 mm",-1.0,-1.0,100,100\n'
+    )
+    with unittest.mock.patch.object(openmvg, 'http_get', return_value=csv_body):
+        specs = openmvg.fetch()
+    if specs:
+        expect("negative dimensions rejected", specs[0].size, None)
+    else:
+        expect("negative dimensions: 0 records", True, True)
+
+    # Zero dimensions should also be rejected (bool(0.0) is False)
+    csv_zero = (
+        "CameraMaker,CameraModel,SensorDescription,SensorWidth(mm),"
+        "SensorHeight(mm),SensorWidth(pixels),SensorHeight(pixels)\n"
+        'Canon,EOS Zero,"0 x 0 mm",0.0,0.0,0,0\n'
+    )
+    with unittest.mock.patch.object(openmvg, 'http_get', return_value=csv_zero):
+        specs_zero = openmvg.fetch()
+    if specs_zero:
+        expect("zero dimensions rejected", specs_zero[0].size, None)
+    else:
+        expect("zero dimensions: 0 records", True, True)
+
+
 # --------------------------------------------------------------------------
 # Merge logic: feeding multi-source CSV records through merge_camera_data
 
@@ -1354,6 +1383,7 @@ def main():
     test_merge_year_change_log()
     test_sony_dsc_hyphen_normalisation()
     test_mpix_re_format_handling()
+    test_openmvg_negative_dimensions()
 
     print("\n" + ("=" * 60))
     if _failures:

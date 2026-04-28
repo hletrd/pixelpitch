@@ -94,7 +94,7 @@ def fetch(limit: Optional[int] = None) -> list[Spec]:
         # If both mm dims and pixel dims known, the area*mpix derivation in
         # pixelpitch.derive_spec will produce the correct pitch — no need to
         # set Spec.pitch directly here.
-        size = (sw, sh) if sw and sh else None
+        size = (sw, sh) if sw and sh and sw > 0 and sh > 0 else None
         name = normalise_name(f"{maker} {model}")
 
         # The openMVG dataset has no body-type field; classify by sensor size
