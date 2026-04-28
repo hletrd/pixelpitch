@@ -14,10 +14,11 @@ cameras. Cameras that don't match any DSLR pattern default to "mirrorless"
 because the majority of modern interchangeable-lens cameras are mirrorless.
 
 Known heuristic limitations: The DSLR regex covers major brands (Canon EOS
-xD/xxD/xxxD, Nikon D, Pentax K, Sigma SD, Sony DSLR-A) but may miss
-obscure DSLR brands or unusual naming patterns. Any misclassifications may
-produce duplicate entries when the same camera appears in Geizhals data with
-the correct category.
+xD/xxD/xxxD, Nikon D/Df, Pentax K-mount, Sigma SD, Sony DSLR-A) but may miss
+obscure DSLR brands or unusual naming patterns. Pentax K-mount covers both
+hyphenated (K-1, K-30) and bare (K3, KP, KF, K-r) naming variants.
+Any misclassifications may produce duplicate entries when the same camera
+appears in Geizhals data with the correct category.
 """
 
 from __future__ import annotations
