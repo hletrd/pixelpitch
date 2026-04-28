@@ -345,7 +345,7 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
                         year = y
                 except ValueError:
                     pass
-            matched_sensors = sensors_str.split(";") if sensors_str else []
+            matched_sensors = [s for s in sensors_str.split(";") if s] if sensors_str else []
 
             spec = Spec(name=name, category=category, type=type_str,
                         size=size, pitch=pitch, mpix=mpix, year=year)
