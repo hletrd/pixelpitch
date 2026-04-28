@@ -1,7 +1,7 @@
 # Plan: Cycle 23 Findings — Body Category Fallback Tests
 
 **Created:** 2026-04-28
-**Status:** PENDING
+**Status:** COMPLETED
 **Source Reviews:** TE23-01 (test-engineer)
 
 ---
@@ -47,9 +47,10 @@ expect("IR body category unknown fallback",
        imaging_resource._body_category("", "1/2.3", ""), "fixed")
 ```
 
-### Verification
-- Gate tests (`python3 -m tests.test_parsers_offline`) must pass with new tests
-- Each branch produces the expected category
+### Verification — DONE
+- Gate tests (`python3 -m tests.test_parsers_offline`) — all checks passed
+- Each branch produces the expected category (confirmed)
+- Commit: 941662e
 
 ---
 
