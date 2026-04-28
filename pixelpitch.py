@@ -1035,7 +1035,18 @@ def fetch_source(name: str, limit: Optional[int], output_dir: Path) -> None:
 
     module = importlib.import_module(SOURCE_REGISTRY[name])
     print(f"Fetching from source '{name}' (limit={limit})...")
-    raw_specs = module.fetch(limit=limit) if limit is not None else module.fetch()
+
+    # Pass source-specific keyword arguments from environment variables.
+    # GSMArena supports max_pages_per_brand (controls how deep each brand
+    # listing is paginated). The CI workflow sets GSMARENA_MAX_PAGES_PER_BRAND.
+    kwargs: dict = {}
+    if limit is not None:
+        kwargs["limit"] = limit
+    if name == "gsmarena":
+        max_pages = int(os.environ.get("GSMARENA_MAX_PAGES_PER_BRAND", "2"))
+        kwargs["max_pages_per_brand"] = max_pages
+
+    raw_specs = module.fetch(**kwargs)
 
     derived = derive_specs(raw_specs)
     derived = sorted_by(derived, "pitch")
