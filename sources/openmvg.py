@@ -44,7 +44,8 @@ _DSLR_NAME_RE = re.compile(
     r"Canon\s+EOS[-\s]+\d+D"     # Canon EOS 5D, 6D, 7D, 1D, 250D, 800D, 850D, etc.
     r"|Canon\s+EOS[-\s]+\d+Ds"   # Canon EOS-1Ds
     r"|Nikon\s+D\d{1,4}"          # Nikon D850, D5, D500, etc.
-    r"|Pentax\s+K[-\s]?\d+[A-Za-z]*"  # Pentax K-1, K3, KP, KF, K-r, K100D, etc.
+    r"|Nikon\s+Df"                # Nikon Df (retro DSLR, no digit)
+    r"|Pentax\s+K[-\s]?[\dA-Za-z]+[A-Za-z]*"  # Pentax K-1, K3, KP, KF, K-r, K100D, etc.
     r"|Pentax\s+\d{1,3}[DZ]"     # Pentax 645D, 645Z
     r"|Sigma\s+SD\d+"            # Sigma SD1, SD9, SD10, SD14, SD15, etc.
     r"|Sony\s+DSLR-A\d+"          # Sony DSLR-A900, A700, etc.
