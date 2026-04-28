@@ -21,7 +21,7 @@ import re
 import time
 from typing import Optional
 
-from . import Spec, http_get, normalise_name, parse_year, TYPE_FRACTIONAL_RE
+from . import Spec, http_get, normalise_name, parse_year, TYPE_FRACTIONAL_RE, PITCH_UM_RE as PITCH_RE
 
 # Import the central sensor-size lookup table (now includes phone formats)
 from pixelpitch import TYPE_SIZE as SENSOR_TYPE_SIZE
@@ -47,7 +47,6 @@ LENS_RE = re.compile(
     r"[^,]*?(?P<role>wide|ultrawide|ultra ?wide|telephoto|tele|periscope|macro|depth)?",
     re.IGNORECASE,
 )
-PITCH_RE = re.compile(r"([\d.]+)\s*(?:µm|μm|um)", re.IGNORECASE)
 
 # fractional inch → (width_mm, height_mm). Uses the central TYPE_SIZE table
 # from pixelpitch which now includes phone-only formats.
@@ -118,7 +117,7 @@ def _phone_to_spec(name: str, fields: dict[str, str]) -> Optional[Spec]:
         # Some pages have the lens info under e.g. "Triple" without a
         # "Main Camera" row. Fall back to scanning all fields.
         for k, v in fields.items():
-            if "MP" in v and re.search(r"\d+\s*MP.*?µm", v):
+            if "MP" in v and PITCH_RE.search(v):
                 cam = v
                 break
 

@@ -61,7 +61,11 @@ def http_get(url: str, timeout: float = 30.0, retries: int = 3) -> Optional[str]
     return None
 
 
-# Helper used by several sources
+# Helper regex patterns used by several sources — single source of truth.
+# SIZE_MM_RE matches "Ax Bmm" with ASCII x, Unicode ×, and optional spaces.
+# PITCH_UM_RE matches pixel pitch values with these suffixes:
+#   µm (micro sign), um (ASCII), microns/micron, μm (Greek mu),
+#   &micro;m and &#956;m (HTML entities).
 SIZE_MM_RE = re.compile(r"([\d.]+)\s*[x×]\s*([\d.]+)\s*mm", re.IGNORECASE)
 PITCH_UM_RE = re.compile(r"([\d.]+)\s*(?:µm|um|microns?|μm|&micro;m|&#0?956;m)", re.IGNORECASE)
 MPIX_RE = re.compile(r"([\d.]+)\s*(?:effective\s+)?(?:Mega ?pixels?|MP)", re.IGNORECASE)

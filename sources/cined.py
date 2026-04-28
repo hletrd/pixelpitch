@@ -24,10 +24,9 @@ import re
 import time
 from typing import Optional
 
-from . import Spec, normalise_name, parse_year
+from . import Spec, normalise_name, parse_year, SIZE_MM_RE as SIZE_RE
 
 DATABASE_URL = "https://www.cined.com/camera-database/"
-SIZE_RE = re.compile(r"([\d.]+)\s*[x×]\s*([\d.]+)\s*mm", re.IGNORECASE)
 RES_RE = re.compile(r"(\d{3,5})\s*[x×]\s*(\d{3,5})")
 
 FORMAT_TO_MM: dict[str, tuple[float, float]] = {

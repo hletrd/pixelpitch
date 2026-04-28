@@ -22,6 +22,7 @@ import time
 from typing import Optional
 
 from . import Spec, http_get, normalise_name, parse_year
+from . import SIZE_MM_RE as SIZE_RE, PITCH_UM_RE as PITCH_RE, MPIX_RE
 
 SITEMAP_INDEX = "https://apotelyt.com/sitemap-00.xml/"
 LOC_RE = re.compile(r"<loc>([^<]+)</loc>")
@@ -31,9 +32,6 @@ ROW_RE = re.compile(r"<tr[^>]*>(.*?)</tr>", re.DOTALL | re.IGNORECASE)
 TAG_RE = re.compile(r"<[^>]+>")
 WS_RE = re.compile(r"\s+")
 
-SIZE_RE = re.compile(r"([\d.]+)\s*[x×]\s*([\d.]+)\s*mm", re.IGNORECASE)
-PITCH_RE = re.compile(r"([\d.]+)\s*(?:µm|μm|microns?)", re.IGNORECASE)
-MPIX_RE = re.compile(r"([\d.]+)\s*Megapixel", re.IGNORECASE)
 
 
 def _gather_urls() -> list[str]:
