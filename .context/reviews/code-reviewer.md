@@ -1,58 +1,76 @@
-# Code Review (Cycle 27) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 28) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-26 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-27 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-C26-01 (MPIX_RE centralization) and C26-02 (ValueError guards in source modules) both implemented and verified. All previous fixes stable. Gate tests pass.
+C27-01 (PITCH_UM_RE "um" fix) and C27-02 (parse_existing_csv year validation) both implemented and verified. All previous fixes stable. Gate tests pass.
 
 ## New Findings
 
-### CR27-01: PITCH_UM_RE does not match lowercase "um" — inconsistent with GSMArena PITCH_RE
+### CR28-01: imaging_resource.py pitch float() missing ValueError guard — incomplete C26-02 fix
 
-**File:** `sources/__init__.py`, line 66 vs `sources/gsmarena.py`, line 50
-**Severity:** LOW | **Confidence:** HIGH
+**File:** `sources/imaging_resource.py`, line 238
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The shared `PITCH_UM_RE` pattern matches `µm`, `μm`, `microns`, `&micro;m`, `&#956;m` but NOT plain lowercase `um`. Meanwhile, `sources/gsmarena.py` defines its own `PITCH_RE` at line 50 that explicitly includes `um`:
+The C26-02 fix added ValueError guards to `size` (line 229, try/except) and `mpix` (line 246, try/except) in `fetch_one()`, but **missed** `pitch` at line 238:
 
 ```python
-# sources/__init__.py line 66 (shared):
-PITCH_UM_RE = re.compile(r"([\d.]+)\s*(?:µm|microns?|μm|&micro;m|&#0?956;m)", re.IGNORECASE)
+# Line 238 — NO try/except:
+pitch = float(m.group(1))
 
-# sources/gsmarena.py line 50 (local):
-PITCH_RE = re.compile(r"([\d.]+)\s*(?:µm|μm|um)", re.IGNORECASE)
+# Line 229 — HAS try/except:
+try:
+    size = (float(m.group(1)), float(m.group(2)))
+except ValueError:
+    size = None
+
+# Line 246 — HAS try/except:
+try:
+    mpix = float(m.group(1))
+except ValueError:
+    mpix = None
 ```
 
-The shared pattern is used by `pixelpitch.py`'s `parse_sensor_field()` for Geizhals data, while GSMArena uses its own pattern. Currently, Geizhals consistently uses `µm` or `μm`, so this is not a runtime bug. However, it is a DRY inconsistency — the shared pattern should be the authoritative one, and `um` is a common alternative representation used in some technical documentation.
+The `IR_PITCH_RE` pattern uses `([\d.]+)` which can match malformed values like `"5.1.2"` from text such as "5.1.2 microns". `float("5.1.2")` raises `ValueError`, which would crash `fetch_one()` and propagate up to `fetch()`, aborting the entire Imaging Resource scrape.
 
-**Impact:** If any source starts producing "um" (ASCII-only) pitch values, the shared pattern would not match. Currently only GSMArena encounters "um" and has its own pattern, so no data is lost.
+**Verified:** `IR_PITCH_RE.search("5.1.2 microns")` matches `"5.1.2"`, and `float("5.1.2")` raises `ValueError`.
 
-**Fix:** Add `um` to the shared `PITCH_UM_RE` alternation: `(?:µm|μm|um|microns?|&micro;m|&#0?956;m)`. This makes the shared pattern a true superset of all local patterns. This is a LOW severity because no current data path uses the shared pattern against "um" text.
+**Fix:** Wrap line 238 in try/except ValueError, consistent with size and mpix:
+```python
+if m:
+    try:
+        pitch = float(m.group(1))
+    except ValueError:
+        pitch = None
+```
 
 ---
 
-### CR27-02: parse_existing_csv accepts year=0 and negative years without validation
+### CR28-02: GSMArena fallback camera detection only matches micro-sign µm — silent phone drop if format changes
 
-**File:** `pixelpitch.py`, line 336
+**File:** `sources/gsmarena.py`, line 121
 **Severity:** LOW | **Confidence:** HIGH
 
-The CSV parser converts the year column with `int(year_str) if year_str else None`, accepting any integer value including 0 and negative numbers. While sources use `parse_year()` which only matches 19xx or 20xx patterns, a manually edited CSV or corrupted data could introduce invalid years.
+The fallback camera detection in `_phone_to_spec()` uses a hardcoded regex with literal `µm`:
 
 ```python
-year = int(year_str) if year_str else None  # line 336
+if "MP" in v and re.search(r"\d+\s*MP.*?µm", v):
+    cam = v
+    break
 ```
 
-The template renders year directly: `{{ spec.spec.year }}`. A year of 0 or -1 would display as "0" or "-1" on the website.
+This only matches `µm` (U+00B5 micro sign), not `μm` (U+03BC Greek mu) or `um` (ASCII). The GSMArena local `PITCH_RE` (line 50) correctly handles all three variants, but this fallback detection regex does not.
 
-**Impact:** No current data path produces year=0 or negative years. The `parse_year()` function in `sources/__init__.py` only matches `\b(19\d{2}|20\d{2})\b`. This is a defensive hardening issue, not a current bug.
+**Impact:** If GSMArena changes their HTML to use Greek `μm` instead of micro-sign `µm` in the camera section values, phones that lack a "Main Camera" field would be silently dropped (cam stays empty, `_phone_to_spec` returns None). Currently, GSMArena uses `µm`, so no data is lost. This is a DRY consistency concern and a latent format-change risk.
 
-**Fix:** Add validation: `year = int(year_str) if year_str and int(year_str) >= 1900 else None`. Or use a try/except with a range check.
+**Fix:** Replace the inline regex with `PITCH_RE.search(v)` or at minimum add `μm` and `um` to the alternation: `re.search(r"\d+\s*MP.*?(?:µm|μm|um)", v)`.
 
 ---
 
 ## Summary
 
-- CR27-01 (LOW): PITCH_UM_RE missing "um" — DRY inconsistency with GSMArena PITCH_RE
-- CR27-02 (LOW): parse_existing_csv accepts year=0 and negative years without validation
+- CR28-01 (MEDIUM): imaging_resource.py pitch float() missing ValueError guard — incomplete C26-02 fix
+- CR28-02 (LOW): GSMArena fallback µm regex only matches micro-sign — latent format-change risk

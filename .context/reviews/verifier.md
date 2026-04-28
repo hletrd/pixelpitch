@@ -1,64 +1,63 @@
-# Verifier Review (Cycle 27) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 28) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-26 fixes
+**Scope:** Full repository re-review after cycles 1-27 fixes
 
-## V27-01: Gate tests pass — all checks verified
+## V28-01: Gate tests pass — all checks verified
 
-**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. C26-01 and C26-02 fixes verified working.
+**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. C27-01 and C27-02 fixes verified working.
 
-## V27-02: PITCH_UM_RE missing "um" — verified discrepancy
+## V28-02: imaging_resource.py pitch float() missing ValueError guard — verified
 
-**File:** `sources/__init__.py`, line 66 vs `sources/gsmarena.py`, line 50
+**File:** `sources/imaging_resource.py`, line 238
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+**Evidence:**
+```python
+from sources.imaging_resource import IR_PITCH_RE
+m = IR_PITCH_RE.search("5.1.2 microns")
+# m.group(1) == "5.1.2"
+float("5.1.2")  # raises ValueError
+```
+
+The `size` (line 229) and `mpix` (line 246) float() calls are wrapped in try/except ValueError, but `pitch` (line 238) is not. This is an inconsistency in the C26-02 fix.
+
+## V28-03: CineD year regex produces unvalidated years — verified
+
+**File:** `sources/cined.py`, line 114
 **Severity:** LOW | **Confidence:** HIGH
 
 **Evidence:**
 ```python
-from sources import PITCH_UM_RE as shared
 import re
-
-gsmarena_pattern = re.compile(r'([\d.]+)\s*(?:µm|μm|um)', re.IGNORECASE)
-
-# Shared pattern does NOT match "um":
-shared.search('1.09um')   # Returns None
-
-# GSMArena local pattern DOES match "um":
-gsmarena_pattern.search('1.09um')  # Returns match
-
-# Both match "µm" and "μm":
-shared.search('5.12µm')          # Returns match
-gsmarena_pattern.search('5.12µm')  # Returns match
+m = re.search(r"Release Date.{0,40}?(\d{4})", "Release Date: SKU1234 model", re.IGNORECASE)
+# m.group(1) == "1234" — matches any 4-digit number, not just 19xx/20xx
 ```
 
-The shared PITCH_UM_RE is missing "um" which the GSMArena local pattern handles. No current data path uses the shared pattern against "um" text (Geizhals uses µm/μm), so no data is lost at runtime.
+The C27-02 fix added year range validation to `parse_existing_csv()`, but `cined._parse_camera_page()` produces years via `int(year_m.group(1))` without range validation. A CineD page with text "Release Date: model1234" could produce year=1234.
 
-## V27-03: parse_existing_csv accepts year=0 — verified
+The `parse_year()` fallback on line 114 validates 19xx/20xx, but the primary regex path does not.
 
-**File:** `pixelpitch.py`, line 336
+## V28-04: Apotelyt PITCH_RE missing "um" — DRY inconsistency verified
+
+**File:** `sources/apotelyt.py`, line 35
 **Severity:** LOW | **Confidence:** HIGH
 
 **Evidence:**
 ```python
-import pixelpitch as pp
-
-# Year=0 is accepted and displayed
-csv_test = 'id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n0,Test,mirrorless,,36.00,24.00,864.00,45.0,5.00,0,\n'
-parsed = pp.parse_existing_csv(csv_test)
-# parsed[0].spec.year == 0 (displays as "0" on website)
-
-# Year=-1 is also accepted
-csv_test2 = 'id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n0,Test,mirrorless,,36.00,24.00,864.00,45.0,5.00,-1,\n'
-parsed2 = pp.parse_existing_csv(csv_test2)
-# parsed2[0].spec.year == -1 (displays as "-1" on website)
+from sources.apotelyt import PITCH_RE
+m = PITCH_RE.search("5.12um")
+# Returns None — Apotelyt PITCH_RE does not match "um"
 ```
 
-No current source produces year=0 or negative years (`parse_year()` only matches 19xx/20xx), but the CSV parser has no guard.
+After the C27-01 fix added "um" to the shared `PITCH_UM_RE`, the local `PITCH_RE` in `apotelyt.py` was not updated. This is a DRY inconsistency.
 
 ---
 
 ## Summary
 
-- V27-01: All gate tests pass
-- V27-02 (LOW): PITCH_UM_RE missing "um" — verified
-- V27-03 (LOW): parse_existing_csv accepts year=0 — verified
+- V28-01: All gate tests pass
+- V28-02 (MEDIUM): imaging_resource.py pitch ValueError guard missing — verified
+- V28-03 (LOW): CineD year regex unvalidated — verified
+- V28-04 (LOW): Apotelyt PITCH_RE missing "um" — DRY inconsistency verified

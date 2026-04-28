@@ -1,47 +1,41 @@
-# Test Engineer Review (Cycle 27) — Test Coverage, Flaky Tests, TDD
+# Test Engineer Review (Cycle 28) — Test Coverage, Flaky Tests, TDD
 
 **Reviewer:** test-engineer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-26 fixes
+**Scope:** Full repository re-review after cycles 1-27 fixes
 
 ## Previous Findings Status
 
-TE26-01 (MPIX_RE "MP"/"Mega pixels" tests) and TE26-02 (ValueError guard tests in source modules) — both addressed by the C26 implementation which added `test_mpix_re_format_handling()` and ValueError guards with existing fixture tests still passing.
+TE27-01 (PITCH_UM_RE "um" test) addressed in C27. TE27-02 (year validation tests) addressed in C27. All existing tests passing.
 
 ## New Findings
 
-### TE27-01: No test for PITCH_UM_RE "um" (lowercase ASCII) variant
+### TE28-01: No test for imaging_resource.py pitch ValueError guard
 
 **File:** `tests/test_parsers_offline.py`
-**Severity:** LOW | **Confidence:** HIGH
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The `test_parse_sensor_field()` function tests PITCH_UM_RE with `µm`, `μm`, and `microns` but does NOT test the lowercase ASCII `um` variant. If `um` is added to the shared pattern (as suggested by CR27-01), a test should be added to verify:
+The `test_imaging_resource()` function tests `IR_PITCH_RE` matching but does not test what happens when the matched value is a malformed float (e.g., "5.1.2 microns"). If the ValueError guard is added (as suggested by CR28-01), a test should verify:
 
 ```python
-# PITCH_UM_RE handles lowercase ASCII "um"
-result = pp.parse_sensor_field('CMOS 5.12um')
-expect("PITCH handles um", result["pitch"], 5.12, tol=0.01)
+# fetch_one handles malformed pitch value gracefully
+fields = {"Approximate Pixel Pitch": "5.1.2 microns", ...}
+spec = imaging_resource.fetch_one(...)
+expect("malformed pitch returns None", spec.pitch, None)  # or spec is None
 ```
 
-Currently, `um` is NOT matched by the shared pattern, so this test would fail. Adding the test documents the expected behavior when the fix is applied.
+Currently, no test exercises this code path. The test for `parse_sensor_field` tests "5.1.2µm" but that's the shared pattern, not the IR-specific code.
 
----
-
-### TE27-02: No test for parse_existing_csv year validation edge cases
+### TE28-02: No test for CineD year range validation
 
 **File:** `tests/test_parsers_offline.py`
 **Severity:** LOW | **Confidence:** MEDIUM
 
-The `test_parse_existing_csv()` function does not test edge cases for the year column:
-- year=0 (should be rejected or treated as None)
-- year=-1 (should be rejected or treated as None)
-- year=99999 (should be validated against a reasonable range)
-
-Currently, these values are accepted verbatim and would display on the website. If validation is added (as suggested by CR27-02), tests should verify the rejection behavior.
+The CineD source module is browser-dependent and not tested offline. However, if year range validation is added to `cined._parse_camera_page()` (as suggested by V28-03), a unit test for the year validation logic would be valuable. Currently, there are no offline tests for the CineD source at all — only `test_cined_format_coverage()` which tests the FORMAT_TO_MM lookup table.
 
 ---
 
 ## Summary
 
-- TE27-01 (LOW): No test for PITCH_UM_RE "um" variant
-- TE27-02 (LOW): No test for parse_existing_csv year validation edge cases
+- TE28-01 (MEDIUM): No test for imaging_resource.py pitch ValueError guard
+- TE28-02 (LOW): No test for CineD year range validation

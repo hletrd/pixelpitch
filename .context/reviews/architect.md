@@ -1,34 +1,37 @@
-# Architect Review (Cycle 27) — Architectural/Design Risks
+# Architect Review (Cycle 28) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-26 fixes
+**Scope:** Full repository re-review after cycles 1-27 fixes
 
 ## Previous Findings Status
 
-ARCH26-01 (MPIX_RE centralization) addressed in C26. All previously identified architectural concerns remain deferred (LOW severity).
+ARCH27-01 (PITCH_UM_RE incomplete) addressed in C27. All previous architectural concerns remain deferred.
 
 ## New Findings
 
-### ARCH27-01: PITCH_UM_RE incomplete as single source of truth — missing "um" variant
+### ARCH28-01: DRY centralization incomplete — source modules maintain local regex copies
 
-**File:** `sources/__init__.py`, line 66
+**File:** `sources/apotelyt.py`, `sources/gsmarena.py`, `sources/cined.py`
 **Severity:** LOW | **Confidence:** HIGH
 
-The C25-01 centralization established `sources/__init__.py` as the single source of truth for shared regex patterns. The C26-01 fix completed MPIX_RE centralization. However, PITCH_UM_RE is still incomplete as a single source of truth — it does not match "um" (lowercase ASCII), which is handled by `sources/gsmarena.py`'s local `PITCH_RE`.
+The C25-01 and C26-01 centralization established `sources/__init__.py` as the single source of truth for shared regex patterns (SIZE_MM_RE, PITCH_UM_RE, MPIX_RE, TYPE_FRACTIONAL_RE). However, 3 source modules still maintain their own local copies:
 
 Current centralization status:
-- `TYPE_FRACTIONAL_RE` — fully centralized (all local variants replaced) ✓
-- `SIZE_MM_RE` — fully centralized ✓
-- `PITCH_UM_RE` — NOT fully centralized (GSMArena still uses local PITCH_RE with "um") ✗
-- `MPIX_RE` — fully centralized (C26-01 fix) ✓
+- `TYPE_FRACTIONAL_RE` — fully centralized (GSMArena imports shared) ✓
+- `SIZE_MM_RE` — NOT fully centralized (Apotelyt, CineD have local SIZE_RE) ✗
+- `PITCH_UM_RE` — NOT fully centralized (Apotelyt, GSMArena have local PITCH_RE) ✗
+- `MPIX_RE` — NOT fully centralized (Apotelyt has local MPIX_RE matching only "Megapixel") ✗
 
-For true DRY completeness, PITCH_UM_RE should include all variants that local patterns handle, and GSMArena should import the shared pattern instead of maintaining its own.
+The local copies diverge from the shared patterns:
+- Apotelyt PITCH_RE: missing `um`, `&micro;m`, `&#956;m`
+- Apotelyt MPIX_RE: only matches "Megapixel" (not "MP" or "Mega pixels")
+- GSMArena PITCH_RE: has `um` but missing `microns`, `&micro;m`, `&#956;m`
 
-**Fix:** Add "um" to the shared PITCH_UM_RE alternation. Optionally, update GSMArena to import the shared pattern.
+**Fix:** Replace local regex copies with imports from `sources/__init__.py`. This completes the DRY centralization.
 
 ---
 
 ## Summary
 
-- ARCH27-01 (LOW): PITCH_UM_RE incomplete as single source of truth — missing "um"
+- ARCH28-01 (LOW): DRY centralization incomplete — 3 source modules have divergent local regex copies

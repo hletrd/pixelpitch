@@ -1,45 +1,50 @@
-# Critic Review (Cycle 27) — Multi-Perspective Critique
+# Critic Review (Cycle 28) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-26 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-27 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-C26-01 (MPIX_RE centralization) and C26-02 (ValueError guards in source modules) both implemented and verified. All previous fixes stable.
+C27-01 (PITCH_UM_RE "um") and C27-02 (year validation) both implemented. All previous fixes stable.
 
 ## New Findings
 
-### CRIT27-01: PITCH_UM_RE missing "um" — incomplete DRY unification of pitch patterns
+### CRIT28-01: imaging_resource.py pitch ValueError guard missing — C26-02 fix was incomplete
 
-**File:** `sources/__init__.py`, line 66 vs `sources/gsmarena.py`, line 50
-**Severity:** LOW | **Confidence:** HIGH
+**File:** `sources/imaging_resource.py`, line 238
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The C25-01 fix centralized SIZE_MM_RE and PITCH_UM_RE from pixelpitch.py into sources/__init__.py. The C26-01 fix centralized MPIX_RE. However, the shared PITCH_UM_RE pattern still does not cover all variants that local patterns handle:
+The C26-02 fix added ValueError guards to `size` (line 229) and `mpix` (line 246) but missed `pitch` (line 238). This is the most significant new finding because it can crash the Imaging Resource scraper at runtime.
 
-- Shared `PITCH_UM_RE` (`sources/__init__.py` line 66): matches `µm`, `μm`, `microns`, `&micro;m`, `&#956;m` — but NOT `um`
-- Local `PITCH_RE` (`sources/gsmarena.py` line 50): matches `µm`, `μm`, AND `um`
+The `IR_PITCH_RE` pattern `([\d.]+)` matches multi-dotted strings like "5.1.2", and `float("5.1.2")` raises `ValueError`. If Imaging Resource ever serves a malformed pixel pitch value, the entire `fetch_one()` call crashes.
 
-The `um` variant (plain ASCII "u" + "m") is commonly used in English technical documentation and on GSMArena spec pages. The shared pattern should be a superset of all local patterns to truly centralize pitch matching. Currently GSMArena's local pattern handles this, so no data is lost, but the shared pattern is incomplete as a single source of truth.
-
-**Fix:** Add `um` to the shared `PITCH_UM_RE` alternation in `sources/__init__.py`.
+**Fix:** Add try/except ValueError around the pitch float() call, consistent with size and mpix.
 
 ---
 
-### CRIT27-02: parse_existing_csv year validation gap — accepts year=0 and negative years
+### CRIT28-02: DRY inconsistency — source modules still have local regex copies not synchronized with shared patterns
 
-**File:** `pixelpitch.py`, line 336
+**File:** `sources/apotelyt.py` line 35, `sources/gsmarena.py` line 50, `sources/cined.py` line 30
 **Severity:** LOW | **Confidence:** HIGH
 
-The CSV parser blindly converts the year column to int without any range validation: `year = int(year_str) if year_str else None`. While source modules use `parse_year()` which only matches 19xx/20xx, a corrupted or manually edited CSV could introduce year=0 or negative years. The template renders these verbatim, showing "0" or "-1" on the website.
+After the C25-01 and C26-01 centralization of shared regex patterns (SIZE_MM_RE, PITCH_UM_RE, MPIX_RE), several source modules still maintain local copies:
 
-This is a defensive hardening issue, not a current runtime bug.
+- `apotelyt.py` line 34 `SIZE_RE` — identical to shared `SIZE_MM_RE`
+- `apotelyt.py` line 35 `PITCH_RE` — differs from shared `PITCH_UM_RE` (missing `um`, `&micro;m`, `&#956;m`)
+- `apotelyt.py` line 36 `MPIX_RE` — differs from shared `MPIX_RE` (only matches "Megapixel", not "MP" or "Mega pixels")
+- `cined.py` line 30 `SIZE_RE` — identical to shared `SIZE_MM_RE`
+- `gsmarena.py` line 50 `PITCH_RE` — differs from shared `PITCH_UM_RE` (matches `um` but missing `microns`, `&micro;m`, `&#956;m`)
 
-**Fix:** Add a range check after int conversion: `year = int(year_str) if year_str and 1900 <= int(year_str) <= 2100 else None`.
+This is a DRY maintenance risk — if the shared patterns are updated, local copies may not be, leading to divergent behavior.
+
+**Impact:** Currently no data is lost because each source module works correctly with its own local pattern. But future regex changes to the shared patterns won't propagate to the local copies.
+
+**Fix:** Import and use the shared patterns from `sources/__init__.py`, removing the local copies. If a source needs source-specific behavior (e.g., Apotelyt only needs "Megapixel"), document why the shared pattern is used instead.
 
 ---
 
 ## Summary
 
-- CRIT27-01 (LOW): PITCH_UM_RE missing "um" — incomplete DRY unification
-- CRIT27-02 (LOW): parse_existing_csv year validation gap
+- CRIT28-01 (MEDIUM): imaging_resource.py pitch ValueError guard missing — C26-02 incomplete
+- CRIT28-02 (LOW): DRY inconsistency — local regex copies not synchronized with shared patterns

@@ -1,44 +1,40 @@
-# Debugger Review (Cycle 27) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 28) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-26 fixes
+**Scope:** Full repository re-review after cycles 1-27 fixes
 
 ## Previous Findings Status
 
-DBG26-01 (MPIX_RE only matches "Megapixel") and DBG26-02 (ValueError in source modules) both fixed in C26. DBG24-03 (rstrip) remains deferred.
+DBG27-01 (PITCH_UM_RE "um") and DBG27-02 (year=0) both fixed in C27.
 
 ## New Findings
 
-### DBG27-01: PITCH_UM_RE does not match "um" — latent failure if Geizhals uses ASCII-only pitch
+### DBG28-01: imaging_resource.py pitch float() — unhandled ValueError (C26-02 regression by omission)
 
-**File:** `sources/__init__.py`, line 66
+**File:** `sources/imaging_resource.py`, line 238
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+**Failure mode:** The C26-02 fix added ValueError guards to `size` and `mpix` but missed `pitch`. If Imaging Resource serves a pixel pitch value containing multiple dots (e.g., "5.1.2 microns"), `float("5.1.2")` raises `ValueError`, which is NOT caught. The exception propagates through `fetch_one()`, aborting the current camera and potentially the entire `fetch()` loop (which has no per-camera try/except).
+
+**Root cause:** Incomplete C26-02 fix — the guard was added to two of three float() calls.
+
+**Verified:** `IR_PITCH_RE.search("5.1.2 microns")` matches "5.1.2"; `float("5.1.2")` raises `ValueError`.
+
+### DBG28-02: CineD year regex can produce invalid years without validation
+
+**File:** `sources/cined.py`, line 114
 **Severity:** LOW | **Confidence:** HIGH
 
-**Failure mode:** If Geizhals (or any future source parsed via `parse_sensor_field()`) uses "5.12 um" (ASCII-only, no micro sign), `PITCH_UM_RE.search("5.12 um")` returns None. The pitch value is silently lost. If size and mpix are available, `derive_spec()` will compute a pitch from area/mpix, so the camera may still show a pitch value — but it would be computed rather than the authoritative value from the source.
+**Failure mode:** The regex `r"Release Date.{0,40}?(\d{4})"` matches any 4-digit number, including years like 0000, 1234, or 9999. The `int()` conversion succeeds, and the year is stored in Spec without validation. The template renders this year verbatim.
 
-**Root cause:** The shared `PITCH_UM_RE` alternation includes `µm`, `μm`, `microns`, `&micro;m`, `&#956;m` but not plain `um`. The GSMArena local `PITCH_RE` includes `um` but uses its own pattern.
+The C27-02 fix added range validation to `parse_existing_csv()` (1900-2100), but `cined._parse_camera_page()` produces years before they reach the CSV parser.
 
-**Impact:** Currently no data path triggers this — Geizhals uses µm/μm. This is a latent bug that would surface only if a data source starts using ASCII "um".
-
-**Verified:** `PITCH_UM_RE.search("5.12 um")` returns None.
-
-### DBG27-02: parse_existing_csv accepts year=0 — displays "0" on website
-
-**File:** `pixelpitch.py`, line 336
-**Severity:** LOW | **Confidence:** HIGH
-
-**Failure mode:** A corrupted or manually edited CSV with year=0 passes through validation. The template's Jinja2 `{% if spec.spec.year %}` treats int(0) as truthy (Jinja2 follows Python truthiness for integers), so "0" is displayed on the website.
-
-**Root cause:** `year = int(year_str) if year_str else None` has no range check. An empty string is falsy (correctly produces None), but "0" is truthy and produces year=0.
-
-**Impact:** No current source produces year=0. Requires corrupted CSV input.
-
-**Verified:** CSV with year=0 produces `spec.year == 0`, which displays as "0" in the template.
+**Root cause:** Missing year range validation in the source module.
 
 ---
 
 ## Summary
 
-- DBG27-01 (LOW): PITCH_UM_RE missing "um" — latent failure if source uses ASCII "um"
-- DBG27-02 (LOW): parse_existing_csv year=0 — displays "0" on website
+- DBG28-01 (MEDIUM): imaging_resource.py pitch float() unhandled ValueError — C26-02 incomplete
+- DBG28-02 (LOW): CineD year regex produces unvalidated years
