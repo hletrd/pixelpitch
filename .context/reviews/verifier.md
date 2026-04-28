@@ -1,63 +1,31 @@
-# Verifier Review (Cycle 28) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 30) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-27 fixes
+**Scope:** Full repository re-review after cycles 1-29 fixes
 
-## V28-01: Gate tests pass — all checks verified
+## V30-01: Gate tests pass — all checks verified
 
-**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. C27-01 and C27-02 fixes verified working.
+**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. C29-01 through C29-04 fixes verified working. No regressions.
 
-## V28-02: imaging_resource.py pitch float() missing ValueError guard — verified
+## V30-02: GSMArena fetch() no per-phone try/except — verified
 
-**File:** `sources/imaging_resource.py`, line 238
+**File:** `sources/gsmarena.py` line 246
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Evidence:**
-```python
-from sources.imaging_resource import IR_PITCH_RE
-m = IR_PITCH_RE.search("5.1.2 microns")
-# m.group(1) == "5.1.2"
-float("5.1.2")  # raises ValueError
-```
+**Evidence:** `gsmarena.fetch()` calls `fetch_phone()` in a loop without try/except. Any unhandled exception in `fetch_phone()` propagates through `fetch()`, aborting the entire scrape. The CineD, IR, and Apotelyt `fetch()` functions all have per-camera try/except. GSMArena was missed in the C29-02 fix.
 
-The `size` (line 229) and `mpix` (line 246) float() calls are wrapped in try/except ValueError, but `pitch` (line 238) is not. This is an inconsistency in the C26-02 fix.
+## V30-03: deduplicate_specs() manual Spec reconstruction — verified
 
-## V28-03: CineD year regex produces unvalidated years — verified
-
-**File:** `sources/cined.py`, line 114
+**File:** `pixelpitch.py`, lines 655-665 and 669-675
 **Severity:** LOW | **Confidence:** HIGH
 
-**Evidence:**
-```python
-import re
-m = re.search(r"Release Date.{0,40}?(\d{4})", "Release Date: SKU1234 model", re.IGNORECASE)
-# m.group(1) == "1234" — matches any 4-digit number, not just 19xx/20xx
-```
-
-The C27-02 fix added year range validation to `parse_existing_csv()`, but `cined._parse_camera_page()` produces years via `int(year_m.group(1))` without range validation. A CineD page with text "Release Date: model1234" could produce year=1234.
-
-The `parse_year()` fallback on line 114 validates 19xx/20xx, but the primary regex path does not.
-
-## V28-04: Apotelyt PITCH_RE missing "um" — DRY inconsistency verified
-
-**File:** `sources/apotelyt.py`, line 35
-**Severity:** LOW | **Confidence:** HIGH
-
-**Evidence:**
-```python
-from sources.apotelyt import PITCH_RE
-m = PITCH_RE.search("5.12um")
-# Returns None — Apotelyt PITCH_RE does not match "um"
-```
-
-After the C27-01 fix added "um" to the shared `PITCH_UM_RE`, the local `PITCH_RE` in `apotelyt.py` was not updated. This is a DRY inconsistency.
+**Evidence:** Both code paths create new Spec objects by enumerating every field positionally. The C29-04 fix addressed the same pattern in `digicamdb.py` but this instance in `pixelpitch.py` was not caught.
 
 ---
 
 ## Summary
 
-- V28-01: All gate tests pass
-- V28-02 (MEDIUM): imaging_resource.py pitch ValueError guard missing — verified
-- V28-03 (LOW): CineD year regex unvalidated — verified
-- V28-04 (LOW): Apotelyt PITCH_RE missing "um" — DRY inconsistency verified
+- V30-01: All gate tests pass
+- V30-02 (MEDIUM): GSMArena fetch() no per-phone try/except — verified
+- V30-03 (LOW): deduplicate_specs() manual Spec reconstruction — verified

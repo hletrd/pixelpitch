@@ -1,37 +1,38 @@
-# Architect Review (Cycle 28) — Architectural/Design Risks
+# Architect Review (Cycle 30) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-27 fixes
+**Scope:** Full repository re-review after cycles 1-29 fixes
 
 ## Previous Findings Status
 
-ARCH27-01 (PITCH_UM_RE incomplete) addressed in C27. All previous architectural concerns remain deferred.
+ARCH29-01 and ARCH29-02 both fixed in C29. All previous architectural concerns remain deferred.
 
 ## New Findings
 
-### ARCH28-01: DRY centralization incomplete — source modules maintain local regex copies
+### ARCH30-01: GSMArena fetch() lacks per-phone error handling — inconsistent with other sources
 
-**File:** `sources/apotelyt.py`, `sources/gsmarena.py`, `sources/cined.py`
+**File:** `sources/gsmarena.py`, lines 246-252
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+After the C29-02 fix, IR and Apotelyt have per-camera try/except. CineD already had it. But GSMArena was missed, creating an inconsistency in the error-resilience pattern across the four browser/HTTP fetch loops.
+
+**Fix:** Add per-phone try/except to `gsmarena.fetch()`.
+
+---
+
+### ARCH30-02: deduplicate_specs() manual Spec reconstruction violates DRY
+
+**File:** `pixelpitch.py`, lines 655-665 and 669-675
 **Severity:** LOW | **Confidence:** HIGH
 
-The C25-01 and C26-01 centralization established `sources/__init__.py` as the single source of truth for shared regex patterns (SIZE_MM_RE, PITCH_UM_RE, MPIX_RE, TYPE_FRACTIONAL_RE). However, 3 source modules still maintain their own local copies:
+The C29-04 fix simplified `digicamdb.py` to a true alias, but `deduplicate_specs()` in `pixelpitch.py` still manually reconstructs Spec objects field-by-field. This is the same DRY violation. If Spec gains a field, this code silently drops it.
 
-Current centralization status:
-- `TYPE_FRACTIONAL_RE` — fully centralized (GSMArena imports shared) ✓
-- `SIZE_MM_RE` — NOT fully centralized (Apotelyt, CineD have local SIZE_RE) ✗
-- `PITCH_UM_RE` — NOT fully centralized (Apotelyt, GSMArena have local PITCH_RE) ✗
-- `MPIX_RE` — NOT fully centralized (Apotelyt has local MPIX_RE matching only "Megapixel") ✗
-
-The local copies diverge from the shared patterns:
-- Apotelyt PITCH_RE: missing `um`, `&micro;m`, `&#956;m`
-- Apotelyt MPIX_RE: only matches "Megapixel" (not "MP" or "Mega pixels")
-- GSMArena PITCH_RE: has `um` but missing `microns`, `&micro;m`, `&#956;m`
-
-**Fix:** Replace local regex copies with imports from `sources/__init__.py`. This completes the DRY centralization.
+**Fix:** Use `dataclasses.replace()`.
 
 ---
 
 ## Summary
 
-- ARCH28-01 (LOW): DRY centralization incomplete — 3 source modules have divergent local regex copies
+- ARCH30-01 (MEDIUM): GSMArena fetch() lacks per-phone error handling
+- ARCH30-02 (LOW): deduplicate_specs() manual Spec reconstruction violates DRY

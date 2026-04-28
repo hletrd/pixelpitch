@@ -1,50 +1,38 @@
-# Critic Review (Cycle 28) — Multi-Perspective Critique
+# Critic Review (Cycle 30) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-27 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-29 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-C27-01 (PITCH_UM_RE "um") and C27-02 (year validation) both implemented. All previous fixes stable.
+C29-01 through C29-04 all implemented. All previous fixes stable.
 
 ## New Findings
 
-### CRIT28-01: imaging_resource.py pitch ValueError guard missing — C26-02 fix was incomplete
+### CRIT30-01: GSMArena fetch() — no per-phone error resilience
 
-**File:** `sources/imaging_resource.py`, line 238
+**File:** `sources/gsmarena.py`, lines 246-252
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C26-02 fix added ValueError guards to `size` (line 229) and `mpix` (line 246) but missed `pitch` (line 238). This is the most significant new finding because it can crash the Imaging Resource scraper at runtime.
+After the C29-02 fix, `imaging_resource.fetch()` and `apotelyt.fetch()` are safer against per-camera exceptions. However, `gsmarena.fetch()` was missed. Any unhandled exception in `fetch_phone()` (e.g., from unexpected HTML structure) aborts the entire GSMArena scrape. The CineD, IR, and Apotelyt fetch loops already have this pattern.
 
-The `IR_PITCH_RE` pattern `([\d.]+)` matches multi-dotted strings like "5.1.2", and `float("5.1.2")` raises `ValueError`. If Imaging Resource ever serves a malformed pixel pitch value, the entire `fetch_one()` call crashes.
-
-**Fix:** Add try/except ValueError around the pitch float() call, consistent with size and mpix.
+**Fix:** Add per-phone try/except in `gsmarena.fetch()`, consistent with the other sources.
 
 ---
 
-### CRIT28-02: DRY inconsistency — source modules still have local regex copies not synchronized with shared patterns
+### CRIT30-02: deduplicate_specs() manually reconstructs Spec objects — violates DRY
 
-**File:** `sources/apotelyt.py` line 35, `sources/gsmarena.py` line 50, `sources/cined.py` line 30
+**File:** `pixelpitch.py`, lines 655-665 and 669-675
 **Severity:** LOW | **Confidence:** HIGH
 
-After the C25-01 and C26-01 centralization of shared regex patterns (SIZE_MM_RE, PITCH_UM_RE, MPIX_RE), several source modules still maintain local copies:
+The `deduplicate_specs()` function creates new Spec objects field-by-field instead of using `dataclasses.replace()`. The C29-04 fix simplified `digicamdb.py` to a true alias, but the same DRY violation exists in `pixelpitch.py` itself. If Spec gains a new field, these reconstructions would silently drop it.
 
-- `apotelyt.py` line 34 `SIZE_RE` — identical to shared `SIZE_MM_RE`
-- `apotelyt.py` line 35 `PITCH_RE` — differs from shared `PITCH_UM_RE` (missing `um`, `&micro;m`, `&#956;m`)
-- `apotelyt.py` line 36 `MPIX_RE` — differs from shared `MPIX_RE` (only matches "Megapixel", not "MP" or "Mega pixels")
-- `cined.py` line 30 `SIZE_RE` — identical to shared `SIZE_MM_RE`
-- `gsmarena.py` line 50 `PITCH_RE` — differs from shared `PITCH_UM_RE` (matches `um` but missing `microns`, `&micro;m`, `&#956;m`)
-
-This is a DRY maintenance risk — if the shared patterns are updated, local copies may not be, leading to divergent behavior.
-
-**Impact:** Currently no data is lost because each source module works correctly with its own local pattern. But future regex changes to the shared patterns won't propagate to the local copies.
-
-**Fix:** Import and use the shared patterns from `sources/__init__.py`, removing the local copies. If a source needs source-specific behavior (e.g., Apotelyt only needs "Megapixel"), document why the shared pattern is used instead.
+**Fix:** Use `dataclasses.replace(ref, name=unified_name, year=year)` and `dataclasses.replace(spec, name=name)`.
 
 ---
 
 ## Summary
 
-- CRIT28-01 (MEDIUM): imaging_resource.py pitch ValueError guard missing — C26-02 incomplete
-- CRIT28-02 (LOW): DRY inconsistency — local regex copies not synchronized with shared patterns
+- CRIT30-01 (MEDIUM): GSMArena fetch() — no per-phone error resilience
+- CRIT30-02 (LOW): deduplicate_specs() manual Spec reconstruction — violates DRY

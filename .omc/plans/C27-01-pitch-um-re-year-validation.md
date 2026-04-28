@@ -1,7 +1,7 @@
 # Plan: Cycle 27 Findings — PITCH_UM_RE "um" Fix & CSV Year Validation
 
 **Created:** 2026-04-28
-**Status:** IN PROGRESS
+**Status:** COMPLETED
 **Source Reviews:** CR27-01, CRIT27-01, V27-02, TR27-01, ARCH27-01, DBG27-01, DOC27-01, TE27-01, CR27-02, CRIT27-02, V27-03, TR27-02, DBG27-02, TE27-02
 
 ---
@@ -44,11 +44,12 @@ Meanwhile, GSMArena has its own `PITCH_RE` at line 50 that includes `um`. The sh
 
 4. Run gate tests to verify no regressions.
 
-### Verification
+### Verification — DONE
 
-- Gate tests (`python -m tests.test_parsers_offline`) — all checks must pass
-- New test for "um" matching must pass
-- Existing PITCH_UM_RE tests (µm, μm, microns) must still pass
+- Gate tests (`python -m tests.test_parsers_offline`) — all checks passed
+- New test for "um" matching passed: `PITCH handles um: got=5.12 want=5.12 (±0.01)`
+- Existing PITCH_UM_RE tests (µm, μm, microns) still pass
+- Commit: 1b27a4e
 
 ---
 
@@ -100,11 +101,16 @@ The CSV parser accepts any integer for the year column without range validation.
 
 3. Run gate tests to verify no regressions.
 
-### Verification
+### Verification — DONE
 
-- Gate tests (`python -m tests.test_parsers_offline`) — all checks must pass
-- New year validation tests must pass
-- Existing CSV parsing tests must still pass
+- Gate tests (`python -m tests.test_parsers_offline`) — all checks passed
+- New year validation tests passed:
+  - `year=0 rejected: got=None want=None`
+  - `year=-1 rejected: got=None want=None`
+  - `year=99999 rejected: got=None want=None`
+  - `year=2021 accepted: got=2021 want=2021`
+- Existing CSV parsing tests still pass
+- Commit: 83910a5
 
 ---
 
