@@ -14,8 +14,13 @@ Coverage per camera page:
   - Lens Mount, base ISO, etc.
 
 Pixel pitch is derived (sensor_width_mm / sensor_pixels_w) when both
-fields are present. If only the format class is given, we leave size
-None and let pixelpitch.derive_spec compute area from TYPE_SIZE / format.
+fields are present. If only the format class is given (no explicit mm
+dimensions), we leave ``spec.size`` as None so that ``merge_camera_data``
+can preserve more accurate measured values from Geizhals when available.
+The template will show "unknown" for sensor size when no measured data
+exists for the camera — this is more honest than presenting FORMAT_TO_MM
+approximations as if they were measured. The ``FORMAT_TO_MM`` table is
+kept for the regex coverage test only.
 """
 
 from __future__ import annotations
@@ -99,7 +104,19 @@ def _parse_camera_page(page, url: str) -> Optional[Spec]:
         except ValueError:
             size = None
     if size is None and fmt:
-        size = FORMAT_TO_MM.get(fmt.lower())
+        # Don't set spec.size from FORMAT_TO_MM lookup — the lookup
+        # provides approximate dimensions from the format class name.
+        # Setting spec.size from the lookup prevents merge_camera_data
+        # from preserving more accurate measured values from Geizhals
+        # (because the merge only preserves existing spec.size when
+        # new spec.size is None). Leave spec.size = None; the template
+        # will show "unknown" for sensor size when no Geizhals data
+        # exists, which is more honest than showing an approximation
+        # as if it were measured data.
+        # Note: we also don't set spec.type because format class names
+        # like "Super 35" or "APS-C" are not fractional-inch types that
+        # TYPE_SIZE understands.
+        pass
 
     pixels = None
     px = RES_RE.search(body_text)
