@@ -20,6 +20,17 @@ Camera data is aggregated from multiple sources:
 
 Note that pixel pitch is calculated from resolution and sensor size, with a look up table if exact sensor size is not given (but instead a common size name). In 2015 geizhals.at added pixel pitch to their website as well, it may happen that the pixel pitch values slightly differ due to different formulas used.
 
+### Generated Pages
+
+`python pixelpitch.py html [dir]` writes one page per category plus an aggregate `index.html`:
+
+- `index.html` — All cameras
+- `dslr.html`, `mirrorless.html`, `rangefinder.html`, `fixedlens.html`, `camcorder.html`, `actioncam.html` — Geizhals-driven categories
+- `smartphone.html` — GSMArena-driven smartphone cameras
+- `cinema.html` — CineD-driven cinema cameras
+- `about.html` — About page
+- `camera-data.csv` — Aggregated CSV artifact
+
 ### Alternative Source Fetching
 
 Individual sources can be fetched independently:
