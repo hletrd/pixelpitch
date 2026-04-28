@@ -40,9 +40,14 @@ CAMCORDER_URL = "https://geizhals.eu/?cat=dvcam&hloc=de&hloc=pl&hloc=uk&hloc=eu&
 ACTIONCAM_URL = "https://geizhals.eu/?cat=dvcamac&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=5023&fcols=5025&fcols=5036&sort=artikel"
 
 SIZE_RE = re.compile(r"([\d\.]+)x([\d\.]+)mm")
-SENSOR_TYPE_RE = re.compile(r"(1/[\d\.]+)\"")
 PITCH_RE = re.compile(r"([\d\.]+)µm")
 MPIX_RE = re.compile(r"([\d\.]+)\s*Megapixel")
+
+# Canonical fractional-inch sensor type regex — matches "1/x.y" followed by
+# any recognized suffix (ASCII/Unicode quotes, "inch", "-type", etc.).
+# Replaces the former SENSOR_TYPE_RE (ASCII-only) and SENSOR_FORMAT_RE
+# (GSMArena-specific) with a single source of truth from sources/__init__.py.
+from sources import TYPE_FRACTIONAL_RE
 
 # from http://en.wikipedia.org/wiki/Image_sensor_format
 TYPE_SIZE: dict[str, Tuple[float, float]] = {
@@ -507,7 +512,7 @@ def parse_sensor_field(sensor_text: str) -> dict:
         return result
 
     # Extract sensor type (e.g. "1/3.1", "1/2.3")
-    type_match = SENSOR_TYPE_RE.search(sensor_text)
+    type_match = TYPE_FRACTIONAL_RE.search(sensor_text)
     if type_match:
         result["type"] = type_match.group(1)
 
@@ -566,7 +571,7 @@ def extract_specs(entries: list[str], category: str) -> list[Spec]:
         if typ is None:
             type_text = fields.get("Typ", "")
             if type_text and "/" in type_text:
-                type_match = SENSOR_TYPE_RE.search(type_text)
+                type_match = TYPE_FRACTIONAL_RE.search(type_text)
                 if type_match:
                     typ = type_match.group(1)
 

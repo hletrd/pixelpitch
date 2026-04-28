@@ -21,7 +21,7 @@ import re
 import time
 from typing import Optional
 
-from . import Spec, http_get, normalise_name, parse_year
+from . import Spec, http_get, normalise_name, parse_year, TYPE_FRACTIONAL_RE
 
 # Import the central sensor-size lookup table (now includes phone formats)
 from pixelpitch import TYPE_SIZE as SENSOR_TYPE_SIZE
@@ -47,7 +47,6 @@ LENS_RE = re.compile(
     r"[^,]*?(?P<role>wide|ultrawide|ultra ?wide|telephoto|tele|periscope|macro|depth)?",
     re.IGNORECASE,
 )
-SENSOR_FORMAT_RE = re.compile(r'(1/[\d.]+)(?:\"|″)', re.IGNORECASE)
 PITCH_RE = re.compile(r"([\d.]+)\s*(?:µm|μm|um)", re.IGNORECASE)
 
 # fractional inch → (width_mm, height_mm). Uses the central TYPE_SIZE table
@@ -133,7 +132,7 @@ def _phone_to_spec(name: str, fields: dict[str, str]) -> Optional[Spec]:
     pitch_match = PITCH_RE.search(main)
     pitch = float(pitch_match.group(1)) if pitch_match else None
 
-    fmt_match = SENSOR_FORMAT_RE.search(main)
+    fmt_match = TYPE_FRACTIONAL_RE.search(main)
     sensor_type = fmt_match.group(1) if fmt_match else None
     size = PHONE_TYPE_SIZE.get(sensor_type) if sensor_type else None
 
