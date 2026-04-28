@@ -524,6 +524,53 @@ def test_template_zero_pitch_rendering():
            "0.0 µm" not in html and "0.0 µm" not in html, True)
 
 
+def test_template_negative_pitch_rendering():
+    """Verify pixelpitch.html template renders negative pitch/mpix as 'unknown'."""
+    section("template negative value rendering")
+    import pixelpitch as pp
+    from models import Spec
+
+    spec = Spec(name="Neg Cam", category="fixed", type=None,
+                size=(5.0, 3.7), pitch=-1.0, mpix=-10.0, year=2020)
+    d = pp.derive_spec(spec)
+    d.id = 0
+
+    from datetime import datetime, timezone
+    date = datetime.now(timezone.utc)
+
+    html = pp._get_env().get_template("pixelpitch.html").render(
+        title="Test", specs=[d], page="fixed", date=date,
+    )
+
+    # Negative mpix is physically impossible — must render as "unknown", not "-10.0 MP"
+    expect("template: negative mpix renders as unknown",
+           "-10.0 MP" not in html, True)
+    expect("template: negative mpix shows unknown text",
+           "unknown" in html, True)
+
+    # Negative pitch is physically impossible — must render as "unknown", not "-1.0 µm"
+    expect("template: negative pitch renders as unknown",
+           "-1.0 µm" not in html, True)
+
+
+def test_parse_existing_csv_negative_values():
+    """Verify parse_existing_csv rejects negative physical quantities."""
+    section("parse_existing_csv negative value rejection")
+    import pixelpitch as pp
+
+    csv_neg = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+        "megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Test,mirrorless,,-5.00,-3.00,-15.00,-10.0,-1.00,2021,\n"
+    )
+    parsed = pp.parse_existing_csv(csv_neg)
+    expect("negative CSV: row count", len(parsed), 1)
+    expect("negative CSV: size is None", parsed[0].size, None)
+    expect("negative CSV: area is None", parsed[0].area, None)
+    expect("negative CSV: mpix is None", parsed[0].spec.mpix, None)
+    expect("negative CSV: pitch is None", parsed[0].pitch, None)
+
+
 # --------------------------------------------------------------------------
 # Merge logic: feeding multi-source CSV records through merge_camera_data
 
@@ -832,10 +879,12 @@ def test_csv_round_trip():
         out_path_zero.unlink(missing_ok=True)
 
     parsed_zero = pp.parse_existing_csv(csv_zero_text)
-    expect("round-trip 0.0 mpix preserved",
-           parsed_zero[0].spec.mpix, 0.0, tol=0.01)
-    expect("round-trip 0.0 pitch preserved",
-           parsed_zero[0].pitch, 0.0, tol=0.01)
+    # 0.0 mpix/pitch are physically impossible and are now rejected
+    # (treated as None) by parse_existing_csv positivity validation.
+    expect("round-trip 0.0 mpix rejected as None",
+           parsed_zero[0].spec.mpix, None)
+    expect("round-trip 0.0 pitch rejected as None",
+           parsed_zero[0].pitch, None)
 
 
 # --------------------------------------------------------------------------
@@ -1657,6 +1706,8 @@ def main():
     test_openmvg_negative_dimensions()
     test_sorted_by_zero_values()
     test_template_zero_pitch_rendering()
+    test_template_negative_pitch_rendering()
+    test_parse_existing_csv_negative_values()
     test_derive_spec_negative_size()
 
     print("\n" + ("=" * 60))
