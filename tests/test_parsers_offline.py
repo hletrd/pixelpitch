@@ -447,6 +447,21 @@ def test_openmvg_negative_dimensions():
     else:
         expect("zero dimensions: 0 records", True, True)
 
+    # Negative pixel dimensions must produce mpix=None (not positive mpix
+    # from the product of two negatives)
+    csv_neg_pixels = (
+        "CameraMaker,CameraModel,SensorDescription,SensorWidth(mm),"
+        "SensorHeight(mm),SensorWidth(pixels),SensorHeight(pixels)\n"
+        'Canon,EOS NegPixels,"1 x 1 mm",1.0,1.0,-100,-200\n'
+    )
+    with unittest.mock.patch.object(openmvg, 'http_get', return_value=csv_neg_pixels):
+        specs_neg_px = openmvg.fetch()
+    if specs_neg_px:
+        expect("negative pixel dimensions: mpix is None",
+               specs_neg_px[0].mpix, None)
+    else:
+        expect("negative pixel dimensions: 0 records", True, True)
+
 
 # --------------------------------------------------------------------------
 # sorted_by: 0.0 values must sort at 0.0, not -1
@@ -717,6 +732,18 @@ def test_parse_existing_csv():
     )
     parsed_valid = pp.parse_existing_csv(csv_valid)
     expect("year=2021 accepted", parsed_valid[0].spec.year, 2021)
+
+    # matched_sensors: leading/trailing/doubled semicolons must not produce empty strings
+    csv_semicolons = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+        "megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Test,mirrorless,,36.00,24.00,864.00,45.0,5.00,2021,;IMX455;;IMX410;\n"
+    )
+    parsed_semi = pp.parse_existing_csv(csv_semicolons)
+    expect("matched_sensors: no empty strings from semicolons",
+           '' not in parsed_semi[0].matched_sensors, True)
+    expect("matched_sensors: correct entries from semicolons",
+           parsed_semi[0].matched_sensors, ["IMX455", "IMX410"])
 
 
 # --------------------------------------------------------------------------
@@ -1198,6 +1225,14 @@ def test_pixel_pitch():
     pitch5 = pp.pixel_pitch(864.0, -1.0)
     expect("negative mpix pitch", pitch5, 0.0)
 
+    # Edge case: negative area — must return 0.0, not crash (ValueError guard)
+    pitch6 = pp.pixel_pitch(-864.0, 33.0)
+    expect("negative area pitch", pitch6, 0.0)
+
+    # Edge case: zero area — must return 0.0, not crash
+    pitch7 = pp.pixel_pitch(0.0, 33.0)
+    expect("zero area pitch", pitch7, 0.0)
+
 
 def test_derive_spec_zero_pitch():
     """Verify derive_spec preserves spec.pitch=0.0 instead of computing from area+mpix.
@@ -1225,6 +1260,32 @@ def test_derive_spec_zero_pitch():
            d_none.pitch is not None, True)
     expect("derive_spec: computed pitch ≈ 5.12",
            d_none.pitch, 5.12, tol=0.05)
+
+
+def test_derive_spec_negative_size():
+    """Verify derive_spec handles negative sensor dimensions without crashing.
+
+    Negative dimensions produce negative area, which would crash pixel_pitch
+    via sqrt() of a negative number. The guard in pixel_pitch returns 0.0
+    for area <= 0, so derive_spec should return pitch=0.0 instead of crashing.
+    """
+    section("derive_spec negative size handling")
+    import pixelpitch as pp
+    from models import Spec
+
+    # Negative width: size=(-5.0, 3.7), pitch=None, mpix=10.0
+    spec_neg = Spec(name="Neg Size Cam", category="fixed", type=None,
+                     size=(-5.0, 3.7), pitch=None, mpix=10.0, year=2020)
+    d_neg = pp.derive_spec(spec_neg)
+    expect("derive_spec negative size: no crash", d_neg is not None, True)
+    expect("derive_spec negative size: pitch is 0.0", d_neg.pitch, 0.0)
+
+    # Negative height: size=(5.0, -3.7), pitch=None, mpix=10.0
+    spec_neg2 = Spec(name="Neg Height Cam", category="fixed", type=None,
+                      size=(5.0, -3.7), pitch=None, mpix=10.0, year=2020)
+    d_neg2 = pp.derive_spec(spec_neg2)
+    expect("derive_spec negative height: no crash", d_neg2 is not None, True)
+    expect("derive_spec negative height: pitch is 0.0", d_neg2.pitch, 0.0)
 
 
 # --------------------------------------------------------------------------
@@ -1521,6 +1582,7 @@ def main():
     test_openmvg_negative_dimensions()
     test_sorted_by_zero_values()
     test_template_zero_pitch_rendering()
+    test_derive_spec_negative_size()
 
     print("\n" + ("=" * 60))
     if _failures:
