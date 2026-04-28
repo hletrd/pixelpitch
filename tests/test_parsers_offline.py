@@ -892,6 +892,18 @@ def test_merge_field_preservation():
     expect("merge: preserves mpix from existing",
            merged_mpx[0].spec.mpix, 10.0, tol=0.1)
 
+    # spec/derived pitch consistency: new has spec.pitch=None with computed
+    # derived.pitch (from area+mpix), existing has spec.pitch=2.0 (direct
+    # measurement).  After merge, derived.pitch must equal spec.pitch (the
+    # authoritative value), not the computed approximation.
+    existing_pc = [derive("Cam PC", "fixed", (5.0, 3.7), 10.0, 2020, pitch_val=2.0)]
+    new_pc = [derive("Cam PC", "fixed", (5.0, 3.7), 10.0, 2020, pitch_val=None)]
+    merged_pc = pp.merge_camera_data(new_pc, existing_pc)
+    expect("merge: spec.pitch preserved from existing",
+           merged_pc[0].spec.pitch, 2.0, tol=0.01)
+    expect("merge: derived.pitch consistent with spec.pitch",
+           merged_pc[0].pitch, 2.0, tol=0.01)
+
 
 # --------------------------------------------------------------------------
 # merge_camera_data year-change log

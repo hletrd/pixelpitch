@@ -430,6 +430,15 @@ def merge_camera_data(
                 new_spec.area = existing_spec.area
             if new_spec.pitch is None and existing_spec.pitch is not None:
                 new_spec.pitch = existing_spec.pitch
+            # Consistency: derived.pitch must always track spec.pitch when the
+            # latter is set.  derive_spec() may compute derived.pitch from
+            # area+mpix when spec.pitch is None, yielding an approximation.
+            # If spec.pitch was preserved from existing (authoritative
+            # measurement), derived.pitch must be updated to match — the
+            # template and write_csv both read derived.pitch.
+            if (new_spec.spec.pitch is not None
+                    and new_spec.pitch != new_spec.spec.pitch):
+                new_spec.pitch = new_spec.spec.pitch
             # Log year changes (independent of field preservation above).
             # This was previously an elif attached to the year-preservation
             # if, but the C21-01 SpecDerived insertion broke that chain.
