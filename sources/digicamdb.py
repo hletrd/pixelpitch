@@ -22,20 +22,7 @@ from .openmvg import fetch as _openmvg_fetch
 
 
 def fetch(limit: Optional[int] = None) -> list[Spec]:
-    specs = _openmvg_fetch(limit=limit)
-    # Return specs with openMVG's category (no separate provenance tagging)
-    return [
-        Spec(
-            name=s.name,
-            category=s.category,  # inherit openMVG's heuristic category
-            type=s.type,
-            size=s.size,
-            pitch=s.pitch,
-            mpix=s.mpix,
-            year=s.year,
-        )
-        for s in specs
-    ]
+    return _openmvg_fetch(limit=limit)
 
 
 if __name__ == "__main__":
