@@ -844,12 +844,12 @@ def test_csv_round_trip():
     from models import Spec
 
     spec1 = Spec(name="Test, Camera", category="mirrorless", type="1/2.3",
-                  size=(35.9, 23.9), pitch=5.12, mpix=33.0, year=2021)
+                 size=(35.9, 23.9), pitch=5.12, mpix=33.0, year=2021)
     d1 = pp.derive_spec(spec1)
     d1.matched_sensors = ["IMX455", "IMX451"]
 
     spec2 = Spec(name="Simple Cam", category="dslr", type=None,
-                  size=None, pitch=None, mpix=None, year=None)
+                 size=None, pitch=None, mpix=None, year=None)
     d2 = pp.derive_spec(spec2)
 
     derived_list = [d1, d2]
@@ -1228,7 +1228,7 @@ def test_merge_gsmarena_measured_preserved():
     # Also test case where GSMArena provides spec.size=None but there is no
     # existing data — derived.size should come from type lookup
     new_only_spec = Spec(name='New Phone', category='smartphone', type='1/1.3',
-                          size=None, pitch=None, mpix=200.0, year=2025)
+                         size=None, pitch=None, mpix=200.0, year=2025)
     new_only = pp.derive_spec(new_only_spec)
     merged_new = pp.merge_camera_data([new_only], [])
     expect("merge GSMArena no existing: derived.size from type",
@@ -1492,7 +1492,7 @@ def test_derive_spec_zero_pitch():
 
     # spec.pitch=0.0 with mpix=0.0 — invalid direct, computed also invalid → None
     spec_zero_nocalc = Spec(name="Zero Pitch No Calc", category="fixed", type=None,
-                             size=(5.0, 3.7), pitch=0.0, mpix=0.0, year=2020)
+                            size=(5.0, 3.7), pitch=0.0, mpix=0.0, year=2020)
     d_zero_nocalc = pp.derive_spec(spec_zero_nocalc)
     expect("derive_spec: spec.pitch=0.0 with mpix=0.0 → None",
            d_zero_nocalc.pitch, None)
@@ -1545,7 +1545,7 @@ def test_derive_spec_negative_size():
 
     # Negative width: size=(-5.0, 3.7), pitch=None, mpix=10.0
     spec_neg = Spec(name="Neg Size Cam", category="fixed", type=None,
-                     size=(-5.0, 3.7), pitch=None, mpix=10.0, year=2020)
+                    size=(-5.0, 3.7), pitch=None, mpix=10.0, year=2020)
     d_neg = pp.derive_spec(spec_neg)
     expect("derive_spec negative size: no crash", d_neg is not None, True)
     expect("derive_spec negative size: size is None", d_neg.size, None)
@@ -1554,7 +1554,7 @@ def test_derive_spec_negative_size():
 
     # Negative height: size=(5.0, -3.7), pitch=None, mpix=10.0
     spec_neg2 = Spec(name="Neg Height Cam", category="fixed", type=None,
-                      size=(5.0, -3.7), pitch=None, mpix=10.0, year=2020)
+                     size=(5.0, -3.7), pitch=None, mpix=10.0, year=2020)
     d_neg2 = pp.derive_spec(spec_neg2)
     expect("derive_spec negative height: no crash", d_neg2 is not None, True)
     expect("derive_spec negative height: size is None", d_neg2.size, None)
@@ -1563,7 +1563,7 @@ def test_derive_spec_negative_size():
 
     # NaN width: size=(nan, 24.0), pitch=None, mpix=10.0
     spec_nan = Spec(name="NaN Size Cam", category="fixed", type=None,
-                     size=(float('nan'), 24.0), pitch=None, mpix=10.0, year=2020)
+                    size=(float('nan'), 24.0), pitch=None, mpix=10.0, year=2020)
     d_nan = pp.derive_spec(spec_nan)
     expect("derive_spec NaN size: no crash", d_nan is not None, True)
     expect("derive_spec NaN size: size is None", d_nan.size, None)
@@ -1572,7 +1572,7 @@ def test_derive_spec_negative_size():
 
     # inf width: size=(inf, 24.0), pitch=None, mpix=10.0
     spec_inf = Spec(name="Inf Size Cam", category="fixed", type=None,
-                     size=(float('inf'), 24.0), pitch=None, mpix=10.0, year=2020)
+                    size=(float('inf'), 24.0), pitch=None, mpix=10.0, year=2020)
     d_inf = pp.derive_spec(spec_inf)
     expect("derive_spec inf size: no crash", d_inf is not None, True)
     expect("derive_spec inf size: size is None", d_inf.size, None)
@@ -1581,7 +1581,7 @@ def test_derive_spec_negative_size():
 
     # Zero width: size=(0.0, 24.0), pitch=None, mpix=10.0
     spec_zero = Spec(name="Zero Size Cam", category="fixed", type=None,
-                      size=(0.0, 24.0), pitch=None, mpix=10.0, year=2020)
+                     size=(0.0, 24.0), pitch=None, mpix=10.0, year=2020)
     d_zero = pp.derive_spec(spec_zero)
     expect("derive_spec zero size: no crash", d_zero is not None, True)
     expect("derive_spec zero size: size is None", d_zero.size, None)
