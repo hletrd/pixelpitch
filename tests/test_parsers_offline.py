@@ -467,8 +467,8 @@ def test_openmvg_negative_dimensions():
 # sorted_by: 0.0 values must sort at 0.0, not -1
 
 def test_sorted_by_zero_values():
-    """Verify sorted_by treats 0.0 as a valid sort value, not as None (-1)."""
-    section("sorted_by 0.0 value handling")
+    """Verify sorted_by treats invalid pitch (0.0, None) consistently."""
+    section("sorted_by invalid pitch handling")
     import pixelpitch as pp
     from models import Spec
 
@@ -477,17 +477,21 @@ def test_sorted_by_zero_values():
                     size=size, pitch=pitch_val, mpix=mpix, year=year)
         return pp.derive_spec(spec)
 
-    # Camera with pitch=0.0 must sort at 0.0, not at -1
+    # Camera with pitch=0.0 and mpix=0.0 — derive_spec produces None (invalid)
     cam_zero = derive("Zero Pitch", "fixed", (5.0, 3.7), 0.0, 2020, pitch_val=0.0)
     cam_normal = derive("Normal Pitch", "fixed", (35.9, 23.9), 33.0, 2021, pitch_val=5.12)
     cam_none = derive("No Pitch", "fixed", None, None, 2019)
 
     sorted_list = pp.sorted_by([cam_normal, cam_zero, cam_none], "pitch")
-    # Sorted descending by pitch: Normal (5.12) > Zero (0.0) > None (-1)
-    expect("sorted_by: zero-pitch camera at index 1",
-           sorted_list[1].spec.name, "Zero Pitch")
-    expect("sorted_by: none-pitch camera at index 2",
-           sorted_list[2].spec.name, "No Pitch")
+    # Both cam_zero and cam_none have derived.pitch=None, so they sort at -1
+    # Sorted descending by pitch: Normal (5.12) > Zero (None=-1) = No Pitch (None=-1)
+    expect("sorted_by: normal-pitch camera at index 0",
+           sorted_list[0].spec.name, "Normal Pitch")
+    # cam_zero and cam_none both have pitch=None, so their relative order
+    # depends on the stable sort — just verify both are at indices 1 and 2
+    names_at_end = {sorted_list[1].spec.name, sorted_list[2].spec.name}
+    expect("sorted_by: zero and none-pitch cameras at end",
+           names_at_end == {"Zero Pitch", "No Pitch"}, True)
 
 
 # --------------------------------------------------------------------------
@@ -1328,22 +1332,32 @@ def test_pixel_pitch():
 
 
 def test_derive_spec_zero_pitch():
-    """Verify derive_spec preserves spec.pitch=0.0 instead of computing from area+mpix.
+    """Verify derive_spec treats invalid direct spec.pitch values (0.0, negative, NaN) as None.
 
-    The docstring says 'spec.pitch (direct measurement) always takes precedence'.
-    If spec.pitch is 0.0, it must be preserved — not overridden by a computed value.
+    Direct spec.pitch values that are non-positive or non-finite are treated as
+    invalid. derive_spec falls through to the computed path when possible, or
+    produces None when no valid pitch can be determined.
     """
-    section("derive_spec 0.0 pitch precedence")
+    section("derive_spec invalid direct pitch handling")
     import pixelpitch as pp
     from models import Spec
 
-    # spec.pitch=0.0 with size and mpix — derive_spec must keep pitch=0.0
-    # (NOT compute pixel_pitch(area, mpix) ≈ 5.12)
+    # spec.pitch=0.0 with size and mpix — invalid direct pitch, fall through
+    # to computed path (pixel_pitch(area, mpix) ≈ 5.12)
     spec_zero = Spec(name="Zero Pitch Cam", category="fixed", type=None,
                      size=(35.9, 23.9), pitch=0.0, mpix=33.0, year=2021)
     d_zero = pp.derive_spec(spec_zero)
-    expect("derive_spec: spec.pitch=0.0 preserved over computed",
-           d_zero.pitch, 0.0, tol=0.01)
+    expect("derive_spec: spec.pitch=0.0 falls through to computed",
+           d_zero.pitch is not None, True)
+    expect("derive_spec: fallback pitch ≈ 5.12",
+           d_zero.pitch, 5.12, tol=0.05)
+
+    # spec.pitch=0.0 with mpix=0.0 — invalid direct, computed also invalid → None
+    spec_zero_nocalc = Spec(name="Zero Pitch No Calc", category="fixed", type=None,
+                             size=(5.0, 3.7), pitch=0.0, mpix=0.0, year=2020)
+    d_zero_nocalc = pp.derive_spec(spec_zero_nocalc)
+    expect("derive_spec: spec.pitch=0.0 with mpix=0.0 → None",
+           d_zero_nocalc.pitch, None)
 
     # spec.pitch=None with size and mpix — derive_spec must compute
     spec_none = Spec(name="None Pitch Cam", category="fixed", type=None,
@@ -1353,6 +1367,31 @@ def test_derive_spec_zero_pitch():
            d_none.pitch is not None, True)
     expect("derive_spec: computed pitch ≈ 5.12",
            d_none.pitch, 5.12, tol=0.05)
+
+    # spec.pitch=-1.0 with size and mpix — invalid direct, fall through to computed
+    spec_neg = Spec(name="Neg Pitch Cam", category="fixed", type=None,
+                    size=(35.9, 23.9), pitch=-1.0, mpix=33.0, year=2021)
+    d_neg = pp.derive_spec(spec_neg)
+    expect("derive_spec: spec.pitch=-1.0 falls through to computed",
+           d_neg.pitch is not None, True)
+    expect("derive_spec: negative pitch fallback ≈ 5.12",
+           d_neg.pitch, 5.12, tol=0.05)
+
+    # spec.pitch=nan with size and mpix — invalid direct, fall through to computed
+    spec_nan = Spec(name="NaN Pitch Cam", category="fixed", type=None,
+                    size=(35.9, 23.9), pitch=float('nan'), mpix=33.0, year=2021)
+    d_nan = pp.derive_spec(spec_nan)
+    expect("derive_spec: spec.pitch=nan falls through to computed",
+           d_nan.pitch is not None, True)
+    expect("derive_spec: nan pitch fallback ≈ 5.12",
+           d_nan.pitch, 5.12, tol=0.05)
+
+    # spec.pitch=-1.0 with no mpix — invalid direct, no computed fallback → None
+    spec_neg_nocalc = Spec(name="Neg Pitch No Calc", category="fixed", type=None,
+                           size=(5.0, 3.7), pitch=-1.0, mpix=None, year=2020)
+    d_neg_nocalc = pp.derive_spec(spec_neg_nocalc)
+    expect("derive_spec: spec.pitch=-1.0 with no mpix → None",
+           d_neg_nocalc.pitch, None)
 
 
 def test_derive_spec_negative_size():
@@ -1703,12 +1742,15 @@ def test_derive_spec_computed_zero_pitch():
     expect("derive_spec: mpix=-1.0, pitch=None -> computed pitch is None",
            d_mpix_neg.pitch, None)
 
-    # Case 3: spec.pitch=0.0 (direct) is still preserved
+    # Case 3: spec.pitch=0.0 (direct) is treated as invalid, falls through
+    # to computed path (pixel_pitch(area, mpix) ≈ 5.12)
     spec_direct_zero = Spec(name="Direct Zero Cam", category="fixed", type=None,
                             size=(35.9, 23.9), pitch=0.0, mpix=33.0, year=2021)
     d_direct_zero = pp.derive_spec(spec_direct_zero)
-    expect("derive_spec: spec.pitch=0.0 direct still preserved",
-           d_direct_zero.pitch, 0.0, tol=0.01)
+    expect("derive_spec: spec.pitch=0.0 direct falls through to computed",
+           d_direct_zero.pitch is not None, True)
+    expect("derive_spec: spec.pitch=0.0 direct fallback ≈ 5.12",
+           d_direct_zero.pitch, 5.12, tol=0.05)
 
     # Case 4: CSV round-trip for mpix=0.0 -> pitch=None -> no data loss
     import tempfile
@@ -1768,6 +1810,63 @@ def test_write_csv_nonfinite_guards():
     expect("write_csv nan mpix: no 'inf' in CSV row", "inf" not in row2, True)
 
 
+def test_write_csv_zero_negative_guards():
+    """Verify write_csv does not output 0.0 or negative mpix/pitch values."""
+    section("write_csv zero/negative value guards")
+    import tempfile
+    import pixelpitch as pp
+    from models import Spec
+
+    # spec.mpix=0.0 → CSV should have empty mpix cell (not "0.0")
+    spec_zero = Spec(name="Zero MP Cam", category="fixed", type=None,
+                     size=(35.9, 23.9), pitch=5.12, mpix=0.0, year=2020)
+    d_zero = pp.derive_spec(spec_zero)
+    d_zero.id = 0
+    with tempfile.NamedTemporaryFile("w+", suffix=".csv", delete=False) as f:
+        out_path = Path(f.name)
+    try:
+        pp.write_csv([d_zero], out_path)
+        csv_text = out_path.read_text(encoding="utf-8")
+    finally:
+        out_path.unlink(missing_ok=True)
+    row = csv_text.splitlines()[1]
+    expect("write_csv zero mpix: no ',0.0,' in CSV row",
+           ",0.0," not in row, True)
+
+    # spec.mpix=-5.0 → CSV should have empty mpix cell (not "-5.0")
+    spec_neg = Spec(name="Neg MP Cam", category="fixed", type=None,
+                    size=(35.9, 23.9), pitch=5.12, mpix=-5.0, year=2020)
+    d_neg = pp.derive_spec(spec_neg)
+    d_neg.id = 0
+    with tempfile.NamedTemporaryFile("w+", suffix=".csv", delete=False) as f:
+        out_path2 = Path(f.name)
+    try:
+        pp.write_csv([d_neg], out_path2)
+        csv_text2 = out_path2.read_text(encoding="utf-8")
+    finally:
+        out_path2.unlink(missing_ok=True)
+    row2 = csv_text2.splitlines()[1]
+    expect("write_csv neg mpix: no '-5.0' in CSV row",
+           "-5.0" not in row2, True)
+
+    # derived.pitch=0.0 (direct spec.pitch=0.0 with no computed fallback)
+    # → CSV should have empty pitch cell (not "0.00")
+    spec_zero_pitch = Spec(name="Zero Pitch Cam", category="fixed", type=None,
+                           size=(5.0, 3.7), pitch=0.0, mpix=0.0, year=2020)
+    d_zero_pitch = pp.derive_spec(spec_zero_pitch)
+    d_zero_pitch.id = 0
+    with tempfile.NamedTemporaryFile("w+", suffix=".csv", delete=False) as f:
+        out_path3 = Path(f.name)
+    try:
+        pp.write_csv([d_zero_pitch], out_path3)
+        csv_text3 = out_path3.read_text(encoding="utf-8")
+    finally:
+        out_path3.unlink(missing_ok=True)
+    row3 = csv_text3.splitlines()[1]
+    expect("write_csv zero pitch: no '0.00' pitch in CSV row",
+           ",0.00," not in row3, True)
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -1805,6 +1904,7 @@ def main():
     test_derive_spec_negative_size()
     test_derive_spec_computed_zero_pitch()
     test_write_csv_nonfinite_guards()
+    test_write_csv_zero_negative_guards()
 
     print("\n" + ("=" * 60))
     if _failures:
