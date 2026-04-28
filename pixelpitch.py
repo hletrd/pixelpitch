@@ -601,7 +601,10 @@ def extract_specs(entries: list[str], category: str) -> list[Spec]:
         if mpix_text:
             mpix_match = MPIX_RE.search(mpix_text)
             if mpix_match:
-                mpix = float(mpix_match.group(1))
+                try:
+                    mpix = float(mpix_match.group(1))
+                except ValueError:
+                    mpix = None
 
         # Parse sensor info
         sensor_text = fields.get("Sensor", "")
