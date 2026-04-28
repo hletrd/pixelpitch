@@ -321,12 +321,17 @@ def _safe_int_id(s: str) -> Optional[int]:
     Accepts ``"5"``, ``"5.0"``, and ``" 5 "``. Returns None on any
     parse failure rather than raising — callers (parse_existing_csv)
     already drop ids on error, but raising would skip the entire row
-    via the broad except. Same Excel-hand-edit class as ``_safe_year``.
+    via the broad except. Same Excel-hand-edit class as ``_safe_year``;
+    rejects non-finite floats and out-of-range integers (anything
+    outside ``[0, 1_000_000]``) so an Excel-coerced ``"1.0E+308"``
+    cannot propagate a 309-digit big-int through merge_camera_data
+    (F53-01). Sequential ids never go negative or exceed the camera
+    count (~1000), so the bound is comfortably generous.
     """
     if not s:
         return None
     try:
-        return int(s)
+        n = int(s)
     except (ValueError, TypeError):
         try:
             f = float(s)
@@ -334,7 +339,10 @@ def _safe_int_id(s: str) -> Optional[int]:
             return None
         if not isfinite(f):
             return None
-        return int(f)
+        n = int(f)
+    if 0 <= n <= 1_000_000:
+        return n
+    return None
 
 
 def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
