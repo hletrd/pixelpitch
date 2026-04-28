@@ -1,71 +1,55 @@
-# Debugger Review (Cycle 35) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 36) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-34 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-35 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-DBG34-01 (match_sensors ZeroDivisionError) fixed in C34. DBG34-02 (list truthy check) fixed in C34. Verified.
+All C35 findings fixed. No regressions detected. Gate tests pass.
 
 ## New Findings
 
-### DBG35-01: `derive_spec` crashes with ValueError when area is negative
+### DBG36-01: NaN and inf values propagate silently through the entire data pipeline
 
-**File:** `pixelpitch.py`, line 725 (calls `pixel_pitch`)
+**Files:** `pixelpitch.py` (pixel_pitch, derive_spec, parse_existing_csv, write_csv), `sources/openmvg.py`
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode:** `pixel_pitch(area, mpix)` calls `sqrt(area / (mpix * 10**6))`. When `area < 0`, `sqrt()` raises `ValueError: expected a nonnegative input`. This exception is not caught anywhere.
+**Failure mode:** Python's `float()` function accepts `"nan"`, `"inf"`, `"-inf"` as valid inputs. The CSV parser uses bare `float()` for all numeric fields. Once NaN or inf enters the pipeline, it propagates through every computation without raising an exception:
+
+1. `parse_existing_csv` accepts `"nan"` and `"inf"` CSV values
+2. `derive_spec` propagates NaN through `area = nan * 24.0 = nan`
+3. `pixel_pitch(nan, 10.0)` returns `nan` (guard only checks `<= 0`)
+4. `write_csv` writes `nan` and `inf` to CSV as strings
+5. Template renders "nan µm" and `data-pitch="nan"`
+6. JS `isInvalidData` does not catch NaN (parseFloat("nan") || 0 = 0)
 
 **Trigger scenario:**
-1. `parse_existing_csv` reads a CSV with negative sensor dimensions (e.g., corrupted data)
-2. `derive_spec` is called on the parsed spec
-3. `area = size[0] * size[1]` produces a negative value
-4. Since `spec.pitch is None`, `pixel_pitch(area, mpix)` is called
-5. `sqrt(negative)` raises `ValueError`
-6. Unhandled exception crashes the build
+1. Manual CSV edit or data corruption introduces `nan` or `inf` in a cell
+2. `parse_existing_csv` happily parses it
+3. NaN propagates through derive_spec, write_csv, and template rendering
+4. The build succeeds but produces "nan µm" in visible output
 
-**Fix:** Add a guard in `pixel_pitch` for `area <= 0`:
-
-```python
-def pixel_pitch(area: float, mpix: float) -> float:
-    if mpix <= 0 or area <= 0:
-        return 0.0
-    return 1000 * sqrt(area / (mpix * 10**6))
-```
+**Fix:** Add `math.isfinite()` guards in `pixel_pitch` and `parse_existing_csv`.
 
 ---
 
-### DBG35-02: `_BOM` literal character — silent failure if editor strips it
+### DBG36-02: `pixel_pitch` returns inf for inf inputs instead of 0.0
 
-**File:** `sources/__init__.py`, line 90
+**File:** `pixelpitch.py`, line 184
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode:** The literal BOM character U+FEFF is used instead of the documented escape sequence. If an editor or CI pipeline strips invisible characters during normalization:
-1. `_BOM` becomes `''` (empty string)
-2. `strip_bom` always returns the input unchanged
-3. BOM-prefixed CSVs produce mangled headers in DictReader
-4. `KeyError` on every row — 0 records, no error message
+**Failure mode:** `pixel_pitch(float('inf'), 10.0)` returns `inf` because:
+- `inf <= 0` is False (guard does not catch it)
+- `sqrt(inf / 10e6)` = `inf`
 
-This is a silent data loss bug — the build succeeds but produces empty/incomplete output.
+The C35-01 fix added `area <= 0` guard but did not account for inf. While negative area correctly returns 0.0, infinite area returns `inf`, which then renders as "inf µm" in the template.
 
-**Fix:** Replace the literal with escape sequence `﻿`.
-
----
-
-### DBG35-03: Empty strings in matched_sensors from semicolon splitting
-
-**File:** `pixelpitch.py`, line 343
-**Severity:** LOW | **Confidence:** HIGH
-
-**Failure mode:** If the matched_sensors CSV field contains leading/trailing semicolons (e.g., `;IMX455;`), the `split(";")` produces `['', 'IMX455', '']`. These empty strings are written back to CSV on the next `write_csv` call, perpetuating corruption.
-
-**Fix:** Filter empty strings after split.
+**Fix:** Add `math.isfinite` guard in `pixel_pitch`.
 
 ---
 
 ## Summary
 
-- DBG35-01 (MEDIUM): `derive_spec` crashes with ValueError on negative area
-- DBG35-02 (MEDIUM): `_BOM` literal — silent failure if editor strips invisible character
-- DBG35-03 (LOW): Empty strings in matched_sensors from semicolon splitting
+- DBG36-01 (MEDIUM): NaN and inf propagate silently through the entire pipeline
+- DBG36-02 (MEDIUM): `pixel_pitch` returns inf for inf inputs instead of 0.0

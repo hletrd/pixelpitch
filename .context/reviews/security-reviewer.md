@@ -1,8 +1,8 @@
-# Security Review (Cycle 35) — OWASP, Secrets, Unsafe Patterns, Auth/Authz
+# Security Review (Cycle 36) — OWASP, Secrets, Unsafe Patterns, Auth/Authz
 
 **Reviewer:** security-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-34 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-35 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
@@ -10,9 +10,7 @@ All previously identified security findings remain deferred (LOW severity). No n
 
 ## New Findings
 
-No NEW security findings. The codebase remains a static-site generator with no user input, no authentication, and no database. Jinja2 autoescape confirmed enabled. All external links use `rel="noopener noreferrer"`. The `importlib.import_module` in `fetch_source` is protected by the `SOURCE_REGISTRY` whitelist. CDN script integrity hashes are present on all external JS/CSS.
-
-The `_BOM` literal vs escape sequence issue (CR35-01) has a minor security dimension: if the BOM is stripped by an editor, `strip_bom` silently stops working, which could cause BOM-prefixed CSVs to be misparsed. However, this is a data integrity issue, not a security vulnerability.
+No NEW security findings. The NaN/inf data integrity issue (CR36-01, CR36-02) has a minor security dimension — corrupted CSV data could be injected to produce "nan" in rendered HTML, which could confuse automated parsers. However, this is a data integrity issue, not a security vulnerability. The codebase has no user input, no authentication, and no database. Jinja2 autoescape is confirmed enabled. All external links use `rel="noopener noreferrer"`.
 
 ## Summary
 

@@ -1,50 +1,32 @@
-# Document Specialist Review (Cycle 35) — Doc/Code Mismatches
+# Document Specialist Review (Cycle 36) — Doc/Code Mismatches
 
 **Reviewer:** document-specialist
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-34 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-35 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-DOC33-01 (derive_spec docstring "always takes precedence" vs 0.0 pitch) fixed in C33.
+DOC35-01 (BOM comment vs code mismatch) fixed. DOC35-02 (pixel_pitch ValueError doc) moot — ValueError no longer raised after C35-01 fix added the `area <= 0` guard.
 
 ## New Findings
 
-### DOC35-01: `_BOM` comment claims escape sequence is used, but literal is used
+### DOC36-01: `pixel_pitch` docstring incomplete — does not mention NaN/inf handling
 
-**File:** `sources/__init__.py`, lines 87-90
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-The comment on lines 87-89 explicitly states:
-
-> Using the escape sequence rather than the literal character guards against editors or CI pipelines that silently strip or normalise the invisible BOM glyph when re-encoding source files.
-
-But line 90 uses the literal BOM character (`\xef\xbb\xbf` in raw bytes), not the escape sequence (`﻿`). The comment directly contradicts the implementation.
-
-**Fix:** Either:
-1. Replace the literal with the actual escape sequence `﻿` (preferred — makes the code match the documented intent), or
-2. Update the comment to reflect that the literal is used (not recommended — defeats the documented purpose)
-
----
-
-### DOC35-02: `pixel_pitch` docstring does not document ValueError for negative area
-
-**File:** `pixelpitch.py`, lines 178-181
+**File:** `pixelpitch.py`, lines 178-183
 **Severity:** LOW | **Confidence:** HIGH
 
-The `pixel_pitch` function docstring does not mention that it raises `ValueError` when `area < 0`. The function signature accepts `float` for area, and the docstring only states the return type is `float`. Callers have no indication that negative area is unsupported.
+The `pixel_pitch` docstring says:
 
-**Fix:** Add a "Raises" section to the docstring:
-```
-Raises:
-    ValueError: If area < 0 (sqrt of negative number)
-```
+> Returns 0.0 when mpix <= 0 or area <= 0 (physically meaningless inputs) instead of raising ValueError from sqrt.
 
-Or better, add a guard that returns 0.0 for negative area (as done for mpix <= 0).
+After the C36 fix, it should also mention NaN and inf:
+
+> Returns 0.0 when mpix <= 0, area <= 0, or either argument is NaN/inf (physically meaningless or non-finite inputs) instead of raising ValueError from sqrt.
+
+**Fix:** Update docstring to match the new guard behavior.
 
 ---
 
 ## Summary
 
-- DOC35-01 (MEDIUM): `_BOM` comment claims escape sequence, code uses literal — direct contradiction
-- DOC35-02 (LOW): `pixel_pitch` docstring does not document ValueError for negative area
+- DOC36-01 (LOW): `pixel_pitch` docstring should mention NaN/inf handling

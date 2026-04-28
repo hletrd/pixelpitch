@@ -1,87 +1,95 @@
-# Test Engineer Review (Cycle 35) — Test Coverage, Flaky Tests, TDD
+# Test Engineer Review (Cycle 36) — Test Coverage, Flaky Tests, TDD
 
 **Reviewer:** test-engineer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-34 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-35 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-TE34-01 (match_sensors megapixels=0.0 test) implemented in C34. TE34-02 (match_sensors width/height=0.0 test) implemented in C34.
+TE35-01 through TE35-04 all implemented and passing.
 
 ## New Findings
 
-### TE35-01: No test for `pixel_pitch` with negative area (ValueError crash)
+### TE36-01: No test for `pixel_pitch` with NaN inputs
 
 **File:** `tests/test_parsers_offline.py`
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-There is no test verifying that `pixel_pitch` or `derive_spec` handles negative area without crashing. The `test_pixel_pitch` function tests zero and negative mpix, but not negative area. Since `pixel_pitch(-864.0, 33.0)` raises `ValueError: expected a nonnegative input`, this crash path is untested and would not be caught by CI.
+There is no test verifying that `pixel_pitch` returns 0.0 for NaN inputs. Currently `pixel_pitch(float('nan'), 10.0)` returns `nan` (a bug), but there should be a test that catches this regression once fixed.
 
 **Fix:** Add test:
 ```python
-# Edge case: negative area — must not crash
-pitch_neg = pp.pixel_pitch(-864.0, 33.0)
-expect("negative area pitch", pitch_neg, 0.0)
+pitch_nan = pp.pixel_pitch(float('nan'), 33.0)
+expect("nan area pitch", pitch_nan, 0.0)
+
+pitch_nan2 = pp.pixel_pitch(864.0, float('nan'))
+expect("nan mpix pitch", pitch_nan2, 0.0)
 ```
 
 ---
 
-### TE35-02: No test for `derive_spec` with negative sensor dimensions (ValueError crash)
+### TE36-02: No test for `pixel_pitch` with inf inputs
 
 **File:** `tests/test_parsers_offline.py`
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-There is no test verifying `derive_spec` handles negative sensor size without crashing. `derive_spec(spec)` with `spec.size=(-5.0, 3.7), pitch=None, mpix=10.0` crashes with `ValueError` from `pixel_pitch`. This crash path is untested.
+There is no test verifying that `pixel_pitch` returns 0.0 for inf inputs. Currently `pixel_pitch(float('inf'), 10.0)` returns `inf` (a bug), but there should be a test that catches this regression once fixed.
 
 **Fix:** Add test:
 ```python
-spec_neg = Spec(name='Neg Size', category='fixed', type=None,
-                size=(-5.0, 3.7), pitch=None, mpix=10.0, year=2020)
-d_neg = pp.derive_spec(spec_neg)
-expect("derive_spec negative size: no crash", d_neg is not None, True)
+pitch_inf = pp.pixel_pitch(float('inf'), 33.0)
+expect("inf area pitch", pitch_inf, 0.0)
+
+pitch_inf2 = pp.pixel_pitch(864.0, float('inf'))
+expect("inf mpix pitch", pitch_inf2, 0.0)
 ```
 
 ---
 
-### TE35-03: No test for empty strings in matched_sensors from semicolon splitting
+### TE36-03: No test for `parse_existing_csv` with NaN/inf values
+
+**File:** `tests/test_parsers_offline.py`
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+There is no test verifying that `parse_existing_csv` rejects or normalizes NaN and inf values. Currently they pass through as `float('nan')` and `float('inf')`.
+
+**Fix:** Add test:
+```python
+csv_nan = (
+    "id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,"
+    "megapixels,pixel_pitch_um,year,matched_sensors\n"
+    "0,Test,mirrorless,,nan,nan,nan,nan,nan,2021,\n"
+)
+parsed = pp.parse_existing_csv(csv_nan)
+# After fix: NaN values should be treated as None
+expect("NaN width rejected", parsed[0].size, None)
+expect("NaN mpix rejected", parsed[0].spec.mpix, None)
+expect("NaN pitch rejected", parsed[0].pitch, None)
+```
+
+---
+
+### TE36-04: No test for `derive_spec` with NaN/inf sensor dimensions
 
 **File:** `tests/test_parsers_offline.py`
 **Severity:** LOW | **Confidence:** HIGH
 
-There is no test for `parse_existing_csv` with leading/trailing semicolons in the matched_sensors field. The split produces empty strings that propagate through the system.
+There is no test verifying that `derive_spec` handles NaN or inf dimensions gracefully. Currently NaN produces NaN area and NaN pitch; inf produces inf area and inf pitch.
 
-**Fix:** Add test in `test_parse_existing_csv`:
+**Fix:** Add test:
 ```python
-csv_semicolons = '''id,name,category,type,...,matched_sensors
-0,Test,mirrorless,...,;IMX455;
-'''
-parsed = pp.parse_existing_csv(csv_semicolons)
-expect("no empty strings in matched_sensors", '' not in parsed[0].matched_sensors, True)
-```
-
----
-
-### TE35-04: No test for openmvg with negative pixel dimensions
-
-**File:** `tests/test_parsers_offline.py`
-**Severity:** LOW | **Confidence:** MEDIUM
-
-There is no test verifying that `openmvg.fetch` rejects negative pixel dimensions. Currently, negative pixel dimensions produce a positive mpix (product of two negatives).
-
-**Fix:** Add test in `test_openmvg_negative_dimensions`:
-```python
-csv_neg_pixels = '''...Canon,EOS Neg,...,-100,-200'''
-with unittest.mock.patch.object(openmvg, 'http_get', return_value=csv_neg_pixels):
-    specs = openmvg.fetch()
-if specs:
-    expect("negative pixel dims: mpix is None", specs[0].mpix, None)
+spec_nan = Spec(name='NaN Size', category='fixed', type=None,
+                size=(float('nan'), 24.0), pitch=None, mpix=10.0, year=2020)
+d_nan = pp.derive_spec(spec_nan)
+expect("derive_spec NaN size: no crash", d_nan is not None, True)
+expect("derive_spec NaN size: pitch is 0.0", d_nan.pitch, 0.0)
 ```
 
 ---
 
 ## Summary
 
-- TE35-01 (MEDIUM): No test for `pixel_pitch` with negative area (ValueError crash)
-- TE35-02 (MEDIUM): No test for `derive_spec` with negative sensor dimensions (ValueError crash)
-- TE35-03 (LOW): No test for empty strings in matched_sensors
-- TE35-04 (LOW): No test for openmvg with negative pixel dimensions
+- TE36-01 (MEDIUM): No test for `pixel_pitch` with NaN inputs
+- TE36-02 (MEDIUM): No test for `pixel_pitch` with inf inputs
+- TE36-03 (MEDIUM): No test for `parse_existing_csv` with NaN/inf values
+- TE36-04 (LOW): No test for `derive_spec` with NaN/inf dimensions

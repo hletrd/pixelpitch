@@ -1,61 +1,42 @@
-# Critic Review (Cycle 35) — Multi-Perspective Critique
+# Critic Review (Cycle 36) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-34 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-35 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-CRIT34-01 (residual truthy-vs-None) fixed in C34 across list command, match_sensors guard, and inner loop. CRIT34-02 (ZeroDivisionError) fixed. All verified.
+All C35 findings fixed and verified. No regressions.
 
 ## New Findings
 
-### CRIT35-01: `_BOM` literal vs escape sequence — comment-doc-code mismatch with real consequences
+### CRIT36-01: The C35-01 fix (negative area guard) is incomplete — NaN and inf bypass the guard
 
-**File:** `sources/__init__.py`, line 90
+**Files:** `pixelpitch.py` line 184, `sources/openmvg.py` line 96
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The comment on lines 87-89 explicitly promises an escape sequence is used to guard against editor stripping. But the actual code uses the literal BOM character. This is not just a documentation error — it's a defense mechanism that was designed but never actually implemented. The whole point of the escape sequence was to survive editor normalization, and using the literal defeats that purpose entirely.
+The C35-01 fix added `if mpix <= 0 or area <= 0: return 0.0` to `pixel_pitch`. This correctly handles negative and zero values but is incomplete because:
 
-This is the same class of issue as "security measure documented but not enforced" — the code claims a protection exists that it doesn't actually provide.
+1. `float('nan') <= 0` is `False` — NaN bypasses the guard
+2. `float('inf') <= 0` is `False` — inf bypasses the guard
+3. `float('nan') <= 0` is `False` — NaN mpix also bypasses the guard
 
-**Fix:** Replace the literal BOM with the escape sequence `﻿` in the source file.
+The C35 reviews specifically identified that negative area crashes via `sqrt()` and that negative mpix returns 0.0. But NaN is worse than negative — it doesn't even crash. It silently propagates through every subsequent computation, producing NaN output that renders as "nan µm" on the page.
 
----
+This is the same class of issue as C35-01 (data integrity) but with a different input domain. The fix pattern should be `math.isfinite()` rather than just `> 0` checks.
 
-### CRIT35-02: Data integrity chain has no negative-value guards
+**Fix:** Replace the `<= 0` guard with a `math.isfinite` check:
+```python
+def pixel_pitch(area: float, mpix: float) -> float:
+    if not math.isfinite(area) or not math.isfinite(mpix) or mpix <= 0 or area <= 0:
+        return 0.0
+    return 1000 * sqrt(area / (mpix * 10**6))
+```
 
-**Files:** `pixelpitch.py` (pixel_pitch, derive_spec), `sources/openmvg.py` (mpix calc)
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-The data pipeline has no guards against negative numeric values at any stage:
-
-1. **`pixel_pitch(area, mpix)`** crashes with `ValueError` when `area < 0` (from `sqrt()` of negative number)
-2. **`derive_spec`** can produce negative `area` from negative sensor dimensions, then crashes when computing pitch
-3. **`openmvg.fetch`** produces positive `mpix` from negative pixel dimensions (product of two negatives)
-4. **`parse_existing_csv`** accepts negative values for all numeric fields without validation
-5. **`write_csv`** writes negative values to CSV without warning
-6. **Template renders** negative pitch/mpix as `-2.0 µm` and `-10.0 MP`
-
-The pipeline has validation for year (1900-2100) but no validation for any other numeric field. While negative values are physically meaningless, they can crash the build (item 1) or produce nonsensical output (items 3-6).
-
-**Fix:** Add a validation guard in `pixel_pitch` for `area <= 0` and in `openmvg.fetch` for negative pixel dimensions. Consider adding a validation step in `derive_spec` or `parse_existing_csv`.
-
----
-
-### CRIT35-03: `parse_existing_csv` matched_sensors can contain empty strings
-
-**File:** `pixelpitch.py`, line 343
-**Severity:** LOW | **Confidence:** HIGH
-
-The split-by-semicolon produces empty strings from leading/trailing/doubled semicolons in the matched_sensors CSV field. This is a data quality issue that perpetuates through the CSV round-trip.
-
-**Fix:** Filter empty strings after split.
+And add `math.isfinite` validation in `parse_existing_csv` for all float fields, and in `openmvg.fetch` for sensor dimensions.
 
 ---
 
 ## Summary
 
-- CRIT35-01 (MEDIUM): `_BOM` literal vs escape — documented protection not actually implemented
-- CRIT35-02 (MEDIUM): No negative-value guards in data pipeline — crashes and nonsensical output
-- CRIT35-03 (LOW): Empty strings in matched_sensors from semicolon splitting
+- CRIT36-01 (MEDIUM): C35-01 fix incomplete — NaN and inf bypass the `<= 0` guard

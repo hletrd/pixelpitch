@@ -1,122 +1,109 @@
-# Aggregate Review (Cycle 35) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 36) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-34 Status
+## Cycle 1-35 Status
 
-All previous fixes confirmed still working. No regressions. Gate tests pass. C34-01/02/03 implemented and verified.
+All previous fixes confirmed still working. No regressions. Gate tests pass. C35-01/02/03/04 implemented and verified.
 
-## Cross-Agent Agreement Matrix (Cycle 35 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 36 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| `derive_spec` crashes with ValueError on negative area (via pixel_pitch) | CR35-03, CRIT35-02, V35-03, TR35-01, ARCH35-01, DBG35-01, TE35-01, TE35-02 | MEDIUM |
-| `_BOM` uses literal instead of escape sequence (comment-doc-code mismatch) | CR35-01, CRIT35-01, V35-02, TR35-02, ARCH35-02, DBG35-02, DOC35-01 | MEDIUM |
-| Empty strings in matched_sensors from semicolon splitting | CR35-02, CRIT35-03, V35-04, DBG35-03, TE35-03 | LOW |
-| openmvg produces positive mpix from negative pixel dimensions | CR35-04, V35-05, TE35-04 | LOW |
-| Negative pitch/mpix render in template | DES35-01, DES35-02 | LOW |
-| pixel_pitch docstring missing ValueError documentation | DOC35-02 | LOW |
+| `pixel_pitch` does not guard NaN/inf inputs | CR36-01, CRIT36-01, DBG36-02, V36-02, TR36-01, ARCH36-01, TE36-01, TE36-02, DES36-01 | MEDIUM |
+| `parse_existing_csv` accepts NaN/inf from CSV strings | CR36-02, DBG36-01, V36-02, TR36-01, TE36-03 | MEDIUM |
+| `openmvg.fetch` accepts inf sensor dimensions | CR36-03, V36-03 | LOW |
+| `derive_spec` propagates NaN/inf from size to pitch | DBG36-01, TE36-04 | MEDIUM (subsumed by C36-01) |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C35-01: `derive_spec` crashes with ValueError on negative area — unhandled exception
+### C36-01: `pixel_pitch` does not guard against NaN or inf inputs
 
-**Sources:** CR35-03, CRIT35-02, V35-03, TR35-01, ARCH35-01, DBG35-01, TE35-01, TE35-02
-**Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
+**Sources:** CR36-01, CRIT36-01, DBG36-02, V36-02, TR36-01, ARCH36-01, TE36-01, TE36-02, DES36-01
+**Severity:** MEDIUM | **Confidence:** HIGH (9-agent consensus)
 
-`pixel_pitch(area, mpix)` calls `sqrt(area / (mpix * 10**6))`, which raises `ValueError` when `area < 0`. `derive_spec` calls `pixel_pitch` when `spec.pitch is None` and both area and mpix are known. If area is negative (from negative sensor dimensions), this crashes the build pipeline.
+The guard `if mpix <= 0 or area <= 0: return 0.0` does not reject NaN or inf:
+- `float('nan') <= 0` is `False` — NaN bypasses the guard
+- `float('inf') <= 0` is `False` — inf bypasses the guard
+- `pixel_pitch(float('nan'), 10.0)` returns `nan` (not 0.0)
+- `pixel_pitch(float('inf'), 10.0)` returns `inf` (not 0.0)
 
-The existing guard in `pixel_pitch` is `if mpix <= 0: return 0.0`, which protects against zero/negative mpix but NOT against negative area.
+NaN propagates through `derive_spec` when size contains NaN: `area = nan * 24.0 = nan`, then `pixel_pitch(nan, mpix) = nan`.
+
+The C35-01 fix (negative area guard) is incomplete — it uses comparison operators that do not catch NaN or inf.
 
 **Concrete scenario:**
-1. Source produces `Spec(size=(-5.0, 3.7), pitch=None, mpix=10.0)` or corrupted CSV has negative dimensions
-2. `derive_spec` computes `area = -5.0 * 3.7 = -18.5`
-3. Calls `pixel_pitch(-18.5, 10.0)`
-4. `sqrt(-18.5 / 10_000_000)` raises `ValueError`
-5. Unhandled exception crashes the entire build
+1. Corrupted CSV contains `nan` or `inf` for sensor dimensions
+2. `parse_existing_csv` calls `float("nan")` which succeeds
+3. `derive_spec` computes `area = nan * 24.0 = nan`
+4. `pixel_pitch(nan, mpix)` returns `nan`
+5. `write_csv` writes `nan` to CSV
+6. Template renders "nan µm" in visible cell and `data-pitch="nan"` in HTML
+7. JS `isInvalidData` does not catch NaN (`parseFloat("nan") || 0 = 0`)
 
-**Fix:** Add guard in `pixel_pitch`:
+**Fix:** Replace the `<= 0` guard with `math.isfinite` check:
 ```python
 def pixel_pitch(area: float, mpix: float) -> float:
-    if mpix <= 0 or area <= 0:
+    if not math.isfinite(area) or not math.isfinite(mpix) or mpix <= 0 or area <= 0:
         return 0.0
     return 1000 * sqrt(area / (mpix * 10**6))
 ```
 
-Also add test coverage for negative area in `pixel_pitch` and negative size in `derive_spec`.
+Also add `math.isfinite` checks in `parse_existing_csv` and `openmvg.fetch`.
 
 ---
 
-### C35-02: `_BOM` uses literal character despite comment promising escape sequence
+### C36-02: `parse_existing_csv` accepts NaN and inf values from CSV strings
 
-**Sources:** CR35-01, CRIT35-01, V35-02, TR35-02, ARCH35-02, DBG35-02, DOC35-01
-**Severity:** MEDIUM | **Confidence:** HIGH (7-agent consensus)
+**Sources:** CR36-02, DBG36-01, V36-02, TR36-01, TE36-03
+**Severity:** MEDIUM | **Confidence:** HIGH (5-agent consensus)
 
-The comment on `sources/__init__.py` lines 87-89 explicitly states that the escape sequence is used "rather than the literal character" to guard against editor stripping. But the actual code on line 90 uses the literal BOM character (raw bytes `ef bb bf` in the source file).
+Python's `float()` accepts `"nan"`, `"inf"`, `"-inf"`, and `"NaN"` as valid inputs. The CSV parser uses bare `float()` calls for width, height, area, mpix, and pitch without checking for finite values. This allows NaN and inf to enter the data pipeline from corrupted or manually edited CSV files.
 
-**Concrete scenario:**
-1. An editor or CI pipeline normalizes UTF-8 source files
-2. The invisible BOM literal on line 90 is silently stripped
-3. `_BOM = ''` (empty string)
-4. `strip_bom` never matches → BOM-prefixed CSVs not stripped
-5. DictReader produces mangled headers → KeyError on every row → 0 records
-6. Build silently produces empty/incomplete data with no error message
-
-**Fix:** Replace the literal BOM character with the escape sequence `﻿` in the source file. The source file must contain the ASCII characters `\u`, `f`, `e`, `f`, `f` rather than the UTF-8 BOM bytes.
-
----
-
-### C35-03: Empty strings in matched_sensors from semicolon splitting
-
-**Sources:** CR35-02, CRIT35-03, V35-04, DBG35-03, TE35-03
-**Severity:** LOW | **Confidence:** HIGH (5-agent consensus)
-
-The matched_sensors field is split by semicolons:
+**Fix:** Add `math.isfinite` validation after each `float()` call in `parse_existing_csv`. Non-finite values should be treated as None:
 ```python
-matched_sensors = sensors_str.split(";") if sensors_str else []
-```
-
-Leading/trailing/doubled semicolons produce empty strings: `;IMX455;` → `['', 'IMX455', '']`. These propagate through the CSV round-trip and could appear in rendered output.
-
-**Fix:** Filter empty strings after split:
-```python
-matched_sensors = [s for s in sensors_str.split(";") if s] if sensors_str else []
+val = float(val_str)
+result = val if math.isfinite(val) else None
 ```
 
 ---
 
-### C35-04: openmvg produces positive mpix from negative pixel dimensions
+### C36-03: `openmvg.fetch` accepts inf sensor dimensions
 
-**Sources:** CR35-04, V35-05, TE35-04
+**Sources:** CR36-03, V36-03
 **Severity:** LOW | **Confidence:** HIGH
 
-The mpix calculation uses `if pw and ph` (truthy check) which passes for negative integers. If `pw=-100` and `ph=-200`, their product is 20000, producing `mpix=20.0` — a physically meaningless value.
+The size guard `sw > 0 and sh > 0` passes for `inf` because `inf > 0` is True. While NaN is rejected (because `nan > 0` is False), inf dimensions produce `(inf, inf)` size which propagates through the pipeline.
 
-**Fix:** Replace truthy check with sign check:
+**Fix:** Replace with `math.isfinite` check:
 ```python
-mpix = round(pw * ph / 1_000_000, 1) if pw > 0 and ph > 0 else None
+size = (sw, sh) if sw and sh and math.isfinite(sw) and math.isfinite(sh) and sw > 0 and sh > 0 else None
 ```
 
 ---
 
-### C35-05: Negative pitch/mpix render in template; NaN also renders
+### C36-04: JS `isInvalidData` does not catch NaN pitch values
 
-**Sources:** DES35-01, DES35-02
+**Sources:** DES36-01
 **Severity:** LOW | **Confidence:** HIGH
 
-Negative values render as `-2.0 µm` and `-10.0 MP` in the template. The `isInvalidData` JS function does not check for negative values. NaN values render as `data-pitch="nan"` and "nan µm".
+When `data-pitch="nan"`, JS `parseFloat("nan") || 0` evaluates to `0`, which passes all validation checks. The row is NOT hidden by the "Hide possibly invalid data" filter. This is a defense-in-depth gap.
 
-**Fix:** Add negative value check to `isInvalidData` JS function, and fix the data pipeline to reject negative values at the source (recommended). NaN defense is best handled by the `pixel_pitch` area guard (C35-01 fix).
+**Fix:** Add NaN check to `isInvalidData`:
+```javascript
+const pitch = parseFloat(row.attr('data-pitch'));
+if (isNaN(pitch)) return true;
+```
 
 ---
 
-### C35-06: `pixel_pitch` docstring does not document ValueError for negative area
+### C36-05: `pixel_pitch` docstring should mention NaN/inf handling
 
-**Sources:** DOC35-02
+**Sources:** DOC36-01
 **Severity:** LOW | **Confidence:** HIGH
 
-The `pixel_pitch` docstring does not mention that it raises `ValueError` when `area < 0`. If C35-01 is fixed by adding a guard, this becomes moot. If not, the docstring should document the exception.
+After the fix, the docstring should document that NaN and inf inputs return 0.0.
 
 ---
 
@@ -126,6 +113,6 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 6
-- Cross-agent consensus findings (3+ agents): 3 (C35-01 with 8 agents, C35-02 with 7 agents, C35-03 with 5 agents)
-- Highest severity: MEDIUM (C35-01, C35-02)
+- Total distinct new findings: 5
+- Cross-agent consensus findings (3+ agents): 2 (C36-01 with 9 agents, C36-02 with 5 agents)
+- Highest severity: MEDIUM (C36-01, C36-02)

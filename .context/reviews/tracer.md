@@ -1,56 +1,42 @@
-# Tracer Review (Cycle 35) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 36) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-34 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-35 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-TR34-01 (match_sensors ZeroDivisionError) fixed in C34. Verified.
+TR35-01 (derive_spec ValueError on negative area) fixed. TR35-02 (BOM literal) fixed.
 
 ## New Findings
 
-### TR35-01: `derive_spec` crashes with ValueError via `pixel_pitch` on negative area — causal trace
+### TR36-01: NaN propagation trace — silent data corruption from CSV to rendered page
 
-**File:** `pixelpitch.py`, line 725
+**Files:** `pixelpitch.py`, `sources/openmvg.py`, `templates/pixelpitch.html`
 **Severity:** MEDIUM | **Confidence:** HIGH
 
 **Causal trace:**
-1. Source parser (e.g., `openmvg.fetch`) produces `Spec(size=(-5.0, 3.7), pitch=None, mpix=10.0)` — negative width from malformed data
-2. `derive_spec` computes `area = -5.0 * 3.7 = -18.5` — negative area
-3. Since `spec.pitch is None`, calls `pixel_pitch(-18.5, 10.0)`
-4. `sqrt(-18.5 / 10_000_000)` raises `ValueError: expected a nonnegative input`
-5. Exception is NOT caught — crashes the render pipeline
+1. Corrupted CSV cell contains `nan` or `inf` string
+2. `parse_existing_csv` calls `float("nan")` → produces `float('nan')`
+3. `derive_spec` computes `area = nan * 24.0 = nan`
+4. Since `spec.pitch is None`, calls `pixel_pitch(nan, 10.0)`
+5. Guard `mpix <= 0 or area <= 0` evaluates to `False` (because `nan <= 0` is `False`)
+6. `sqrt(nan / 10e6) = nan` — returns `nan` instead of `0.0`
+7. `write_csv` writes `nan` to CSV — `f"{nan:.2f}"` = `"nan"`
+8. Template renders `{{ nan|round(1) }}` = `nan` → visible "nan µm"
+9. JS `isInvalidData`: `parseFloat("nan") || 0 = 0` → not flagged → row visible
+10. User sees "nan µm" in the table
 
-**Competing hypothesis:** Could negative dimensions actually reach `derive_spec`?
-- `openmvg.fetch` guards `sw > 0 and sh > 0` for mm dimensions, but NOT for pixel dimensions
-- `parse_existing_csv` accepts any float for width/height without validation
-- `merge_camera_data` preserves existing size values which could be negative from corrupted CSV
+**Competing hypothesis:** Could NaN/inf actually reach the pipeline?
+- `parse_existing_csv` accepts any `float()` string including `"nan"`, `"inf"` — YES
+- Source parsers use regex-extracted values which never produce NaN from normal text — UNLIKELY from sources
+- Manual CSV edits could introduce NaN — YES
+- `derive_spec` arithmetic with very large floats produces inf — YES (e.g., `1e308 * 1e308`)
 
-**Fix:** Add `area <= 0` guard in `pixel_pitch` or `derive_spec` before the sqrt call.
-
----
-
-### TR35-02: `_BOM` literal character — silent failure trace
-
-**File:** `sources/__init__.py`, line 90
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-**Causal trace:**
-1. An editor or CI pipeline normalizes UTF-8 source files
-2. The invisible BOM literal character on line 90 is silently stripped
-3. `_BOM` becomes `''` (empty string)
-4. `strip_bom` checks `text[0] == _BOM` which is `text[0] == ''` — always False
-5. BOM-prefixed CSVs are not stripped
-6. `openmvg.fetch`: DictReader sees mangled header `"﻿CameraMaker"` instead of `"CameraMaker"`
-7. `KeyError` on every row — 0 records returned
-8. The build silently produces empty data with no error message
-
-**Fix:** Replace the literal BOM with the escape sequence `﻿` so it survives editor normalization.
+**Fix:** Add `math.isfinite()` guards in `pixel_pitch`, `parse_existing_csv`, and `openmvg.fetch`.
 
 ---
 
 ## Summary
 
-- TR35-01 (MEDIUM): `derive_spec` crashes with ValueError on negative area — crash path traced
-- TR35-02 (MEDIUM): `_BOM` literal character — silent failure traced through CSV parsing
+- TR36-01 (MEDIUM): NaN propagates silently from CSV through to rendered "nan µm" — traced end-to-end
