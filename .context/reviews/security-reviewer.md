@@ -1,24 +1,19 @@
-# Security Review (Cycle 19)
+# Security Review (Cycle 20)
 
 **Reviewer:** security-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository security re-review after cycles 1-18 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-18) — Confirmed Resolved
+## Findings
 
-All previous security fixes confirmed intact. SRI hashes present, noopener on external links.
+No NEW security issues found. Previous security findings remain deferred:
+- C10-07: HTTP redirect chain not validated (LOW, deferred)
+- C10-08: Remote debugging port on macOS browser (LOW, deferred)
+- F34: `importlib.import_module` with user-controllable input (LOW, mitigated by whitelist, deferred)
 
-## Deferred Items Still Valid
-
-- C10-07: HTTP redirect chain SSRF risk — DEFERRED
-- C10-08: Remote debugging port — DEFERRED
-- F34: importlib.import_module with user-controllable input — DEFERRED
-
-## New Findings
-
-No new security findings. The codebase remains a static site generator with no user-facing runtime input.
+The Jinja2 autoescape is correctly enabled (`select_autoescape(["html", "xml"])`). No `|safe` filters found in templates. The `data-name` attribute uses `|e` for proper escaping. CDN SRI hashes are in place.
 
 ---
 
 ## Summary
-- NEW findings: 0
+
+No new actionable findings.

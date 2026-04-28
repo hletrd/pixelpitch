@@ -1,0 +1,46 @@
+{
+  "title": "C20-01: pixel_pitch crash guard, Sony FX naming, merge field preservation",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Fix pixel_pitch() crash on zero/negative mpix",
+      "priority": 1,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pixel_pitch(864.0, 0.0) returns 0.0 instead of ZeroDivisionError",
+        "pixel_pitch(864.0, -1.0) returns 0.0 instead of ValueError",
+        "pixel_pitch(864.0, 33.0) still returns correct value (~5.12)",
+        "Test added for zero and negative mpix in test_parsers_offline.py",
+        "All 105+ existing gate tests still pass"
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Fix Sony FX series naming in _parse_camera_name",
+      "priority": 2,
+      "passes": true,
+      "acceptanceCriteria": [
+        "_parse_camera_name({'Model Name': 'Sony FX3'}, '...sony-fx3-review/specifications/') returns 'Sony FX3' not 'Sony Fx3'",
+        "_parse_camera_name({'Model Name': 'Sony FX30'}, '...sony-fx30-review/specifications/') returns 'Sony FX30'",
+        "Existing Sony ZV-E10 naming test still passes",
+        "Existing Sony A7 IV naming test still passes",
+        "Test added for Sony FX naming in test_parsers_offline.py",
+        "All gate tests pass"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Add merge field preservation for type/size/pitch",
+      "priority": 3,
+      "passes": true,
+      "acceptanceCriteria": [
+        "merge_camera_data preserves type from existing when new has type=None",
+        "merge_camera_data preserves size from existing when new has size=None",
+        "merge_camera_data preserves pitch from existing when new has pitch=None",
+        "merge_camera_data still overwrites existing fields when new has non-None values",
+        "Test added for type/size/pitch preservation in test_parsers_offline.py",
+        "All gate tests pass"
+      ]
+    }
+  ]
+}

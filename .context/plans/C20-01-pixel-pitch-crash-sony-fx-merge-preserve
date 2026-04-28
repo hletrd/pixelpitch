@@ -1,0 +1,45 @@
+# Plan C20-01: pixel_pitch Crash Guard, Sony FX Naming, Merge Field Preservation
+
+**Status:** completed
+**Priority:** P1 (2 MEDIUM correctness bugs, 1 LOW data quality fix)
+**Findings addressed:** C20-01, C20-02, C20-03
+
+## Problem
+
+1. **C20-01 (MEDIUM):** `pixel_pitch()` crashes with ZeroDivisionError when `mpix=0.0` and with ValueError when `mpix<0`. The `derive_spec()` function has no guard, so corrupted source data would crash the entire render pipeline.
+
+2. **C20-02 (MEDIUM):** Sony FX-series cameras (FX3, FX6, FX30) are misnamed as "Fx3"/"Fx6"/"Fx30" by `_parse_camera_name()` in `sources/imaging_resource.py`. The `.title()` method capitalizes 'x' in 'fx'. This creates dedup failures when other sources produce the correct name.
+
+3. **C20-03 (LOW):** `merge_camera_data` preserves `year` from existing data when new data has `year=None`, but does NOT preserve `type`, `size`, or `pitch` in the same way. This causes data loss when a source produces partial data.
+
+## Implementation Steps
+
+### Step 1: Fix pixel_pitch() crash guard (C20-01)
+- [x] Add `if mpix <= 0: return 0.0` guard in `pixel_pitch()`
+- [x] Add test cases for zero and negative mpix
+- [x] Verify existing tests still pass
+- [x] Commit: 9a720f0
+
+### Step 2: Fix Sony FX series naming (C20-02)
+- [x] Add FX-series normalization regex in `_parse_camera_name()`: `re.sub(r'\bFx(\d)', r'FX\1', cleaned)`
+- [x] Add test cases for Sony FX3, FX6, FX30
+- [x] Verify existing Sony naming tests still pass
+- [x] Commit: 5c4884e
+
+### Step 3: Add merge field preservation for type/size/pitch (C20-03)
+- [x] Add field-level merge logic similar to year preservation in `merge_camera_data()`
+- [x] Add test cases for type, size, pitch preservation
+- [x] Verify existing merge tests still pass
+- [x] Commit: 0e7ff96
+
+### Step 4: Verify all fixes
+- [x] Run gate tests — ALL PASS
+- [x] Verify no regressions
+- [x] Push all commits
+
+## Exit Criteria
+- `pixel_pitch(area, 0.0)` returns 0.0 instead of crashing -- VERIFIED
+- `pixel_pitch(area, -1.0)` returns 0.0 instead of crashing -- VERIFIED
+- Sony FX3 named "Sony FX3" not "Sony Fx3" -- VERIFIED
+- Merge preserves type/size/pitch from existing data when new data has None -- VERIFIED
+- All gate tests pass -- VERIFIED

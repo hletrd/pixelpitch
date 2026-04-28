@@ -1,18 +1,16 @@
-# Document Specialist Review (Cycle 19) — Doc/Code Mismatches
+# Document Specialist Review (Cycle 20) — Doc/Code Mismatches
 
 **Reviewer:** document-specialist
 **Date:** 2026-04-28
-**Scope:** Full repository doc/code review after cycles 1-18 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-18) — Confirmed Resolved
+## Findings
 
-- DS18-01 (SENSOR_TYPE_RE ASCII-only comment): MOOT — regex removed entirely.
+No NEW doc/code mismatches found. All docstrings accurately describe the current code behavior. The openMVG docstring correctly describes the DSLR regex coverage after C17-04 fix. The `merge_camera_data` docstring correctly describes the year preservation behavior.
 
-## New Findings
-
-No new doc/code mismatches. All docstrings accurately describe current behavior. The TYPE_FRACTIONAL_RE import in pixelpitch.py has a clear comment explaining the consolidation.
+The `pixel_pitch` function has no docstring mentioning its behavior for non-positive mpix values, but this is because the function currently crashes on such input. Once C20-01 is fixed, a docstring note about the guard would be appropriate.
 
 ---
 
 ## Summary
-- NEW findings: 0
+
+No new actionable findings.

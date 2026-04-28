@@ -1,34 +1,41 @@
-# Tracer Review (Cycle 19) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 20) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
-**Scope:** Full repository causal tracing after cycles 1-18 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-18) — Confirmed Resolved
+## T20-01: Data flow from source to pixel_pitch — crash path traced
 
-All C18 fixes confirmed. Scatter plot hidden data, CI env var wiring, TYPE_FRACTIONAL_RE consolidation all working.
+**Trace:**
+1. `fetch_source()` calls `module.fetch()` which returns `list[Spec]`
+2. `derive_specs()` calls `derive_spec(spec, sensors_db)` for each
+3. `derive_spec()` checks `if spec.mpix is not None and area is not None`
+4. If true, calls `pixel_pitch(area, spec.mpix)`
+5. `pixel_pitch()` computes `sqrt(area / (mpix * 10**6))`
+6. If `mpix == 0`: ZeroDivisionError
+7. If `mpix < 0`: ValueError (sqrt of negative)
 
-## New Findings
+**Root cause:** No guard against non-positive mpix in `pixel_pitch()`.
+**Fix point:** Add guard at step 5 (in `pixel_pitch` itself, not in `derive_spec`).
 
-### T19-01: Tablesorter column index mismatch on non-"all" pages — regression from C18-08
-**File:** `templates/pixelpitch.html`, lines 228-258
-**Severity:** MEDIUM | **Confidence:** HIGH
+---
 
-Traced data flow:
-1. C18-08 fix added `sensor-width` custom parser to column index 2
-2. On "all" page: Name(0), Category(1), Sensor Size(2), ... — column 2 IS Sensor Size ✓
-3. On non-"all" page: Name(0), Sensor Size(1), Resolution(2), ... — column 2 IS Resolution ✗
-4. User clicks "Sensor Size" header on DSLR page
-5. Tablesorter applies column 1's parser: "text" (alphabetical sort)
-6. "9.84 x 7.40 mm" sorts after "35.9 x 23.9 mm" alphabetically
-7. User sees incorrect sort order
+## T20-02: Sony FX name corruption flow traced
 
-The root cause is that the C18-08 fix did not account for the variable column count caused by the conditional `{% if page == "all" %}` Category column.
+**Trace:**
+1. GSMArena phone page: `_parse_camera_name` not called (GSMArena uses `<h1>` tag)
+2. IR spec page: `_parse_camera_name({'Model Name': 'Sony FX3'}, url)`
+3. Name starts with "Sony" -> enters Sony-specific branch
+4. URL slug extracted: "sony-fx3" -> `.replace("-", " ")` -> "sony fx3"
+5. `.title()` -> "Sony Fx3" (lowercase 'x' capitalized)
+6. ZV normalization: `cleaned.replace("Sony Zv ", "Sony ZV-")` — no match
+7. No FX normalization -> returns "Sony Fx3"
 
-**Fix:** Make the header config conditional on `page == "all"`.
+**Root cause:** `.title()` capitalizes every word-initial letter including 'x' in 'fx'.
+**Fix point:** Add FX normalization after ZV normalization.
 
 ---
 
 ## Summary
-- NEW findings: 1 (MEDIUM)
-- T19-01: Tablesorter column index mismatch on non-"all" pages — MEDIUM
+
+- T20-01: pixel_pitch crash path fully traced — fix at `pixel_pitch()` function
+- T20-02: Sony FX name corruption path fully traced — fix at `_parse_camera_name()`

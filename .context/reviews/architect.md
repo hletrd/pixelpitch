@@ -1,18 +1,19 @@
-# Architect Review (Cycle 19) — Architectural/Design Risks, Coupling, Layering
+# Architect Review (Cycle 20) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository architecture re-review after cycles 1-18 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-18) — Confirmed Resolved
+## A20-01: Merge function field preservation is ad-hoc, not schema-driven
+**Severity:** LOW | **Confidence:** HIGH
 
-- A18-01 (three divergent sensor-type regexes): Fixed — single TYPE_FRACTIONAL_RE source of truth.
+The `merge_camera_data` function has special-case logic for `year` preservation but not for `type`, `size`, or `pitch`. This ad-hoc approach means each field's merge behavior must be individually coded and tested. A schema-driven merge (e.g., a merge strategy per field: "prefer new", "prefer existing if new is None", "prefer non-None") would be more maintainable and less error-prone.
 
-## New Findings
+However, this is an architectural improvement, not a correctness fix. The current behavior works correctly for the primary use case (Geizhals data is always more complete than source data).
 
-No new architectural findings. The TYPE_FRACTIONAL_RE consolidation from C18-03 resolved the last reported architectural issue. The codebase architecture remains stable — a static site generator with clear separation between data sources, core logic, and templates.
+**Recommendation:** Document the merge behavior for each field. Consider a field-level merge strategy if the source diversity grows.
 
 ---
 
 ## Summary
-- NEW findings: 0
+
+No new actionable findings beyond what code-reviewer and critic already identified.

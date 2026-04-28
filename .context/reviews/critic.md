@@ -1,38 +1,35 @@
-# Critic Review (Cycle 19) — Multi-Perspective Critique
+# Critic Review (Cycle 20) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository critique after cycles 1-18 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-18) — Confirmed Resolved
-
-All C18 fixes verified. No regressions from C18-01 through C18-08 except as noted below.
-
-## New Findings
-
-### CR19-01: Tablesorter column configuration regression — sensor-width parser on wrong column
-**File:** `templates/pixelpitch.html`, lines 228-258
+## C20-CR01: Sony FX series misnaming causes dedup failures with other sources
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C18-08 fix added a `sensor-width` custom parser for numeric sorting of the Sensor Size column, but it hardcoded column index 2. On 8 of 9 pages (everything except "All Cameras"), the Category column is absent, shifting all column indices left by 1. Sensor Size is at index 1 on those pages, not 2.
+The `_parse_camera_name` function in imaging_resource.py produces "Sony Fx3" instead of "Sony FX3". This is not just a cosmetic issue — it affects data quality. Users searching for "Sony FX3" won't find it. Other sources (Apotelyt, GSMArena) may produce the correct name, creating a name mismatch that prevents proper deduplication in the merge step. This amplifies the bug from a cosmetic issue to a data integrity issue.
 
-This means the sensor-width parser is applied to the Resolution column on non-"all" pages, and the text parser is applied to Sensor Size. The C18-08 fix improved sorting on exactly 1 page (All Cameras) while breaking it on the other 8.
-
-**Fix:** Conditional column index assignment in the Jinja2 template.
+**Amplification:** If Imaging Resource names it "Sony Fx3" but Apotelyt names it "Sony FX3", the merge treats them as different cameras (different keys), creating a duplicate entry on the All Cameras page.
 
 ---
 
-### CR19-02: `fetch_source` crashes on malformed GSMARENA_MAX_PAGES_PER_BRAND env var
-**File:** `pixelpitch.py`, line 1046
+## C20-CR02: `pixel_pitch` crash risk on corrupted source data
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+The `pixel_pitch()` ZeroDivisionError (C20-01) is a crash risk that could halt the entire CI pipeline. While mpix=0 is unlikely from valid data, corrupted or malformed HTML from a source page could produce unexpected values. The `derive_spec` function has no try/except around the `pixel_pitch` call, so any error propagates up and crashes `render_html`.
+
+**Concrete scenario:** A source page has "0.0 Megapixels" (perhaps from a placeholder or data entry error). The regex matches it, producing mpix=0.0. `derive_spec` calls `pixel_pitch(area, 0.0)` and crashes.
+
+---
+
+## C20-CR03: Merge field preservation inconsistency — year is special-cased but other fields are not
 **Severity:** LOW | **Confidence:** HIGH
 
-The C18-04 fix wired the env var but didn't add error handling for `int()` conversion. An empty or non-numeric value causes a crash instead of a graceful fallback.
-
-**Fix:** Wrap in try/except with default value.
+The merge function has explicit year-preservation logic (if new year is None, keep existing year). But type, size, and pitch have no such logic. This creates an inconsistency: year is treated as a "best known value" while other fields are treated as "newest value wins". This design choice should be intentional and documented, or all fields should have consistent preservation behavior.
 
 ---
 
 ## Summary
-- NEW findings: 2 (1 MEDIUM, 1 LOW)
-- CR19-01: Tablesorter column regression on non-"all" pages — MEDIUM
-- CR19-02: fetch_source crashes on bad env var — LOW
+
+- C20-CR01 (MEDIUM): Sony FX misnaming causes dedup failures with other sources
+- C20-CR02 (MEDIUM): pixel_pitch crash risk on corrupted data
+- C20-CR03 (LOW): Inconsistent field preservation in merge
