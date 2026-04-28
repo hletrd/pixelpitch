@@ -769,6 +769,76 @@ def test_merge_field_preservation():
 
 
 # --------------------------------------------------------------------------
+# merge_camera_data year-change log
+
+def test_merge_year_change_log():
+    section("merge_camera_data year-change log")
+    import io
+    import contextlib
+    import pixelpitch as pp
+    from models import Spec, SpecDerived
+
+    def derive(name, category, size, mpix, year, pitch_val=None):
+        spec = Spec(name=name, category=category, type=None,
+                    size=size, pitch=pitch_val, mpix=mpix, year=year)
+        return pp.derive_spec(spec)
+
+    # Case 1: years differ AND pitch is preserved from existing
+    # (This was the case where the elif was unreachable before the fix)
+    # Use mpix=None for new so that derive_spec produces derived.pitch=None
+    # (if mpix is set, pitch gets computed from area+mpix and is not None).
+    existing = [derive("Cam YP", "fixed", (5.0, 3.7), 10.0, 2020, pitch_val=2.0)]
+    new = [derive("Cam YP", "fixed", (5.0, 3.7), None, 2021, pitch_val=None)]
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        merged = pp.merge_camera_data(new, existing)
+    output = buf.getvalue()
+    expect("year-change log with pitch preservation",
+           "Year changed" in output, True)
+    expect("year correctly updated", merged[0].spec.year, 2021)
+    expect("pitch preserved from existing", merged[0].pitch, 2.0, tol=0.01)
+
+    # Case 2: years differ, no pitch preservation needed
+    existing2 = [derive("Cam Y2", "fixed", (5.0, 3.7), 10.0, 2020)]
+    new2 = [derive("Cam Y2", "fixed", (5.0, 3.7), 10.0, 2021)]
+    buf2 = io.StringIO()
+    with contextlib.redirect_stdout(buf2):
+        merged2 = pp.merge_camera_data(new2, existing2)
+    output2 = buf2.getvalue()
+    expect("year-change log without pitch preservation",
+           "Year changed" in output2, True)
+
+
+# --------------------------------------------------------------------------
+# Sony DSC hyphen normalisation
+
+def test_sony_dsc_hyphen_normalisation():
+    section("Sony DSC hyphen normalisation")
+    from sources import imaging_resource
+
+    # Model Name path: "Sony DSC-HX400" should normalise to "Sony DSC HX400"
+    name_model = imaging_resource._parse_camera_name(
+        {"Model Name": "Sony DSC-HX400"},
+        "https://www.imaging-resource.com/cameras/sony-dsc-hx400-review/specifications/"
+    )
+    expect("DSC-HX400 from Model Name", name_model, "Sony DSC HX400")
+
+    # Model Name path: "Sony DSC-WX350" should normalise to "Sony DSC WX350"
+    name_model2 = imaging_resource._parse_camera_name(
+        {"Model Name": "Sony DSC-WX350"},
+        "https://www.imaging-resource.com/cameras/sony-dsc-wx350-review/specifications/"
+    )
+    expect("DSC-WX350 from Model Name", name_model2, "Sony DSC WX350")
+
+    # URL fallback path (already works via .replace("-", " "))
+    name_url = imaging_resource._parse_camera_name(
+        {"Model Name": ""},
+        "https://www.imaging-resource.com/cameras/sony-dsc-hx400-review/specifications/"
+    )
+    expect("DSC-HX400 from URL fallback", name_url, "Sony DSC HX400")
+
+
+# --------------------------------------------------------------------------
 # sensor_size_from_type
 
 def test_sensor_size_from_type():
@@ -1122,6 +1192,8 @@ def main():
     test_create_camera_key_year_mismatch()
     test_category_dedup()
     test_merge_field_preservation()
+    test_merge_year_change_log()
+    test_sony_dsc_hyphen_normalisation()
 
     print("\n" + ("=" * 60))
     if _failures:
