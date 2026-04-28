@@ -1,39 +1,16 @@
-# Architect Review (Cycle 22) — Architectural/Design Risks
+# Architect Review (Cycle 23) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
 
-## A22-01: `merge_camera_data` field preservation is ad-hoc and fragile
+## Findings
 
-**Severity:** LOW | **Confidence:** HIGH
+No NEW architectural issues found. The C22-05 concern (ad-hoc field preservation logic) remains deferred with an appropriate exit criterion ("more fields added to Spec/SpecDerived and the `if` chain grows beyond 12 statements, or another insertion bug occurs").
 
-The C22-01 bug (`elif` misattachment) is a symptom of a deeper design issue. The merge function now has 8 separate `if` statements for field preservation:
-
-1. `spec.type` preservation
-2. `spec.size` preservation
-3. `spec.pitch` preservation
-4. `spec.mpix` preservation
-5. `spec.year` preservation (with elif for year-change logging)
-6. `derived.size` preservation
-7. `derived.area` preservation
-8. `derived.pitch` preservation
-
-This list will grow as more fields are added to the data model. The ad-hoc `if` chain is error-prone: inserting code in the middle (as C21-01 did) can break the conditional structure.
-
-**Recommendation:** Extract a generic field-preservation helper:
-```python
-def _preserve_none_fields(new_obj, existing_obj, field_names):
-    for field in field_names:
-        if getattr(new_obj, field) is None and getattr(existing_obj, field) is not None:
-            setattr(new_obj, field, getattr(existing_obj, field))
-```
-
-This would make the preservation logic declarative and less prone to insertion errors. However, the year-change logging is a special case that would still need separate handling.
-
-This is an architectural improvement, not a correctness fix. It can be deferred.
+The codebase architecture is stable: a single main module (`pixelpitch.py` ~1160 lines) with 6 source modules, 2 data models, and 2 Jinja2 templates. The monolith concern (F32) is deferred with a 1500-line threshold.
 
 ---
 
 ## Summary
 
-- A22-01 (LOW): Field preservation logic is ad-hoc and fragile — consider generic helper
+No new actionable findings.

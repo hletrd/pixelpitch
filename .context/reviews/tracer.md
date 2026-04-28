@@ -1,38 +1,22 @@
-# Tracer Review (Cycle 22) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 23) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
 
-## T22-01: Year-change log flow traced — `elif` misattachment from C21-01
+## Findings
 
-**Trace:**
-1. Pre-C21-01 code structure (after C20-03):
-   ```
-   if spec.year is None: preserve year       (line ~418)
-   elif years differ:      print year change  (line ~419)
-   if spec.size is None:  preserve size       (new in C20-03)
-   if spec.pitch is None: preserve pitch      (new in C20-03)
-   ```
-2. C21-01 fix inserted SpecDerived preservation BETWEEN spec.year and the year elif:
-   ```
-   if spec.year is None: preserve year               (line 417)
-   if spec.size is None:  preserve spec.size          (line 411)
-   if spec.pitch is None: preserve spec.pitch         (line 413)
-   if spec.mpix is None:  preserve spec.mpix          (line 415)
-   if derived.size is None:  preserve derived.size    (line 424)
-   if derived.area is None:  preserve derived.area    (line 426)
-   if derived.pitch is None: preserve derived.pitch   (line 428)
-   elif years differ:      print year change          (line 429) ← WRONG ATTACHMENT
-   ```
-3. The `elif` is now syntactically part of the `if derived.pitch is None` block
-4. Year change log only fires when `derived.pitch is NOT None` (elif condition)
+No NEW suspicious flows found. Traced the following critical paths and confirmed they are correct:
 
-**Root cause:** The C21-01 fix inserted code above the year-change `elif` without recognizing it was part of a conditional chain. The insertion changed the `elif`'s parent from the year-preservation `if` to the pitch-preservation `if`.
+1. **merge_camera_data field preservation**: All 8 `if` statements correctly preserve None fields from existing data. The year-change log is now a standalone `if` (C22-01 fix confirmed).
 
-**Fix point:** Convert the `elif` to a standalone `if` after all preservation logic.
+2. **Sony DSC normalisation**: Both the Model Name path (line 177: `re.sub(r"\bDSC-", "DSC ", cleaned)`) and the URL fallback path (line 206: same regex) produce consistent "DSC HX400" output.
+
+3. **CSV round-trip**: `write_csv` -> `parse_existing_csv` correctly handles BOM, short rows, quoted fields with commas, and sensor type stripping.
+
+4. **GSMArena `_select_main_lens`**: Role priority ordering (wide=0, untagged=1, ultrawide=3, tele=4, macro/depth=5) correctly selects the main camera lens.
 
 ---
 
 ## Summary
 
-- T22-01: Year-change `elif` misattachment traced to C21-01 insertion — fix: convert to standalone `if`
+No new actionable findings.

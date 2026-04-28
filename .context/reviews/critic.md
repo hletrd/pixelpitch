@@ -1,22 +1,16 @@
-# Critic Review (Cycle 22) — Multi-Perspective Critique
+# Critic Review (Cycle 23) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
 
-## C22-CR01: Year-change `elif` misattachment — C21-01 regression
+## Findings
 
-**Severity:** MEDIUM | **Confidence:** HIGH
+No NEW issues found. The C22-01 fix (elif-to-standalone-if) correctly resolves the year-change diagnostic regression. The C22-02 fix (DSC-hyphen normaliser) correctly handles both Model Name and URL paths.
 
-The C21-01 fix inserted SpecDerived field preservation code between the Spec year-preservation `if` and the year-change `elif`. This broke the conditional chain: the `elif` is now attached to the SpecDerived pitch preservation `if` instead of the year preservation `if`.
-
-This is a classic code-insertion bug: adding code in the middle of a conditional chain without recognizing that the `elif` is part of that chain. The fix should have either:
-1. Converted the year-change `elif` to a standalone `if` before inserting new code, or
-2. Inserted the SpecDerived preservation AFTER the entire year-preservation block
-
-**Amplification:** While this only affects a diagnostic log (not data correctness), it demonstrates that the merge function is becoming fragile. Multiple rounds of fixes (C20-03, C21-01) have added preservation logic in an ad-hoc manner. A cleaner design would be a generic "preserve None fields" helper that iterates over all field names.
+The merge logic is now stable after 22 cycles of fixes. The ad-hoc field preservation pattern remains a design concern but is correctly implemented (deferred as C22-05).
 
 ---
 
 ## Summary
 
-- C22-CR01 (MEDIUM): `elif` misattachment is a code-insertion regression — suggests merge logic needs refactoring
+No new actionable findings.

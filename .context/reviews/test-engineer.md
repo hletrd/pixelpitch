@@ -1,45 +1,26 @@
-# Test Engineer Review (Cycle 22) — Test Coverage, Flaky Tests, TDD
+# Test Engineer Review (Cycle 23) — Test Coverage, Flaky Tests, TDD
 
 **Reviewer:** test-engineer
 **Date:** 2026-04-28
 
-## TE22-01: No test for year-change log in merge_camera_data
+## TE23-01: No test for `_body_category` in `sources/imaging_resource.py` edge cases
 
 **File:** `tests/test_parsers_offline.py`
-**Severity:** LOW | **Confidence:** HIGH
+**Severity:** LOW | **Confidence:** LOW
 
-The `test_merge_field_preservation` test verifies that year values are correctly preserved or overridden, but it does NOT verify the year-change diagnostic log. The existing test `test_create_camera_key_year_mismatch` tests the year-change scenario but only checks the final data values, not the log output.
+The `_body_category` function has several fallback heuristics (name-based GoPro/Insta360/action cam detection, sensor format fallbacks). While the existing test covers the "Full-Frame" hyphenated case, the following paths are untested:
 
-After the C22-01 bug (year-change `elif` attached to wrong `if`), there is no test that would catch this regression because:
-1. The data values are correct (year is properly set)
-2. The log is only a diagnostic — not testable via the current test framework
+- Name-based action cam detection ("gopro", "insta360", "osmo action" in name)
+- Name-based camcorder detection ("handycam" in name)
+- Sensor format fallback to "mirrorless" for "APS-C", "Micro Four Thirds", "medium format"
+- The fallback to "fixed" when no other match is found
 
-**Fix:** Add a test that captures stdout during merge and verifies the year-change log is printed when years differ and pitch is preserved:
+However, these are low-risk heuristics that are unlikely to regress since they are simple string checks. Testing would require constructing mock data for each branch.
 
-```python
-def test_merge_year_change_log():
-    import io, contextlib
-    # Case: new pitch is None, existing pitch is set, years differ
-    existing = [derive("Cam Y", "fixed", (5.0, 3.7), 10.0, 2020, pitch_val=2.0)]
-    new = [derive("Cam Y", "fixed", (5.0, 3.7), 10.0, 2021, pitch_val=None)]
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(buf):
-        merged = pp.merge_camera_data(new, existing)
-    expect("year change log printed", "Year changed" in buf.getvalue(), True)
-```
-
----
-
-## TE22-02: No test for Sony DSC hyphen normalisation
-
-**File:** `tests/test_parsers_offline.py`
-**Severity:** LOW | **Confidence:** MEDIUM
-
-The test for Sony DSC-HX400 expects "Sony DSC HX400" (space between DSC and HX400), which tests the URL-derived name path. But there is no test for the Model Name path where "Sony DSC-HX400" would retain the hyphen. If a DSC-hyphen normalizer is added, it needs a test.
+**Confidence lowered** because these are simple string comparisons with low regression risk.
 
 ---
 
 ## Summary
 
-- TE22-01 (LOW): No test for year-change log in merge
-- TE22-02 (LOW): No test for Sony DSC hyphen normalisation
+- TE23-01 (LOW): No test for `_body_category` name-based and sensor-format fallback branches — low regression risk

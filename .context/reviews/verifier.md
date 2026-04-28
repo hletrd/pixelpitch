@@ -1,40 +1,24 @@
-# Verifier Review (Cycle 22) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 23) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
 
-## V22-01: Year-change log unreachable — verified by code inspection
+## V23-01: Gate tests pass — all 105+ checks verified
 
-**File:** `pixelpitch.py`, lines 428-437
-**Severity:** MEDIUM | **Confidence:** HIGH (static analysis confirmed)
+**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. Verified the following key invariants:
 
-Verified the `elif` attachment issue by inspecting the code structure:
+1. Year-change log fires correctly when years differ AND pitch is preserved (C22-01 fix verified)
+2. Sony DSC-HX400 normalises to "Sony DSC HX400" from both Model Name and URL paths (C22-02 fix verified)
+3. CSV round-trip preserves all fields including commas in names, sensor types, matched sensors
+4. Merge deduplication works for same-key cameras in new_specs
+5. Field preservation works for type, size, pitch, mpix, year, SpecDerived fields
 
-```python
-# Line 428
-if new_spec.pitch is None and existing_spec.pitch is not None:
-    new_spec.pitch = existing_spec.pitch
-# Line 429-437
-elif (
-    new_spec.spec.year is not None
-    and existing_spec.spec.year is not None
-    and new_spec.spec.year != existing_spec.spec.year
-):
-    print(...)
-```
+## Findings
 
-The `elif` on line 429 is syntactically attached to the `if` on line 428 (SpecDerived pitch preservation), not to the `if` on line 417 (Spec year preservation). This means:
-
-- When `new_spec.pitch is None and existing_spec.pitch is not None` → the `if` fires (pitch preserved), `elif` skipped
-- When `new_spec.pitch is not None` → the `elif` is evaluated (year change logged if applicable)
-- When `new_spec.pitch is None and existing_spec.pitch is None` → the `elif` is evaluated
-
-The year value itself is NOT affected — new data's year always takes precedence. Only the diagnostic message is affected.
-
-**Correctness impact:** None for data. Medium for observability.
+No NEW correctness issues found. All previous fixes verified still working.
 
 ---
 
 ## Summary
 
-- V22-01 (MEDIUM): Year-change log unreachable due to `elif` attachment — verified, no data impact
+No new actionable findings.
