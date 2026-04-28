@@ -44,7 +44,7 @@ ACTIONCAM_URL = "https://geizhals.eu/?cat=dvcamac&hloc=de&hloc=pl&hloc=uk&hloc=e
 # PITCH_UM_RE matches µm, μm (Greek mu), "microns", "um", and HTML entities.
 # MPIX_RE matches "Megapixel", "MP", "Mega pixels" (case-insensitive).
 # TYPE_FRACTIONAL_RE matches fractional-inch sensor types with various suffixes.
-from sources import TYPE_FRACTIONAL_RE, SIZE_MM_RE, PITCH_UM_RE, MPIX_RE
+from sources import TYPE_FRACTIONAL_RE, SIZE_MM_RE, PITCH_UM_RE, MPIX_RE, strip_bom
 
 # from http://en.wikipedia.org/wiki/Image_sensor_format
 TYPE_SIZE: dict[str, Tuple[float, float]] = {
@@ -271,10 +271,9 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
         return []
 
     # Strip UTF-8 BOM if present. Excel's "CSV UTF-8" save option adds a
-    # BOM (﻿) at the start of the file, which would make header[0] = "﻿id"
+    # BOM at the start of the file, which would make header[0] = "﻿id"
     # instead of "id", breaking schema detection and causing 0-row parses.
-    if csv_content[0] == "﻿":
-        csv_content = csv_content[1:]
+    csv_content = strip_bom(csv_content)
 
     specs: List[SpecDerived] = []
     reader = csv.reader(io.StringIO(csv_content))
