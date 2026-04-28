@@ -1,28 +1,41 @@
-# document-specialist Review (Cycle 52)
+# Document Specialist — Cycle 53
 
 **Date:** 2026-04-29
-**HEAD:** 331c6f5
+**HEAD:** `1c968dd`
 
-## Doc/code consistency
+## Doc-vs-code check
 
-- `README.md` accurately describes the data sources and CLI.
-- `pixelpitch.py` module docstring correctly enumerates the six data
-  sources (matches `sources/__init__.py:15-22`).
-- `parse_existing_csv` docstring (`pixelpitch.py:285-291`) accurately
-  describes header-row schema detection. The cycle-51 whitespace +
-  dedup comment block at lines 373-376 is up to date.
-- `merge_camera_data` docstring (`pixelpitch.py:411-433`) correctly
-  describes the spec-vs-derived consistency override.
+### `_safe_int_id` docstring vs. code (pixelpitch.py:319-337)
 
-## F52-DS-01: After F52-01 lands, `parse_existing_csv` should mention year tolerance — LOW
+Docstring (line 324) says:
+> Same Excel-hand-edit class as `_safe_year`.
 
-- **File:** `pixelpitch.py:285-291` (docstring) and inline comment near
-  the year-parse block
-- **Detail:** After F52-01 lands, the parser will accept `"2023.0"`
-  alongside `"2023"`. The docstring or an inline comment should
-  document this so future maintainers know the contract is "tolerant
-  to Excel hand-edits."
-- **Severity:** LOW (cosmetic; gate-bound to F52-01 implementation)
-- **Confidence:** HIGH
+Reality:
+- `_safe_year` has BOTH `isfinite` AND a 1900-2100 range guard.
+- `_safe_int_id` has ONLY the `isfinite` guard.
 
-## No external doc-vs-code mismatches identified this cycle.
+Doc/code mismatch (F53-DOC-01). Fix lands with F53-01: add the range
+guard to `_safe_int_id`, then the docstring is accurate. Severity LOW.
+
+## Other doc/code checks
+
+- `parse_existing_csv` docstring — accurate.
+- `_safe_year` docstring — accurate.
+- `_safe_float` docstring — accurate.
+- `merge_camera_data` docstring — accurate.
+
+## CLAUDE.md / AGENTS.md cross-check
+
+Repo has no project-level CLAUDE.md. User-global CLAUDE.md governs:
+GPG-sign, conventional commits + gitmoji, no `--no-verify`, no
+Co-Authored-By, fine-grained commits, `git pull --rebase` before push.
+
+Recent commit messages are compliant. No process drift.
+
+## Verdict
+
+| Finding     | Severity | Confidence |
+|-------------|----------|------------|
+| F53-DOC-01  | LOW      | HIGH       |
+
+Bound to the F53-01 fix.

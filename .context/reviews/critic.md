@@ -1,36 +1,35 @@
-# critic Review (Cycle 52)
+# Critic — Cycle 53
 
 **Date:** 2026-04-29
-**HEAD:** 331c6f5
+**HEAD:** `1c968dd`
 
-## Multi-perspective critique
+## Cross-perspective critique
 
-### Maintainer hat
+Cycles 50–52 converged on a coherent theme — defending
+`parse_existing_csv` against Excel hand-edits of
+`dist/camera-data.csv`:
 
-Cycles 45-51 settled into a clean cadence: one finding, one plan, one
-focused commit, one accompanying test. Cycle 52 (this one) continues
-that — the year-column parse-tolerance hardening (F52-01) is the same
-class of defense as F51-01, applied to the only other column where
-Excel is likely to corrupt a clean write.
+- C50: `write_csv` rejects `;` in matched_sensors (round-trip).
+- C51: `parse_existing_csv` strips/dedups matched_sensors tokens.
+- C52: `_safe_year` + `_safe_int_id` tolerate `"X.0"` floats.
 
-### User hat
+## Remaining gap: F53-01 `_safe_int_id` is still loose
 
-Site is healthy. No user-facing regressions. Build pipeline cleared by
-both gates.
+The C52 implementation added an `isfinite` check to the float
+fallback for record_id but skipped a range guard. Side-by-side
+with `_safe_year`, the asymmetry is the bug: `_safe_year` rejects
+`"3000"`, `_safe_int_id` accepts arbitrary huge ints. Same
+defense-in-depth round-trip class as C50/C52.
 
-### Steady-state risk
+Consensus with code-reviewer F53-01.
 
-The repo now has a gentle "long tail" of LOW-severity Excel-tolerance
-findings (F50-04 round-trip → F51-01 whitespace → F52-01 year `.0`).
-A single comprehensive sweep — "every CSV column tolerates Excel
-hand-edit" — would close them all. Out of scope as a refactor (F32
-deferred), but worth noting as the natural end-state.
+## Process critique
 
-### F52-03: Per-agent review files were modified but uncommitted at cycle start — LOW (process)
+The cycle-52 docs commit `1c968dd` correctly bundled the 12 review
+files + aggregate + plan. F52-03 is satisfied. No new process
+complaints.
 
-- **Flagged by:** critic
-- **Detail:** `git status` showed all 12 review files dirty. The cycle's
-  docs commit must include the refreshed snapshots so the
-  HEAD-pinned-snapshot convention holds. Same hygiene reminder as F51-04.
-- **Severity:** LOW (process)
-- **Confidence:** HIGH
+## Verdict
+
+One LOW correctness finding (F53-01, agreement) and one LOW test-gap
+finding (F53-02). No disagreement with other reviewers.

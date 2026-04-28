@@ -1,28 +1,27 @@
-# designer Review (Cycle 52)
+# Designer — Cycle 53
 
 **Date:** 2026-04-29
-**HEAD:** 331c6f5
+**HEAD:** `1c968dd`
 
-## UI/UX presence
+UI/UX review applied where present.
 
-`templates/{index,pixelpitch,about}.html` are static Jinja templates
-rendering Bootstrap-based pages. UI is present but unchanged this
-cycle. No template files were modified in cycles 46-51 — all changes
-were backend (CSV parser, CI workflow, merge logic).
+## Surface
 
-## Carry-forward (deferred)
+- `templates/index.html`
+- `templates/pixelpitch.html`
+- `templates/about.html`
+- Bootstrap CSS (CDN, SRI), jQuery, D3, tablesorter.
 
-- F35: D3 box plot height hardcoded — defer.
-- F36: No skip-to-content link — defer.
-- F37: Filter dropdown lacks current-state indicator — defer.
-- F38: No loading indicator for large datasets — defer.
-- F39: Navbar 9 items on mobile — Bootstrap collapse handles it.
-- C11-08: Scatter plot label overlap with 20+ years — defer.
+No dev server is configured (static-site generator). Live-browser
+review skipped — would require populating `dist/` first
+(`python3 -m pixelpitch`), which depends on network for sensor
+scraping.
 
-## No new UI/UX findings this cycle.
+## Static template review
 
-## Methodology note
+No template changes since cycle 52. Designer findings F35-F39 all
+remain deferred (see `deferred.md`). No re-opens.
 
-Per the prompt's multimodal caveat, this review is text-extractable.
-No `agent-browser` session was launched because no UI-touching commits
-exist since the last designer review.
+## Verdict
+
+No new UI/UX findings this cycle.

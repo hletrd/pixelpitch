@@ -1,44 +1,48 @@
-# verifier Review (Cycle 52)
+# Verifier — Cycle 53
 
 **Date:** 2026-04-29
-**HEAD:** 331c6f5
+**HEAD:** `1c968dd`
 
-## Gate evidence
+## Evidence collected
 
-- `flake8 .` — exit 0, no output.
-- `python3 -m tests.test_parsers_offline` — exit 0, "All checks passed."
-  All sections green, including:
-  - `roundtrip: matched_sensors preserved verbatim`
-  - `roundtrip-guard: ';'-containing element dropped`
-  - `parse-tolerance: whitespace stripped, duplicate removed, order preserved`
+### Gates
 
-## Verification of cycle 51 fixes
+- `flake8 .` → exit 0, zero errors.
+- `python3 -m tests.test_parsers_offline` → all sections green
+  (matched_sensors parse tolerance, year parse tolerance, id parse
+  tolerance).
 
-| Finding | Commit  | Verified |
-|---------|---------|----------|
-| F51-01  | a0ac8bc | YES — `pixelpitch.py:377-381` strips and dedups. |
-| F51-02  | a0ac8bc | YES — same comprehension dedups via `dict.fromkeys`. |
-| F51-test| d1b0ca1 | YES — `test_parsers_offline` runs the parse-tolerance section. |
-
-## New findings
-
-### F52-01 confirmed
-
-Direct REPL test:
+### Behavior probes
 
 ```
-python3 -c "print(int('2023.0'))"            # ValueError
-python3 -c "print(int(float('2023.0')))"     # 2023
-python3 -c "print(int(float(' 2023.0 ')))"   # 2023
-python3 -c "print(int(float('inf')))"        # OverflowError → caught
-python3 -c "print(int(float('nan')))"        # ValueError → caught
+_safe_year("")        → None
+_safe_year("  ")      → None
+_safe_year(" 2023 ")  → 2023
+_safe_year("2023.0")  → 2023
+_safe_year("abc")     → None
+_safe_year("nan")     → None
+_safe_year("inf")     → None
+_safe_year("3000")    → None  (range guard)
+_safe_year("1e308")   → None  (isfinite check)
+
+_safe_int_id("")      → None
+_safe_int_id("  ")    → None
+_safe_int_id("5.7")   → 5
+_safe_int_id("-3")    → -3
+_safe_int_id("1e308") → 309-digit big-int   ← anomaly
 ```
 
-The fallback path `int(float(...))` correctly handles the Excel `2023.0`
-case while still rejecting non-finite values when the range guard
-(1900..2100) is applied.
+`int(float("1e308"))` is finite (largest finite IEEE 754 double
+≈1.797e308), so the `isfinite` check does NOT trip. Result
+propagates through merge. Confirms code-reviewer F53-01.
+
+## Confidence in current state
+
+- Cycle-52 fixes verified working.
+- One new LOW correctness gap (F53-01).
+- One new LOW test gap (F53-02).
+- All other reviewer claims verified against source.
 
 ## Verdict
 
-Repo state matches stated behavior. F52-01 is real, single-cause,
-single-fix. Both gates hold.
+State at HEAD `1c968dd` is in known-good shape modulo F53-01/F53-02.

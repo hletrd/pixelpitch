@@ -1,96 +1,87 @@
-# Aggregate Review (Cycle 52) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 53) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-29
-**HEAD:** 331c6f5
-**Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier,
-test-engineer, tracer, architect, debugger, designer, document-specialist
+**HEAD:** `1c968dd`
+**Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic,
+verifier, test-engineer, tracer, architect, debugger, document-specialist,
+designer.
 
-## Cycle 1-51 Status
+## Cycle 1–52 Status
 
-All previous fixes confirmed still working. Both gates pass at HEAD = `331c6f5`:
+All previous fixes confirmed still working. Both gates pass at HEAD
+`1c968dd`:
 
-- `flake8 .` — 0 errors (also enforced in CI by `.github/workflows/github-pages.yml`)
-- `python3 -m tests.test_parsers_offline` — PASS
+- `flake8 .` → 0 errors (also enforced in CI by
+  `.github/workflows/github-pages.yml`).
+- `python3 -m tests.test_parsers_offline` → all sections green
+  (matched_sensors + year + id parse-tolerance).
 
-No regressions detected. Cycle 51 findings F51-01 / F51-02 are fully resolved
-(commits `a0ac8bc`, `d1b0ca1`).
+No regressions detected.
 
-## Cycle 52 New Findings
+## Cycle 53 New Findings
 
-### F52-01 (consensus): `parse_existing_csv` rejects `2023.0`-style year strings — LOW / MEDIUM
+### F53-01 (consensus): `_safe_int_id` lacks the post-conversion range guard `_safe_year` has — LOW
 
-- **Flagged by:** code-reviewer, verifier, tracer, debugger, test-engineer
-- **File:** `pixelpitch.py:366-372`
-- **Detail:** `int(year_str)` raises ValueError on `"2023.0"`. The except branch
-  silently drops the year. Same class as F51-01: defense-in-depth against Excel
-  hand-edit of `dist/camera-data.csv`. `write_csv` emits clean integer years
-  today, so no current internal trigger.
-- **Failure scenario:** Maintainer opens `dist/camera-data.csv` in Excel → makes
-  a small edit → saves → CI re-renders → year column blanks for every edited
-  row.
-- **Fix:** Try `int(year_str)` first; on `ValueError`, fall back to
-  `int(float(year_str))`; keep the 1900-2100 range guard. Add a parse-tolerance
-  test in `tests/test_parsers_offline.py`.
+- **Flagged by:** code-reviewer, critic, verifier, tracer, debugger,
+  document-specialist (as F53-DOC-01)
+- **File:** `pixelpitch.py:318-337`
+- **Repro:** `_safe_int_id("1e308")` returns a 309-digit Python big-int
+  (because `int(float("1e308"))` is finite — `isfinite` does not trip).
+- **Failure scenario:** Excel rewrites a small integer column as
+  scientific notation on save (`1.0E+308`). `parse_existing_csv`
+  produces a 309-digit `record_id`. The value propagates through
+  `merge_camera_data` (`new_spec.id = existing_spec.id`) until
+  `main()` reassigns sequential ids before `write_csv`. Committed CSV
+  is safe, but the original id-to-row mapping for that row is lost,
+  and any code path that reads `spec.id` between parse and reassignment
+  sees garbage. Asymmetric with `_safe_year`, which DOES range-guard
+  (1900-2100). Same defense-in-depth round-trip class as
+  C50/C51/C52.
+- **Fix:** Mirror `_safe_year`'s range guard in `_safe_int_id`.
+  Reject ids outside `[0, 10**6]` (sequential reassignment makes
+  larger values nonsensical anyway). Update docstring to note the
+  range guard so the doc/code mismatch (F53-DOC-01) is also closed.
 - **Confidence:** MEDIUM
-- **Severity:** LOW (no current trigger; defense-in-depth alongside cycle-51
-  parse-tolerance change)
+- **Severity:** LOW (recoverable; sequential reassignment masks
+  most failure modes)
 
-### F52-02 (related): `record_id` parsing has the same int-vs-float vulnerability — LOW
+### F53-02: no `nan`/`inf`/`1e308` row in year/id parse-tolerance tests — LOW
 
-- **Flagged by:** debugger
-- **File:** `pixelpitch.py:319`
-- **Detail:** `int(values[0])` raises on `"5.0"`. The broad except at line 390
-  catches it and SKIPS the row entirely. Recoverable because
-  `merge_camera_data` regenerates ids (line 559-560), but more disruptive
-  than the year case — the entire row is lost on parse, and any data not
-  also produced by the new fetch is gone.
-- **Fix:** Pair with F52-01 in the same comprehension: `int(values[0]) if
-  values[0] else None` becomes `_safe_int(values[0])` where `_safe_int`
-  tolerates `"5"`, `"5.0"`, `" 5 "` and rejects everything else.
-- **Confidence:** MEDIUM
-- **Severity:** LOW (recoverable)
-
-### F52-03: per-agent reviews and aggregate uncommitted at cycle start — LOW (process)
-
-- **Flagged by:** code-reviewer, critic
-- **File:** `.context/reviews/*.md`
-- **Detail:** All 12 review files were modified-but-uncommitted in the working
-  tree at cycle start. The cycle's docs commit must include the refreshed
-  snapshots.
-- **Fix:** Process-only. Commit refreshed reviews + aggregate + plan in the
-  cycle's docs commit, matching cycle-51's `331c6f5` pattern.
-- **Severity:** LOW (process)
-- **Confidence:** HIGH
-
-### F52-04: no parse-tolerance test for `year_str = "2023.0"` — LOW
-
-- **Flagged by:** test-engineer
+- **Flagged by:** code-reviewer, test-engineer
 - **File:** `tests/test_parsers_offline.py` (gap)
-- **Detail:** All current parse-tolerance tests exercise `matched_sensors`. The
-  F52-01 fix needs an accompanying test for the year column.
-- **Fix:** Add a synthetic-CSV test that asserts `year_str ∈ {"2023",
-  " 2023 ", "2023.0"}` all parse to `2023`, while `"abc"` and `""` parse
-  to None.
-- **Severity:** LOW
-- **Confidence:** HIGH (companion to F52-01)
+- **Detail:** Existing tests cover `"abc"`, `""`, `"2023.0"`, ` 2023 `.
+  Missing: `"nan"`, `"inf"`, `"-inf"`, `"1e308"`. Future refactor
+  could silently regress the `isfinite` / range guards.
+- **Fix:** Extend the year-tolerance and id-tolerance test sections
+  with rows for these scientific-notation edges.
+- **Confidence:** HIGH
+- **Severity:** LOW (test gap)
 
-### F52-DS-01: docstring/comment update for parse_existing_csv year tolerance — LOW
+### F53-DOC-01: `_safe_int_id` docstring claims symmetry with `_safe_year` but lacks the range guard — LOW
 
 - **Flagged by:** document-specialist
-- **File:** `pixelpitch.py:285-291` and inline comment near line 366
-- **Detail:** Cosmetic; gate-bound to F52-01 implementation.
-- **Severity:** LOW (cosmetic)
+- **File:** `pixelpitch.py:319-326`
+- **Detail:** Doc/code mismatch. Resolved when F53-01 lands.
+- **Fix:** Update docstring as part of F53-01 commit.
+- **Severity:** LOW (cosmetic, gate-bound to F53-01)
 - **Confidence:** HIGH
+
+### F53-03 (cosmetic, not actionable this cycle): test assert messages do not encode rejection reason — LOW
+
+- **Flagged by:** test-engineer
+- **Detail:** Recommendation only. Existing assert messages are
+  enough for a single failing case.
+- **Severity:** LOW (cosmetic)
+- **Confidence:** LOW
 
 ## Cross-Agent Agreement Matrix
 
-| Finding | Flagged By                                                      | Highest Severity |
-|---------|-----------------------------------------------------------------|------------------|
-| F52-01  | code-reviewer, verifier, tracer, debugger, test-engineer        | LOW / MEDIUM     |
-| F52-02  | debugger                                                        | LOW              |
-| F52-03  | code-reviewer, critic                                           | LOW (process)    |
-| F52-04  | test-engineer                                                   | LOW              |
-| F52-DS-01 | document-specialist                                           | LOW (cosmetic)   |
+| Finding   | Flagged By                                                                  | Highest Severity |
+|-----------|-----------------------------------------------------------------------------|------------------|
+| F53-01    | code-reviewer, critic, verifier, tracer, debugger, document-specialist       | LOW              |
+| F53-02    | code-reviewer, test-engineer                                                  | LOW              |
+| F53-DOC-01| document-specialist                                                           | LOW (cosmetic)   |
+| F53-03    | test-engineer                                                                 | LOW (cosmetic)   |
 
 ## AGENT FAILURES
 
@@ -98,9 +89,10 @@ No agents failed.
 
 ## Summary statistics
 
-- Total distinct new findings: 5 (3 actionable code/test/docs, 1 process,
-  1 paired latent)
-- Cross-agent consensus findings (3+ agents): 1 (F52-01)
-- Highest severity: LOW (one MEDIUM-confidence)
-- Actionable findings: 4 (F52-01 + companion test F52-04 + companion docs
-  F52-DS-01 + paired record_id F52-02)
+- 11 reviewer perspectives executed.
+- 4 findings produced this cycle (1 actionable correctness, 1 actionable
+  test gap, 1 doc/code mismatch gate-bound to F53-01, 1 cosmetic
+  recommendation).
+- 0 new HIGH/CRITICAL findings.
+- 0 deferred items added (F53-03 is a recommendation only, not a
+  finding requiring a deferral entry).

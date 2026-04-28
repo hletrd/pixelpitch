@@ -1,21 +1,26 @@
-# perf-reviewer Review (Cycle 52)
+# Performance Reviewer — Cycle 53
 
 **Date:** 2026-04-29
-**HEAD:** 331c6f5
+**HEAD:** `1c968dd`
 
-## Hot paths re-verified
+No new performance issues found this cycle.
 
-- `parse_existing_csv` — O(rows × cols) once per render. The cycle-51
-  dedup-while-stripping comprehension at line 377-381
-  (`list(dict.fromkeys(...))`) is O(n) per row in matched_sensors
-  length; n ≤ 5 typical.
-- `match_sensors` — O(sensors_db). Lazy-loaded in `merge_camera_data`.
-- `write_csv` — pure write, no concern.
-- F49-04 (per-existing-only sensor re-match) — DEFERRED, still
-  acceptable.
+## Existing surface (recap from prior cycles, still LOW priority)
 
-## No new performance findings.
+- `merge_camera_data` re-runs `match_sensors` per existing-only
+  camera (~1000 × 200 = 200k comparisons). Tracked as F49-04 in
+  `.context/plans/deferred.md`. Render still finishes in seconds
+  at current scale.
+- `openmvg.fetch` re-fetches the full CSV every CI run. Tracked as
+  F40 in `deferred.md`.
+- `pixelpitch.py` line count: 1370. Below F32 threshold of 1500.
 
-The proposed F52-01 fix adds at most one `float()` call per CSV row
-(only when the `int()` path raises). Sub-microsecond cost; runs once
-per render.
+## F53-PERF-01 (note, not a finding)
+
+`_safe_int_id("1e308")` produces a 309-digit Python big-int. Memory
+~150 bytes single-row. Not a perf concern; correctness owned by
+code-reviewer F53-01.
+
+## Verdict
+
+No new perf findings. Both gates pass. No regressions.

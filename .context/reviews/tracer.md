@@ -1,42 +1,41 @@
-# tracer Review (Cycle 52)
+# Tracer — Cycle 53
 
 **Date:** 2026-04-29
-**HEAD:** 331c6f5
+**HEAD:** `1c968dd`
 
-## Causal trace: F52-01 — year column drop on Excel-roundtrip
+## Hypothesis under test
 
-1. CI runs `python pixelpitch.py render` →
-   `render_html(output_dir)` (`pixelpitch.py:992`).
-2. `load_csv(output_dir)` reads `dist/camera-data.csv`
-   (`pixelpitch.py:256`).
-3. `parse_existing_csv(previous_csv)` enters the row loop
-   (`pixelpitch.py:310`).
-4. `year_str = values[9]` (or `values[8]` for no-id rows).
-5. `int(year_str)` (`pixelpitch.py:368`) — if Excel saved the file with
-   `"2023.0"`, this raises ValueError.
-6. The except branch is `pass`; year stays None
-   (`pixelpitch.py:371`).
-7. `merge_camera_data` then sees `existing_spec.spec.year = None` →
-   the year-preservation branch
-   (`pixelpitch.py:495`) does NOT fire (it triggers only when new is
-   None and existing is non-None).
-8. `write_csv` then emits an empty year column for all edited rows.
+H1: F53-01 (`_safe_int_id("1e308")` returns 309-digit int) propagates
+into the committed CSV.
 
-Single hypothesis confirmed; no competing flow.
+## Causal chain
 
-## Causal trace: matched_sensors stability
+1. Excel rewrites integer ids in scientific notation on save.
+2. CI loads the CSV via `load_csv` (line 256-265).
+3. `parse_existing_csv` calls `_safe_int_id(values[0])` (line 379).
+4. `int("1.0E+308")` raises ValueError.
+5. Falls through: `float("1.0E+308") ≈ 1e308`. `isfinite` → True.
+6. `int(1e308)` → 309-digit big-int.
+7. `record_id = <309-digit int>` → stored on `SpecDerived.id`.
+8. `merge_camera_data` line 516: `new_spec.id = existing_spec.id`.
+9. `main()` line 1293: `d.id = i` reassigns sequential ids before
+   `write_csv` is called.
 
-After cycle 51, the chain
-`derive_spec → merge_camera_data → write_csv → parse_existing_csv →
-merge_camera_data` for matched_sensors is verified idempotent under:
+## Counter-hypothesis
 
-- whitespace (cycle 51 fix)
-- duplicates (cycle 51 fix)
-- `;`-injection (cycle 50 fix)
-- missing sensors_db (cycle 46 fix)
+The 309-digit value is overwritten before write_csv. So the bad id
+never reaches `dist/camera-data.csv`. Impact narrows to "transient
+in-memory garbage on the parsed object during merge", not "bad
+data persisted to disk."
 
-No new trace-level concerns this cycle.
+Still a finding because:
+- The original id-to-row mapping for that row is permanently lost
+  (parsed bad → reassigned new id, no continuity with prior CSV).
+- Asymmetric with `_safe_year`'s range guard (process inconsistency).
 
 ## Verdict
 
-F52-01 is real, single-cause, single-fix.
+H1 partially confirmed. LOW severity. Agreement with code-reviewer
+F53-01.
+
+No other suspicious flows surfaced.

@@ -1,35 +1,39 @@
-# test-engineer Review (Cycle 52)
+# Test Engineer — Cycle 53
 
 **Date:** 2026-04-29
-**HEAD:** 331c6f5
+**HEAD:** `1c968dd`
 
-## Coverage map
+## Coverage sweep
 
-The offline gate (`tests/test_parsers_offline.py`, ~2206 LOC) covers:
+`tests/test_parsers_offline.py` is the gate. Current sections:
 
-- pixel_pitch sentinel handling
-- TYPE_SIZE phone formats
-- write_csv finite/positive guards
-- write_csv → parse_existing_csv round-trip for matched_sensors
-- write_csv guard against `;` in matched_sensors
-- parse_existing_csv whitespace + dedup tolerance for matched_sensors
-- merge_camera_data matched_sensors preservation
+- pixel_pitch / sensor_area / sensor_size / sensor_size_from_type
+- match_sensors (incl. C46-01 matched_sensors preservation)
+- merge_camera_data
+- write_csv (round-trip, BOM, semicolon escape)
+- parse_existing_csv (matched_sensors whitespace + dedup,
+  year tolerance, id tolerance)
 
-## Gap identified
+## Gap F53-02: no `nan` / `inf` / `1e308` rows in year/id parse-tolerance tests
 
-### F52-04: No parse-tolerance test for `year_str = "2023.0"` — LOW
+Current tolerance tests assert behavior for `"abc"`, `""`,
+`" 2023 "`, `"2023.0"`. They do not exercise:
 
-- **File:** `tests/test_parsers_offline.py` (gap)
-- **Detail:** All current parse-tolerance tests exercise the
-  `matched_sensors` column. The F52-01 fix needs an accompanying test
-  asserting that `year_str ∈ {"2023", " 2023 ", "2023.0", "2023.5",
-  "abc", ""}` parses to `{2023, 2023, 2023, None, None, None}`
-  (`2023.5` is rejected because it cannot represent a calendar year
-  cleanly; or accept `2023` if rounding is acceptable — the
-  implementation will pick the conservative path).
-- **Severity:** LOW
-- **Confidence:** HIGH (companion to F52-01)
+- `"nan"`, `"inf"`, `"-inf"`
+- `"1e308"` (largest finite IEEE 754 double in scientific notation)
 
-## No flaky tests detected.
+Without these, a future refactor that drops `isfinite` or the range
+guard would silently regress.
 
-The offline gate is fully deterministic (fixture-based).
+## Gap F53-03 (cosmetic): assert messages do not encode the rejection reason
+
+Each `assert_equal(parsed[i].spec.year, None, "...")` only checks
+that bad inputs collapse to None. They do not log which guard fired
+(range vs. isfinite vs. ValueError). Recommendation only.
+
+## Verdict
+
+| Finding | Severity | Confidence |
+|---------|----------|------------|
+| F53-02  | LOW      | HIGH       |
+| F53-03  | LOW (cosmetic) | LOW |

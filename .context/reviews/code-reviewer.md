@@ -1,62 +1,67 @@
-# code-reviewer Review (Cycle 52)
+# Code Reviewer Report — Cycle 53
 
 **Date:** 2026-04-29
-**HEAD:** 331c6f5
-**Gates:** flake8 0 errors; `python3 -m tests.test_parsers_offline` PASS
+**HEAD:** `1c968dd` (cycle 52 docs commit)
+**Scope:** Whole repository.
 
-## Inventory
+## Status of prior fixes
 
-- Reviewed: `pixelpitch.py` (1314 LOC), `models.py`, `sources/*.py`, `tests/*.py`,
-  `templates/*.html`, `.github/workflows/github-pages.yml`, `setup.cfg`,
-  `requirements.txt`, prior cycles' aggregate, `.context/plans/deferred.md`.
+All cycles 1–52 fixes verified still in place.
 
-## Verification of cycle 51 fixes
+- `flake8 .` → 0 errors.
+- `python3 -m tests.test_parsers_offline` → all sections green
+  (matched_sensors + year + id parse-tolerance).
 
-- F51-01 (whitespace tolerance) — FIXED at `a0ac8bc`. Code at lines
-  377-381 now: `_raw = (s.strip() for s in sensors_str.split(";"))`
-  / `list(dict.fromkeys(s for s in _raw if s))`. Test added at
-  `d1b0ca1`.
-- F51-02 (dedup on parse) — folded into the F51-01 fix; same test
-  asserts duplicate removal.
+## New finding F53-01: `_safe_int_id` returns unbounded big-int on extreme float strings — LOW
 
-## New findings
-
-### F52-01: `year` column parser silently drops `2023.0`-style values — LOW / MEDIUM
-
-- **File:** `pixelpitch.py:366-372`
-- **Code:**
-  ```python
-  if year_str:
-      try:
-          y = int(year_str)
-          if 1900 <= y <= 2100:
-              year = y
-      except ValueError:
-          pass
-  ```
-- **Detail:** `int("2023.0")` raises `ValueError` and the year is silently
-  dropped. `write_csv` (line 927) emits clean integer years today, so the
-  internal round-trip works. But the same Excel hand-edit scenario that
-  motivated F51-01 (whitespace tolerance) and F50-04 (matched_sensors
-  round-trip preservation) applies to the year column too. Excel often
-  coerces an integer year value to `2023.0` when the column type is
-  guessed as numeric.
-- **Failure scenario:** Maintainer opens `dist/camera-data.csv` in Excel
-  → makes a small edit → saves → CI re-renders → year column blanks for
-  every edited row.
-- **Fix:** Tolerate trailing `.0` and surrounding whitespace. Try `int()`
-  first; on `ValueError`, fall back to `int(float(year_str))`. Keep the
-  1900-2100 range guard. Reject NaN/inf (covered by isfinite test).
+- **File:** `pixelpitch.py:318-337`
+- **Repro:** `_safe_int_id("1e308")` → 309-digit Python integer.
+- **Why it's a problem:** `parse_existing_csv` stores the result on
+  `SpecDerived.id`. `merge_camera_data` carries this through
+  (`new_spec.id = existing_spec.id` at line 516) before sequential
+  reassignment. Asymmetric with `_safe_year`, which has both an
+  `isfinite` guard AND a 1900-2100 range guard. `_safe_int_id` has
+  only the `isfinite` guard.
+- **Failure scenario:** Excel rewrites a small integer column as
+  scientific notation (`1.0E+308`) → next CI run parses, propagates a
+  309-digit id through merge. Sequential reassignment in `main()`
+  overwrites it before write_csv, so committed CSV is safe — but
+  any code path that reads `spec.id` between parse and reassignment
+  sees garbage. Defense-in-depth class with F52-01/F52-02.
+- **Fix:** Add a sanity range guard to `_safe_int_id`: reject ids
+  outside `[0, 10**6]`. The merge step regenerates ids in `[0, N)`
+  where N is the camera count (~1000), so 10**6 is a comfortable
+  upper bound. Mirror `_safe_year`'s post-conversion range check.
 - **Confidence:** MEDIUM
-- **Severity:** LOW (no current trigger; defense-in-depth alongside
-  F51-01 parser-tolerance change)
+- **Severity:** LOW (recoverable; sequential reassignment masks
+  most failure modes)
 
-### F52-02: per-agent reviews and aggregate are uncommitted in working tree — LOW (process)
+## New finding F53-02: no test for `_safe_year` / `_safe_int_id` non-finite-from-string edge — LOW
 
-- **File:** `.context/reviews/*.md`
-- **Detail:** All 12 review files appear modified-but-uncommitted at
-  cycle start (per `git status`). The cycle's docs commit must include
-  the refreshed reviews + aggregate, matching cycle-51's `331c6f5`
-  pattern.
-- **Severity:** LOW (process)
+- **File:** `tests/test_parsers_offline.py` (gap)
+- **Detail:** Current year/id tolerance tests cover `"abc"`, `""`,
+  `"2023.0"`, ` 2023 `. They do not exercise `"nan"`, `"inf"`,
+  `"-inf"`, `"1e308"`. The implementation handles them via
+  `isfinite`/range guards, but absence of tests means a future
+  refactor could silently regress.
+- **Fix:** Extend the year-tolerance and id-tolerance test sections
+  with rows for those scientific-notation edges.
 - **Confidence:** HIGH
+- **Severity:** LOW (test gap; defense-in-depth)
+
+## Sweep for commonly-missed issues
+
+- Reviewed every `*.py` under `pixelpitch.py`, `models.py`,
+  `sources/*.py`, `tests/*.py`. No new logic bugs found beyond F53-01
+  and F53-02.
+- `pixelpitch.py:1370` lines, still under the F32 threshold (1500
+  lines) recorded in `deferred.md`.
+- `_safe_float` already enforces `isfinite`, so all numeric columns
+  except `record_id` are non-finite-safe.
+
+## Confidence summary
+
+| Finding | Confidence | Severity |
+|---------|------------|----------|
+| F53-01  | MEDIUM     | LOW      |
+| F53-02  | HIGH       | LOW      |

@@ -1,26 +1,29 @@
-# security-reviewer Review (Cycle 52)
+# Security Reviewer — Cycle 53
 
 **Date:** 2026-04-29
-**HEAD:** 331c6f5
+**HEAD:** `1c968dd`
 
-## Sweeps performed
+No new security findings.
 
-- `eval` / `exec` / `pickle.loads` — none in non-test code.
-- `subprocess` with user input — none.
-- `urllib.request.urlopen` callers — all use hardcoded URL constants.
-- Jinja autoescape — on (`select_autoescape(["html", "xml"])`).
-- CSV cells are not eval'd.
-- Secrets in tracked files — none.
+## Status of prior security findings
 
-## Carry-forward (deferred per repo policy)
+- C10-07 (HTTP redirect SSRF) — still deferred per `deferred.md`.
+- C10-08 (remote debugging port on macOS) — still deferred.
+- F34 (`importlib.import_module` whitelist) — mitigated by
+  `SOURCE_REGISTRY`. No regression.
+- C8-01/SRI hashes — all CDN resources have SRI hashes.
+- C9-07 (jQuery sha256 vs sha384) — accepted, deferred.
 
-- C10-07: HTTP redirect chain not validated — SSRF theoretical, all
-  source URLs are hardcoded trusted domains; CI-only.
-- C10-08: macOS 127.0.0.1:9222 remote-debug port — dev only.
-- F34: `importlib.import_module` whitelisted by `SOURCE_REGISTRY`.
+## Sweep this cycle
 
-## No new security findings this cycle.
+- Reviewed `templates/*.html` for new injection vectors. No new
+  unescaped Jinja `{{ ... | safe }}`. No new inline event handlers.
+- Reviewed `sources/__init__.py` for new HTTP fetcher additions.
+  None.
+- F53-01 (`_safe_int_id` accepts huge ints) has no security
+  dimension. Value never reaches a privileged sink (no SQL, no
+  exec, no shell). CSV/HTML output is escaped.
 
-The proposed F52-01 year-tolerance fix has no security implications:
-input is already untrusted CSV; the fix narrows acceptance, never
-widens it (still bounded to integer values in 1900-2100).
+## Verdict
+
+No new security findings. No re-opens.
