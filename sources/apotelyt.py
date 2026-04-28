@@ -117,17 +117,26 @@ def fetch_one(url: str) -> Optional[Spec]:
     size = None
     m = SIZE_RE.search(fields.get("Sensor Size", ""))
     if m:
-        size = (float(m.group(1)), float(m.group(2)))
+        try:
+            size = (float(m.group(1)), float(m.group(2)))
+        except ValueError:
+            size = None
 
     pitch = None
     m = PITCH_RE.search(fields.get("Pixel Pitch", ""))
     if m:
-        pitch = float(m.group(1))
+        try:
+            pitch = float(m.group(1))
+        except ValueError:
+            pitch = None
 
     mpix = None
     m = MPIX_RE.search(fields.get("Sensor Resolution", ""))
     if m:
-        mpix = float(m.group(1))
+        try:
+            mpix = float(m.group(1))
+        except ValueError:
+            mpix = None
 
     year = parse_year(fields.get("Launch Date", ""))
 

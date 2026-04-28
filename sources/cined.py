@@ -95,8 +95,11 @@ def _parse_camera_page(page, url: str) -> Optional[Spec]:
     size = None
     s = SIZE_RE.search(body_text)
     if s:
-        size = (float(s.group(1)), float(s.group(2)))
-    elif fmt:
+        try:
+            size = (float(s.group(1)), float(s.group(2)))
+        except ValueError:
+            size = None
+    if size is None and fmt:
         size = FORMAT_TO_MM.get(fmt.lower())
 
     pixels = None

@@ -127,10 +127,20 @@ def _phone_to_spec(name: str, fields: dict[str, str]) -> Optional[Spec]:
         return None
 
     mp_match = re.match(r"\s*([\d.]+)\s*MP", main)
-    mpix = float(mp_match.group(1)) if mp_match else None
+    mpix = None
+    if mp_match:
+        try:
+            mpix = float(mp_match.group(1))
+        except ValueError:
+            mpix = None
 
     pitch_match = PITCH_RE.search(main)
-    pitch = float(pitch_match.group(1)) if pitch_match else None
+    pitch = None
+    if pitch_match:
+        try:
+            pitch = float(pitch_match.group(1))
+        except ValueError:
+            pitch = None
 
     fmt_match = TYPE_FRACTIONAL_RE.search(main)
     sensor_type = fmt_match.group(1) if fmt_match else None

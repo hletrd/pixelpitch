@@ -225,7 +225,10 @@ def fetch_one(spec_url: str) -> Optional[Spec]:
     sensor_size_text = fields.get("Sensor size") or fields.get("Sensor Size") or ""
     m = IR_SENSOR_SIZE_RE.search(sensor_size_text)
     if m:
-        size = (float(m.group(1)), float(m.group(2)))
+        try:
+            size = (float(m.group(1)), float(m.group(2)))
+        except ValueError:
+            size = None
 
     # Pixel pitch
     pitch = None
