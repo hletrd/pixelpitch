@@ -86,7 +86,7 @@ def fetch(limit: Optional[int] = None) -> list[Spec]:
         try:
             pw = int(float(row["SensorWidth(pixels)"]))
             ph = int(float(row["SensorHeight(pixels)"]))
-            mpix = round(pw * ph / 1_000_000, 1) if pw and ph else None
+            mpix = round(pw * ph / 1_000_000, 1) if pw > 0 and ph > 0 else None
         except (KeyError, ValueError, TypeError):
             mpix = None
 
