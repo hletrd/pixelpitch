@@ -413,6 +413,15 @@ def merge_camera_data(
     entry.  Both Spec fields (type, size, pitch, mpix, year) and
     SpecDerived fields (size, area, pitch) are preserved so that the
     rendered HTML reflects the most complete known data.
+
+    When a Spec field is preserved from existing data (e.g.,
+    ``spec.size``), the corresponding SpecDerived fields are checked for
+    consistency: if ``derived.size`` disagrees with the preserved
+    ``spec.size`` (e.g., because ``derive_spec`` computed it from
+    ``spec.type`` rather than ``spec.size``), the derived fields are also
+    overridden from existing to maintain consistency.  The template and
+    CSV both read derived fields, so consistency is critical for correct
+    output.
     """
     print(
         f"Merging {len(new_specs)} new records with {len(existing_specs)} existing records"
@@ -455,6 +464,7 @@ def merge_camera_data(
                 if new_spec.size is not None and new_spec.size != new_spec.spec.size:
                     new_spec.size = existing_spec.size
                     new_spec.area = existing_spec.area
+                    new_spec.pitch = existing_spec.pitch
             if new_spec.spec.pitch is None and existing_spec.spec.pitch is not None:
                 new_spec.spec.pitch = existing_spec.spec.pitch
                 # Validate preserved pitch: non-positive or non-finite values
@@ -1219,7 +1229,11 @@ def main():
             args = sys.argv[3:]
             for i, a in enumerate(args):
                 if a == "--limit" and i + 1 < len(args):
-                    limit = int(args[i + 1])
+                    try:
+                        limit = int(args[i + 1])
+                    except ValueError:
+                        print(f"Error: --limit requires an integer, got '{args[i + 1]}'")
+                        sys.exit(1)
                 elif a == "--out" and i + 1 < len(args):
                     out_dir = Path(args[i + 1])
             fetch_source(src, limit, out_dir)
