@@ -2189,7 +2189,14 @@ def test_record_id_parse_tolerance():
     Excel may rewrite integer ids as floats (``5`` → ``"5.0"``). The old
     code raised ValueError, which the broad except at parse_existing_csv
     line ~390 caught and SKIPPED the entire row. Now ``_safe_int_id``
-    tolerates the float form so the row survives. Companion to F52-02.
+    tolerates the float form so the row survives.
+
+    Also covers F53-01: scientific-notation Excel coercions like
+    ``"1.0E+308"`` would previously bypass the isfinite check (because
+    1e308 is finite as IEEE 754) and produce a 309-digit Python
+    big-int. The post-conversion range guard ``[0, 1_000_000]`` rejects
+    these along with negative ids and other out-of-range values.
+    Companion to F52-02 / F53-01 / F53-02.
     """
     section("record_id parse tolerance (Excel hand-edit)")
     import pixelpitch as pp
@@ -2202,11 +2209,16 @@ def test_record_id_parse_tolerance():
         " 7 ,Cam Pad,fixed,,,,,,,,\n"
         "abc,Cam Bad,fixed,,,,,,,,\n"
         ",Cam Empty,fixed,,,,,,,,\n"
+        "1e308,Cam SciNotation,fixed,,,,,,,,\n"
+        "nan,Cam NaN,fixed,,,,,,,,\n"
+        "inf,Cam Inf,fixed,,,,,,,,\n"
+        "-3,Cam Negative,fixed,,,,,,,,\n"
+        "1000001,Cam OutOfRange,fixed,,,,,,,,\n"
     )
     parsed = pp.parse_existing_csv(csv_text)
-    expect("id-tolerance: 5 rows parsed (no row drop)",
-           len(parsed), 5)
-    expected_ids = [5, 5, 7, None, None]
+    expect("id-tolerance: 10 rows parsed (no row drop)",
+           len(parsed), 10)
+    expected_ids = [5, 5, 7, None, None, None, None, None, None, None]
     for i, want in enumerate(expected_ids):
         if i < len(parsed):
             expect(f"id-tolerance: row {i} id", parsed[i].id, want)
