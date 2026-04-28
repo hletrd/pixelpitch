@@ -1,19 +1,32 @@
-# Document Specialist Review (Cycle 23) — Doc/Code Mismatches
+# Document Specialist Review (Cycle 24) — Doc/Code Mismatches
 
 **Reviewer:** document-specialist
 **Date:** 2026-04-28
+**Scope:** Full repository re-review after cycles 1-23 fixes
 
-## Findings
+## Previous Findings Status
 
-No NEW doc/code mismatches found. All docstrings and comments are consistent with the current code:
+All previously identified doc/code mismatches addressed. No regressions.
 
-- `merge_camera_data` docstring correctly documents Spec and SpecDerived field preservation
-- Year-change log comment correctly describes the standalone `if` (not elif)
-- Source module docstrings correctly describe their fetch/parse behavior
-- `sources/__init__.py` docstring correctly lists all 6 source modules
+## New Findings
+
+### DOC24-01: TYPE_FRACTIONAL_RE comment says "ASCII/Unicode quotes" but also matches -inch and -type suffixes
+
+**File:** `pixelpitch.py`, lines 47-49
+**Severity:** LOW | **Confidence:** MEDIUM
+
+The comment on lines 47-49 says:
+```
+# Canonical fractional-inch sensor type regex — matches "1/x.y" followed by
+# any recognized suffix (ASCII/Unicode quotes, "inch", "-type", etc.).
+```
+
+While the comment does mention "inch" and "-type", it labels them as "etc." and the primary focus is on quotes. The regex also matches `\s*type` (space+type) which is not mentioned. This is a minor documentation precision issue.
+
+**Fix:** Update comment to explicitly list all suffix alternatives.
 
 ---
 
 ## Summary
 
-No new actionable findings.
+- DOC24-01 (LOW): TYPE_FRACTIONAL_RE comment could more precisely list all matched suffixes

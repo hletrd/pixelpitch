@@ -1,20 +1,32 @@
-# Designer Review (Cycle 23) — UI/UX Review
+# Designer Review (Cycle 24) — UI/UX Review
 
 **Reviewer:** designer
 **Date:** 2026-04-28
+**Scope:** Full repository re-review after cycles 1-23 fixes
 
-## Findings
+## Previous Findings Status
 
-No NEW UI/UX issues found. The frontend (Jinja2 + Bootstrap 5.3.7 + D3.js + jQuery tablesorter) is functioning correctly:
+All previous UI/UX findings remain deferred (F35-F39). No regressions.
+
+## New Findings
+
+No NEW UI/UX issues found. The frontend is functioning correctly:
 
 - Dark/light theme toggle works via localStorage and `data-bs-theme`
-- Responsive navbar with hamburger menu for mobile
-- Table with sort, filter (All/Known/Unknown), and "Hide possibly invalid data" toggle
-- Scatter plot with D3.js (year vs pixel pitch)
+- All 8 category pages plus "All Cameras" and "About" are linked in the navbar
+- Table with sort, filter (All/Known/Unknown), and "Hide possibly invalid data" toggle works
+- Scatter plot with D3.js renders correctly
+- SEO meta tags (description, keywords, OG, Twitter) are conditionally rendered per page including smartphone and cinema
+- Sitemap.xml includes smartphone and cinema pages
 - All external links use `rel="noopener noreferrer"` and `target="_blank"`
-- SEO meta tags (description, keywords, OG, Twitter) are conditionally rendered per page
+- Bootstrap 5.3.7 with SRI hashes for CSS and JS
 
-Previous UI/UX findings remain deferred (F35: box plot hardcoded dimensions, F36: no skip-to-content link, F37: filter dropdown state, F38: no loading indicator, F39: navbar items on mobile).
+Previous UI/UX findings remain deferred:
+- F35: Box plot hardcoded dimensions
+- F36: No skip-to-content link
+- F37: Filter dropdown doesn't show current state
+- F38: No loading indicator or pagination
+- F39: Navbar has 9 items on mobile
 
 ---
 
