@@ -5,8 +5,12 @@ Phone spec pages list a "Main Camera" row containing for each lens:
   "<MP> MP, f/<aperture>, <focal>mm (wide|tele|...), <1/x.y>", <pitch>µm, ..."
 
 We extract the first WIDE entry (i.e. the rear main camera). Sensor
-fractional-inch format is converted to mm using the same TYPE_SIZE table
-used elsewhere in pixelpitch.
+fractional-inch format is stored as ``spec.type`` (e.g. "1/1.3") without
+setting ``spec.size``. The TYPE_SIZE lookup in ``pixelpitch.derive_spec``
+computes ``derived.size`` from the type designation. This ensures that
+``merge_camera_data`` can preserve more accurate measured sensor dimensions
+from Geizhals when available (because ``spec.size is None`` triggers the
+merge's field-preservation logic).
 
 Discovery: makers.php3 → per-brand listing pages (paginated) →
 per-phone spec page.
@@ -22,9 +26,6 @@ import time
 from typing import Optional
 
 from . import Spec, http_get, normalise_name, parse_year, TYPE_FRACTIONAL_RE, PITCH_UM_RE as PITCH_RE
-
-# Import the central sensor-size lookup table (now includes phone formats)
-from pixelpitch import TYPE_SIZE as SENSOR_TYPE_SIZE
 
 BASE = "https://www.gsmarena.com/"
 
@@ -48,10 +49,6 @@ LENS_RE = re.compile(
     re.IGNORECASE,
 )
 
-# fractional inch → (width_mm, height_mm). Uses the central TYPE_SIZE table
-# from pixelpitch which now includes phone-only formats.
-# A shallow copy prevents accidental mutation of the central TYPE_SIZE table.
-PHONE_TYPE_SIZE: dict[str, tuple[float, float]] = dict(SENSOR_TYPE_SIZE)
 
 
 def _parse_spec_table(html: str) -> dict[str, str]:
@@ -143,7 +140,14 @@ def _phone_to_spec(name: str, fields: dict[str, str]) -> Optional[Spec]:
 
     fmt_match = TYPE_FRACTIONAL_RE.search(main)
     sensor_type = fmt_match.group(1) if fmt_match else None
-    size = PHONE_TYPE_SIZE.get(sensor_type) if sensor_type else None
+    # Don't set spec.size from the TYPE_SIZE lookup table — the lookup
+    # provides approximate dimensions based on the fractional-inch
+    # designation. Setting spec.size from the lookup prevents
+    # merge_camera_data from preserving more accurate measured values
+    # from Geizhals (because the merge only preserves existing spec.size
+    # when new spec.size is None). Instead, set only spec.type and let
+    # derive_spec compute derived.size from the type.
+    size = None
 
     # Year from "Released" / "Announced" field
     year = None
