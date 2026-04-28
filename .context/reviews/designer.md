@@ -1,29 +1,24 @@
-# Designer — Cycle 54
+# Designer Review (Cycle 55)
 
-**HEAD:** `93851b0`
+**Reviewer:** designer
+**Date:** 2026-04-29
+**HEAD:** `f08c3c4`
 
-## UI/UX review scope check
+## Inventory (UI present)
 
-This repo emits a static HTML site under `dist/` from Jinja2
-templates in `templates/`. UI/UX review is in scope.
-
-The build is offline-rendered. The dev server is `python -m
-http.server` over the `dist/` directory. The cycle's run context
-does not include `agent-browser` setup, and the deploy mode is
-`none`, so I review templates statically.
+- `templates/index.html` (370 lines) — landing/navbar.
+- `templates/pixelpitch.html` (478 lines) — table + plots.
+- `templates/about.html` (107 lines).
 
 ## Findings
 
-### No new UI/UX issues this cycle
+No new UI/UX issues this cycle. Previously deferred items
+(F35 box-plot dimensions, F36 skip-to-content, F37 filter state,
+F38 pagination, F39 navbar count) remain deferred per their
+original rationale.
 
-- Templates: `index.html`, `pixelpitch.html`, `about.html`. All use
-  Jinja2 autoescape (`select_autoescape(["html", "xml"])`).
-- SRI hashes on CDN resources: present (C8-01, commit 447ee5a).
-- `temporalCoverage` LD+JSON metadata: present (C8-03).
-- Sort UX (sorted_by) only exposes descending; F18 deferred.
-- No new responsive, contrast, or focus-state regressions
-  introduced this cycle (no template diff).
+## Cross-checks
 
-## Final sweep
-
-No findings.
+- SRI hashes still pinned for all CDN resources.
+- LD+JSON `temporalCoverage` still updated.
+- Bootstrap mobile collapse still functional.

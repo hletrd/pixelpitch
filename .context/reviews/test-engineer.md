@@ -1,42 +1,36 @@
-# Test Engineer — Cycle 54
+# Test Engineer Review (Cycle 55)
 
-**HEAD:** `93851b0`
+**Reviewer:** test-engineer
+**Date:** 2026-04-29
+**HEAD:** `f08c3c4`
 
-## Inventory
+## Coverage map
 
-- `tests/test_parsers_offline.py` (2283 lines): per-source HTML
-  fixture parsers, matched_sensors round-trip + parse-tolerance,
-  year + id parse-tolerance.
-- `tests/test_sources.py` (111 lines): network-dependent smoke
-  tests; not in the gate.
+`tests/test_parsers_offline.py` exercises pitch/area, TYPE_SIZE,
+year/id/matched_sensors parse tolerance, merge preservation,
+write_csv ↔ parse round-trip (incl. `;`), `_load_per_source_csvs`
+refresh.
 
-## Findings
+## Gaps
 
-### F54-T01 — No test asserts `_load_per_source_csvs` behavior — LOW
+### F55-TE-01: no test for `_load_per_source_csvs` when sensors.json fails — LOW
 
-- **File:** `tests/test_parsers_offline.py` (gap)
-- **Severity:** LOW | **Confidence:** HIGH
-- **Description:** `_load_per_source_csvs` clears row ids and trusts
-  matched_sensors verbatim. There is no test that exercises this
-  function. Specifically, no test asserts:
-  - Per-row `id` is cleared after load.
-  - `matched_sensors` is preserved (current behavior) OR refreshed
-    (expected behavior under F54-01 fix).
-  - Missing per-source CSV does not raise.
-- **Fix:** Add a small unit test that writes a temp CSV with a known
-  matched_sensors column and asserts the loaded `SpecDerived`
-  reflects the chosen semantics.
+- **File:** tests/test_parsers_offline.py
+- **Detail:** No assertion of fallback behavior when
+  `load_sensors_database` returns `{}`. F55-CRIT-01's chosen
+  contract should be locked in by a test.
+- **Severity:** LOW. **Confidence:** HIGH.
 
-### F54-T02 — No test for stale matched_sensors merge scenario — LOW
+### F55-TE-02: no boundary tolerance test for `match_sensors` — LOW
 
-- **File:** `tests/test_parsers_offline.py` (gap)
-- **Severity:** LOW | **Confidence:** MEDIUM
-- **Description:** Tests cover preservation when new_spec
-  matched_sensors is None (C46), but no test exercises the case
-  where new_spec has stale matched_sensors that should be replaced
-  with current `sensors.json` matches.
-- **Fix:** Test will be relevant once F54-01 lands.
+- **File:** tests/test_parsers_offline.py
+- **Detail:** Boundary at exactly 2% size / 5% mpix deviation
+  untested.
+- **Severity:** LOW. **Confidence:** HIGH.
 
-## Final sweep
+### F55-TE-03: no direct BOM test for `parse_existing_csv` — LOW
 
-No regressions. New findings are scoped to F54-01.
+- **File:** tests/test_parsers_offline.py
+- **Detail:** Add a regression test that prepends `﻿` and asserts
+  has_id detection still works.
+- **Severity:** LOW. **Confidence:** HIGH.

@@ -1,36 +1,32 @@
-# Performance Reviewer — Cycle 54
+# Performance Review (Cycle 55)
 
-**HEAD:** `93851b0`
+**Reviewer:** perf-reviewer
+**Date:** 2026-04-29
+**HEAD:** `f08c3c4`
 
-## Inventory
+## Hot-path inventory
 
-Reviewed all hot paths: scrape (`extract_entries`), per-source
-fetchers (`sources/*.py`), CSV round-trip (`parse_existing_csv`,
-`write_csv`), merge (`merge_camera_data`), and HTML render.
+`merge_camera_data`, `_load_per_source_csvs`, `derive_specs`,
+`match_sensors`, `parse_existing_csv`, `write_csv`, `render_html`,
+source `fetch()`s, `extract_specs`.
 
 ## Findings
 
-### No new performance issues in cycle 54
+### F55-PR-01: `_load_per_source_csvs` per-row `match_sensors` — INFORMATIONAL
 
-- `merge_camera_data` is O(N) with a dict lookup; no degradation.
-- `match_sensors` is O(N_sensors × N_cameras), unchanged from prior
-  cycles. ~80 sensors × ~1000 cameras = 80k comparisons, runs in
-  well under a second.
-- `parse_existing_csv` per-row work added by C50-C53 (whitespace
-  strip + dedupe in matched_sensors, `_safe_year`, `_safe_int_id`)
-  is constant-time per row. Total cost negligible.
-- No new allocations or copies introduced since C53.
+- **File:** `pixelpitch.py:1080-1082`
+- **Detail:** ~1000 rows × 5 sources × ~200 sensors per call ≈ 1M
+  comparisons. Sub-second on commodity hardware. Same complexity
+  class as the deferred F49-04 entry. No new action.
 
-### Watch list (no action)
+### F55-PR-02: `match_sensors` `sorted()` per call — INFORMATIONAL
 
-- `sensors_db` lazy-load in `merge_camera_data` (line 602-610) is
-  correctly scoped: only loaded when there is at least one
-  existing-only camera.
-- `_load_per_source_csvs` reads each per-source CSV synchronously.
-  At ~6 source files of ~1000 rows each, this is ~25 ms.
+- **File:** `pixelpitch.py:253`
+- **Detail:** Per-call list-sort allocates trivially. Not a hotspot.
 
-## Final sweep
+### F55-PR-03: `parse_existing_csv` 6× `_safe_float` per row — INFORMATIONAL
 
-No flagged performance issues this cycle. F54-01 (code-reviewer)
-would add a `derive_spec` call per per-source row; this is still
-O(N) and the extra cost is negligible given current data sizes.
+- **File:** `pixelpitch.py:414-432`
+- **Detail:** ~36k float-parse attempts on full load; <100 ms.
+
+## No new actionable performance issues this cycle.

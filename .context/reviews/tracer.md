@@ -1,56 +1,50 @@
-# Tracer — Cycle 54
+# Tracer Review (Cycle 55)
 
-**HEAD:** `93851b0`
+**Reviewer:** tracer
+**Date:** 2026-04-29
+**HEAD:** `f08c3c4`
 
-## Causal trace — stale matched_sensors propagation
+## Causal traces
 
-Hypothesis: matched_sensors emitted in `dist/camera-data.csv` may
-not reflect the current state of `sensors.json` when per-source
-CSVs are stale.
+### Flow 1: per-source CSV → merge → render → write-back
 
-### Forward trace
+1. `fetch_source` writes per-source CSV with current matched_sensors.
+2. `_load_per_source_csvs` parses and (post-C54-01) recomputes
+   matched_sensors against current sensors.json.
+3. `merge_camera_data` honors tri-valued sentinel.
+4. `write_csv` joins with `;` and guards `;`-in-name.
+5. Next cycle: `parse_existing_csv` splits on `;` (strip+dedup).
 
-1. User runs `python pixelpitch.py source openmvg` at time T0
-   when `sensors.json` defines sensor `S0` matching some camera C.
-2. `fetch_source` → `derive_specs` → `match_sensors(...)` →
-   `matched_sensors=["S0"]` → `write_csv` → file
-   `dist/camera-data-openmvg.csv` row for C contains `S0`.
-3. At time T1 > T0, `sensors.json` is edited: `S0` removed.
-4. User runs `python pixelpitch.py html dist`.
-5. `render_html` → `_load_per_source_csvs` → `parse_existing_csv`
-   loads C's row → matched_sensors=["S0"] (from disk).
-6. `merge_camera_data` adds C as a new_spec. C's existing entry in
-   `dist/camera-data.csv` may have matched_sensors=[] (if the
-   previous render-after-edit cleared it). new_spec wins because
-   the merge gives new precedence (line 547-585), so `S0` is kept
-   even though it no longer exists in `sensors.json`.
-7. `write_csv(merged)` → `dist/camera-data.csv` row for C contains
-   `S0`. Output diverges from sensors.json.
+End-to-end the contract holds.
 
-### Competing hypothesis 1: derive_spec is called somewhere
+### Flow 2: BOM → parse_existing_csv → write_csv
 
-Searched for `derive_spec` calls outside `derive_specs` and
-`fetch_source`. Found only `tests/test_parsers_offline.py` mocks.
-Not called on parsed-from-CSV data. Hypothesis 1 rejected.
+1. Excel saves CSV with leading `﻿`.
+2. `parse_existing_csv` `strip_bom` runs.
+3. `header[0] == "id"` resolves correctly post-strip.
+4. Re-write produces no BOM.
 
-### Competing hypothesis 2: merge_camera_data re-matches
+Confirmed correct.
 
-Lines 602-617 re-match for **existing-only** cameras (those in
-existing but not new). C is in new (came from per-source CSV), so
-this path does not run for C. Hypothesis 2 rejected.
+### Flow 3: sensors.json missing during render_html
 
-### Competing hypothesis 3: parse_existing_csv strips stale entries
+1. `merge_camera_data` lazy-loads only for existing-only cameras.
+   When file missing, returns `{}`. Existing-only cameras get
+   matched_sensors UNCHANGED in this branch.
+2. `_load_per_source_csvs` always overwrites with lookup; on `{}`
+   sets matched_sensors to `None` (drops cache).
 
-Lines 437-445 only filter empty/whitespace-only tokens. Sensor
-name `"S0"` is not empty, so it survives. Hypothesis 3 rejected.
+Inconsistency confirmed → F55-T-01.
 
-## Conclusion
+## Findings
 
-F54-01 confirmed. Severity LOW because:
-- Sensor renames/removals are infrequent.
-- The matched_sensors column is informational, not load-bearing.
-- Self-healing on next per-source fetch.
+### F55-T-01 (consensus with F55-CRIT-01): inconsistent sensors_db-failure behavior between merge and per-source-load paths — LOW
 
-## Final sweep
+- See F55-CRIT-01.
+- **Severity:** LOW. **Confidence:** MEDIUM.
 
-No other suspicious flows in current diff.
+## Competing hypotheses
+
+- H1 (chosen): C54-01 happy-path correct; failure path too aggressive.
+  Fix the failure path only.
+- H2 (rejected): Revert C54-01.

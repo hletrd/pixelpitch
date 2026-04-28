@@ -1,30 +1,30 @@
-# Security Reviewer — Cycle 54
+# Security Review (Cycle 55)
 
-**HEAD:** `93851b0`
+**Reviewer:** security-reviewer
+**Date:** 2026-04-29
+**HEAD:** `f08c3c4`
 
-## Inventory
+## Attack surface
 
-- `pixelpitch.py` — CSV I/O, HTML render via Jinja2 with autoescape,
-  importlib for source dispatch.
-- `sources/*.py` — HTTP fetch with `urllib`, regex parsing only.
-- Templates in `templates/` — autoescape enabled.
+- HTTP `http_get` outbound only; no inbound network surface.
+- Jinja2 with autoescape for HTML/XML.
+- CSV parse via stdlib `csv`.
+- JSON parse only of in-tree `sensors.json`.
+- Dynamic import gated by `SOURCE_REGISTRY` whitelist.
+- CDN resources SRI-pinned.
 
 ## Findings
 
-### No new security issues in cycle 54
+### F55-SR-01: `parse_existing_csv` broad `except Exception` — LOW (informational)
 
-- CSV round-trip: input is constrained to numeric/string scalars
-  parsed via `_safe_float`/`_safe_year`/`_safe_int_id`, all with
-  `isfinite` and range guards. No injection surface.
-- `importlib.import_module(SOURCE_REGISTRY[name])` (line 1280):
-  `name` is validated against `SOURCE_REGISTRY` whitelist on line
-  1274-1277. No arbitrary import.
-- HTML render: Jinja2 `select_autoescape(["html", "xml"])` enabled
-  on line 961. No `|safe` filter usage in templates.
-- No secrets in repo (re-scanned).
-- No `eval`/`exec`/`pickle` usage.
+- Bare-row preview is 50-char truncated to stdout (CI logs).
+  No PII. Acceptable.
 
-## Final sweep
+### F55-SR-02: `http_get` unbounded redirects — RE-AFFIRMED DEFERRED (C10-07).
 
-OWASP top 10 sweep: A01-A10 N/A or already mitigated. No new
-findings.
+### F55-SR-03: `_create_browser` `--no-sandbox` — INFORMATIONAL
+
+- Required because CI image runs as root. Throwaway browser, fixed
+  geizhals.eu URLs only.
+
+## No new exploitable issues this cycle.

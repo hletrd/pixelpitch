@@ -1,32 +1,30 @@
-# Document Specialist — Cycle 54
+# Document Specialist Review (Cycle 55)
 
-**HEAD:** `93851b0`
+**Reviewer:** document-specialist
+**Date:** 2026-04-29
+**HEAD:** `f08c3c4`
 
-## Doc/code mismatch sweep
+## Findings
 
-### F54-DOC-01 — `_load_per_source_csvs` docstring says "caches" but treats them as authoritative — LOW
+### F55-DOC-01: `_load_per_source_csvs` docstring silent on sensors_db-empty fallback — LOW
 
-- **File:** `pixelpitch.py:1028-1053`
-- **Severity:** LOW | **Confidence:** HIGH
-- **Detail:** Docstring (lines 1031-1033) says: "These are produced
-  by `python pixelpitch.py source <name>` runs and serve as caches
-  between deployments." But the function trusts the file's
-  matched_sensors column verbatim — see F54-01. The doc and code
-  disagree on whether per-source CSVs are caches or authoritative.
-- **Fix:** Resolved when F54-01 implementation lands.
+- **File:** `pixelpitch.py:1041-1053`
+- **Detail:** Docstring describes the refresh behavior but does not
+  state that, when sensors.json fails to load, the per-row cache is
+  also discarded. After F55-CRIT-01 is resolved, the docstring
+  should describe the new contract.
+- **Severity:** LOW. **Confidence:** HIGH.
 
-### F54-DOC-02 — `merge_camera_data` docstring does not document matched_sensors preservation — LOW (cosmetic)
+### F55-DOC-02: README does not mention smartphone or cinema rendered pages — LOW
 
-- **File:** `pixelpitch.py:475-497`
-- **Severity:** LOW | **Confidence:** HIGH
-- **Detail:** The behavior added in C46 (preserve existing
-  matched_sensors when new is None, treat [] as authoritative)
-  is implemented correctly but not described in the docstring.
-- **Fix:** One-paragraph addition. Cosmetic.
+- **File:** `README.md`
+- **Detail:** `render_html` writes `smartphone.html` and `cinema.html`
+  but README does not enumerate the output pages. Minor doc gap.
+- **Severity:** LOW. **Confidence:** MEDIUM.
 
-## Confirmed clean
+## Verified accurate
 
-- `_safe_year` and `_safe_int_id` docstrings were synced with code
-  in C52-C53. Re-checked, accurate.
-- README.md and templates carry no library-version claims that
-  could drift.
+- `parse_existing_csv` BOM comment matches code.
+- `merge_camera_data` matched_sensors tri-valued contract docstring
+  matches code.
+- `_safe_year` / `_safe_int_id` docstrings match implementation.

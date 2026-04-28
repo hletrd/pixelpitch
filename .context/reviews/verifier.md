@@ -1,32 +1,35 @@
-# Verifier — Cycle 54
+# Verifier Review (Cycle 55)
 
-**HEAD:** `93851b0`
+**Reviewer:** verifier
+**Date:** 2026-04-29
+**HEAD:** `f08c3c4`
 
-## Evidence-based verification
+## Evidence
 
-### Gates at HEAD
+- `flake8 .` → 0 errors.
+- `python3 -m tests.test_parsers_offline` → all sections pass,
+  including the new `_load_per_source_csvs refresh against
+  sensors.json` test added in C54-01.
+- `git log --oneline` shows clean fine-grained commits.
 
-- `flake8 .` → 0 errors. Verified.
-- `python3 -m tests.test_parsers_offline` → all sections green.
-  Verified at run time this cycle.
+## C54-01 contract verified
 
-### Behavior verification — round-trip preservation (C46-C53)
-
-- `matched_sensors` round-trip: semicolon-delimited, whitespace +
-  dedup tolerant. Verified.
-- Year / id parse tolerance for Excel-coerced numeric strings.
-  Tests cover `"2023.0"`, `"5.0"`, `" 5 "`, `"nan"`, `"inf"`,
-  `"1e308"`, negative, out-of-range. Verified.
-- `_safe_int_id` range guard `[0, 1_000_000]`. Verified by test.
-
-### Stated vs actual behavior
-
-- F54-01: `_load_per_source_csvs` docstring says "serve as caches
-  between deployments" but the code trusts the file's
-  matched_sensors column verbatim. **Verified** as a real
-  doc-vs-code mismatch.
+Docstring claims "On load we therefore refresh matched_sensors".
+Code at `pixelpitch.py:1074-1086` is consistent with this when
+sensors_db is non-empty. When empty, matched_sensors is set to
+`None` (drops cache); the contract is silent on that path.
 
 ## Findings
 
-I confirm F54-01 with **MEDIUM** confidence. No additional new
-findings.
+### F55-V-01: docstring silent on sensors_db-empty fallback (drops cache) — LOW
+
+- See F55-CRIT-01 / F55-DOC-01. Same root cause.
+
+### F55-V-02: no test for `match_sensors` boundary tolerance — LOW
+
+- **File:** tests/test_parsers_offline.py (gap)
+- **Detail:** `match_sensors` uses `<= 2%` size, `<= 5%` mpix. No
+  boundary test asserts exactly-2% / exactly-5% behavior.
+- **Severity:** LOW. **Confidence:** HIGH.
+
+## Behavior not contradicted by code: clean.

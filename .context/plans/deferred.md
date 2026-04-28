@@ -239,3 +239,35 @@ These findings from the review are explicitly deferred. Each entry records:
 - **Re-open if:** Render time exceeds 30s on the merge step, or sensor DB grows past 5000 entries.
 
 ---
+
+## F55-02: no boundary tolerance test for `match_sensors`
+- **File:** `tests/test_parsers_offline.py` (gap)
+- **Severity:** LOW | **Confidence:** HIGH
+- **Reason:** `match_sensors` uses `<=` for both 2% size and 5% mpix tolerance. Boundary behavior is already implicitly correct from the operator and is exercised indirectly by C54-01 refresh tests. Adding an explicit boundary test is a nice-to-have but no bug has been observed and the boundary is unlikely to drift.
+- **Re-open if:** Tolerance values become configurable, or a future refactor switches `<=` to `<`.
+
+---
+
+## F55-04: `merge_camera_data` mutates input `existing_specs` items in place when re-matching
+- **File:** `pixelpitch.py`, lines 622-628
+- **Severity:** LOW | **Confidence:** HIGH (latent contract issue)
+- **Reason:** `existing_spec.matched_sensors = match_sensors(...)` writes back into the caller's list items. Today the only caller (`render_html`) does not reuse `existing_specs` after the merge call, so no observable bug. Refactoring to use `replace(existing_spec, matched_sensors=...)` is correct but introduces a new SpecDerived allocation per existing-only camera and changes a long-stable code path with no current consumer.
+- **Re-open if:** A future caller reuses `existing_specs` after `merge_camera_data` and is surprised by the mutation.
+
+---
+
+## F55-05: `parse_existing_csv` `has_id` detection defeated by hand-edited blank-leading-cell
+- **File:** `pixelpitch.py`, lines 371-372
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Reason:** A spreadsheet user inserting a blank column before id would defeat `header[0] == "id"`. The `dist/camera-data.csv` file is produced by `write_csv`, not edited by hand in normal operation. Hand-edits are explicitly out-of-scope per the current data flow (the F51/F52/F53 hand-edit hardening covers numeric-coercion edits which Excel applies silently; structural column edits are a different class).
+- **Re-open if:** A user reports loss of data after editing the CSV in a spreadsheet, or the workflow starts accepting user-edited CSVs.
+
+---
+
+## F55-06: `_refresh_matched_sensors` helper extraction across `merge_camera_data` and `_load_per_source_csvs`
+- **File:** `pixelpitch.py`, lines 615-628 and 1074-1086
+- **Severity:** LOW | **Confidence:** HIGH (cleanup)
+- **Reason:** After C55-01 the two paths share semantics enough to suggest a helper, but they still differ in subtle details: `merge_camera_data` only recomputes for existing-only (no new data) cameras and only when sensors_db is non-empty AND size is set; `_load_per_source_csvs` runs on every parsed row and falls back to None when size is unknown. Folding the two would obscure these differences. Refactor risk in a file already flagged monolithic (F32 deferred).
+- **Re-open if:** A third refresh callsite is added, or the two paths converge to identical semantics.
+
+---
