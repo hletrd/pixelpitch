@@ -235,7 +235,10 @@ def fetch_one(spec_url: str) -> Optional[Spec]:
     pitch_text = fields.get("Approximate Pixel Pitch") or ""
     m = IR_PITCH_RE.search(pitch_text)
     if m:
-        pitch = float(m.group(1))
+        try:
+            pitch = float(m.group(1))
+        except ValueError:
+            pitch = None
 
     # Megapixels
     mpix = None
