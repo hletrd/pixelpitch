@@ -1,36 +1,42 @@
-# Critic Review (Cycle 33) — Multi-Perspective Critique
+# Critic Review (Cycle 34) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-33 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-C32-01 (write_csv falsy checks) fixed and verified. C32-02 (IR_MPIX_RE) deferred.
+CRIT33-01 (systemic truthy-vs-None) fixed in C33 across derive_spec, sorted_by, prettyprint, template.
 
 ## New Findings
 
-### CRIT33-01: Systemic truthy-vs-None inconsistency — C32-01 fix was incomplete
+### CRIT34-01: Truthy-vs-None pattern still has residual instances — C33-01 fix was not fully exhaustive
 
-**Files:** `pixelpitch.py` (derive_spec, sorted_by, prettyprint), `templates/pixelpitch.html`
+**Files:** `pixelpitch.py` (line 1170, line 217, line 227)
 **Severity:** LOW-MEDIUM | **Confidence:** HIGH
 
-The C32-01 fix correctly addressed the write_csv serialization layer, replacing truthy checks with explicit `is not None` checks. However, the same truthy-vs-None pattern persists in FOUR other locations:
+The C33-01 fix addressed the 4 most visible truthy-vs-None locations. However, three additional instances remain:
 
-1. **derive_spec (line 722):** `if spec.pitch:` — 0.0 pitch is overridden by computed value, violating the docstring's "takes precedence" guarantee. This is the most significant instance because it affects data correctness, not just display.
+1. **`list` command (line 1170):** `if spec.pitch:` — 0.0 pitch cameras silently omitted. Low impact (CLI only).
 
-2. **sorted_by (lines 752-756):** `c.pitch if c.pitch else -1` — 0.0 sorts as -1 instead of 0.0.
+2. **match_sensors guard (line 217):** `if not width or not height:` — 0.0 dimensions treated as None. Low impact (physically meaningless).
 
-3. **prettyprint (lines 772-778):** `if spec.mpix:` / `if derived.pitch:` — 0.0 displays as "unknown".
+3. **match_sensors inner loop (line 227):** `if not sensor_width or not sensor_height:` — same pattern for sensor_db entries.
 
-4. **Template (pixelpitch.html lines 76-89):** `{% if spec.pitch %}` / `{% if spec.spec.mpix %}` — 0.0 renders as "unknown" in HTML.
+While items 2 and 3 are physically meaningless (no sensor has 0.0 mm dimensions), item 1 is a consistency gap. The C33-01 fix should have been applied project-wide, not just to the 4 most visible locations.
 
-This is a cross-cutting consistency issue: the data model and CSV serialization now correctly handle 0.0 as distinct from None (C32-01), but the computation, sorting, and display layers still treat 0.0 as equivalent to None. The fix should be applied holistically.
+### CRIT34-02: match_sensors ZeroDivisionError with mpix=0.0 — real crash risk
 
-**Fix:** Replace all truthy checks with explicit None checks across all four locations. In Jinja2 templates, use `{% if spec.pitch is not none %}` instead of `{% if spec.pitch %}`.
+**File:** `pixelpitch.py`, line 238
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+The division `abs(megapixels - mp) / megapixels` crashes when megapixels=0.0. This is a correctness bug, not just a consistency issue. The guard `if megapixels is not None and sensor_megapixels:` does not protect against 0.0.
+
+**Fix:** Add `megapixels > 0` to the guard condition.
 
 ---
 
 ## Summary
 
-- CRIT33-01 (LOW-MEDIUM): Systemic truthy-vs-None inconsistency — C32-01 fix incomplete across derive_spec, sorted_by, prettyprint, and templates
+- CRIT34-01 (LOW-MEDIUM): Residual truthy-vs-None instances in `list` command and match_sensors
+- CRIT34-02 (MEDIUM): match_sensors ZeroDivisionError with mpix=0.0 — real crash risk

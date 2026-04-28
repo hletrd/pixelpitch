@@ -1,42 +1,50 @@
-# Debugger Review (Cycle 33) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 34) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-33 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-DBG32-01 (write_csv falsy checks) fixed in C32. DBG31-01/02 fixed in C31.
+DBG33-01 (derive_spec 0.0 override) and DBG33-02 (template 0.0 rendering) fixed in C33. All gate tests pass.
 
 ## New Findings
 
-### DBG33-01: derive_spec silently overrides spec.pitch=0.0 with computed value
+### DBG34-01: match_sensors ZeroDivisionError crash with megapixels=0.0
 
-**File:** `pixelpitch.py`, line 722
-**Severity:** LOW-MEDIUM | **Confidence:** HIGH
+**File:** `pixelpitch.py`, line 238
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode:** If a source parser produces `Spec(pitch=0.0)`, derive_spec will NOT preserve the 0.0 value. Instead, it will compute pitch from area+mpix. The 0.0 value is lost before write_csv even runs. This means the C32-01 fix (which correctly preserves 0.0 in CSV) is only partially effective — if 0.0 never reaches write_csv because derive_spec already overrode it, the CSV fix is moot.
+**Failure mode:** If `match_sensors` is called with `megapixels=0.0`, the percentage comparison `abs(megapixels - mp) / megapixels * 100` divides by zero. The guard `if megapixels is not None and sensor_megapixels:` does not protect against 0.0 because `0.0 is not None` is True.
 
-**Root cause:** Python truthiness check `if spec.pitch:` treats `0.0` as falsy, identical to `None`. The correct check is `if spec.pitch is not None`.
+**Trigger scenario:**
+1. Source parser produces `Spec(mpix=0.0)` from malformed data or a computation
+2. `merge_camera_data` calls `match_sensors` with that camera's mpix
+3. `0.0 is not None` → True, enters the division
+4. `ZeroDivisionError` raised, not caught by any try/except
+5. The entire merge/render pipeline crashes
 
-**Trigger:** A source parser sets pitch=0.0 (unlikely in practice but possible through computation or data corruption). derive_spec would compute a non-zero pitch from area+mpix and use that instead.
+This is the most significant finding because it's an unhandled exception that would crash the production build.
 
-**Fix:** Replace `if spec.pitch:` with `if spec.pitch is not None:` in derive_spec.
+**Fix:** Guard against `megapixels <= 0` before the division:
+```python
+if megapixels is not None and megapixels > 0 and sensor_megapixels:
+```
 
 ---
 
-### DBG33-02: Template renders 0.0 as "unknown" — display-level data loss
+### DBG34-02: `list` command truthy check skips cameras with pitch=0.0
 
-**File:** `templates/pixelpitch.html`, lines 76-89
+**File:** `pixelpitch.py`, line 1170
 **Severity:** LOW | **Confidence:** HIGH
 
-**Failure mode:** If a camera has pitch=0.0 or mpix=0.0, the Jinja2 template's `{% if spec.pitch %}` evaluates to False, rendering "unknown" instead of the actual value. This is a display-level inconsistency: the data model and CSV serialization handle 0.0 correctly (C32-01), but the UI treats 0.0 the same as None.
+**Failure mode:** The `list` command uses `if spec.pitch:` to filter before prettyprinting. If `spec.pitch=0.0`, the camera is silently omitted from the listing. This is the same class of truthy-vs-None bug fixed in C33-01 across 4 other locations.
 
-**Fix:** Replace Jinja2 `{% if spec.pitch %}` with `{% if spec.pitch is not none %}`.
+**Fix:** Replace with `if spec.pitch is not None:`
 
 ---
 
 ## Summary
 
-- DBG33-01 (LOW-MEDIUM): derive_spec silently overrides spec.pitch=0.0 with computed value
-- DBG33-02 (LOW): Template renders 0.0 as "unknown" — display-level data loss
+- DBG34-01 (MEDIUM): match_sensors ZeroDivisionError crash with megapixels=0.0
+- DBG34-02 (LOW): `list` command truthy check skips cameras with pitch=0.0

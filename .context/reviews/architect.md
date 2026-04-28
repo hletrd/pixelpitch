@@ -1,30 +1,48 @@
-# Architect Review (Cycle 33) — Architectural/Design Risks
+# Architect Review (Cycle 34) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-33 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-ARCH31-01 (Spec/SpecDerived pitch duplication) fixed in C31. ARCH31-02 (BOM duplication) fixed in C31. All previous architectural concerns remain deferred.
+ARCH33-01 (systemic truthy-vs-None) fixed in C33. All previous architectural concerns remain deferred.
 
 ## New Findings
 
-### ARCH33-01: Truthy-vs-None pattern is a systemic design inconsistency
+### ARCH34-01: match_sensors percentage comparison lacks defensive boundary check
 
-**Files:** pixelpitch.py (derive_spec, sorted_by, prettyprint, write_csv), templates/pixelpitch.html
-**Severity:** LOW-MEDIUM | **Confidence:** HIGH
+**File:** `pixelpitch.py`, lines 230-238
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The C32-01 fix addressed the serialization layer (write_csv) by replacing truthy checks with explicit `is not None` checks. However, the same pattern persists in the computation layer (derive_spec), sorting layer (sorted_by), display layer (prettyprint), and presentation layer (Jinja2 templates).
+The `match_sensors` function computes percentage differences for width, height, and megapixel matching:
 
-This is a design inconsistency: the data model allows 0.0 as a valid float value distinct from None, but only the serialization layer was updated to respect this. The other layers still treat 0.0 as equivalent to None.
+```python
+width_match = abs(width - sensor_width) / width * 100 <= size_tolerance
+height_match = abs(height - sensor_height) / height * 100 <= size_tolerance
+...
+abs(megapixels - mp) / megapixels * 100 <= megapixel_tolerance
+```
 
-The root cause is that the truthy-vs-None distinction was fixed locally (write_csv only) rather than holistically (all code paths that handle Optional[float] fields). A consistent approach would be to enforce `is not None` checks across all code paths that read Optional[float] fields.
+All three divisions can produce ZeroDivisionError when the denominator is 0.0:
+- `width=0.0` → lines 230-231 crash
+- `height=0.0` → line 231 crash
+- `megapixels=0.0` → line 238 crash
 
-**Fix:** Apply the same C32-01 pattern to derive_spec, sorted_by, prettyprint, and Jinja2 templates. Consider a project-wide search for `if <optional_float>` patterns.
+The width/height cases are guarded by `if not width or not height: return []` on line 217, but this guard uses a truthy check (0.0 is treated as None). The megapixels case has NO guard against 0.0.
+
+**Architectural recommendation:** All percentage-based comparisons should guard their denominators explicitly. Consider a helper function:
+
+```python
+def _pct_diff(value: float, reference: float) -> Optional[float]:
+    """Return percentage difference, or None if reference is <= 0."""
+    if reference <= 0:
+        return None
+    return abs(value - reference) / reference * 100
+```
 
 ---
 
 ## Summary
 
-- ARCH33-01 (LOW-MEDIUM): Truthy-vs-None pattern is systemic — C32-01 fix was incomplete, needs holistic application
+- ARCH34-01 (MEDIUM): match_sensors percentage comparisons lack ZeroDivisionError guards

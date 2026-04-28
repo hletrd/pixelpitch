@@ -1,122 +1,95 @@
-# Code Review (Cycle 33) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 34) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-33 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-C32-01 (write_csv falsy checks) fixed and verified. C32-02 (IR_MPIX_RE) deferred. All previous fixes stable.
+C33-01 (systemic truthy-vs-None in derive_spec, sorted_by, prettyprint, template) fixed and verified. All gate tests pass.
 
 ## New Findings
 
-### CR33-01: derive_spec truthy check for spec.pitch violates docstring contract for 0.0
+### CR34-01: `list` command uses truthy check for spec.pitch — 0.0 pitch cameras silently omitted
 
-**File:** `pixelpitch.py`, line 722
-**Severity:** LOW-MEDIUM | **Confidence:** HIGH
+**File:** `pixelpitch.py`, line 1170
+**Severity:** LOW | **Confidence:** HIGH
 
-The `derive_spec` docstring states: "spec.pitch (direct measurement) always takes precedence." But the code uses a truthy check:
+The `list` command filters cameras with `if spec.pitch:` before prettyprinting:
 
 ```python
-if spec.pitch:
-    pitch = spec.pitch
-elif spec.mpix is not None and area is not None:
-    pitch = pixel_pitch(area, spec.mpix)
+for spec in specs_sorted:
+    if spec.pitch:
+        prettyprint(spec)
 ```
 
-If `spec.pitch=0.0`, the truthy check is False, and pitch is computed from area+mpix instead. The docstring's "always takes precedence" guarantee is violated for 0.0. This is the same class of issue as C32-01 (write_csv falsy checks), but in the computation layer.
+If a camera has `spec.pitch=0.0`, the truthy check is False and the camera is silently omitted from the listing. This is inconsistent with the C33-01 fixes that already corrected derive_spec, sorted_by, prettyprint, and the template to use explicit `is not None` checks.
+
+The `list` command is a CLI diagnostic path, so the impact is low, but it's the same class of truthy-vs-None bug that was fixed across 4 other locations.
+
+**Fix:** Replace with `if spec.pitch is not None:`
+
+---
+
+### CR34-02: match_sensors uses truthy check for width/height — 0.0 dimensions silently rejected
+
+**File:** `pixelpitch.py`, line 217
+**Severity:** LOW | **Confidence:** HIGH
+
+The guard clause in `match_sensors` uses truthy checks:
+
+```python
+if not sensors_db or not width or not height:
+    return []
+```
+
+If width=0.0 or height=0.0, `not 0.0` is True, and the function returns []. While a sensor with width=0.0 mm is physically meaningless, the data model allows it and the function signature accepts `Optional[float]`. The truthy check conflates 0.0 with None.
+
+Similarly, line 227:
+```python
+if not sensor_width or not sensor_height:
+    continue
+```
+
+**Fix:** Replace with explicit None checks:
+```python
+if not sensors_db or width is None or height is None:
+    return []
+```
+
+---
+
+### CR34-03: match_sensors has potential ZeroDivisionError when megapixels=0.0
+
+**File:** `pixelpitch.py`, line 238
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+The megapixel matching uses a percentage calculation:
+```python
+megapixel_match = any(
+    abs(megapixels - mp) / megapixels * 100 <= megapixel_tolerance
+    for mp in sensor_megapixels
+)
+```
+
+If `megapixels=0.0`, this divides by zero, raising `ZeroDivisionError`. The guard `if megapixels is not None and sensor_megapixels:` on line 236 does not protect against 0.0 because `0.0 is not None` is True.
 
 **Concrete scenario:**
-1. Source parser produces `Spec(pitch=0.0, mpix=33.0, size=(35.9, 23.9))`
-2. `derive_spec`: `if spec.pitch:` → False (0.0 is falsy)
-3. Falls to elif: computes `pixel_pitch(858.61, 33.0)` = 5.12
-4. Result: `derived.pitch=5.12` instead of `0.0`
-5. The "direct measurement" was silently discarded
+1. Source parser produces `Spec(mpix=0.0)` (e.g., from malformed data)
+2. `match_sensors` is called with `megapixels=0.0`
+3. `0.0 is not None` is True → enters the megapixel_match branch
+4. `abs(0.0 - mp) / 0.0 * 100` → ZeroDivisionError
+5. Unhandled exception crashes the merge pipeline
 
-**Fix:** Replace with explicit None check:
+**Fix:** Add a guard for megapixels=0.0:
 ```python
-if spec.pitch is not None:
-    pitch = spec.pitch
-```
-
----
-
-### CR33-02: sorted_by truthy checks sort 0.0 values as -1
-
-**File:** `pixelpitch.py`, lines 752-756
-**Severity:** LOW | **Confidence:** HIGH
-
-The `sorted_by` function uses truthy checks for sort keys:
-
-```python
-"pitch": lambda c: c.pitch if c.pitch else -1,
-"area": lambda c: c.area if c.area else -1,
-"mpix": lambda c: c.spec.mpix if c.spec.mpix else -1,
-```
-
-If any of these values is 0.0, it would be sorted as -1 instead of 0.0. This is inconsistent with the C32-01 fix that treats 0.0 as a valid value distinct from None.
-
-**Fix:** Use explicit None checks:
-```python
-"pitch": lambda c: c.pitch if c.pitch is not None else -1,
-"area": lambda c: c.area if c.area is not None else -1,
-"mpix": lambda c: c.spec.mpix if c.spec.mpix is not None else -1,
-```
-
----
-
-### CR33-03: prettyprint truthy checks display "unknown" for 0.0 values
-
-**File:** `pixelpitch.py`, lines 772-778
-**Severity:** LOW | **Confidence:** HIGH
-
-The `prettyprint` function uses truthy checks:
-
-```python
-if spec.mpix:
-    print(f", {spec.mpix:.1f} MP", end="")
-else:
-    print(", unknown resolution", end="")
-
-if derived.pitch:
-    print(f", {derived.pitch:.1f}µm pixel pitch", end="")
-```
-
-If mpix or pitch is 0.0, it would display "unknown" instead of "0.0 MP" / "0.0 µm". Inconsistent with C32-01 fix.
-
-**Fix:** Use explicit None checks:
-```python
-if spec.mpix is not None:
-    print(f", {spec.mpix:.1f} MP", end="")
-else:
-    print(", unknown resolution", end="")
-
-if derived.pitch is not None:
-    print(f", {derived.pitch:.1f}µm pixel pitch", end="")
-```
-
----
-
-### CR33-04: Missing test for derive_spec with spec.pitch=0.0
-
-**File:** `tests/test_parsers_offline.py`
-**Severity:** LOW | **Confidence:** HIGH
-
-The `test_pixel_pitch` function tests `pixel_pitch(864.0, 0.0) == 0.0`, and `test_csv_round_trip` tests 0.0 CSV preservation. But there is no test verifying that `derive_spec` with `spec.pitch=0.0` correctly preserves the 0.0 value instead of computing pitch from area+mpix. Without this test, the CR33-01 bug in `derive_spec` would not be caught by CI.
-
-**Fix:** Add a test case:
-```python
-spec_zero_pitch = Spec(name="Zero Pitch Cam", category="fixed", type=None,
-                       size=(35.9, 23.9), pitch=0.0, mpix=33.0, year=2021)
-d_zp = pp.derive_spec(spec_zero_pitch)
-expect("derive_spec: spec.pitch=0.0 preserved", d_zp.pitch, 0.0, tol=0.01)
+if megapixels is not None and megapixels > 0 and sensor_megapixels:
 ```
 
 ---
 
 ## Summary
 
-- CR33-01 (LOW-MEDIUM): derive_spec truthy check violates docstring contract for spec.pitch=0.0
-- CR33-02 (LOW): sorted_by truthy checks sort 0.0 values as -1
-- CR33-03 (LOW): prettyprint truthy checks display "unknown" for 0.0 values
-- CR33-04 (LOW): Missing test for derive_spec with spec.pitch=0.0
+- CR34-01 (LOW): `list` command truthy check for spec.pitch omits 0.0 pitch cameras
+- CR34-02 (LOW): match_sensors truthy checks for width/height reject 0.0 dimensions
+- CR34-03 (MEDIUM): match_sensors ZeroDivisionError when megapixels=0.0

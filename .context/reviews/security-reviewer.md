@@ -1,8 +1,8 @@
-# Security Review (Cycle 33) — OWASP, Secrets, Unsafe Patterns, Auth/Authz
+# Security Review (Cycle 34) — OWASP, Secrets, Unsafe Patterns, Auth/Authz
 
 **Reviewer:** security-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-33 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 

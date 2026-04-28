@@ -1,35 +1,34 @@
-# Tracer Review (Cycle 33) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 34) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-33 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-TR32-01 (write_csv 0.0 data loss) fixed in C32. TR31-01 (merge pitch inconsistency) fixed in C31.
+TR33-01 (derive_spec 0.0 pitch override) fixed in C33.
 
 ## New Findings
 
-### TR33-01: derive_spec 0.0 pitch override — causal trace
+### TR34-01: match_sensors ZeroDivisionError — causal trace
 
-**File:** `pixelpitch.py`, line 722
-**Severity:** LOW-MEDIUM | **Confidence:** HIGH
+**File:** `pixelpitch.py`, line 238
+**Severity:** MEDIUM | **Confidence:** HIGH
 
 **Causal trace:**
-1. Source parser (e.g., GSMArena) produces `Spec(pitch=0.0, mpix=33.0, size=(35.9, 23.9))`
-2. `derive_spec()` line 722: `if spec.pitch:` → `bool(0.0) is False` → skips to elif
-3. elif: `spec.mpix is not None and area is not None` → True
-4. `pitch = pixel_pitch(858.61, 33.0)` → 5.12
-5. Result: `derived.pitch=5.12` — the original 0.0 measurement is lost
-6. `write_csv` (now fixed in C32) would correctly write 5.12 (not 0.0, because derived.pitch was overridden)
-7. The 0.0 value is permanently lost in the derivation step, BEFORE write_csv even runs
+1. Source parser (e.g., openMVG) produces `Spec(mpix=0.0)` from `round(pw * ph / 1_000_000, 1)` when pixels are 0
+2. `derive_spec` correctly handles mpix=0.0 (pixel_pitch returns 0.0)
+3. `merge_camera_data` calls `match_sensors(size[0], size[1], spec.mpix, sensors_db)` — line 471
+4. `match_sensors`: `if megapixels is not None and sensor_megapixels:` → True (0.0 is not None)
+5. `abs(0.0 - 61.2) / 0.0 * 100` → ZeroDivisionError
+6. Exception is NOT caught — crashes the entire render pipeline
 
-**Competing hypothesis:** Could spec.pitch=0.0 ever be a valid direct measurement? In the physical domain, no camera has 0 µm pixel pitch. But the data model allows it, and a source parser could produce it (e.g., from a parsing bug or malformed data). The derive_spec docstring says spec.pitch "always takes precedence" — this contract should hold regardless of physical plausibility.
+**Competing hypothesis:** Could mpix=0.0 ever reach match_sensors? The `pixel_pitch` function returns 0.0 for mpix=0.0, and `derive_spec` would set `pitch=0.0`. The Spec would have `mpix=0.0`. During merge, `match_sensors` is called on existing-only cameras (line 470). If a camera has mpix=0.0 in the existing CSV, this path would be reached.
 
-**Fix:** Replace `if spec.pitch:` with `if spec.pitch is not None:` in derive_spec.
+**Fix:** Add `megapixels > 0` guard to the division branch.
 
 ---
 
 ## Summary
 
-- TR33-01 (LOW-MEDIUM): derive_spec 0.0 pitch override — causal trace confirms data loss before write_csv
+- TR34-01 (MEDIUM): match_sensors ZeroDivisionError with megapixels=0.0 — crash path confirmed
