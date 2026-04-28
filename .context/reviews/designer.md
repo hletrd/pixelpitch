@@ -1,49 +1,42 @@
-# Designer Review (Cycle 33) — UI/UX Review
+# Designer Review (Cycle 35) — UI/UX Review
 
 **Reviewer:** designer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-34 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-All previous UI/UX findings remain deferred (F35-F39). No regressions.
+DES33-01 (template truthy checks for 0.0) fixed in C33. All previous UI/UX findings (F35-F39) remain deferred.
 
 ## New Findings
 
-### DES33-01: Template truthy checks hide 0.0 pitch/mpix values — shows "unknown" instead
+### DES35-01: Negative pitch/mpix values render as "-2.0 µm" and "-10.0 MP" in the table
 
-**File:** `templates/pixelpitch.html`, lines 76-89
+**File:** `templates/pixelpitch.html`, lines 69-89
 **Severity:** LOW | **Confidence:** HIGH
 
-The template uses Jinja2 truthy checks for displaying pitch and mpix values:
+The template renders negative pitch and mpix values as negative numbers (e.g., "-2.0 µm", "-10.0 MP"). While physically meaningless, these values pass through the template rendering without any visual indicator that they're invalid.
 
-```html
-{% if spec.spec.mpix %}
-  {{ spec.spec.mpix|round(1) }} MP
-{% else %}
-  <span class="text-muted">unknown</span>
-{% endif %}
-...
-{% if spec.pitch %}
-  {{ spec.pitch|round(1) }} µm
-{% else %}
-  <span class="text-muted">unknown</span>
-{% endif %}
-```
+The `isInvalidData` JS function (line 263) checks for `pitch > 10` but does NOT check for negative values. So a camera with pitch=-2.0 would be visible in the table (if the "Hide possibly invalid data" checkbox is on, it would pass the check).
 
-In Jinja2, `{% if 0.0 %}` evaluates to False. So a camera with mpix=0.0 or pitch=0.0 would display "unknown" instead of "0.0 MP" / "0.0 µm". This is inconsistent with the C32-01 fix that correctly preserves 0.0 in CSV. The data is present in the model but hidden from the user.
+**Fix options:**
+1. Add a negative value check to `isInvalidData`: `if (pitch < 0) return true;`
+2. Or fix the data pipeline to reject negative values at the source (recommended)
 
-**Fix:** Use Jinja2's `is not none` test:
-```html
-{% if spec.spec.mpix is not none %}
-  {{ spec.spec.mpix|round(1) }} MP
-{% else %}
-  <span class="text-muted">unknown</span>
-{% endif %}
-```
+---
+
+### DES35-02: NaN pitch value renders as `data-pitch="nan"` and displays "nan µm"
+
+**File:** `templates/pixelpitch.html`, lines 50, 84-85
+**Severity:** LOW | **Confidence:** MEDIUM
+
+If a NaN pitch value reaches the template, it renders as `data-pitch="nan"` in the HTML attributes and "nan µm" in the visible cell. While NaN is unlikely to reach the template in practice (the `pixel_pitch` function crashes before producing NaN), this is a defense-in-depth gap.
+
+**Fix:** Add a NaN/finite check in the template or in `write_csv`.
 
 ---
 
 ## Summary
 
-- DES33-01 (LOW): Template truthy checks hide 0.0 pitch/mpix values — shows "unknown" instead
+- DES35-01 (LOW): Negative pitch/mpix renders as negative numbers in the table
+- DES35-02 (LOW): NaN pitch renders as "nan µm" in the template

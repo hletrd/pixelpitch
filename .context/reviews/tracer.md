@@ -1,34 +1,56 @@
-# Tracer Review (Cycle 34) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 35) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-33 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-34 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-TR33-01 (derive_spec 0.0 pitch override) fixed in C33.
+TR34-01 (match_sensors ZeroDivisionError) fixed in C34. Verified.
 
 ## New Findings
 
-### TR34-01: match_sensors ZeroDivisionError — causal trace
+### TR35-01: `derive_spec` crashes with ValueError via `pixel_pitch` on negative area — causal trace
 
-**File:** `pixelpitch.py`, line 238
+**File:** `pixelpitch.py`, line 725
 **Severity:** MEDIUM | **Confidence:** HIGH
 
 **Causal trace:**
-1. Source parser (e.g., openMVG) produces `Spec(mpix=0.0)` from `round(pw * ph / 1_000_000, 1)` when pixels are 0
-2. `derive_spec` correctly handles mpix=0.0 (pixel_pitch returns 0.0)
-3. `merge_camera_data` calls `match_sensors(size[0], size[1], spec.mpix, sensors_db)` — line 471
-4. `match_sensors`: `if megapixels is not None and sensor_megapixels:` → True (0.0 is not None)
-5. `abs(0.0 - 61.2) / 0.0 * 100` → ZeroDivisionError
-6. Exception is NOT caught — crashes the entire render pipeline
+1. Source parser (e.g., `openmvg.fetch`) produces `Spec(size=(-5.0, 3.7), pitch=None, mpix=10.0)` — negative width from malformed data
+2. `derive_spec` computes `area = -5.0 * 3.7 = -18.5` — negative area
+3. Since `spec.pitch is None`, calls `pixel_pitch(-18.5, 10.0)`
+4. `sqrt(-18.5 / 10_000_000)` raises `ValueError: expected a nonnegative input`
+5. Exception is NOT caught — crashes the render pipeline
 
-**Competing hypothesis:** Could mpix=0.0 ever reach match_sensors? The `pixel_pitch` function returns 0.0 for mpix=0.0, and `derive_spec` would set `pitch=0.0`. The Spec would have `mpix=0.0`. During merge, `match_sensors` is called on existing-only cameras (line 470). If a camera has mpix=0.0 in the existing CSV, this path would be reached.
+**Competing hypothesis:** Could negative dimensions actually reach `derive_spec`?
+- `openmvg.fetch` guards `sw > 0 and sh > 0` for mm dimensions, but NOT for pixel dimensions
+- `parse_existing_csv` accepts any float for width/height without validation
+- `merge_camera_data` preserves existing size values which could be negative from corrupted CSV
 
-**Fix:** Add `megapixels > 0` guard to the division branch.
+**Fix:** Add `area <= 0` guard in `pixel_pitch` or `derive_spec` before the sqrt call.
+
+---
+
+### TR35-02: `_BOM` literal character — silent failure trace
+
+**File:** `sources/__init__.py`, line 90
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+**Causal trace:**
+1. An editor or CI pipeline normalizes UTF-8 source files
+2. The invisible BOM literal character on line 90 is silently stripped
+3. `_BOM` becomes `''` (empty string)
+4. `strip_bom` checks `text[0] == _BOM` which is `text[0] == ''` — always False
+5. BOM-prefixed CSVs are not stripped
+6. `openmvg.fetch`: DictReader sees mangled header `"﻿CameraMaker"` instead of `"CameraMaker"`
+7. `KeyError` on every row — 0 records returned
+8. The build silently produces empty data with no error message
+
+**Fix:** Replace the literal BOM with the escape sequence `﻿` so it survives editor normalization.
 
 ---
 
 ## Summary
 
-- TR34-01 (MEDIUM): match_sensors ZeroDivisionError with megapixels=0.0 — crash path confirmed
+- TR35-01 (MEDIUM): `derive_spec` crashes with ValueError on negative area — crash path traced
+- TR35-02 (MEDIUM): `_BOM` literal character — silent failure traced through CSV parsing

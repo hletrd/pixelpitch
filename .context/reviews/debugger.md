@@ -1,50 +1,71 @@
-# Debugger Review (Cycle 34) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 35) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-33 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-34 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-DBG33-01 (derive_spec 0.0 override) and DBG33-02 (template 0.0 rendering) fixed in C33. All gate tests pass.
+DBG34-01 (match_sensors ZeroDivisionError) fixed in C34. DBG34-02 (list truthy check) fixed in C34. Verified.
 
 ## New Findings
 
-### DBG34-01: match_sensors ZeroDivisionError crash with megapixels=0.0
+### DBG35-01: `derive_spec` crashes with ValueError when area is negative
 
-**File:** `pixelpitch.py`, line 238
+**File:** `pixelpitch.py`, line 725 (calls `pixel_pitch`)
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode:** If `match_sensors` is called with `megapixels=0.0`, the percentage comparison `abs(megapixels - mp) / megapixels * 100` divides by zero. The guard `if megapixels is not None and sensor_megapixels:` does not protect against 0.0 because `0.0 is not None` is True.
+**Failure mode:** `pixel_pitch(area, mpix)` calls `sqrt(area / (mpix * 10**6))`. When `area < 0`, `sqrt()` raises `ValueError: expected a nonnegative input`. This exception is not caught anywhere.
 
 **Trigger scenario:**
-1. Source parser produces `Spec(mpix=0.0)` from malformed data or a computation
-2. `merge_camera_data` calls `match_sensors` with that camera's mpix
-3. `0.0 is not None` → True, enters the division
-4. `ZeroDivisionError` raised, not caught by any try/except
-5. The entire merge/render pipeline crashes
+1. `parse_existing_csv` reads a CSV with negative sensor dimensions (e.g., corrupted data)
+2. `derive_spec` is called on the parsed spec
+3. `area = size[0] * size[1]` produces a negative value
+4. Since `spec.pitch is None`, `pixel_pitch(area, mpix)` is called
+5. `sqrt(negative)` raises `ValueError`
+6. Unhandled exception crashes the build
 
-This is the most significant finding because it's an unhandled exception that would crash the production build.
+**Fix:** Add a guard in `pixel_pitch` for `area <= 0`:
 
-**Fix:** Guard against `megapixels <= 0` before the division:
 ```python
-if megapixels is not None and megapixels > 0 and sensor_megapixels:
+def pixel_pitch(area: float, mpix: float) -> float:
+    if mpix <= 0 or area <= 0:
+        return 0.0
+    return 1000 * sqrt(area / (mpix * 10**6))
 ```
 
 ---
 
-### DBG34-02: `list` command truthy check skips cameras with pitch=0.0
+### DBG35-02: `_BOM` literal character — silent failure if editor strips it
 
-**File:** `pixelpitch.py`, line 1170
+**File:** `sources/__init__.py`, line 90
+**Severity:** MEDIUM | **Confidence:** HIGH
+
+**Failure mode:** The literal BOM character U+FEFF is used instead of the documented escape sequence. If an editor or CI pipeline strips invisible characters during normalization:
+1. `_BOM` becomes `''` (empty string)
+2. `strip_bom` always returns the input unchanged
+3. BOM-prefixed CSVs produce mangled headers in DictReader
+4. `KeyError` on every row — 0 records, no error message
+
+This is a silent data loss bug — the build succeeds but produces empty/incomplete output.
+
+**Fix:** Replace the literal with escape sequence `﻿`.
+
+---
+
+### DBG35-03: Empty strings in matched_sensors from semicolon splitting
+
+**File:** `pixelpitch.py`, line 343
 **Severity:** LOW | **Confidence:** HIGH
 
-**Failure mode:** The `list` command uses `if spec.pitch:` to filter before prettyprinting. If `spec.pitch=0.0`, the camera is silently omitted from the listing. This is the same class of truthy-vs-None bug fixed in C33-01 across 4 other locations.
+**Failure mode:** If the matched_sensors CSV field contains leading/trailing semicolons (e.g., `;IMX455;`), the `split(";")` produces `['', 'IMX455', '']`. These empty strings are written back to CSV on the next `write_csv` call, perpetuating corruption.
 
-**Fix:** Replace with `if spec.pitch is not None:`
+**Fix:** Filter empty strings after split.
 
 ---
 
 ## Summary
 
-- DBG34-01 (MEDIUM): match_sensors ZeroDivisionError crash with megapixels=0.0
-- DBG34-02 (LOW): `list` command truthy check skips cameras with pitch=0.0
+- DBG35-01 (MEDIUM): `derive_spec` crashes with ValueError on negative area
+- DBG35-02 (MEDIUM): `_BOM` literal — silent failure if editor strips invisible character
+- DBG35-03 (LOW): Empty strings in matched_sensors from semicolon splitting

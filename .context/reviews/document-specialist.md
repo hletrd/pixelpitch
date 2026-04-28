@@ -1,39 +1,50 @@
-# Document Specialist Review (Cycle 33) — Doc/Code Mismatches
+# Document Specialist Review (Cycle 35) — Doc/Code Mismatches
 
 **Reviewer:** document-specialist
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-34 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-DOC31-01 (derive_spec docstring) fixed in C31. All previous doc/code mismatches resolved.
+DOC33-01 (derive_spec docstring "always takes precedence" vs 0.0 pitch) fixed in C33.
 
 ## New Findings
 
-### DOC33-01: derive_spec docstring claims "always takes precedence" but 0.0 pitch is overridden
+### DOC35-01: `_BOM` comment claims escape sequence is used, but literal is used
 
-**File:** `pixelpitch.py`, lines 692-734
-**Severity:** LOW-MEDIUM | **Confidence:** HIGH
+**File:** `sources/__init__.py`, lines 87-90
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-The `derive_spec` docstring states:
+The comment on lines 87-89 explicitly states:
 
-> Pixel pitch: ``spec.pitch`` (direct measurement) always takes precedence.
+> Using the escape sequence rather than the literal character guards against editors or CI pipelines that silently strip or normalise the invisible BOM glyph when re-encoding source files.
 
-But the code at line 722 uses a truthy check:
+But line 90 uses the literal BOM character (`\xef\xbb\xbf` in raw bytes), not the escape sequence (`﻿`). The comment directly contradicts the implementation.
 
-```python
-if spec.pitch:
-    pitch = spec.pitch
-elif spec.mpix is not None and area is not None:
-    pitch = pixel_pitch(area, spec.mpix)
+**Fix:** Either:
+1. Replace the literal with the actual escape sequence `﻿` (preferred — makes the code match the documented intent), or
+2. Update the comment to reflect that the literal is used (not recommended — defeats the documented purpose)
+
+---
+
+### DOC35-02: `pixel_pitch` docstring does not document ValueError for negative area
+
+**File:** `pixelpitch.py`, lines 178-181
+**Severity:** LOW | **Confidence:** HIGH
+
+The `pixel_pitch` function docstring does not mention that it raises `ValueError` when `area < 0`. The function signature accepts `float` for area, and the docstring only states the return type is `float`. Callers have no indication that negative area is unsupported.
+
+**Fix:** Add a "Raises" section to the docstring:
+```
+Raises:
+    ValueError: If area < 0 (sqrt of negative number)
 ```
 
-If `spec.pitch=0.0`, the truthy check is False, and pitch is computed from area+mpix instead. The "always takes precedence" claim is violated for 0.0.
-
-**Fix:** Either fix the code to match the docstring (use `if spec.pitch is not None:`) or update the docstring to document the 0.0 exception.
+Or better, add a guard that returns 0.0 for negative area (as done for mpix <= 0).
 
 ---
 
 ## Summary
 
-- DOC33-01 (LOW-MEDIUM): derive_spec docstring claims "always takes precedence" but 0.0 pitch is overridden
+- DOC35-01 (MEDIUM): `_BOM` comment claims escape sequence, code uses literal — direct contradiction
+- DOC35-02 (LOW): `pixel_pitch` docstring does not document ValueError for negative area
