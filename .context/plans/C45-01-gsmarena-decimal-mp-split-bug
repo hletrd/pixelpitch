@@ -1,0 +1,60 @@
+# Plan C45-01: GSMArena Decimal MP Regex Split Bug Fix & Test Coverage
+
+**Status:** completed
+**Priority:** P1 (data integrity — HIGH severity data corruption)
+**Findings addressed:** C45-01, C45-02
+
+## Problem
+
+`_select_main_lens` in `sources/gsmarena.py` uses a regex split that breaks on decimal MP values. The regex `r'(?=\b\d+(?:\.\d+)?\s*MP\b)'` uses `\b` (word boundary) before `\d+`, which fires between a digit and a decimal point. This causes "12.2 MP" to be split into "12." and "2 MP", leading to:
+
+1. **mpix wrong**: 12.2 becomes 2.0
+2. **sensor type lost**: TYPE_FRACTIONAL_RE may fail to match in the corrupted fragment
+3. **derived.size wrong**: Without spec.type, derive_spec cannot compute sensor dimensions
+
+No test coverage exists for decimal MP values in `_select_main_lens` or `_phone_to_spec`.
+
+## Implementation Steps
+
+### Step 1: Fix the regex split in `_select_main_lens`
+
+**File:** `sources/gsmarena.py`, line 82
+
+- [x] Changed the split regex from:
+  ```python
+  parts = re.split(r"(?=\b\d+(?:\.\d+)?\s*MP\b)", raw)
+  ```
+  to:
+  ```python
+  parts = re.split(r"(?<![\d.])(?=\d+(?:\.\d+)?\s*MP\b)", raw)
+  ```
+  Replaced `\b` (which fires between digit and decimal point) with `(?<![\d.])` negative lookbehind that ensures we only split at the start of a number (not preceded by another digit or a decimal point).
+
+### Step 2: Add test cases for decimal MP in `_select_main_lens`
+
+**File:** `tests/test_parsers_offline.py`
+
+- [x] Added test cases in `test_gsmarena_select_main_lens`:
+  - Decimal MP single lens: `'12.2 MP, f/1.9, (wide), 1/2.55", 1.25µm'` — passes
+  - Decimal MP periscope: `'10.7 MP, f/4.3, 240mm (periscope)'` — passes
+  - Decimal MP depth camera: `'0.3 MP, f/2.4, (depth)'` — passes
+  - Mixed integer/decimal MP multi-lens: `'50 MP, f/1.7, (wide)...\n12.2 MP, f/2.2, (ultrawide)...'` — picks 50 MP wide — passes
+
+### Step 3: Add test case for `_phone_to_spec` with decimal MP
+
+**File:** `tests/test_parsers_offline.py`
+
+- [x] Added `test_gsmarena_decimal_mp` test function:
+  - Decimal MP main camera: mpix=12.2, type='1/2.55', pitch=1.25 — passes
+  - Mixed integer/decimal multi-lens: picks 50 MP wide, type='1/1.3' — passes
+
+### Step 4: Run gate tests
+
+- [x] `python3 -m tests.test_parsers_offline` — all checks passed
+
+## Exit Criteria
+
+- [x] `_select_main_lens('12.2 MP, f/1.9, (wide)')` returns a string starting with "12.2 MP" (not "2 MP")
+- [x] `_phone_to_spec` with decimal MP fields correctly extracts mpix=12.2 and type='1/2.55'
+- [x] All gate tests pass
+- [x] New test cases for decimal MP added and passing

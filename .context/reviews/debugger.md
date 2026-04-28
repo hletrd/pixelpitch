@@ -1,28 +1,36 @@
-# Debugger Review (Cycle 44) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 45) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-DBG43-01 (GSMArena spec.size from TYPE_SIZE) — COMPLETED. GSMArena now sets spec.size=None.
-DBG43-02 (CineD FORMAT_TO_MM lookup) — COMPLETED. CineD no longer sets spec.size from FORMAT_TO_MM.
-DBG43-03 (redundant derived.pitch write) — COMPLETED. Write was restored with improved comments.
+DBG44-03 (CineD fmt/fmt_m dead code) — COMPLETED. Removed.
 
 ## New Findings
 
-### DBG44-03: CineD fmt/fmt_m variables and `if size is None and fmt:` block are dead code after C43-01 fix
+### DBG45-01: GSMArena _select_main_lens regex split corrupts decimal MP — latent data corruption bug
 
-**File:** `sources/cined.py, _parse_camera_page function`
-**Severity:** LOW | **Confidence:** HIGH
+**File:** `sources/gsmarena.py, _select_main_lens, line 82`
+**Severity:** HIGH | **Confidence:** HIGH
 
-After C43-01 removed `size = FORMAT_TO_MM.get(fmt.lower())`, the fmt variable is computed via regex but never used. The `if size is None and fmt:` block contains only a `pass` statement with a long comment. This is dead code that could confuse maintainers.
+**Failure mode:** When a phone's camera spec page lists a main camera with a decimal MP value (e.g., "12.2 MP"), the `re.split(r'(?=\b\d+(?:\.\d+)?\s*MP\b)', raw)` regex incorrectly splits the value at the decimal point. The word boundary `\b` fires between the integer digit "2" and the decimal point ".", causing the split to produce two fragments: "12." and "2 MP, f/1.7, ...". The function then selects "2 MP" as the main lens, extracting mpix=2.0 instead of 12.2.
 
-**Fix:** Remove the fmt_m regex, fmt assignment, and the `if size is None and fmt:` block. Also remove the FORMAT_TO_MM dict if no test references it.
+**Concrete failure scenario:**
+1. GSMArena fetch runs for Google Pixel 7 (12.2 MP main camera)
+2. _select_main_lens receives "12.2 MP, f/1.9, 25mm (wide), 1/2.55\", 1.25µm, ..."
+3. Split produces: ["12.", "2 MP, f/1.9, 25mm (wide), 1/2.55\", 1.25µm, ..."]
+4. _select_main_lens sorts and picks "2 MP, f/1.9, ..." (wide has priority 0)
+5. _phone_to_spec extracts mpix=2.0 (wrong), type=None (lost), pitch=1.25 (correct by coincidence)
+6. derive_spec cannot compute sensor size because spec.type=None and spec.size=None
+7. The camera appears in the database with mpix=2.0, unknown sensor size, and unknown derived.size
+
+**Why it was missed for 44 cycles:** The existing test fixture (Galaxy S25 Ultra) only has integer MP values (200, 10, 50, 50). No test exercises decimal MP, and the bug only manifests at runtime when scraping phones with decimal MP main cameras.
+
+**Fix:** Remove `\b` from the start of the split regex: `r'(?=\d+(?:\.\d+)?\s*MP\b)'`
 
 ---
 
-
 ## Summary
 
-- DBG44-03 (LOW): CineD fmt/fmt_m variables and `if size is None and fmt:` block are dead code after C43-01 fix
+- DBG45-01 (HIGH): GSMArena _select_main_lens regex split corrupts decimal MP — latent data corruption bug

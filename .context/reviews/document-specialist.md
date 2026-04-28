@@ -1,26 +1,16 @@
-# Document Specialist Review (Cycle 44) — Doc/Code Mismatches
+# Document Specialist Review (Cycle 45) — Doc/Code Mismatches
 
 **Reviewer:** document-specialist
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-All C43 findings resolved. No regressions.
+DOC44-01 (CineD FORMAT_TO_MM docstring claim) — COMPLETED. Dict and docstring reference removed.
 
 ## New Findings
 
-### DOC44-01: CineD docstring claims FORMAT_TO_MM is 'kept for regex coverage test' but no such test exists
-
-**File:** `sources/cined.py, module docstring`
-**Severity:** LOW | **Confidence:** HIGH
-
-The module docstring states 'The FORMAT_TO_MM table is kept for the regex coverage test only.' However, no test in test_parsers_offline.py references FORMAT_TO_MM. The docstring claim is inaccurate — there is no regex coverage test that uses FORMAT_TO_MM.
-
-**Fix:** Either add a regex coverage test for FORMAT_TO_MM, or remove the dict and update the docstring.
-
----
-
+No new doc/code mismatches. The GSMArena module docstring accurately describes the data flow (spec.type set without spec.size). The regex split bug (CR45-01) is a code bug, not a documentation issue.
 
 ## Summary
 
-- DOC44-01 (LOW): CineD docstring claims FORMAT_TO_MM is 'kept for regex coverage test' but no such test exists
+- No new doc/code mismatches

@@ -1,15 +1,15 @@
-# Security Review (Cycle 44)
+# Security Review (Cycle 45)
 
 **Reviewer:** security-reviewer
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-C43-01 (data integrity: GSMArena/CineD lookup-table sizes) — COMPLETED. Both sources now leave spec.size=None for type-derived/format-derived dimensions.
+C44-01 (FORMAT_TO_MM dead code) — COMPLETED. Removed.
 
 ## New Findings
 
-No new security findings.
+No new security findings. The GSMArena regex split bug (CR45-01) is a data integrity issue (incorrect mpix values) but not a security vulnerability.
 
 ## Summary
 

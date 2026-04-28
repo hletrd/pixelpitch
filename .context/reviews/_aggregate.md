@@ -1,49 +1,47 @@
-# Aggregate Review (Cycle 44) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 45) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-43 Status
+## Cycle 1-44 Status
 
-All previous fixes confirmed still working. No regressions in core logic. Gate tests pass. C43 fixes (GSMArena/CineD spec.size provenance, redundant pitch write clarification) all verified working correctly via live code execution in the verifier agent.
+All previous fixes confirmed still working. No regressions in core logic. Gate tests pass. C44 fixes (FORMAT_TO_MM dead code removal, fmt extraction removal) verified working correctly.
 
-## Verification Results (Cycle 44)
-
-- derive_spec with type='1/1.3', size=None → derived.size = (9.84, 7.40) from TYPE_SIZE — OK
-- merge_camera_data preserves measured Geizhals spec.size when new has spec.size=None — OK
-- test_merge_gsmarena_measured_preserved — exists and tests spec.size, derived.size, area
-- test_merge_size_consistency — exists and tests C42-01 consistency fix
-- PHONE_TYPE_SIZE and TYPE_SIZE import — already removed from gsmarena.py (C43-01 complete)
-
-## Cross-Agent Agreement Matrix (Cycle 44 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 45 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| FORMAT_TO_MM dict in cined.py is dead code after C43-01 | CR44-01, CRIT44-01, ARCH44-01, TR44-01, DBG44-03, DOC44-01, TE44-02 | LOW |
-| CineD fmt_m/fmt variables and `if size is None and fmt:` block are dead code | CR44-02, CRIT44-02, ARCH44-02, TR44-01, DBG44-03 | LOW |
-| CineD docstring says FORMAT_TO_MM 'kept for regex coverage test' but no such test exists | CRIT44-03, DOC44-01 | LOW |
+| GSMArena _select_main_lens regex split breaks on decimal MP | CR45-01, CRIT45-01, V45-01, TR45-01, ARCH45-01, DBG45-01 | HIGH |
+| No test for decimal MP in _select_main_lens | TE45-01 | MEDIUM |
+| No test for decimal MP in _phone_to_spec | TE45-02 | MEDIUM |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C44-01: FORMAT_TO_MM dict in cined.py is dead code after C43-01 fix — should be removed
+### C45-01: GSMArena _select_main_lens regex split breaks on decimal MP values — data corruption
 
-**Sources:** CR44-01, CRIT44-01, ARCH44-01, TR44-01, DBG44-03, DOC44-01, TE44-02
-**Severity:** LOW | **Confidence:** HIGH (7-agent consensus)
+**Sources:** CR45-01, CRIT45-01, V45-01, TR45-01, ARCH45-01, DBG45-01
+**Severity:** HIGH | **Confidence:** HIGH (6-agent consensus, verified by live execution)
 
-After C43-01 removed `size = FORMAT_TO_MM.get(fmt.lower())`, the FORMAT_TO_MM dict at module level (lines 37-51) is defined but never referenced by any executable code. It's only mentioned in comments and the docstring. The module docstring claims "The FORMAT_TO_MM table is kept for the regex coverage test only" but no test references it. This is dead code that could mislead future maintainers into thinking it's still used.
+The `re.split(r'(?=\b\d+(?:\.\d+)?\s*MP\b)', raw)` in `_select_main_lens` (gsmarena.py line 82) uses `\b` (word boundary) before `\d+`. The word boundary fires between a digit and a decimal point, causing "12.2 MP" to be split into "12." and "2 MP, ...". The function then selects the corrupted "2 MP" fragment as the main lens, extracting mpix=2.0 instead of 12.2 and losing the sensor type designation.
 
-**Fix:** Remove the FORMAT_TO_MM dict entirely. Update the module docstring to remove the reference.
+This affects all phones with decimal-megapixel main cameras (Google Pixel 1-6 at 12.2 MP, various Samsung/Apple/OnePlus phones). The bug causes three-fold data corruption:
+
+1. **mpix wrong**: 12.2 becomes 2.0
+2. **sensor type lost**: TYPE_FRACTIONAL_RE may fail to match the format designation in the corrupted fragment
+3. **derived.size wrong**: Without spec.type, derive_spec cannot compute sensor dimensions
+
+**Fix:** Remove `\b` from the start of the split regex: `r'(?=\d+(?:\.\d+)?\s*MP\b)'`
 
 ---
 
-### C44-02: CineD fmt_m/fmt variables and `if size is None and fmt:` block are dead code after C43-01 fix
+### C45-02: No test coverage for decimal MP values in GSMArena _select_main_lens and _phone_to_spec
 
-**Sources:** CR44-02, CRIT44-02, ARCH44-02, TR44-01, DBG44-03
-**Severity:** LOW | **Confidence:** HIGH (5-agent consensus)
+**Sources:** TE45-01, TE45-02
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-After C43-01 removed `FORMAT_TO_MM.get(fmt.lower())`, the format extraction regex (fmt_m, lines 92-97) and fmt variable assignment are computed but never used. The `if size is None and fmt:` block (lines 106-119) contains only a `pass` statement with comments. The entire format detection code path is dead code that wastes computation and misleads about the data flow.
+The existing GSMArena tests only exercise integer MP values (200, 10, 50, 50 from the S25 Ultra fixture). No test covers decimal MP values like 12.2 MP, which is the exact input that triggers C45-01. Adding test coverage would have caught this bug earlier and will prevent regression.
 
-**Fix:** Remove the fmt_m regex search, fmt assignment, and the `if size is None and fmt:` block with its comments. Also remove the format extraction regex (the `fmt_m` pattern) from the function.
+**Fix:** Add test cases for `_select_main_lens` and `_phone_to_spec` with decimal MP camera values.
 
 ---
 
@@ -53,8 +51,8 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 2 (C44-01, C44-02)
-- Cross-agent consensus findings (3+ agents): 2 (C44-01 with 7 agents, C44-02 with 5 agents)
-- Highest severity: LOW (both findings)
+- Total distinct new findings: 2 (C45-01, C45-02)
+- Cross-agent consensus findings (3+ agents): 1 (C45-01 with 6 agents)
+- Highest severity: HIGH (C45-01)
 - Actionable findings: 2
 - Verified safe / deferred: 0

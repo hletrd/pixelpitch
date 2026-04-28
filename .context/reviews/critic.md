@@ -1,27 +1,32 @@
-# Critic Review (Cycle 44) — Multi-Perspective Critique
+# Critic Review (Cycle 45) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-CRIT43-01 (GSMArena/CineD spec.size provenance) — COMPLETED. Both sources now leave spec.size=None.
-CRIT43-02 (redundant derived.pitch write) — COMPLETED. Write was restored with improved comments.
+CRIT44-01 (FORMAT_TO_MM dead code) — COMPLETED. Removed.
 
 ## New Findings
 
-### CRIT44-01: FORMAT_TO_MM dict in cined.py is dead code after C43-01 fix — no code references it
+### CRIT45-01: GSMArena _select_main_lens regex split corrupts decimal MP data — high-severity data integrity bug
 
-**File:** `sources/cined.py, lines 37-51`
-**Severity:** LOW | **Confidence:** HIGH
+**File:** `sources/gsmarena.py, line 82`
+**Severity:** HIGH | **Confidence:** HIGH
 
-After C43-01 removed `size = FORMAT_TO_MM.get(fmt.lower())`, the FORMAT_TO_MM dict is defined but never referenced by any executable code. It's only mentioned in comments and the docstring. The module docstring says 'The FORMAT_TO_MM table is kept for the regex coverage test only' but no test actually references it. This is dead code that could confuse maintainers into thinking it's still used.
+The `re.split(r'(?=\b\d+(?:\.\d+)?\s*MP\b)', raw)` regex uses `\b` (word boundary) before `\d+`. This causes a split at the boundary between a digit and a decimal point, breaking "12.2 MP" into "12." and "2 MP". When `_select_main_lens` sorts and picks the lowest-priority (main) lens, it selects the corrupted fragment "2 MP, f/1.7, ..." instead of the correct "12.2 MP, f/1.7, ...".
 
-**Fix:** Remove the FORMAT_TO_MM dict. If a regex coverage test is desired, add one that explicitly references it. Otherwise the format extraction regex itself is sufficient documentation.
+This is a high-severity data integrity bug because:
+1. It silently corrupts mpix values (12.2 -> 2.0)
+2. It causes TYPE_FRACTIONAL_RE to fail matching because the quote suffix on the sensor format (e.g., `1/2.55"`) gets severed from the numeric prefix
+3. Without spec.type, derive_spec cannot compute sensor dimensions from the type lookup
+
+The bug affects all phones whose main camera has a decimal-megapixel value, including the entire Google Pixel line (Pixel 1-6 at 12.2 MP), various Samsung phones with 12.0 MP decimal representation, and many older smartphones.
+
+**Fix:** Remove the leading `\b` from the split regex. Change to `r'(?=\d+(?:\.\d+)?\s*MP\b)'`. This allows the greedy `\d+` to consume the full integer part of a decimal number before the optional `.\\d+` group matches the fractional part, preventing the split from occurring inside a decimal number.
 
 ---
 
-
 ## Summary
 
-- CRIT44-01 (LOW): FORMAT_TO_MM dict in cined.py is dead code after C43-01 fix — no code references it
+- CRIT45-01 (HIGH): GSMArena _select_main_lens regex split corrupts decimal MP data
