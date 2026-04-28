@@ -1048,8 +1048,9 @@ def _load_per_source_csvs(output_dir: Path) -> List[SpecDerived]:
     cache is preserved as a softer-fail fallback (F55-01) — this
     matches `merge_camera_data`'s existing-only branch which also
     skips re-matching when sensors_db is empty. When the row has no
-    sensor size, matched_sensors is set to `None` ("not checked"),
-    matching the `derive_spec` contract.
+    sensor size, matched_sensors is set to `None` ("not checked",
+    overriding any cached value), matching the `derive_spec`
+    contract.
 
     Per-row `id` is dropped so `merge_camera_data` can assign globally
     unique ids. Missing files are silently skipped — failure of one
