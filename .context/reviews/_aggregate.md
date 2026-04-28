@@ -1,65 +1,55 @@
-# Aggregate Review (Cycle 32) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 33) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-31 Status
+## Cycle 1-32 Status
 
-All previous fixes confirmed still working. No regressions. Gate tests pass (all checks). C31-01 through C31-04 all implemented and verified.
+All previous fixes confirmed still working. No regressions. Gate tests pass (all checks). C32-01 implemented and verified.
 
-## Cross-Agent Agreement Matrix (Cycle 32 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 33 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| write_csv falsy checks silently drop 0.0 float values | code-reviewer, critic, verifier, tracer, debugger, test-engineer | LOW-MEDIUM |
-| IR_MPIX_RE matches partial decimals without unit suffix | code-reviewer | LOW |
+| derive_spec truthy check violates docstring for spec.pitch=0.0 | CR33-01, CRIT33-01, V33-02, TR33-01, ARCH33-01, DBG33-01, DOC33-01, TE33-01 | LOW-MEDIUM |
+| sorted_by truthy checks sort 0.0 as -1 | CR33-02, V33-04, TE33-02 | LOW |
+| prettyprint truthy checks display "unknown" for 0.0 | CR33-03 | LOW |
+| Template truthy checks hide 0.0 as "unknown" | DES33-01, DBG33-02, V33-03, TE33-03 | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C32-01: write_csv uses truthy checks instead of None checks for float fields
+### C33-01: Systemic truthy-vs-None inconsistency — derive_spec, sorted_by, prettyprint, template
 
-**Sources:** CR32-01, CRIT32-01, V32-02, TR32-01, DBG32-01, TE32-01
-**Severity:** LOW-MEDIUM | **Confidence:** HIGH (6-agent consensus)
+**Sources:** CR33-01, CR33-02, CR33-03, CRIT33-01, V33-02, V33-03, V33-04, TR33-01, ARCH33-01, DBG33-01, DBG33-02, DES33-01, DOC33-01, TE33-01, TE33-02, TE33-03
+**Severity:** LOW-MEDIUM | **Confidence:** HIGH (11-agent consensus on core issue)
 
-Four fields in `write_csv` use Python truthiness (`if x`) instead of explicit None checks (`if x is not None`):
+The C32-01 fix addressed the write_csv serialization layer by replacing truthy checks with explicit `is not None` checks for float fields. However, the same truthy-vs-None pattern persists in FOUR other code locations, making the C32-01 fix incomplete:
 
-```python
-area_str = f"{derived.area:.2f}" if derived.area else ""       # line 824
-mpix_str = f"{spec.mpix:.1f}" if spec.mpix else ""             # line 825
-pitch_str = f"{derived.pitch:.2f}" if derived.pitch else ""    # line 826
-year_str = str(spec.year) if spec.year else ""                 # line 827
-```
+1. **derive_spec (pixelpitch.py line 722):** `if spec.pitch:` — 0.0 pitch is overridden by computed value from area+mpix. The docstring says "spec.pitch always takes precedence" but this is violated for 0.0. This is the most significant instance because it corrupts data BEFORE it reaches write_csv, making the C32-01 CSV fix partially moot.
 
-For float fields, `0.0` is falsy but is a valid float distinct from `None`. If any field is ever `0.0`, it would be written as empty string and read back as `None` by `parse_existing_csv`, causing silent data loss on CSV round-trip.
+2. **sorted_by (pixelpitch.py lines 752-756):** `c.pitch if c.pitch else -1` — cameras with 0.0 values sort as -1 instead of 0.0.
 
-**Concrete scenario:**
-1. `pixel_pitch(area, mpix)` returns `0.0` when `mpix <= 0`
-2. `write_csv` writes `""` for pitch (because `bool(0.0) is False`)
-3. `parse_existing_csv` reads `""` and produces `None`
-4. Data lost: pitch changes from `0.0` to `None` on next build
+3. **prettyprint (pixelpitch.py lines 772-778):** `if spec.mpix:` / `if derived.pitch:` — 0.0 displays as "unknown" instead of "0.0 MP" / "0.0 µm".
 
-**Verified:** Confirmed via test with `Spec(mpix=0.0)` — CSV row shows empty mpix field.
+4. **Template (pixelpitch.html lines 76-89):** `{% if spec.pitch %}` / `{% if spec.spec.mpix %}` — 0.0 renders as "unknown" in HTML.
 
-**Fix:** Replace truthy checks with explicit None checks:
-```python
-area_str = f"{derived.area:.2f}" if derived.area is not None else ""
-mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None else ""
-pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None else ""
-year_str = str(spec.year) if spec.year is not None else ""
-```
+**Concrete scenario (derive_spec — most critical):**
+1. Source parser produces `Spec(pitch=0.0, mpix=33.0, size=(35.9, 23.9))`
+2. `derive_spec`: `if spec.pitch:` → False (0.0 is falsy)
+3. Falls to elif: computes `pixel_pitch(858.61, 33.0)` = 5.12
+4. Result: `derived.pitch=5.12` instead of `0.0`
+5. The 0.0 value is lost BEFORE write_csv even runs — the C32-01 fix never gets a chance to preserve it
 
----
+**Fix:** Replace all truthy checks with explicit `is not None` checks:
+- `pixelpitch.py` line 722: `if spec.pitch is not None:`
+- `pixelpitch.py` lines 752-756: `c.pitch if c.pitch is not None else -1`, etc.
+- `pixelpitch.py` lines 772-778: `if spec.mpix is not None:`, `if derived.pitch is not None:`
+- `pixelpitch.html` lines 76-89: `{% if spec.spec.mpix is not none %}`, `{% if spec.pitch is not none %}`
 
-### C32-02: IR_MPIX_RE matches partial decimals without requiring unit suffix
-
-**Sources:** CR32-02
-**Severity:** LOW | **Confidence:** MEDIUM (1 agent)
-
-The `IR_MPIX_RE` pattern `r"(\d+\.?\d*)"` matches any number without requiring a unit suffix (MP, Megapixel, etc.). Unlike the centralized `MPIX_RE` which requires a suffix, `IR_MPIX_RE` can match partial decimal numbers from malformed input (e.g., `.5` matches as `5`). The centralized `MPIX_RE` correctly rejects `.5` (returns None).
-
-In practice, IR spec pages produce clean numeric values, so this is unlikely to cause real issues. But it's an inconsistency between the two regex patterns.
-
-**Fix:** Add a suffix requirement or use the centralized `MPIX_RE` in the IR parser where appropriate.
+Add test coverage for:
+- derive_spec with spec.pitch=0.0 (TE33-01)
+- sorted_by with 0.0 values (TE33-02)
+- Template rendering of 0.0 values (TE33-03)
 
 ---
 
@@ -69,6 +59,6 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 2 (1 LOW-MEDIUM, 1 LOW)
-- Cross-agent consensus findings (3+ agents): 1 (C32-01 with 6 agents)
-- 6-agent consensus: 1 (C32-01)
+- Total distinct new findings: 1 (systemic truthy-vs-None issue across 4 code locations)
+- Cross-agent consensus findings (3+ agents): 1 (C33-01 with 11 agents)
+- Highest severity: LOW-MEDIUM

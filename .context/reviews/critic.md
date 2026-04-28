@@ -1,28 +1,36 @@
-# Critic Review (Cycle 32) — Multi-Perspective Critique
+# Critic Review (Cycle 33) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-31 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-C31-01 and C31-02 both implemented. All previous fixes stable.
+C32-01 (write_csv falsy checks) fixed and verified. C32-02 (IR_MPIX_RE) deferred.
 
 ## New Findings
 
-### CRIT32-01: write_csv falsy checks lose 0.0 values on CSV round-trip
+### CRIT33-01: Systemic truthy-vs-None inconsistency — C32-01 fix was incomplete
 
-**File:** `pixelpitch.py`, lines 824-827
+**Files:** `pixelpitch.py` (derive_spec, sorted_by, prettyprint), `templates/pixelpitch.html`
 **Severity:** LOW-MEDIUM | **Confidence:** HIGH
 
-This is a correctness issue that subsumes CR32-01. The `write_csv` function uses Python truthiness (`if x`) for float fields (area, mpix, pitch) and year. For float values, `0.0` is falsy and would be written as empty string, then read back as `None` by `parse_existing_csv`.
+The C32-01 fix correctly addressed the write_csv serialization layer, replacing truthy checks with explicit `is not None` checks. However, the same truthy-vs-None pattern persists in FOUR other locations:
 
-The deeper issue is that this is an inconsistency: the data model (Spec/SpecDerived) allows `0.0` as a valid value, but the serialization layer (write_csv/parse_existing_csv) treats `0.0` as equivalent to `None`. This violates the principle that serialization should be lossless.
+1. **derive_spec (line 722):** `if spec.pitch:` — 0.0 pitch is overridden by computed value, violating the docstring's "takes precedence" guarantee. This is the most significant instance because it affects data correctness, not just display.
 
-**Fix:** Use `if x is not None` instead of `if x` for all float and integer fields in `write_csv`.
+2. **sorted_by (lines 752-756):** `c.pitch if c.pitch else -1` — 0.0 sorts as -1 instead of 0.0.
+
+3. **prettyprint (lines 772-778):** `if spec.mpix:` / `if derived.pitch:` — 0.0 displays as "unknown".
+
+4. **Template (pixelpitch.html lines 76-89):** `{% if spec.pitch %}` / `{% if spec.spec.mpix %}` — 0.0 renders as "unknown" in HTML.
+
+This is a cross-cutting consistency issue: the data model and CSV serialization now correctly handle 0.0 as distinct from None (C32-01), but the computation, sorting, and display layers still treat 0.0 as equivalent to None. The fix should be applied holistically.
+
+**Fix:** Replace all truthy checks with explicit None checks across all four locations. In Jinja2 templates, use `{% if spec.pitch is not none %}` instead of `{% if spec.pitch %}`.
 
 ---
 
 ## Summary
 
-- CRIT32-01 (LOW-MEDIUM): write_csv falsy checks create asymmetry between data model and CSV serialization for 0.0 values
+- CRIT33-01 (LOW-MEDIUM): Systemic truthy-vs-None inconsistency — C32-01 fix incomplete across derive_spec, sorted_by, prettyprint, and templates

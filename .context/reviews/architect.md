@@ -1,8 +1,8 @@
-# Architect Review (Cycle 32) — Architectural/Design Risks
+# Architect Review (Cycle 33) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-31 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
@@ -10,10 +10,21 @@ ARCH31-01 (Spec/SpecDerived pitch duplication) fixed in C31. ARCH31-02 (BOM dupl
 
 ## New Findings
 
-No NEW architectural issues found. The C31 fixes (BOM centralization, pitch consistency check) improved the codebase structure. The `strip_bom()` utility in `sources/__init__.py` is now the single source of truth. The merge pitch consistency fix adds a small coupling between `spec.pitch` and `derived.pitch` in `merge_camera_data`, but this is justified because `derived.pitch` should always be consistent with `spec.pitch` when the latter is set.
+### ARCH33-01: Truthy-vs-None pattern is a systemic design inconsistency
+
+**Files:** pixelpitch.py (derive_spec, sorted_by, prettyprint, write_csv), templates/pixelpitch.html
+**Severity:** LOW-MEDIUM | **Confidence:** HIGH
+
+The C32-01 fix addressed the serialization layer (write_csv) by replacing truthy checks with explicit `is not None` checks. However, the same pattern persists in the computation layer (derive_spec), sorting layer (sorted_by), display layer (prettyprint), and presentation layer (Jinja2 templates).
+
+This is a design inconsistency: the data model allows 0.0 as a valid float value distinct from None, but only the serialization layer was updated to respect this. The other layers still treat 0.0 as equivalent to None.
+
+The root cause is that the truthy-vs-None distinction was fixed locally (write_csv only) rather than holistically (all code paths that handle Optional[float] fields). A consistent approach would be to enforce `is not None` checks across all code paths that read Optional[float] fields.
+
+**Fix:** Apply the same C32-01 pattern to derive_spec, sorted_by, prettyprint, and Jinja2 templates. Consider a project-wide search for `if <optional_float>` patterns.
 
 ---
 
 ## Summary
 
-No new actionable findings.
+- ARCH33-01 (LOW-MEDIUM): Truthy-vs-None pattern is systemic — C32-01 fix was incomplete, needs holistic application

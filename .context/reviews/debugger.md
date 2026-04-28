@@ -1,30 +1,42 @@
-# Debugger Review (Cycle 32) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 33) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-31 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-DBG31-01 (merge pitch inconsistency) fixed in C31. DBG31-02 (BOM literal) fixed in C31.
+DBG32-01 (write_csv falsy checks) fixed in C32. DBG31-01/02 fixed in C31.
 
 ## New Findings
 
-### DBG32-01: write_csv falsy check silently drops 0.0 float values
+### DBG33-01: derive_spec silently overrides spec.pitch=0.0 with computed value
 
-**File:** `pixelpitch.py`, lines 824-827
+**File:** `pixelpitch.py`, line 722
 **Severity:** LOW-MEDIUM | **Confidence:** HIGH
 
-**Failure mode:** If a camera's `spec.mpix` or `derived.pitch` or `derived.area` is ever `0.0`, `write_csv` writes an empty string for that field. On next build, `parse_existing_csv` reads the empty string as `None`. The value silently changes from `0.0` to `None`.
+**Failure mode:** If a source parser produces `Spec(pitch=0.0)`, derive_spec will NOT preserve the 0.0 value. Instead, it will compute pitch from area+mpix. The 0.0 value is lost before write_csv even runs. This means the C32-01 fix (which correctly preserves 0.0 in CSV) is only partially effective — if 0.0 never reaches write_csv because derive_spec already overrode it, the CSV fix is moot.
 
-**Root cause:** Python truthiness check `if x` treats `0.0` as falsy, identical to `None`. The correct check is `if x is not None`.
+**Root cause:** Python truthiness check `if spec.pitch:` treats `0.0` as falsy, identical to `None`. The correct check is `if spec.pitch is not None`.
 
-**Trigger:** `pixel_pitch(area, mpix)` returns `0.0` when `mpix <= 0`. If a source parser produces a camera with `mpix=0.0` (unlikely but possible through computation), the derived pitch would be `0.0`, which write_csv would drop.
+**Trigger:** A source parser sets pitch=0.0 (unlikely in practice but possible through computation or data corruption). derive_spec would compute a non-zero pitch from area+mpix and use that instead.
 
-**Fix:** Replace `if x` with `if x is not None` for float and integer fields in `write_csv`.
+**Fix:** Replace `if spec.pitch:` with `if spec.pitch is not None:` in derive_spec.
+
+---
+
+### DBG33-02: Template renders 0.0 as "unknown" — display-level data loss
+
+**File:** `templates/pixelpitch.html`, lines 76-89
+**Severity:** LOW | **Confidence:** HIGH
+
+**Failure mode:** If a camera has pitch=0.0 or mpix=0.0, the Jinja2 template's `{% if spec.pitch %}` evaluates to False, rendering "unknown" instead of the actual value. This is a display-level inconsistency: the data model and CSV serialization handle 0.0 correctly (C32-01), but the UI treats 0.0 the same as None.
+
+**Fix:** Replace Jinja2 `{% if spec.pitch %}` with `{% if spec.pitch is not none %}`.
 
 ---
 
 ## Summary
 
-- DBG32-01 (LOW-MEDIUM): write_csv falsy checks lose 0.0 float values on CSV round-trip
+- DBG33-01 (LOW-MEDIUM): derive_spec silently overrides spec.pitch=0.0 with computed value
+- DBG33-02 (LOW): Template renders 0.0 as "unknown" — display-level data loss

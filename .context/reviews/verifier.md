@@ -1,43 +1,55 @@
-# Verifier Review (Cycle 32) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 33) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-31 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-32 fixes, focusing on NEW issues
 
-## V32-01: Gate tests pass — all checks verified
+## V33-01: Gate tests pass — all checks verified
 
-**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. C31 fixes verified working. No regressions.
+**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. C32-01 fix verified working. No regressions.
 
-## V32-02: write_csv falsy check data loss — verified
+## V33-02: derive_spec spec.pitch=0.0 bug — verified
 
-**File:** `pixelpitch.py`, lines 824-827
+**File:** `pixelpitch.py`, line 722
 **Severity:** LOW-MEDIUM | **Confidence:** HIGH
 
-**Evidence:** Constructed a Spec with `mpix=0.0` and ran `write_csv` → `parse_existing_csv` round-trip:
+**Evidence:** Traced derive_spec execution with spec.pitch=0.0:
 
 ```python
-spec = Spec(name='Test Zero', category='mirrorless', type=None,
-            size=(35.9, 23.9), pitch=None, mpix=0.0, year=2021)
-d = derive_spec(spec)
-# write_csv produces: "0,Test Zero,mirrorless,,35.90,23.90,858.01,,,2021,"
-# Note: mpix column is EMPTY because bool(0.0) is False
-# parse_existing_csv reads back mpix=None (data lost)
+spec = Spec(name="Test", category="fixed", type=None,
+            size=(35.9, 23.9), pitch=0.0, mpix=33.0, year=2021)
+# derive_spec:
+# if spec.pitch: → False (bool(0.0) is False)
+# elif spec.mpix is not None and area is not None: → True
+# pitch = pixel_pitch(858.61, 33.0) → 5.12
+# Result: derived.pitch=5.12, NOT 0.0
 ```
 
-The CSV row shows empty fields for mpix and pitch, confirming the data loss.
+The docstring says "spec.pitch (direct measurement) always takes precedence" but for 0.0 it does not. Confirmed bug.
 
-## V32-03: derive_spec pitch consistency after C31 fix — verified
+## V33-03: Template truthy check for spec.pitch — verified
 
-**Evidence:** Tested `derive_spec` with `spec.pitch=5.0` and `spec.pitch=None`:
-- When `spec.pitch=5.0`: `derived.pitch=5.0` (correct, spec.pitch takes precedence)
-- When `spec.pitch=None, size+mpix available`: `derived.pitch=5.0990` (computed, correct)
+**File:** `templates/pixelpitch.html`, lines 84-89
+**Severity:** LOW | **Confidence:** HIGH
 
-The C31-01 fix is working as intended.
+**Evidence:** Jinja2's `{% if spec.pitch %}` evaluates `bool(0.0)` as False. If spec.pitch=0.0, the template renders `<span class="text-muted">unknown</span>` instead of "0.0 µm". The Jinja2 test `{% if spec.pitch is not none %}` correctly distinguishes 0.0 from None.
+
+## V33-04: sorted_by 0.0 sorting — verified
+
+**File:** `pixelpitch.py`, lines 752-756
+**Severity:** LOW | **Confidence:** HIGH
+
+**Evidence:** Traced `sorted_by` with a camera having pitch=0.0:
+```python
+key_functions["pitch"](camera_with_pitch_0)  # 0.0 if 0.0 else -1 → -1
+```
+0.0 would be sorted as -1, placing it below cameras with small positive pitch values.
 
 ---
 
 ## Summary
 
-- V32-01: All gate tests pass
-- V32-02 (LOW-MEDIUM): write_csv falsy check data loss verified for mpix=0.0
-- V32-03: C31 pitch consistency fix verified working
+- V33-01: All gate tests pass
+- V33-02 (LOW-MEDIUM): derive_spec spec.pitch=0.0 bug verified
+- V33-03 (LOW): Template truthy check for 0.0 verified
+- V33-04 (LOW): sorted_by 0.0 sorting verified
