@@ -2041,6 +2041,64 @@ def test_write_csv_zero_negative_guards():
            ",0.00," not in row3, True)
 
 
+def test_matched_sensors_roundtrip():
+    """Round-trip a multi-element matched_sensors list through
+    write_csv → parse_existing_csv and assert it is preserved verbatim.
+
+    This guards against silent regressions in the ';' delimiter contract
+    (write_csv joins on ';', parse_existing_csv splits on ';'). Also
+    verifies that the F50-03 defensive filter in write_csv does not
+    drop legitimate (semicolon-free) sensor names.
+    """
+    section("matched_sensors write_csv → parse_existing_csv round-trip")
+    import tempfile
+    import pixelpitch as pp
+    from models import Spec, SpecDerived
+
+    expected_sensors = ["IMX455", "IMX571", "IMX989"]
+    spec = Spec(name="Roundtrip Cam", category="mirrorless", type=None,
+                size=(35.9, 23.9), pitch=5.94, mpix=61.2, year=2024)
+    derived = SpecDerived(spec=spec, size=(35.9, 23.9),
+                          area=35.9 * 23.9, pitch=5.94,
+                          matched_sensors=list(expected_sensors), id=0)
+
+    with tempfile.NamedTemporaryFile("w+", suffix=".csv", delete=False) as f:
+        out_path = Path(f.name)
+    try:
+        pp.write_csv([derived], out_path)
+        csv_text = out_path.read_text(encoding="utf-8")
+        parsed = pp.parse_existing_csv(csv_text)
+    finally:
+        out_path.unlink(missing_ok=True)
+
+    expect("roundtrip: 1 row parsed back", len(parsed), 1)
+    if parsed:
+        expect("roundtrip: matched_sensors preserved verbatim",
+               parsed[0].matched_sensors, expected_sensors)
+        expect("roundtrip: name preserved",
+               parsed[0].spec.name, "Roundtrip Cam")
+
+    # Also verify the F50-03 guard: an entry containing ';' is dropped
+    # (with a warning) rather than silently fragmenting on parse-back.
+    bad_sensors = ["IMX455", "BAD;NAME", "IMX571"]
+    derived_bad = SpecDerived(spec=spec, size=(35.9, 23.9),
+                              area=35.9 * 23.9, pitch=5.94,
+                              matched_sensors=list(bad_sensors), id=0)
+    with tempfile.NamedTemporaryFile("w+", suffix=".csv", delete=False) as f:
+        out_path2 = Path(f.name)
+    try:
+        pp.write_csv([derived_bad], out_path2)
+        csv_text2 = out_path2.read_text(encoding="utf-8")
+        parsed_bad = pp.parse_existing_csv(csv_text2)
+    finally:
+        out_path2.unlink(missing_ok=True)
+
+    expect("roundtrip-guard: 1 row parsed back", len(parsed_bad), 1)
+    if parsed_bad:
+        expect("roundtrip-guard: ';'-containing element dropped",
+               parsed_bad[0].matched_sensors, ["IMX455", "IMX571"])
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -2082,6 +2140,7 @@ def main():
     test_derive_spec_computed_zero_pitch()
     test_write_csv_nonfinite_guards()
     test_write_csv_zero_negative_guards()
+    test_matched_sensors_roundtrip()
 
     print("\n" + ("=" * 60))
     if _failures:
