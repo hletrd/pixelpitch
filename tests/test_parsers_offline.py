@@ -1674,6 +1674,100 @@ def test_category_dedup():
     expect("actual rangefinder kept", len(filtered_rf2), 1)
 
 
+# --------------------------------------------------------------------------
+# derive_spec: computed pitch from pixel_pitch sentinel
+
+def test_derive_spec_computed_zero_pitch():
+    """Verify derive_spec converts pixel_pitch 0.0 sentinel to None.
+
+    pixel_pitch() returns 0.0 for invalid inputs (negative, zero, NaN, inf).
+    derive_spec must convert this 0.0 sentinel to None so that:
+    - selectattr('pitch', 'ne', None) routes the camera to the correct section
+    - write_csv produces empty string instead of "0.00" (consistent round-trip)
+    """
+    section("derive_spec computed 0.0 pitch -> None")
+    import pixelpitch as pp
+    from models import Spec
+
+    # Case 1: spec.pitch=None, mpix=0.0 -> pixel_pitch(area, 0.0) = 0.0 -> None
+    spec_mpix_zero = Spec(name="Zero MP Cam", category="fixed", type=None,
+                          size=(5.0, 3.7), pitch=None, mpix=0.0, year=2020)
+    d_mpix_zero = pp.derive_spec(spec_mpix_zero)
+    expect("derive_spec: mpix=0.0, pitch=None -> computed pitch is None",
+           d_mpix_zero.pitch, None)
+
+    # Case 2: spec.pitch=None, mpix=-1.0 -> pixel_pitch(area, -1.0) = 0.0 -> None
+    spec_mpix_neg = Spec(name="Neg MP Cam", category="fixed", type=None,
+                         size=(5.0, 3.7), pitch=None, mpix=-1.0, year=2020)
+    d_mpix_neg = pp.derive_spec(spec_mpix_neg)
+    expect("derive_spec: mpix=-1.0, pitch=None -> computed pitch is None",
+           d_mpix_neg.pitch, None)
+
+    # Case 3: spec.pitch=0.0 (direct) is still preserved
+    spec_direct_zero = Spec(name="Direct Zero Cam", category="fixed", type=None,
+                            size=(35.9, 23.9), pitch=0.0, mpix=33.0, year=2021)
+    d_direct_zero = pp.derive_spec(spec_direct_zero)
+    expect("derive_spec: spec.pitch=0.0 direct still preserved",
+           d_direct_zero.pitch, 0.0, tol=0.01)
+
+    # Case 4: CSV round-trip for mpix=0.0 -> pitch=None -> no data loss
+    import tempfile
+    d_mpix_zero.id = 0
+    with tempfile.NamedTemporaryFile("w+", suffix=".csv", delete=False) as f:
+        out_path = Path(f.name)
+    try:
+        pp.write_csv([d_mpix_zero], out_path)
+        csv_text = out_path.read_text(encoding="utf-8")
+    finally:
+        out_path.unlink(missing_ok=True)
+    parsed_back = pp.parse_existing_csv(csv_text)
+    expect("round-trip mpix=0.0: pitch stays None",
+           parsed_back[0].pitch, None)
+
+
+# --------------------------------------------------------------------------
+# write_csv: non-finite float guards
+
+def test_write_csv_nonfinite_guards():
+    """Verify write_csv does not output inf/nan strings for float fields."""
+    section("write_csv non-finite float guards")
+    import tempfile
+    import pixelpitch as pp
+    from models import Spec
+
+    # spec.mpix=inf -> CSV should have empty mpix cell
+    spec_inf = Spec(name="Inf MP Cam", category="fixed", type=None,
+                    size=(35.9, 23.9), pitch=5.12, mpix=float('inf'), year=2020)
+    d_inf = pp.derive_spec(spec_inf)
+    d_inf.id = 0
+    with tempfile.NamedTemporaryFile("w+", suffix=".csv", delete=False) as f:
+        out_path = Path(f.name)
+    try:
+        pp.write_csv([d_inf], out_path)
+        csv_text = out_path.read_text(encoding="utf-8")
+    finally:
+        out_path.unlink(missing_ok=True)
+    row = csv_text.splitlines()[1]
+    expect("write_csv inf mpix: no 'inf' in CSV row", "inf" not in row, True)
+    expect("write_csv inf mpix: no 'nan' in CSV row", "nan" not in row, True)
+
+    # spec.mpix=nan -> CSV should have empty mpix cell
+    spec_nan = Spec(name="NaN MP Cam", category="fixed", type=None,
+                    size=(35.9, 23.9), pitch=5.12, mpix=float('nan'), year=2020)
+    d_nan = pp.derive_spec(spec_nan)
+    d_nan.id = 0
+    with tempfile.NamedTemporaryFile("w+", suffix=".csv", delete=False) as f:
+        out_path2 = Path(f.name)
+    try:
+        pp.write_csv([d_nan], out_path2)
+        csv_text2 = out_path2.read_text(encoding="utf-8")
+    finally:
+        out_path2.unlink(missing_ok=True)
+    row2 = csv_text2.splitlines()[1]
+    expect("write_csv nan mpix: no 'nan' in CSV row", "nan" not in row2, True)
+    expect("write_csv nan mpix: no 'inf' in CSV row", "inf" not in row2, True)
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -1709,6 +1803,8 @@ def main():
     test_template_negative_pitch_rendering()
     test_parse_existing_csv_negative_values()
     test_derive_spec_negative_size()
+    test_derive_spec_computed_zero_pitch()
+    test_write_csv_nonfinite_guards()
 
     print("\n" + ("=" * 60))
     if _failures:
