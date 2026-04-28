@@ -1,42 +1,42 @@
-# Tracer Review (Cycle 36) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 37) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-35 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-36 fixes
 
 ## Previous Findings Status
 
-TR35-01 (derive_spec ValueError on negative area) fixed. TR35-02 (BOM literal) fixed.
+TR36-01 (NaN propagation from CSV to page) fixed. All `isfinite` guards verified working.
 
 ## New Findings
 
-### TR36-01: NaN propagation trace — silent data corruption from CSV to rendered page
+### TR37-01: `derive_spec` area=nan → `write_csv` → "nan" string → `_safe_float` → None: asymmetric round-trip
 
-**Files:** `pixelpitch.py`, `sources/openmvg.py`, `templates/pixelpitch.html`
-**Severity:** MEDIUM | **Confidence:** HIGH
+**Files:** `pixelpitch.py` (derive_spec, write_csv, parse_existing_csv)
+**Severity:** LOW | **Confidence:** HIGH
 
 **Causal trace:**
-1. Corrupted CSV cell contains `nan` or `inf` string
-2. `parse_existing_csv` calls `float("nan")` → produces `float('nan')`
-3. `derive_spec` computes `area = nan * 24.0 = nan`
-4. Since `spec.pitch is None`, calls `pixel_pitch(nan, 10.0)`
-5. Guard `mpix <= 0 or area <= 0` evaluates to `False` (because `nan <= 0` is `False`)
-6. `sqrt(nan / 10e6) = nan` — returns `nan` instead of `0.0`
-7. `write_csv` writes `nan` to CSV — `f"{nan:.2f}"` = `"nan"`
-8. Template renders `{{ nan|round(1) }}` = `nan` → visible "nan µm"
-9. JS `isInvalidData`: `parseFloat("nan") || 0 = 0` → not flagged → row visible
-10. User sees "nan µm" in the table
+1. A `Spec` is constructed with `size=(nan, 24.0)` (from source code or in-memory)
+2. `derive_spec` computes `area = nan * 24.0 = nan`
+3. `write_csv` formats `f"{nan:.2f}"` = `"nan"` into the CSV area column
+4. On next run, `parse_existing_csv` calls `_safe_float("nan")` → returns `None`
+5. The area changes from `nan` to `None` across a write-read cycle
 
-**Competing hypothesis:** Could NaN/inf actually reach the pipeline?
-- `parse_existing_csv` accepts any `float()` string including `"nan"`, `"inf"` — YES
-- Source parsers use regex-extracted values which never produce NaN from normal text — UNLIKELY from sources
-- Manual CSV edits could introduce NaN — YES
-- `derive_spec` arithmetic with very large floats produces inf — YES (e.g., `1e308 * 1e308`)
+This is a data integrity asymmetry. The first write produces a CSV with "nan" in it; the read-back produces `None`. The CSV file is "corrupted" with a "nan" string on the first pass, then "corrected" to empty on the second pass.
 
-**Fix:** Add `math.isfinite()` guards in `pixel_pitch`, `parse_existing_csv`, and `openmvg.fetch`.
+**Competing hypothesis:** Can NaN area actually reach `write_csv`?
+- `parse_existing_csv` now rejects NaN via `_safe_float` — NO from CSV
+- Source parsers use `[\d.]+` regex which can't match "nan" — NO from sources
+- `derive_spec` can produce NaN area from NaN size — YES from code-constructed Spec
+- `openmvg.fetch` now guards inf dimensions — NO from openmvg
+- Other source parsers use bare `float()` but regex excludes NaN — NO
+
+The only remaining path is `derive_spec` computing `nan * valid = nan` from a code-constructed Spec with NaN size dimensions. This can only happen if a source parser somehow produces a NaN dimension, which the regex analysis shows is impossible from real HTML data.
+
+**Fix:** Add `isfinite` guard in `derive_spec` for size dimensions. This closes the last remaining NaN propagation path.
 
 ---
 
 ## Summary
 
-- TR36-01 (MEDIUM): NaN propagates silently from CSV through to rendered "nan µm" — traced end-to-end
+- TR37-01 (LOW): `derive_spec` area=nan writes "nan" to CSV, which round-trips as None

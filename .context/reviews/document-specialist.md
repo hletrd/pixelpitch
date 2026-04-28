@@ -1,32 +1,29 @@
-# Document Specialist Review (Cycle 36) — Doc/Code Mismatches
+# Document Specialist Review (Cycle 37) — Doc/Code Mismatches
 
 **Reviewer:** document-specialist
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-35 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-36 fixes
 
 ## Previous Findings Status
 
-DOC35-01 (BOM comment vs code mismatch) fixed. DOC35-02 (pixel_pitch ValueError doc) moot — ValueError no longer raised after C35-01 fix added the `area <= 0` guard.
+DOC36-01 (`pixel_pitch` docstring should mention NaN/inf handling) — fixed. The docstring now says: "Returns 0.0 when mpix <= 0, area <= 0, or either argument is NaN / inf".
 
 ## New Findings
 
-### DOC36-01: `pixel_pitch` docstring incomplete — does not mention NaN/inf handling
+### DOC37-01: `derive_spec` docstring does not mention NaN/inf handling for size dimensions
 
-**File:** `pixelpitch.py`, lines 178-183
+**File:** `pixelpitch.py`, lines 706-724
 **Severity:** LOW | **Confidence:** HIGH
 
-The `pixel_pitch` docstring says:
+The `derive_spec` docstring describes the computation logic:
+> Area: computed as width * height when both are known.
 
-> Returns 0.0 when mpix <= 0 or area <= 0 (physically meaningless inputs) instead of raising ValueError from sqrt.
+After the C37 fix (adding `isfinite` validation in `derive_spec`), the docstring should mention that NaN/inf size dimensions are treated as unknown (size=None, area=None).
 
-After the C36 fix, it should also mention NaN and inf:
-
-> Returns 0.0 when mpix <= 0, area <= 0, or either argument is NaN/inf (physically meaningless or non-finite inputs) instead of raising ValueError from sqrt.
-
-**Fix:** Update docstring to match the new guard behavior.
+**Fix:** Update docstring after the `derive_spec` fix is implemented.
 
 ---
 
 ## Summary
 
-- DOC36-01 (LOW): `pixel_pitch` docstring should mention NaN/inf handling
+- DOC37-01 (LOW): `derive_spec` docstring should mention NaN/inf handling for size dimensions

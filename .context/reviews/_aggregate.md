@@ -1,109 +1,76 @@
-# Aggregate Review (Cycle 36) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 37) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-35 Status
+## Cycle 1-36 Status
 
-All previous fixes confirmed still working. No regressions. Gate tests pass. C35-01/02/03/04 implemented and verified.
+All previous fixes confirmed still working. No regressions. Gate tests pass. C36-01/02/03/04/05 implemented and verified.
 
-## Cross-Agent Agreement Matrix (Cycle 36 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 37 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| `pixel_pitch` does not guard NaN/inf inputs | CR36-01, CRIT36-01, DBG36-02, V36-02, TR36-01, ARCH36-01, TE36-01, TE36-02, DES36-01 | MEDIUM |
-| `parse_existing_csv` accepts NaN/inf from CSV strings | CR36-02, DBG36-01, V36-02, TR36-01, TE36-03 | MEDIUM |
-| `openmvg.fetch` accepts inf sensor dimensions | CR36-03, V36-03 | LOW |
-| `derive_spec` propagates NaN/inf from size to pitch | DBG36-01, TE36-04 | MEDIUM (subsumed by C36-01) |
+| `derive_spec` does not validate NaN/inf size dimensions → produces nan area | CR37-02, CRIT37-01, V37-02, TR37-01, ARCH37-01, DBG37-01, TE37-01, TE37-02, DOC37-01 | MEDIUM |
+| `0.0` pitch renders as "0.0 µm" not "unknown" — defense-in-depth | DES37-01 | LOW |
+| Source parsers use bare `float()` but regex excludes NaN/inf | CRIT37-02, V37-03 | LOW (verified safe) |
+| `match_sensors` division by near-zero width | CR37-03 | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C36-01: `pixel_pitch` does not guard against NaN or inf inputs
+### C37-01: `derive_spec` does not validate NaN/inf size dimensions
 
-**Sources:** CR36-01, CRIT36-01, DBG36-02, V36-02, TR36-01, ARCH36-01, TE36-01, TE36-02, DES36-01
+**Sources:** CR37-02, CRIT37-01, V37-02, TR37-01, ARCH37-01, DBG37-01, TE37-01, TE37-02, DOC37-01
 **Severity:** MEDIUM | **Confidence:** HIGH (9-agent consensus)
 
-The guard `if mpix <= 0 or area <= 0: return 0.0` does not reject NaN or inf:
-- `float('nan') <= 0` is `False` — NaN bypasses the guard
-- `float('inf') <= 0` is `False` — inf bypasses the guard
-- `pixel_pitch(float('nan'), 10.0)` returns `nan` (not 0.0)
-- `pixel_pitch(float('inf'), 10.0)` returns `inf` (not 0.0)
+`derive_spec` computes `area = size[0] * size[1]` without checking that the size dimensions are finite. When `spec.size = (nan, 24.0)`:
+1. `area = nan * 24.0 = nan`
+2. `pixel_pitch(nan, mpix)` returns `0.0` (guarded)
+3. `write_csv` writes `f"{nan:.2f}"` = `"nan"` to CSV
+4. On re-read, `_safe_float("nan")` returns `None` — area changes from nan to None
 
-NaN propagates through `derive_spec` when size contains NaN: `area = nan * 24.0 = nan`, then `pixel_pitch(nan, mpix) = nan`.
+The C36 fixes addressed NaN at the boundaries (CSV parser, openmvg) but not at the computation point. `derive_spec` should validate its inputs as defense-in-depth.
 
-The C35-01 fix (negative area guard) is incomplete — it uses comparison operators that do not catch NaN or inf.
+Source parser regex patterns (`[\d.]+`) naturally exclude NaN/inf strings, so the practical risk is limited to code-constructed Spec objects (tests, etc.). However, the architectural principle (validate at the computation point, not just the boundaries) warrants the fix.
 
-**Concrete scenario:**
-1. Corrupted CSV contains `nan` or `inf` for sensor dimensions
-2. `parse_existing_csv` calls `float("nan")` which succeeds
-3. `derive_spec` computes `area = nan * 24.0 = nan`
-4. `pixel_pitch(nan, mpix)` returns `nan`
-5. `write_csv` writes `nan` to CSV
-6. Template renders "nan µm" in visible cell and `data-pitch="nan"` in HTML
-7. JS `isInvalidData` does not catch NaN (`parseFloat("nan") || 0 = 0`)
-
-**Fix:** Replace the `<= 0` guard with `math.isfinite` check:
+**Fix:** Add `isfinite` validation in `derive_spec`:
 ```python
-def pixel_pitch(area: float, mpix: float) -> float:
-    if not math.isfinite(area) or not math.isfinite(mpix) or mpix <= 0 or area <= 0:
-        return 0.0
-    return 1000 * sqrt(area / (mpix * 10**6))
+if size is not None and spec.mpix is not None:
+    if isfinite(size[0]) and isfinite(size[1]) and size[0] > 0 and size[1] > 0:
+        area = size[0] * size[1]
+    else:
+        size = None
+        area = None
 ```
 
-Also add `math.isfinite` checks in `parse_existing_csv` and `openmvg.fetch`.
+Also update the `derive_spec` docstring to mention NaN/inf handling.
+
+Add tests for area being None when size has NaN dimensions, and for CSV round-trip of NaN area.
 
 ---
 
-### C36-02: `parse_existing_csv` accepts NaN and inf values from CSV strings
+### C37-02: `0.0` pitch renders as "0.0 µm" instead of "unknown" — defense-in-depth
 
-**Sources:** CR36-02, DBG36-01, V36-02, TR36-01, TE36-03
-**Severity:** MEDIUM | **Confidence:** HIGH (5-agent consensus)
-
-Python's `float()` accepts `"nan"`, `"inf"`, `"-inf"`, and `"NaN"` as valid inputs. The CSV parser uses bare `float()` calls for width, height, area, mpix, and pitch without checking for finite values. This allows NaN and inf to enter the data pipeline from corrupted or manually edited CSV files.
-
-**Fix:** Add `math.isfinite` validation after each `float()` call in `parse_existing_csv`. Non-finite values should be treated as None:
-```python
-val = float(val_str)
-result = val if math.isfinite(val) else None
-```
-
----
-
-### C36-03: `openmvg.fetch` accepts inf sensor dimensions
-
-**Sources:** CR36-03, V36-03
+**Sources:** DES37-01, CR37-01
 **Severity:** LOW | **Confidence:** HIGH
 
-The size guard `sw > 0 and sh > 0` passes for `inf` because `inf > 0` is True. While NaN is rejected (because `nan > 0` is False), inf dimensions produce `(inf, inf)` size which propagates through the pipeline.
+When `pixel_pitch` returns `0.0` for invalid inputs (NaN, inf, negative), the template renders "0.0 µm" instead of "unknown". A 0.0 µm pixel pitch is physically impossible. The JS `isInvalidData` function does not catch `pitch === 0` either.
 
-**Fix:** Replace with `math.isfinite` check:
-```python
-size = (sw, sh) if sw and sh and math.isfinite(sw) and math.isfinite(sh) and sw > 0 and sh > 0 else None
-```
-
----
-
-### C36-04: JS `isInvalidData` does not catch NaN pitch values
-
-**Sources:** DES36-01
-**Severity:** LOW | **Confidence:** HIGH
-
-When `data-pitch="nan"`, JS `parseFloat("nan") || 0` evaluates to `0`, which passes all validation checks. The row is NOT hidden by the "Hide possibly invalid data" filter. This is a defense-in-depth gap.
-
-**Fix:** Add NaN check to `isInvalidData`:
+**Fix:** Add `pitch === 0` check to JS `isInvalidData` function:
 ```javascript
-const pitch = parseFloat(row.attr('data-pitch'));
-if (isNaN(pitch)) return true;
+if (pitch === 0) {
+  return true;
+}
 ```
 
 ---
 
-### C36-05: `pixel_pitch` docstring should mention NaN/inf handling
+### C37-03: Source parsers use bare `float()` but regex patterns exclude NaN/inf — verified safe
 
-**Sources:** DOC36-01
-**Severity:** LOW | **Confidence:** HIGH
+**Sources:** CRIT37-02, V37-03
+**Severity:** LOW (verified safe) | **Confidence:** HIGH
 
-After the fix, the docstring should document that NaN and inf inputs return 0.0.
+All source parser regex patterns use `[\d.]+` or `\d` character classes which cannot match "nan" or "inf" strings. No fix required. Document as verified.
 
 ---
 
@@ -113,6 +80,8 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 5
-- Cross-agent consensus findings (3+ agents): 2 (C36-01 with 9 agents, C36-02 with 5 agents)
-- Highest severity: MEDIUM (C36-01, C36-02)
+- Total distinct new findings: 3 (C37-01, C37-02, C37-03)
+- Cross-agent consensus findings (3+ agents): 1 (C37-01 with 9 agents)
+- Highest severity: MEDIUM (C37-01)
+- Actionable findings: 2 (C37-01, C37-02)
+- Verified safe (no action): 1 (C37-03)

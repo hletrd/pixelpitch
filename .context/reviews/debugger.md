@@ -1,55 +1,39 @@
-# Debugger Review (Cycle 36) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 37) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-35 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-36 fixes
 
 ## Previous Findings Status
 
-All C35 findings fixed. No regressions detected. Gate tests pass.
+All C36 findings fixed. No regressions detected. Gate tests pass.
 
 ## New Findings
 
-### DBG36-01: NaN and inf values propagate silently through the entire data pipeline
+### DBG37-01: `derive_spec` computes `area = nan` for partially-NaN size, writes "nan" to CSV
 
-**Files:** `pixelpitch.py` (pixel_pitch, derive_spec, parse_existing_csv, write_csv), `sources/openmvg.py`
+**File:** `pixelpitch.py`, lines 731-733
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode:** Python's `float()` function accepts `"nan"`, `"inf"`, `"-inf"` as valid inputs. The CSV parser uses bare `float()` for all numeric fields. Once NaN or inf enters the pipeline, it propagates through every computation without raising an exception:
+**Failure mode:** When `spec.size = (nan, 24.0)`, `derive_spec` computes `area = nan * 24.0 = nan`. This `nan` area then flows to:
+1. `pixel_pitch(nan, mpix)` → returns `0.0` (guarded, OK)
+2. `SpecDerived(area=nan, ...)` — the `area` field is `nan`
+3. `write_csv` formats `f"{nan:.2f}"` = `"nan"` — writes literal "nan" to CSV
+4. `_safe_float("nan")` on re-read returns `None` — area changes from nan to None
 
-1. `parse_existing_csv` accepts `"nan"` and `"inf"` CSV values
-2. `derive_spec` propagates NaN through `area = nan * 24.0 = nan`
-3. `pixel_pitch(nan, 10.0)` returns `nan` (guard only checks `<= 0`)
-4. `write_csv` writes `nan` and `inf` to CSV as strings
-5. Template renders "nan µm" and `data-pitch="nan"`
-6. JS `isInvalidData` does not catch NaN (parseFloat("nan") || 0 = 0)
+The failure mode is: on the first render after a camera with NaN size enters the system, the CSV contains "nan" strings. On the next render, those "nan" strings are parsed as `None`, so the data "self-heals" but with data loss (area changes from nan to None, when it should have been None from the start).
 
 **Trigger scenario:**
-1. Manual CSV edit or data corruption introduces `nan` or `inf` in a cell
-2. `parse_existing_csv` happily parses it
-3. NaN propagates through derive_spec, write_csv, and template rendering
-4. The build succeeds but produces "nan µm" in visible output
+1. Source parser or test code constructs `Spec(size=(nan, 24.0))`
+2. `derive_spec` produces `SpecDerived(area=nan, pitch=0.0)`
+3. `write_csv` writes "nan" to the area column
+4. Next build reads "nan" → `_safe_float` → `None`
+5. Area becomes None — data "healed" but via a corrupt intermediate CSV
 
-**Fix:** Add `math.isfinite()` guards in `pixel_pitch` and `parse_existing_csv`.
-
----
-
-### DBG36-02: `pixel_pitch` returns inf for inf inputs instead of 0.0
-
-**File:** `pixelpitch.py`, line 184
-**Severity:** MEDIUM | **Confidence:** HIGH
-
-**Failure mode:** `pixel_pitch(float('inf'), 10.0)` returns `inf` because:
-- `inf <= 0` is False (guard does not catch it)
-- `sqrt(inf / 10e6)` = `inf`
-
-The C35-01 fix added `area <= 0` guard but did not account for inf. While negative area correctly returns 0.0, infinite area returns `inf`, which then renders as "inf µm" in the template.
-
-**Fix:** Add `math.isfinite` guard in `pixel_pitch`.
+**Fix:** Add `isfinite` guard in `derive_spec` for size dimensions. Set `size=None` and `area=None` when dimensions are not finite.
 
 ---
 
 ## Summary
 
-- DBG36-01 (MEDIUM): NaN and inf propagate silently through the entire pipeline
-- DBG36-02 (MEDIUM): `pixel_pitch` returns inf for inf inputs instead of 0.0
+- DBG37-01 (MEDIUM): `derive_spec` area=nan writes "nan" to CSV, self-heals to None on next read

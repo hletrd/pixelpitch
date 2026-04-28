@@ -1,12 +1,14 @@
 # Plan: Cycle 36 Findings — NaN/inf Input Validation Guards
 
 **Created:** 2026-04-28
-**Status:** IN PROGRESS
+**Status:** COMPLETED
 **Source Reviews:** CR36-01, CR36-02, CR36-03, CRIT36-01, DBG36-01, DBG36-02, V36-02, V36-03, TR36-01, ARCH36-01, TE36-01, TE36-02, TE36-03, TE36-04, DES36-01, DOC36-01
 
 ---
 
-## Task 1: Fix `pixel_pitch` to guard against NaN and inf inputs — C36-01 (core)
+## Task 1: Fix `pixel_pitch` to guard against NaN and inf inputs — C36-01 (core) — DONE
+
+Commit: b47923d
 
 **Finding:** C36-01 (9-agent consensus)
 **Severity:** MEDIUM | **Confidence:** HIGH
@@ -29,7 +31,9 @@ The guard `if mpix <= 0 or area <= 0: return 0.0` does not reject NaN or inf:
 
 ---
 
-## Task 2: Fix `parse_existing_csv` to reject NaN and inf CSV values — C36-02
+## Task 2: Fix `parse_existing_csv` to reject NaN and inf CSV values — C36-02 — DONE
+
+Commit: 9c6784d
 
 **Finding:** C36-02 (5-agent consensus)
 **Severity:** MEDIUM | **Confidence:** HIGH
@@ -68,7 +72,9 @@ Python's `float()` accepts `"nan"`, `"inf"`, `"-inf"`, `"NaN"` as valid inputs. 
 
 ---
 
-## Task 3: Fix `openmvg.fetch` to reject inf sensor dimensions — C36-03
+## Task 3: Fix `openmvg.fetch` to reject inf sensor dimensions — C36-03 — DONE
+
+Commit: 726aceb
 
 **Finding:** C36-03
 **Severity:** LOW | **Confidence:** HIGH
@@ -88,7 +94,9 @@ The size guard `sw > 0 and sh > 0` passes for `inf` because `inf > 0` is True.
 
 ---
 
-## Task 4: Add NaN check to JS `isInvalidData` function — C36-04
+## Task 4: Add NaN check to JS `isInvalidData` function — C36-04 — DONE
+
+Commit: b28a129
 
 **Finding:** DES36-01
 **Severity:** LOW | **Confidence:** HIGH
@@ -110,7 +118,9 @@ JS `parseFloat("nan") || 0` evaluates to `0`, which passes all validation checks
 
 ---
 
-## Task 5: Add test coverage for NaN/inf handling — C36-01/C36-02 (tests)
+## Task 5: Add test coverage for NaN/inf handling — C36-01/C36-02 (tests) — DONE
+
+Commit: d526fa4
 
 **Finding:** TE36-01, TE36-02, TE36-03, TE36-04
 **Severity:** MEDIUM | **Confidence:** HIGH
