@@ -1,49 +1,34 @@
-# Tracer Review (Cycle 18) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 19) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
-**Scope:** Full repository causal tracing after cycles 1-17 fixes, focusing on NEW issues
+**Scope:** Full repository causal tracing after cycles 1-18 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-17) — Confirmed Resolved
+## Previously Fixed (Cycles 1-18) — Confirmed Resolved
 
-All C17 fixes confirmed. Pentax, Nikon Df, GSMArena quotes, sensors_db lazy load all working.
+All C18 fixes confirmed. Scatter plot hidden data, CI env var wiring, TYPE_FRACTIONAL_RE consolidation all working.
 
 ## New Findings
 
-### T18-01: Scatter plot data collection ignores row visibility — hidden invalid data leaks into plot
-**File:** `templates/pixelpitch.html`, lines 337-346
+### T19-01: Tablesorter column index mismatch on non-"all" pages — regression from C18-08
+**File:** `templates/pixelpitch.html`, lines 228-258
 **Severity:** MEDIUM | **Confidence:** HIGH
 
 Traced data flow:
-1. `applyInvalidFilter()` hides rows with `row.hide()` when "Hide possibly invalid data" is checked
-2. User clicks "Create Scatter Plot"
-3. `createPlot()` iterates ALL `#table_with_pitch tbody tr` elements
-4. No visibility check is performed
-5. Hidden rows with suspicious pitch > 10 µm appear as data points
-6. User sees outlier in scatter plot that isn't visible in the table
+1. C18-08 fix added `sensor-width` custom parser to column index 2
+2. On "all" page: Name(0), Category(1), Sensor Size(2), ... — column 2 IS Sensor Size ✓
+3. On non-"all" page: Name(0), Sensor Size(1), Resolution(2), ... — column 2 IS Resolution ✗
+4. User clicks "Sensor Size" header on DSLR page
+5. Tablesorter applies column 1's parser: "text" (alphabetical sort)
+6. "9.84 x 7.40 mm" sorts after "35.9 x 23.9 mm" alphabetically
+7. User sees incorrect sort order
 
-**Concrete failure:** A misclassified camera with 12 µm pixel pitch is hidden by the filter. The scatter plot shows this as a data point at 12 µm. The user can't find the corresponding row in the table.
+The root cause is that the C18-08 fix did not account for the variable column count caused by the conditional `{% if page == "all" %}` Category column.
 
-**Fix:** Add `if (!row.is(':visible')) return;` in the scatter plot `.each()` callback.
-
----
-
-### T18-02: CI GSMARENA_MAX_PAGES_PER_BRAND env var is read by nobody
-**File:** `.github/workflows/github-pages.yml`, line 74; `pixelpitch.py`, lines 1031-1033
-**Severity:** LOW | **Confidence:** HIGH
-
-Traced configuration path:
-1. CI sets `GSMARENA_MAX_PAGES_PER_BRAND: "1"` as env var
-2. `python pixelpitch.py source gsmarena --limit 150 --out dist` is executed
-3. `fetch_source()` calls `module.fetch(limit=limit)` — only passes `limit`
-4. `gsmarena.fetch()` uses `max_pages_per_brand=2` (default) — never reads env var
-5. CI fetches 2 pages per brand instead of the intended 1
-
-**Fix:** Wire the env var through `fetch_source()` or add CLI flag.
+**Fix:** Make the header config conditional on `page == "all"`.
 
 ---
 
 ## Summary
-- NEW findings: 2 (1 MEDIUM, 1 LOW)
-- T18-01: Scatter plot includes hidden data — MEDIUM
-- T18-02: CI env var dead code — LOW
+- NEW findings: 1 (MEDIUM)
+- T19-01: Tablesorter column index mismatch on non-"all" pages — MEDIUM

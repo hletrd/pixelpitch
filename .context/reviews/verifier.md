@@ -1,59 +1,71 @@
-# Verifier Review (Cycle 18) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 19) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
-**Scope:** Full repository verification after cycles 1-17 fixes, focusing on NEW issues
+**Scope:** Full repository verification after cycles 1-18 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-17) — Verified
+## Previously Fixed (Cycles 1-18) — Verified
 
-All 98 gate tests pass. All C17 fixes verified as correctly applied.
+All 105 gate tests pass. All C18 fixes verified as correctly applied.
 
-## Verification of C17 Fixes
+## Verification of C18 Fixes
 
-### C17-01: Pentax KP/KF/K-r/K-x regex fix — VERIFIED
-```python
-_DSLR_NAME_RE.search("Pentax KP")   # Matches (verified in tests)
-_DSLR_NAME_RE.search("Pentax KF")   # Matches
-_DSLR_NAME_RE.search("Pentax K-r")  # Matches
-_DSLR_NAME_RE.search("Pentax K-x")  # Matches
-```
+### C18-01: Scatter plot excludes hidden data — VERIFIED
+`if (!row.is(':visible')) return;` is present in the `.each()` callback. Hidden rows excluded from plot data.
 
-### C17-02: Nikon Df regex fix — VERIFIED
-```python
-_DSLR_NAME_RE.search("Nikon Df")   # Matches (verified in tests)
-```
+### C18-02/C18-03: TYPE_FRACTIONAL_RE consolidation — VERIFIED
+`SENSOR_TYPE_RE` removed from pixelpitch.py. `from sources import TYPE_FRACTIONAL_RE` at line 50. GSMArena also imports `TYPE_FRACTIONAL_RE`. Single source of truth confirmed.
 
-### C17-03: GSMArena Unicode quotes — VERIFIED
-```python
-SENSOR_FORMAT_RE.search('1/1.3″')   # Matches (regex updated)
-```
+### C18-04: CI GSMARENA_MAX_PAGES_PER_BRAND wired — VERIFIED (with caveat)
+`fetch_source()` reads env var and passes to gsmarena.fetch(). However, no error handling on `int()` conversion — see V19-02.
 
-### C17-04: openMVG docstring — VERIFIED
-Docstring now says "Pentax K-mount (K3, K-1, KP, etc.)" and mentions "Nikon D/Df".
+### C18-05/C18-06/C18-07: Test additions — VERIFIED
+Unicode quote test, Pentax KF/K-r/K-x test, TYPE_FRACTIONAL_RE tests all present and passing.
 
-### C17-05: sensors_db lazy load — VERIFIED
-`sensors_db = None` with lazy initialization in merge_camera_data.
+### C18-08: Sensor-size numeric sort — PARTIAL REGRESSION
+Custom `sensor-width` parser added. Works correctly on "all" page. **Broken on non-"all" pages** — see V19-01.
 
 ## New Findings
 
-### V18-01: `SENSOR_TYPE_RE` in pixelpitch.py doesn't match Unicode quotes — inconsistency with C17-03
-**File:** `pixelpitch.py`, line 43
-**Severity:** LOW | **Confidence:** MEDIUM
+### V19-01: Tablesorter column index mismatch on non-"all" pages — regression
+**File:** `templates/pixelpitch.html`, lines 228-258
+**Severity:** MEDIUM | **Confidence:** HIGH
 
-Reproduced:
-```python
-import re
-SENSOR_TYPE_RE = re.compile(r'(1/[\d\.]+)"')
-SENSOR_TYPE_RE.search('1/2.3″')  # None (Unicode U+2033 not matched)
-SENSOR_TYPE_RE.search('1/2.3"')  # Match (ASCII quote matched)
+Reproduced the column index mismatch by tracing the HTML template:
+
+For `#table_with_pitch` on non-"all" page (e.g., DSLR):
+```
+<th>Name</th>     → index 0
+<th>Sensor Size</th> → index 1
+<th>Resolution</th>  → index 2
+<th>Pixel Pitch</th> → index 3
+<th>Year</th>       → index 4
 ```
 
-While `TYPE_FRACTIONAL_RE` in sources/__init__.py handles both. The fix in C17-03 updated GSMArena's regex but missed the one in pixelpitch.py. Practical impact is LOW since this regex is only used for Geizhals HTML parsing.
+Config assigns: `1: text, 2: sensor-width, 3: digit, 4: digit`
+Correct would be: `1: sensor-width, 2: digit, 3: digit, 4: digit`
 
-**Fix:** Update `SENSOR_TYPE_RE` to handle Unicode quotes, or reuse `TYPE_FRACTIONAL_RE`.
+Sensor Size column uses "text" parser → alphabetical sort, not numeric.
+
+**Fix:** Conditional header config based on `page == "all"`.
+
+---
+
+### V19-02: `int()` on env var without error handling
+**File:** `pixelpitch.py`, line 1046
+**Severity:** LOW | **Confidence:** HIGH
+
+```python
+max_pages = int(os.environ.get("GSMARENA_MAX_PAGES_PER_BRAND", "2"))
+```
+
+If env var is empty string: `int("")` → `ValueError: invalid literal for int() with base 10: ''`
+
+**Fix:** try/except with fallback default.
 
 ---
 
 ## Summary
-- NEW findings: 1 (LOW)
-- V18-01: SENSOR_TYPE_RE doesn't match Unicode quotes — LOW
+- NEW findings: 2 (1 MEDIUM, 1 LOW)
+- V19-01: Tablesorter column indices wrong for non-"all" pages — MEDIUM
+- V19-02: int() on env var crashes on bad input — LOW

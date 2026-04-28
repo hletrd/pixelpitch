@@ -1,44 +1,42 @@
-# Debugger Review (Cycle 18) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 19) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository latent bug review after cycles 1-17 fixes, focusing on NEW issues
+**Scope:** Full repository latent bug review after cycles 1-18 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-17) — Confirmed Resolved
+## Previously Fixed (Cycles 1-18) — Confirmed Resolved
 
-- D16-01 (sensor_size_from_type crash): Fixed.
-- D16-02 (merge dedup): Fixed.
-- D16-03 (Pentax regex): Fixed (all letter-suffix models now covered).
-- D16-04 (http_get OSError): Fixed.
-- D17-01, D17-02, D17-03: All fixed.
+All C18 fixes confirmed. Scatter plot hidden data exclusion, TYPE_FRACTIONAL_RE consolidation, CI env var wiring all working.
 
 ## New Findings
 
-### D18-01: Scatter plot includes hidden/invalid data — user-trust regression
-**File:** `templates/pixelpitch.html`, lines 337-346
+### D19-01: Tablesorter column mismatch on non-"all" pages — functional regression from C18-08
+**File:** `templates/pixelpitch.html`, lines 228-258
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The scatter plot data collection iterates over all table rows including hidden ones. This is a functional mismatch between the table view and the plot view. The user's explicit filter choice ("Hide possibly invalid data") is silently ignored by the scatter plot.
+The C18-08 fix introduced a custom `sensor-width` parser and assigned it to column index 2 for both "all" and non-"all" pages. On non-"all" pages, the Category column is absent, so Sensor Size is at index 1, not 2.
 
-**Failure mode:** User enables "Hide possibly invalid data" (default ON), then creates scatter plot. The plot shows data points from hidden rows (e.g., a camera with 12 µm pixel pitch). The user sees an outlier in the plot that doesn't correspond to any visible table row. This erodes trust in the data display.
+**Failure mode:** On the DSLR page, the user clicks the "Resolution" column header to sort by megapixels. Instead, the table sorts by sensor width because the `sensor-width` parser is assigned to column 2 (Resolution) instead of column 1 (Sensor Size). The user sees cameras sorted by sensor width when they expected megapixel ordering.
 
-**Fix:** Add `if (!row.is(':visible')) return;` at the start of the `.each()` loop in `createPlot()`.
+Similarly, clicking "Sensor Size" sorts alphabetically (text parser) instead of numerically.
+
+**Fix:** Conditional column index assignment based on `{% if page == "all" %}`.
 
 ---
 
-### D18-02: SENSOR_TYPE_RE in pixelpitch.py doesn't match Unicode quotes — silent data loss
-**File:** `pixelpitch.py`, line 43
-**Severity:** LOW | **Confidence:** MEDIUM
+### D19-02: `int()` on env var can crash `fetch_source` with unhandled ValueError
+**File:** `pixelpitch.py`, line 1046
+**Severity:** LOW | **Confidence:** HIGH
 
-If Geizhals HTML ever uses Unicode quotes (U+2033) for sensor format in title attributes, `SENSOR_TYPE_RE` would fail to match, and `parse_sensor_field()` would return `type=None`. The sensor type would be silently lost, and the camera would appear with "unknown" sensor size.
+`int(os.environ.get("GSMARENA_MAX_PAGES_PER_BRAND", "2"))` has no error handling. An empty string or non-numeric value in the env var causes an unhandled crash.
 
-This is the same class of issue as D17-03 (GSMArena Unicode quotes), which was fixed in C17-03. The fix missed `SENSOR_TYPE_RE` in pixelpitch.py.
+**Failure mode:** CI or local user sets `GSMARENA_MAX_PAGES_PER_BRAND=""` (accidentally empty). `int("")` raises ValueError. The entire `python pixelpitch.py source gsmarena` command fails.
 
-**Fix:** Update `SENSOR_TYPE_RE` to match Unicode quotes: `re.compile(r'(1/[\d.]+)(?:\"|″)')`.
+**Fix:** Add try/except with fallback to default value 2.
 
 ---
 
 ## Summary
 - NEW findings: 2 (1 MEDIUM, 1 LOW)
-- D18-01: Scatter plot includes hidden data — MEDIUM
-- D18-02: SENSOR_TYPE_RE doesn't match Unicode quotes — LOW
+- D19-01: Tablesorter column indices wrong for non-"all" pages — MEDIUM
+- D19-02: int() on env var can crash — LOW

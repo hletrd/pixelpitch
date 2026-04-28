@@ -1,12 +1,12 @@
-# Security Review (Cycle 18)
+# Security Review (Cycle 19)
 
 **Reviewer:** security-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository security re-review after cycles 1-17 fixes, focusing on NEW issues
+**Scope:** Full repository security re-review after cycles 1-18 fixes, focusing on NEW issues
 
-## Previously Fixed (Cycles 1-17) — Confirmed Resolved
+## Previously Fixed (Cycles 1-18) — Confirmed Resolved
 
-All previous security fixes confirmed intact. SRI hashes present, noopener on external links, digicamdb alias removed.
+All previous security fixes confirmed intact. SRI hashes present, noopener on external links.
 
 ## Deferred Items Still Valid
 
@@ -16,7 +16,7 @@ All previous security fixes confirmed intact. SRI hashes present, noopener on ex
 
 ## New Findings
 
-No new security findings. The codebase remains a static site generator with no user-facing runtime input. All data sources are hardcoded URLs.
+No new security findings. The codebase remains a static site generator with no user-facing runtime input.
 
 ---
 
