@@ -1,7 +1,7 @@
 # Plan: Cycle 25 Findings — Regex Consistency & ValueError Guard
 
 **Created:** 2026-04-28
-**Status:** PENDING
+**Status:** COMPLETED
 **Source Reviews:** CR25-01, CRIT25-01, V25-02, V25-03, TR25-02, ARCH25-01, DBG25-02, TE25-01, CR25-02, CRIT25-02, V25-04, TR25-01, DBG25-01, TE25-02, DOC25-01
 
 ---
@@ -47,9 +47,10 @@ The Geizhals-specific regex patterns in `pixelpitch.py` are significantly less r
    - `parse_sensor_field` with Greek mu μ
    - `parse_sensor_field` with "microns" suffix
 
-### Verification
-- Gate tests (`python3 -m tests.test_parsers_offline`) must pass
-- New test cases must pass
+### Verification — DONE
+- Gate tests (`python3 -m tests.test_parsers_offline`) — all 230 checks passed
+- New test cases pass (Unicode ×, spaces, Greek μ, "microns")
+- Commit: 17a7b2d
 
 ---
 
@@ -92,10 +93,10 @@ The Geizhals-specific regex patterns in `pixelpitch.py` are significantly less r
    expect("malformed size returns None for size", result_bad["size"], None)
    ```
 
-### Verification
-- Gate tests must pass
-- New test case must pass
-- Malformed float input no longer crashes
+### Verification — DONE
+- Gate tests (`python3 -m tests.test_parsers_offline`) — all 230 checks passed
+- New test cases pass (malformed size returns None, malformed pitch returns None)
+- Commit: 17a7b2d
 
 ---
 
@@ -104,5 +105,5 @@ The Geizhals-specific regex patterns in `pixelpitch.py` are significantly less r
 ### C25-03: parse_sensor_field docstring format limitations
 - **File:** `pixelpitch.py`, lines 530-539
 - **Original Severity:** LOW | **Confidence:** MEDIUM
-- **Reason:** Will be addressed as part of Task 1 (C25-01 fix). When the regex patterns are upgraded, the docstring will be updated to match. No separate implementation needed.
-- **Re-open if:** Task 1 is completed without updating the docstring.
+- **Reason:** Addressed as part of Task 1 (C25-01 fix). The docstring was updated to include Unicode × and Greek μ examples.
+- **Status:** RESOLVED — docstring now shows `"CMOS 36.0×24.0mm, 5.12μm"` as an example.
