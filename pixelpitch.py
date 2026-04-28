@@ -506,6 +506,11 @@ def merge_camera_data(
                     and isfinite(new_spec.spec.pitch) and new_spec.spec.pitch > 0
                     and new_spec.pitch != new_spec.spec.pitch):
                 new_spec.pitch = new_spec.spec.pitch
+            # Preserve matched_sensors from existing data if new data has None
+            # (meaning sensors_db was not consulted). When new has [] (checked,
+            # found nothing), that is authoritative and should not be overridden.
+            if new_spec.matched_sensors is None and existing_spec.matched_sensors is not None:
+                new_spec.matched_sensors = existing_spec.matched_sensors
             # Log year changes (independent of field preservation above).
             # This was previously an elif attached to the year-preservation
             # if, but the C21-01 SpecDerived insertion broke that chain.
@@ -808,9 +813,14 @@ def derive_spec(
     else:
         pitch = None
 
-    matched_sensors = []
     if sensors_db and size:
         matched_sensors = match_sensors(size[0], size[1], spec.mpix, sensors_db)
+    else:
+        # None means "sensors_db was not consulted" (either unavailable
+        # or size unknown).  This distinguishes "not checked" from
+        # "checked, found nothing" (empty list) so that merge_camera_data
+        # can preserve existing sensor matches when new data is None.
+        matched_sensors = None
 
     return SpecDerived(spec=spec, size=size, area=area,
                        pitch=pitch, matched_sensors=matched_sensors)
