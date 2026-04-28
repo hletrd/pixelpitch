@@ -42,6 +42,12 @@ jobs:
         . .venv/bin/activate
         python -m tests.test_parsers_offline
 
+    - name: Run flake8 lint
+      run: |
+        . .venv/bin/activate
+        pip install flake8
+        python -m flake8 . --exclude=.git,__pycache__,dist,downloaded_files,.context,.omc,templates
+
     # ----- Per-source fetch jobs ------------------------------------------
     # Each source step is independent. continue-on-error keeps a transient
     # failure from blocking the deploy — the previous source CSV stays
