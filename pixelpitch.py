@@ -369,8 +369,6 @@ def merge_camera_data(
         f"Merging {len(new_specs)} new records with {len(existing_specs)} existing records"
     )
 
-    sensors_db = load_sensors_database()
-
     existing_by_key = {}
     for spec in existing_specs:
         key = create_camera_key(spec.spec)
@@ -410,8 +408,15 @@ def merge_camera_data(
 
         merged_specs.append(new_spec)
 
+    sensors_db: Optional[dict] = None  # lazy-loaded on first use
+
     for key, existing_spec in existing_by_key.items():
         if key not in found_keys:
+            # Lazy-load sensors_db only when we have existing-only cameras
+            # that need sensor matching. This avoids reading sensors.json
+            # when all existing cameras are also in the new data.
+            if existing_spec.size and sensors_db is None:
+                sensors_db = load_sensors_database()
             if existing_spec.size and sensors_db:
                 existing_spec.matched_sensors = match_sensors(
                     existing_spec.size[0],
