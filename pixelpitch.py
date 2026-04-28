@@ -494,6 +494,17 @@ def merge_camera_data(
     overridden from existing to maintain consistency.  The template and
     CSV both read derived fields, so consistency is critical for correct
     output.
+
+    ``matched_sensors`` follows a tri-valued sentinel contract (C46):
+    ``None`` means "sensors_db was not consulted" (size unknown or
+    sensors_db unavailable); ``[]`` means "checked, found nothing";
+    a non-empty list means "checked, these names match". When new
+    is ``None`` it is preserved from existing if existing is not
+    ``None``. When new is ``[]`` it is authoritative — preferring an
+    actively-cleared list over a stale list. Cameras that exist
+    only in existing (not seen in any new source this build) get
+    their matched_sensors recomputed against current ``sensors.json``
+    so a sensor rename/removal eventually propagates.
     """
     print(
         f"Merging {len(new_specs)} new records with {len(existing_specs)} existing records"
