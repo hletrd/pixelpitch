@@ -446,6 +446,15 @@ def merge_camera_data(
                 new_spec.spec.type = existing_spec.spec.type
             if new_spec.spec.size is None and existing_spec.spec.size is not None:
                 new_spec.spec.size = existing_spec.spec.size
+                # If derived.size was type-computed and differs from the
+                # preserved spec.size, override derived fields from existing
+                # for consistency.  derive_spec may compute size from type
+                # when spec.size is None, but the preserved (measured) value
+                # is authoritative.  The template and CSV both read derived
+                # fields, so inconsistency would corrupt output.
+                if new_spec.size is not None and new_spec.size != new_spec.spec.size:
+                    new_spec.size = existing_spec.size
+                    new_spec.area = existing_spec.area
             if new_spec.spec.pitch is None and existing_spec.spec.pitch is not None:
                 new_spec.spec.pitch = existing_spec.spec.pitch
                 # Validate preserved pitch: non-positive or non-finite values
