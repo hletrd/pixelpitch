@@ -955,6 +955,30 @@ def test_parse_sensor_field():
     expect("1-inch with mm dims type", result7["type"], "1")
     expect("1-inch with mm dims size", result7["size"], (13.2, 8.8), tol=0.01)
 
+    # SIZE_MM_RE handles Unicode multiplication sign (U+00D7)
+    result8 = pp.parse_sensor_field('CMOS 36.0×24.0mm')
+    expect("SIZE handles Unicode ×", result8["size"], (36.0, 24.0), tol=0.01)
+
+    # SIZE_MM_RE handles spaces around x
+    result9 = pp.parse_sensor_field('CMOS 36.0 x 24.0 mm')
+    expect("SIZE handles spaces around x", result9["size"], (36.0, 24.0), tol=0.01)
+
+    # PITCH_UM_RE handles Greek mu (U+03BC)
+    result10 = pp.parse_sensor_field('CMOS 5.12μm')
+    expect("PITCH handles Greek mu", result10["pitch"], 5.12, tol=0.01)
+
+    # PITCH_UM_RE handles "microns" suffix
+    result11 = pp.parse_sensor_field('CMOS 5.12 microns')
+    expect("PITCH handles microns suffix", result11["pitch"], 5.12, tol=0.01)
+
+    # ValueError guard: malformed float in dimension string
+    result12 = pp.parse_sensor_field('CMOS 36.0.1x24.0mm')
+    expect("malformed size returns None", result12["size"], None)
+
+    # ValueError guard: malformed float in pitch string
+    result13 = pp.parse_sensor_field('CMOS 5.1.2µm')
+    expect("malformed pitch returns None", result13["pitch"], None)
+
 
 # --------------------------------------------------------------------------
 # pixel_pitch

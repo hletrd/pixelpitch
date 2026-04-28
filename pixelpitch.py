@@ -39,16 +39,13 @@ RANGEFINDER_URL = "https://geizhals.eu/?cat=dcamsp&xf=1480_Messsucher&hloc=de&hl
 CAMCORDER_URL = "https://geizhals.eu/?cat=dvcam&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=205&fcols=195&fcols=3373&sort=artikel"
 ACTIONCAM_URL = "https://geizhals.eu/?cat=dvcamac&hloc=de&hloc=pl&hloc=uk&hloc=eu&fcols=5023&fcols=5025&fcols=5036&sort=artikel"
 
-SIZE_RE = re.compile(r"([\d\.]+)x([\d\.]+)mm")
-PITCH_RE = re.compile(r"([\d\.]+)µm")
 MPIX_RE = re.compile(r"([\d\.]+)\s*Megapixel")
 
-# Canonical fractional-inch sensor type regex — matches "1/x.y" followed by
-# any recognized suffix: ASCII/Unicode quotes (" ″), optional-space + "inch",
-# "-inch", optional-space + "type", or "-type".
-# Replaces the former SENSOR_TYPE_RE (ASCII-only) and SENSOR_FORMAT_RE
-# (GSMArena-specific) with a single source of truth from sources/__init__.py.
-from sources import TYPE_FRACTIONAL_RE
+# Shared regex patterns from sources/__init__.py — single source of truth.
+# SIZE_MM_RE matches "Ax Bmm" with ASCII x, Unicode ×, and optional spaces.
+# PITCH_UM_RE matches µm, μm (Greek mu), "microns", "um", and HTML entities.
+# TYPE_FRACTIONAL_RE matches fractional-inch sensor types with various suffixes.
+from sources import TYPE_FRACTIONAL_RE, SIZE_MM_RE, PITCH_UM_RE
 
 # from http://en.wikipedia.org/wiki/Image_sensor_format
 TYPE_SIZE: dict[str, Tuple[float, float]] = {
@@ -535,6 +532,7 @@ def parse_sensor_field(sensor_text: str) -> dict:
         "CMOS 1/3.1\", 1.09µm Pixelgröße"
         "APS-C, CMOS 23.5x15.6mm"
         "CMOS 1\", 2.4µm Pixelgröße"
+        "CMOS 36.0×24.0mm, 5.12μm"
         "CMOS"
     """
     result = {"type": None, "size": None, "pitch": None}
@@ -550,15 +548,21 @@ def parse_sensor_field(sensor_text: str) -> dict:
         # Bare 1-inch format (not fractional 1/x.y).  TYPE_SIZE has key "1".
         result["type"] = "1"
 
-    # Extract sensor dimensions (e.g. "36.0x24.0mm")
-    size_match = SIZE_RE.search(sensor_text)
+    # Extract sensor dimensions (e.g. "36.0x24.0mm", "36.0 × 24.0 mm")
+    size_match = SIZE_MM_RE.search(sensor_text)
     if size_match:
-        result["size"] = (float(size_match.group(1)), float(size_match.group(2)))
+        try:
+            result["size"] = (float(size_match.group(1)), float(size_match.group(2)))
+        except ValueError:
+            result["size"] = None
 
-    # Extract pixel pitch (e.g. "6.94µm")
-    pitch_match = PITCH_RE.search(sensor_text)
+    # Extract pixel pitch (e.g. "6.94µm", "6.94μm", "6.94 microns")
+    pitch_match = PITCH_UM_RE.search(sensor_text)
     if pitch_match:
-        result["pitch"] = float(pitch_match.group(1))
+        try:
+            result["pitch"] = float(pitch_match.group(1))
+        except ValueError:
+            result["pitch"] = None
 
     return result
 
