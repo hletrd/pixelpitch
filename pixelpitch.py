@@ -688,6 +688,23 @@ def deduplicate_specs(specs: list[Spec]) -> list[Spec]:
 def derive_spec(
     spec: Spec, sensors_db: Optional[dict] = None
 ) -> SpecDerived:
+    """Derive computed fields from a Spec.
+
+    Sensor size: if ``spec.size`` is None, attempt to derive it from
+    ``spec.type`` using the TYPE_SIZE lookup table.
+
+    Area: computed as width * height when both are known.
+
+    Pixel pitch: ``spec.pitch`` (direct measurement) always takes
+    precedence.  When ``spec.pitch`` is None but both area and mpix
+    are known, pitch is computed as
+    ``1000 * sqrt(area / (mpix * 10**6))``.  This computed value is
+    an approximation because it does not account for pixel binning or
+    gap pixels.
+
+    Matched sensors: looked up from ``sensors_db`` when both size
+    and the database are available.
+    """
     if spec.size is None:
         size = sensor_size_from_type(spec.type)
     else:
