@@ -47,7 +47,7 @@
     </thead>
     <tbody>
       {% for spec in specs %}
-      <tr data-pitch="{{ spec.pitch or 0 }}"
+      <tr data-pitch="{{ spec.pitch if spec.pitch is not none and spec.pitch > 0 else 0 }}"
           data-sensor-width="{{ spec.size[0] if spec.size else 0 }}"
           data-sensor-height="{{ spec.size[1] if spec.size else 0 }}"
           data-category="{{ spec.spec.category }}"
@@ -73,7 +73,7 @@
           {% endif %}
         </td>
         <td>
-          {% if spec.spec.mpix is not none and spec.spec.mpix != 0.0 %}
+          {% if spec.spec.mpix is not none and spec.spec.mpix > 0 %}
             {{ spec.spec.mpix|round(1) }} MP
           {% else %}
             <span class="text-muted">unknown</span>
@@ -81,7 +81,7 @@
         </td>
         {% if not without_pitch %}
         <td>
-          {% if spec.pitch is not none and spec.pitch != 0.0 %}
+          {% if spec.pitch is not none and spec.pitch > 0 %}
             {{ spec.pitch|round(1) }} µm
           {% else %}
             <span class="text-muted">unknown</span>
