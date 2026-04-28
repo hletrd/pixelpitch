@@ -1040,14 +1040,18 @@ def _load_per_source_csvs(output_dir: Path) -> List[SpecDerived]:
     """Read dist/camera-data-{source}.csv for every registered source.
 
     These files are produced by `python pixelpitch.py source <name>`
-    runs and serve as caches between deployments. They are NOT
-    authoritative for `matched_sensors`: that column was computed
-    against whatever `sensors.json` was current at write time, and
-    `sensors.json` may have drifted since (sensor rename, removal,
-    or megapixel list edit). On load we therefore refresh
-    matched_sensors against the current `sensors.json` so the merged
-    output reflects current sensor data (F54-01). Per-row `id` is
-    likewise dropped so `merge_camera_data` can assign globally
+    runs and serve as caches between deployments. The `matched_sensors`
+    column is treated as a cache: when `sensors.json` is loadable, the
+    column is refreshed against the current sensor database so a
+    rename / removal / megapixel-list edit eventually propagates
+    (F54-01). When `sensors.json` is missing or invalid, the parsed
+    cache is preserved as a softer-fail fallback (F55-01) — this
+    matches `merge_camera_data`'s existing-only branch which also
+    skips re-matching when sensors_db is empty. When the row has no
+    sensor size, matched_sensors is set to `None` ("not checked"),
+    matching the `derive_spec` contract.
+
+    Per-row `id` is dropped so `merge_camera_data` can assign globally
     unique ids. Missing files are silently skipped — failure of one
     source must not block the build.
     """
@@ -1064,13 +1068,6 @@ def _load_per_source_csvs(output_dir: Path) -> List[SpecDerived]:
             print(f"  could not read {path.name}: {e}")
             continue
         parsed = parse_existing_csv(content)
-        # Per-source CSVs carry their own ids and possibly stale
-        # matched_sensors — clear ids so merge gives globally unique
-        # ones, and refresh matched_sensors against current
-        # sensors.json (F54-01). When sensors_db is empty (load
-        # failure) or the row has no size, matched_sensors falls
-        # back to None ("not checked"), which preserves the
-        # merge_camera_data contract for matched_sensors fallback.
         for d in parsed:
             d.id = None
             if d.size is not None:
@@ -1080,9 +1077,13 @@ def _load_per_source_csvs(output_dir: Path) -> List[SpecDerived]:
                     d.matched_sensors = match_sensors(
                         d.size[0], d.size[1], d.spec.mpix, sensors_db
                     )
-                else:
-                    d.matched_sensors = None
+                # else: keep parsed cache as fallback when sensors_db
+                # is unavailable. This is softer-fail than dropping
+                # to None and matches merge_camera_data's existing-only
+                # behavior (F55-01).
             else:
+                # Size unknown — matched_sensors is meaningless;
+                # honor derive_spec's "not checked" sentinel.
                 d.matched_sensors = None
         extras.extend(parsed)
         print(f"  loaded {len(parsed)} records from {path.name}")
