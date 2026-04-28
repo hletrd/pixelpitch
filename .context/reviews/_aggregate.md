@@ -1,63 +1,54 @@
-# Aggregate Review (Cycle 46) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 48) — Deduplicated, Merged Findings
 
-**Date:** 2026-04-28
+**Date:** 2026-04-29
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-45 Status
+## Cycle 1-47 Status
 
-All previous fixes confirmed still working. No regressions in core logic. Gate tests pass. C45 fixes (GSMArena decimal MP regex split fix, decimal MP tests) verified working correctly.
+All previous fixes confirmed still working. The test gate (`python3 -m tests.test_parsers_offline`) passes. No regressions in core logic.
 
-## Cross-Agent Agreement Matrix (Cycle 46 New Findings)
+## Cycle 48 New Findings
 
-| Finding | Flagged By | Highest Severity |
-|---------|-----------|-----------------|
-| matched_sensors not preserved in merge_camera_data | CR46-01, CRIT46-01, V46-01, TR46-01, ARCH46-01, DBG46-01, TE46-01 | MEDIUM |
-| LENS_RE dead code in gsmarena.py | CR46-02 | LOW |
+The previous aggregate claimed zero new findings, but the lint gate (flake8) declared in `setup.cfg` was never actually run. Running it now reveals 33 errors. The most actionable new work for this cycle is closing those gate violations.
 
-## Deduplicated New Findings (Ordered by Severity)
+### F48-01 (consensus): Flake8 gate failures across the repo (33 errors) — MEDIUM / HIGH
+- Flagged by: code-reviewer, critic, verifier, test-engineer, debugger, architect
+- Files: `pixelpitch.py`, `sources/__init__.py`, `sources/apotelyt.py`, `sources/cined.py`, `tests/test_parsers_offline.py`, `tests/test_sources.py`
+- Categories:
+  - F401 (11) — unused imports (`dataclass`, `io`, `models.SpecDerived`, `models.Spec`)
+  - F541 (1) — `f""` with no placeholder in `pixelpitch.py:1240`
+  - F811 (1) — duplicate `import io` in test file
+  - F841 (1) — unused local `merged2` in test file
+  - E127 (9) — continuation line indentation in test file
+  - E231 (3) — missing whitespace after `,`/`:`
+  - E302 (1) / E303 (1) — blank-line spacing in `sources/cined.py` and `sources/apotelyt.py`
+  - E402 (5) — module-level imports after `sys.path.insert`; legitimate use, suppressible via `# noqa: E402`
 
-### C46-01: matched_sensors not preserved in merge_camera_data — data loss
+### F48-02: `merged2` unused — possible missed assertion — LOW / MEDIUM
+- Flagged by: code-reviewer, debugger, test-engineer
+- File: `tests/test_parsers_offline.py:1271`
+- Investigation needed: confirm whether the test intended an assertion.
 
-**Sources:** CR46-01, CRIT46-01, V46-01, TR46-01, ARCH46-01, DBG46-01, TE46-01
-**Severity:** MEDIUM | **Confidence:** HIGH (7-agent consensus, verified by live execution)
+### F48-03: Duplicate top-level `io` import — LOW / HIGH
+- Flagged by: code-reviewer, test-engineer
+- File: `tests/test_parsers_offline.py:17` (top-level) shadowed by line 1241 inside a function.
 
-The `merge_camera_data` function preserves `type`, `size`, `pitch`, `mpix`, `year`, `area` fields from existing data when new data has `None`. However, `matched_sensors` is never checked for preservation. When `derive_spec` is called without `sensors_db` (or with an empty `sensors_db`), it returns `matched_sensors=[]`. The merge code treats `[]` as "we have data" (not `None`), so it overwrites existing sensor matches from the previous CSV with an empty list.
+## Cross-Agent Agreement Matrix
 
-**Root cause:** `matched_sensors=[]` and `matched_sensors=None` are semantically different (empty after checking vs. not checked), but `derive_spec` always returns `[]` regardless of whether the sensors database was consulted.
-
-**Failure scenario:**
-1. Previous CSV has `matched_sensors=['IMX309', 'IMX366', 'IMX609']` for Canon R5
-2. `sensors.json` is temporarily unavailable (missing/corrupt)
-3. `derive_specs` -> `derive_spec(spec, {})` -> `matched_sensors=[]`
-4. `merge_camera_data` overwrites existing matches with `[]`
-5. CSV download loses all sensor match data
-
-**Fix:**
-1. In `derive_spec`: return `matched_sensors=None` when `sensors_db` is `None` or falsy, and `matched_sensors=[]` only when `sensors_db` was consulted but found no matches
-2. In `merge_camera_data`: add `matched_sensors` preservation check: `if new_spec.matched_sensors is None and existing_spec.matched_sensors is not None: new_spec.matched_sensors = existing_spec.matched_sensors`
-3. In `write_csv`: handle `matched_sensors=None` the same as `matched_sensors=[]` (write empty string)
-
----
-
-### C46-02: LENS_RE dead code in gsmarena.py
-
-**Sources:** CR46-02
-**Severity:** LOW | **Confidence:** HIGH
-
-The `LENS_RE` regex is defined at module level (`sources/gsmarena.py`, lines 45-50) but never referenced anywhere in the codebase. This is dead code similar to the C44-01 `FORMAT_TO_MM` removal in `cined.py`.
-
-**Fix:** Remove the `LENS_RE` definition entirely.
-
----
+| Finding | Flagged By                                                                         | Highest Severity |
+|---------|------------------------------------------------------------------------------------|------------------|
+| F48-01  | code-reviewer, critic, verifier, test-engineer, debugger, architect                 | MEDIUM           |
+| F48-02  | code-reviewer, debugger, test-engineer                                              | LOW              |
+| F48-03  | code-reviewer, test-engineer                                                        | LOW              |
 
 ## AGENT FAILURES
 
-No agents failed. All reviews completed successfully.
+No agents failed.
 
 ## Summary Statistics
 
-- Total distinct new findings: 2 (C46-01, C46-02)
-- Cross-agent consensus findings (3+ agents): 1 (C46-01 with 7 agents)
-- Highest severity: MEDIUM (C46-01)
-- Actionable findings: 2
+- Total distinct new findings: 3
+- Cross-agent consensus findings (3+ agents): 2 (F48-01, F48-02)
+- Highest severity: MEDIUM
+- Actionable findings: 3
 - Verified safe / deferred: 0

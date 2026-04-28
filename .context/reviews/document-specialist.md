@@ -1,16 +1,21 @@
-# Document Specialist Review — Cycle 46
+# Document Specialist Review — Cycle 48
 
-**Date:** 2026-04-28
+**Date:** 2026-04-29
 **Reviewer:** document-specialist
 
-## Previous Findings Status
+## Doc/Code Mismatch Check
 
-DOC44-01 (CineD FORMAT_TO_MM docstring claim) — COMPLETED.
+Reviewed `README.md`, `setup.cfg`, `requirements.txt`, plan docs, and per-cycle review docs.
 
-## New Findings
+## New Findings (Cycle 48)
 
-No new doc/code mismatches. The `derive_spec` docstring describes matched_sensors correctly ("Matched sensors: looked up from sensors_db when both size and the database are available"). The merge_camera_data docstring describes field preservation but does not mention matched_sensors, which is consistent with the code (it doesn't preserve matched_sensors). This is a code bug (CR46-01), not a documentation mismatch.
+No documentation/code mismatches found this cycle.
 
-## Summary
+## Confirmation
 
-- No new doc/code mismatches
+- `setup.cfg` flake8 config (`max-line-length=160`) is still the only declared lint policy.
+- No new external API surface added since cycle 47.
+
+## Confidence Summary
+
+No new findings.

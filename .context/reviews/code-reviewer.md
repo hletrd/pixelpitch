@@ -1,43 +1,68 @@
-# Code Review — Cycle 46
+# Code Reviewer — Cycle 48
 
-**Date:** 2026-04-28
+**Date:** 2026-04-29
 **Reviewer:** code-reviewer
 
-## Review Scope
+## Inventory
 
-All Python source files (`pixelpitch.py`, `models.py`, `sources/*.py`), templates, and tests.
+Examined every Python source file:
+- `pixelpitch.py` (1291 lines)
+- `models.py` (27 lines)
+- `sources/__init__.py` (111 lines)
+- `sources/apotelyt.py` (184 lines)
+- `sources/cined.py` (148 lines)
+- `sources/digicamdb.py` (32 lines)
+- `sources/gsmarena.py` (269 lines)
+- `sources/imaging_resource.py` (302 lines)
+- `sources/openmvg.py` (129 lines)
+- `tests/test_parsers_offline.py` (2098 lines)
+- `tests/test_sources.py` (111 lines)
 
-## Previous Cycle Findings (1-45) Status
+## New Findings (Cycle 48)
 
-All previous fixes confirmed still in place. C45-01 GSMArena decimal MP regex fix working correctly. C44-01 CineD dead code cleanup complete.
+### F48-01: Flake8 gate failures across the repo (33 errors)
+- **Severity:** MEDIUM | **Confidence:** HIGH
+- **Files affected:**
+  - `pixelpitch.py:17` — F401 unused `dataclass` import
+  - `pixelpitch.py:47` — E402 module-level import not at top of file
+  - `pixelpitch.py:1240` — F541 f-string missing placeholders
+  - `sources/__init__.py:30` — F401 unused `dataclass` import
+  - `sources/apotelyt.py:37` — E303 too many blank lines (3)
+  - `sources/cined.py:36` — E302 expected 2 blank lines, found 1
+  - `tests/test_parsers_offline.py:17` — F401 unused `io`
+  - `tests/test_parsers_offline.py:25` — E402 module-level import not at top
+  - `tests/test_parsers_offline.py:392` — E231 missing whitespace after `,`
+  - `tests/test_parsers_offline.py:594,666,845,977,1244,1822,1856` — F401 unused `models.SpecDerived` / `models.Spec` imports
+  - `tests/test_parsers_offline.py:848,853,1232,1497,1550,1559,1568,1577,1586` — E127 continuation line over-indented
+  - `tests/test_parsers_offline.py:1241` — F811 redefinition of unused `io`
+  - `tests/test_parsers_offline.py:1271` — F841 local variable `merged2` assigned but never used
+  - `tests/test_sources.py:23-25` — E402 module-level imports not at top
+  - `tests/test_sources.py:32` — E231 missing whitespace after `:` and `,`
+- **Why it's a problem:** The repo's `setup.cfg` declares flake8 with `max-line-length=160` as a gate. Currently 33 errors are emitted. The cycle GATES require lint to pass.
+- **Failure scenario:** CI gate fails. Subsequent cycles inherit the failure.
+- **Fix:** Remove unused imports, hoist `sys.path` insertion via `# noqa: E402` where genuinely needed; fix indentation; drop dead `merged2`; convert `f""` without placeholders to plain string; add whitespace; collapse extra blank lines.
 
-## New Findings
+### F48-02: Unused local `merged2` masks a likely missing assertion
+- **File:** `tests/test_parsers_offline.py:1271`
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Why it's a problem:** F841 — the `merged2 = merge_camera_data(...)` call's result is never asserted. Either an assertion is missing or the call exists only for side-effects (not the case for `merge_camera_data` which returns a fresh dict).
+- **Fix:** Drop the assignment if side-effect-only; otherwise add the missing assertion.
 
-### CR46-01: matched_sensors not preserved in merge_camera_data — data loss
+### F48-03: Duplicate `import io` (top-level + function-scope)
+- **File:** `tests/test_parsers_offline.py:17` (top-level) and `tests/test_parsers_offline.py:1241` (inside test function)
+- **Severity:** LOW | **Confidence:** HIGH
+- **Why it's a problem:** F811 — top-level `io` import is unused, and a function-scoped re-import shadows it.
+- **Fix:** Drop the unused top-level `io` import.
 
-**File:** `pixelpitch.py`, lines 439-521 (merge_camera_data)
-**Severity:** MEDIUM | **Confidence:** HIGH
+## Confirmation of prior status
 
-The merge_camera_data function preserves `type`, `size`, `pitch`, `mpix`, `year`, `area` fields from existing data when new data has `None`. However, `matched_sensors` is never checked for preservation. When `derive_spec` is called without `sensors_db` (or with an empty `sensors_db`), it returns `matched_sensors=[]`. The merge code treats `[]` as "we have data" (not `None`), so it overwrites existing sensor matches from the previous CSV with an empty list.
+- All correctness fixes from cycles 1–46 still pass the test gate.
+- No new logic regressions found.
 
-**Failure scenario:**
-1. Previous CSV has `matched_sensors=['IMX309', 'IMX366', 'IMX609']` for Canon R5
-2. `sensors.json` is temporarily unavailable (missing/corrupt)
-3. `derive_specs` -> `derive_spec(spec, {})` -> `matched_sensors=[]`
-4. `merge_camera_data` overwrites existing `['IMX309', 'IMX366', 'IMX609']` with `[]`
-5. CSV download loses all sensor match data
+## Confidence Summary
 
-**Root cause:** `matched_sensors=[]` and `matched_sensors=None` are semantically different (empty after checking vs. not checked), but the merge code doesn't distinguish them.
-
-**Fix:** Change `derive_spec` to return `matched_sensors=None` when `sensors_db` is not provided (or is empty), and add a `matched_sensors` preservation check in `merge_camera_data` similar to other fields.
-
----
-
-### CR46-02: LENS_RE dead code in gsmarena.py
-
-**File:** `sources/gsmarena.py`, lines 45-50
-**Severity:** LOW | **Confidence:** HIGH
-
-The `LENS_RE` regex is defined at module level but never referenced anywhere in the codebase — not in `gsmarena.py` itself nor in any other module. This is dead code similar to the C44-01 `FORMAT_TO_MM` removal in `cined.py`.
-
-**Fix:** Remove the `LENS_RE` definition entirely.
+| Finding | Severity | Confidence |
+|---------|----------|------------|
+| F48-01  | MEDIUM   | HIGH       |
+| F48-02  | LOW      | MEDIUM     |
+| F48-03  | LOW      | HIGH       |

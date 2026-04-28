@@ -1,55 +1,43 @@
-# Verifier Review — Cycle 46
+# Verifier Review — Cycle 48
 
-**Date:** 2026-04-28
+**Date:** 2026-04-29
 **Reviewer:** verifier
 
-## Previous Findings Status
+## Evidence-Based Correctness Check
 
-V45-01 (GSMArena decimal MP regex) — COMPLETED. Fix verified working.
+### Gate Evidence (run today)
 
-## Verification Results
-
-### V46-VERIFY-01: matched_sensors data loss in merge_camera_data
-
-Tested with direct Python execution:
-
-```python
-from models import Spec, SpecDerived
-from pixelpitch import merge_camera_data, derive_spec
-
-# Existing: Canon R5 with matched_sensors from CSV
-spec1 = Spec(name='Canon EOS R5', category='dslr', type=None, size=(36.0, 24.0), pitch=4.39, mpix=45.0, year=2020)
-existing = SpecDerived(spec=spec1, size=(36.0, 24.0), area=864.0, pitch=4.39, matched_sensors=['IMX309', 'IMX366', 'IMX609'], id=0)
-
-# New: same camera but derive_spec with empty sensors_db
-new = derive_spec(spec1, {})
-# new.matched_sensors = []
-
-merged = merge_camera_data([new], [existing])
-# merged[0].matched_sensors = []  <-- DATA LOSS
 ```
+$ python3 -m tests.test_parsers_offline
+... All checks passed.
 
-Result: `matched_sensors=['IMX309', 'IMX366', 'IMX609']` is overwritten by `[]`. **BUG CONFIRMED**.
-
-Also verified: when `derive_spec` is called WITH a populated `sensors_db`, the new data has correct `matched_sensors` and no data loss occurs. The bug only manifests when `sensors_db` is empty or not provided.
-
-### V46-VERIFY-02: LENS_RE dead code in gsmarena.py
-
-Searched entire codebase: `LENS_RE` is defined at `sources/gsmarena.py:45` but never referenced in any file. **DEAD CODE CONFIRMED**.
+$ python3 -m flake8 . --exclude=.git,__pycache__,dist,downloaded_files,.context,.omc,templates
+33 errors:
+  9   E127 continuation line over-indented for visual indent
+  3   E231 missing whitespace after ','
+  1   E302 expected 2 blank lines, found 1
+  1   E303 too many blank lines (3)
+  5   E402 module level import not at top of file
+ 11   F401 unused imports
+  1   F541 f-string is missing placeholders
+  1   F811 redefinition of unused 'io'
+  1   F841 local variable 'merged2' assigned but never used
+```
 
 ## New Findings
 
-### V46-01: matched_sensors not preserved in merge_camera_data — verified data loss
+### F48-VER-01: Test gate passes but lint gate fails
+- **Severity:** MEDIUM | **Confidence:** HIGH (reproducible)
+- **Why it's a problem:** A passing test gate creates false confidence; the lint gate is real and currently failing. The orchestrator's gates list both.
+- **Fix:** Same as F48-01 — clean up the lint failures.
 
-**File:** `pixelpitch.py`, merge_camera_data
-**Severity:** MEDIUM | **Confidence:** HIGH (verified by live execution)
+## Confirmation
 
-Verified that `merge_camera_data` loses `matched_sensors` from existing data when new data has `matched_sensors=[]` (from `derive_spec` with empty `sensors_db`). The merge code preserves fields when `new.X is None`, but `[]` is not `None`, so preservation is bypassed.
+- All 56 prior unit/regression tests in `tests.test_parsers_offline` continue to pass.
+- No new behavior regressions detected.
 
-**Fix:** Return `matched_sensors=None` from `derive_spec` when `sensors_db` is not provided, and add preservation logic for `matched_sensors` in `merge_camera_data`.
+## Confidence Summary
 
----
-
-## Summary
-
-- V46-01 (MEDIUM): matched_sensors not preserved in merge_camera_data — verified data loss
+| Finding    | Severity | Confidence |
+|------------|----------|------------|
+| F48-VER-01 | MEDIUM   | HIGH       |

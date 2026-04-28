@@ -1,37 +1,27 @@
-# Critic Review — Cycle 46
+# Critic Review — Cycle 48
 
-**Date:** 2026-04-28
+**Date:** 2026-04-29
 **Reviewer:** critic
 
-## Previous Findings Status
+## Multi-Perspective Critique
 
-CRIT45-01 (GSMArena decimal MP regex) — COMPLETED. Fix applied and tested.
+After 47 prior review cycles, the codebase is mature. The single critical gap this cycle: the project's own declared lint gate (flake8) is failing with 33 errors. The review aggregate from cycle 47 reported "zero new findings" but did not actually run the lint gate. This is a self-discipline gap in the review process itself.
 
 ## New Findings
 
-### CRIT46-01: matched_sensors data loss in merge_camera_data — semantic ambiguity between [] and None
+### F48-CRIT-01: Review process did not enforce its own gates
+- **Severity:** MEDIUM | **Confidence:** HIGH
+- **Why it's a problem:** Cycle 47 aggregate claimed all is well, yet `flake8` (declared gate in `setup.cfg`) reports 33 errors. The review fan-out should have surfaced this.
+- **Fix:** This cycle adds the missing finding (F48-01) and triggers the implementation step to clean up.
 
-**File:** `pixelpitch.py`, merge_camera_data (lines 439-521)
-**Severity:** MEDIUM | **Confidence:** HIGH
+### F48-CRIT-02: Repeated `models.SpecDerived` / `models.Spec` imports in tests but never used
+- **File:** `tests/test_parsers_offline.py` lines 594, 666, 845, 977, 1244, 1822, 1856
+- **Severity:** LOW | **Confidence:** HIGH
+- **Why it's a problem:** Suggests copy-paste pattern in test scaffolding without subsequent cleanup. The linter flags it, and removing them is trivial.
 
-The merge_camera_data function has a systematic gap in its field preservation logic: `matched_sensors` is not included in the set of fields checked for preservation from existing data. This is because the field preservation code was written to check `if new_spec.X is None and existing_spec.X is not None`, which works for fields that default to `None` but fails for `matched_sensors` which defaults to `[]` (empty list) rather than `None`.
+## Confidence Summary
 
-The semantic ambiguity is the core problem: `matched_sensors=[]` can mean either "we checked the sensors database and found no matches" (authoritative) or "we did not check the sensors database" (non-authoritative). The current code cannot distinguish these cases.
-
-When `derive_spec` is called with `sensors_db=None` (the default for `derive_specs` which loads the DB), it calls `match_sensors` only when `sensors_db` is truthy. When `sensors_db` is `None` or empty, `matched_sensors` is set to `[]` — the same value as "checked and found nothing."
-
-**Concrete failure scenario:**
-1. Previous build cycle: Canon R5 gets `matched_sensors=['IMX309', 'IMX366', 'IMX609']` from sensors_db
-2. This data is written to `camera-data.csv` in dist/
-3. Next build cycle: `sensors.json` is missing/corrupt (e.g., git merge conflict)
-4. `derive_specs` -> `derive_spec(spec, {})` -> `matched_sensors=[]`
-5. `merge_camera_data` overwrites `['IMX309', 'IMX366', 'IMX609']` with `[]`
-6. CSV download loses sensor match information
-
-**Fix:** Make `derive_spec` return `matched_sensors=None` when `sensors_db` is `None` or empty (meaning "not checked"), and `matched_sensors=[]` only when the database was actually consulted. Then add `matched_sensors` preservation in `merge_camera_data` following the same pattern as other fields: preserve from existing when new is `None`.
-
----
-
-## Summary
-
-- CRIT46-01 (MEDIUM): matched_sensors data loss in merge_camera_data — semantic ambiguity between [] and None
+| Finding     | Severity | Confidence |
+|-------------|----------|------------|
+| F48-CRIT-01 | MEDIUM   | HIGH       |
+| F48-CRIT-02 | LOW      | HIGH       |

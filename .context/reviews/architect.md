@@ -1,34 +1,27 @@
-# Architect Review — Cycle 46
+# Architect Review — Cycle 48
 
-**Date:** 2026-04-28
+**Date:** 2026-04-29
 **Reviewer:** architect
 
-## Previous Findings Status
+## Architectural Assessment
 
-ARCH45-01 (GSMArena regex word boundary) — COMPLETED. Fix applied.
+The codebase architecture has not changed since cycle 47. Layering is clean: `models.py` (data shapes) → `sources/*` (per-source parsers) → `pixelpitch.py` (merge, derive, render). No circular imports.
 
-## New Findings
+## New Findings (Cycle 48)
 
-### ARCH46-01: matched_sensors field has no sentinel for "not checked" vs "checked, empty"
+### F48-ARCH-01: `pixelpitch.py:47` E402 — `sys.path` insert before `models` import is intentional
+- **File:** `pixelpitch.py:47`
+- **Severity:** LOW | **Confidence:** HIGH
+- **Why it's flagged:** flake8 E402 — module-level imports after a non-import statement.
+- **Why it's intentional:** The `sys.path.insert` is required to make `models` importable when run as a script.
+- **Fix:** Add a targeted `# noqa: E402` to the affected import line(s) so the lint gate stays clean without restructuring imports. Same applies to `tests/test_parsers_offline.py:25` and `tests/test_sources.py:23-25`.
 
-**File:** `pixelpitch.py` (derive_spec, merge_camera_data), `models.py` (SpecDerived)
-**Severity:** MEDIUM | **Confidence:** HIGH
+## Confirmation
 
-The `SpecDerived.matched_sensors` field uses `Optional[List[str]]` with default `None`, but `derive_spec` always initializes it as `[]` (empty list) regardless of whether the sensors database was consulted. This creates a semantic ambiguity: `matched_sensors=[]` can mean either "we checked and found no matches" or "we didn't check at all."
+No new structural issues. Source registry still serves as a clean contract.
 
-This ambiguity causes data loss in `merge_camera_data`, which preserves fields from existing data only when the new value is `None`. Since `derive_spec` always returns `[]` (never `None`), the preservation check `if new_spec.matched_sensors is None and existing_spec.matched_sensors is not None` never triggers, and existing sensor match data is silently overwritten.
+## Confidence Summary
 
-The architectural fix is to use the `None` sentinel correctly:
-- `matched_sensors=None` means "not checked" (sensors_db was not available)
-- `matched_sensors=[]` means "checked, found nothing" (sensors_db was consulted but no matches)
-- `matched_sensors=['IMX455']` means "checked, found matches"
-
-This is consistent with how other `Optional` fields work in the codebase (e.g., `spec.size=None` means "unknown" while `spec.size=(36.0, 24.0)` means "known").
-
-**Fix:** In `derive_spec`, set `matched_sensors=None` when `sensors_db` is falsy, and `matched_sensors=[]` only when `sensors_db` was consulted but found no matches. Then add preservation logic in `merge_camera_data`.
-
----
-
-## Summary
-
-- ARCH46-01 (MEDIUM): matched_sensors field has no sentinel for "not checked" vs "checked, empty"
+| Finding     | Severity | Confidence |
+|-------------|----------|------------|
+| F48-ARCH-01 | LOW      | HIGH       |

@@ -1,36 +1,29 @@
-# Debugger Review — Cycle 46
+# Debugger Review — Cycle 48
 
-**Date:** 2026-04-28
+**Date:** 2026-04-29
 **Reviewer:** debugger
 
-## Previous Findings Status
+## Latent Bug Surface
 
-DBG45-01 (GSMArena decimal MP regex) — COMPLETED. Fix applied and tested.
+After 47 cycles, latent bug surface is small. The cycle 46 matched_sensors=None sentinel and cycle 45 decimal-MP regex fix closed the most recent surfaces.
 
-## New Findings
+## New Findings (Cycle 48)
 
-### DBG46-01: matched_sensors silently lost in merge_camera_data when sensors_db unavailable
+### F48-DEBUG-01: `pixelpitch.py:1240` f-string with no placeholder
+- **File:** `pixelpitch.py:1240`
+- **Severity:** LOW | **Confidence:** HIGH
+- **Why it's a problem:** F541 — `f"..."` with no `{}` substitution. While not a bug, it's a code smell often indicating either a placeholder was deleted from a string or the `f` was added by mistake. Worth confirming intent.
+- **Fix:** Convert to plain string if intentional, or restore the missing placeholder.
 
-**File:** `pixelpitch.py`, merge_camera_data (lines 439-521)
-**Severity:** MEDIUM | **Confidence:** HIGH
+### F48-DEBUG-02: `merged2` unused — possible missed assertion
+- **File:** `tests/test_parsers_offline.py:1271`
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Why it's a problem:** F841. If the test author intended `merged2` to verify a post-merge state, the assertion is missing. Otherwise dead code.
+- **Fix:** Confirm and either add assertion or drop assignment.
 
-**Failure mode:** When `sensors.json` is missing or corrupt (e.g., during a git merge conflict), `load_sensors_database()` returns `{}`. `derive_spec` then sets `matched_sensors=[]` for all cameras. During merge, the `[]` overwrites existing `matched_sensors` data from the previous CSV because the merge code only preserves `None` values.
+## Confidence Summary
 
-**Concrete failure scenario:**
-1. Build succeeds with `sensors.json` available -> Canon R5 gets `matched_sensors=['IMX309', 'IMX366', 'IMX609']`
-2. CSV is written to dist/ with sensor data
-3. Next build: `sensors.json` is missing (git conflict, accidental deletion)
-4. `derive_spec(spec, {})` -> `matched_sensors=[]`
-5. `merge_camera_data` overwrites `['IMX309', 'IMX366', 'IMX609']` with `[]`
-6. CSV loses sensor match data
-7. On subsequent builds (even with sensors.json restored), the sensor data is not in the existing CSV, so it must be re-derived
-
-**Why it was missed for 45 cycles:** No test covers `matched_sensors` preservation in merge. The template doesn't display `matched_sensors` (it's in a TODO block), so the bug doesn't produce visible UI changes. It only affects the CSV download.
-
-**Fix:** Return `matched_sensors=None` from `derive_spec` when `sensors_db` is falsy. Add `matched_sensors` preservation in `merge_camera_data`.
-
----
-
-## Summary
-
-- DBG46-01 (MEDIUM): matched_sensors silently lost in merge_camera_data when sensors_db unavailable
+| Finding      | Severity | Confidence |
+|--------------|----------|------------|
+| F48-DEBUG-01 | LOW      | HIGH       |
+| F48-DEBUG-02 | LOW      | MEDIUM     |
