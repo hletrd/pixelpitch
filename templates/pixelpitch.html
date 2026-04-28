@@ -73,7 +73,7 @@
           {% endif %}
         </td>
         <td>
-          {% if spec.spec.mpix is not none %}
+          {% if spec.spec.mpix is not none and spec.spec.mpix != 0.0 %}
             {{ spec.spec.mpix|round(1) }} MP
           {% else %}
             <span class="text-muted">unknown</span>
@@ -81,7 +81,7 @@
         </td>
         {% if not without_pitch %}
         <td>
-          {% if spec.pitch is not none %}
+          {% if spec.pitch is not none and spec.pitch != 0.0 %}
             {{ spec.pitch|round(1) }} µm
           {% else %}
             <span class="text-muted">unknown</span>
