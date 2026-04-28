@@ -1,12 +1,12 @@
 # Plan: Cycle 43 Findings — Source Size Provenance, Redundant Pitch Write
 
 **Created:** 2026-04-28
-**Status:** IN PROGRESS
+**Status:** COMPLETED
 **Source Reviews:** CR43-02, CR43-02b, SR43-01, CRIT43-01, V43-02, TR43-01, ARCH43-01, DBG43-01, DBG43-02, DES43-01, DOC43-01, DOC43-02, TE43-01, TE43-02, CR43-01, CRIT43-02, V43-03, DBG43-03
 
 ---
 
-## Task 1: Fix GSMArena spec.size provenance — stop setting spec.size from TYPE_SIZE lookup — C43-01 (core)
+## Task 1: Fix GSMArena spec.size provenance — stop setting spec.size from TYPE_SIZE lookup — C43-01 (core) [COMPLETED]
 
 **Finding:** C43-01 (14-agent consensus)
 **Severity:** MEDIUM | **Confidence:** HIGH
@@ -60,7 +60,7 @@ Also update the test in `tests/test_parsers_offline.py` for the GSMArena fixture
 
 ---
 
-## Task 2: Fix CineD spec.size provenance — stop setting spec.size from FORMAT_TO_MM lookup — C43-01
+## Task 2: Fix CineD spec.size provenance — stop setting spec.size from FORMAT_TO_MM lookup — C43-01 [COMPLETED]
 
 **Finding:** C43-01 (14-agent consensus)
 **Severity:** MEDIUM | **Confidence:** HIGH
@@ -100,37 +100,46 @@ Also update the module docstring to match: currently says "If only the format cl
 
 ---
 
-## Task 3: Remove redundant `derived.pitch` write from C42-01 fix — C43-02
+## Task 3: CLARIFY (not remove) `derived.pitch` write from C42-01 fix — C43-02 INCORRECT
 
-**Finding:** C43-02 (4-agent agreement)
-**Severity:** LOW | **Confidence:** HIGH
+**Finding:** C43-02 (4-agent agreement) — **FINDING WAS INCORRECT**
+**Severity:** LOW | **Confidence:** HIGH (that the finding was wrong)
 **Files:** `pixelpitch.py`, line 467
 
-### Implementation
+### Problem
 
-In `pixelpitch.py`, `merge_camera_data`, remove `new_spec.pitch = existing_spec.pitch` from the C42-01 fix block:
+C43-02 claimed the `derived.pitch` write was redundant because the pitch
+consistency check (lines 498-501) would handle it. This analysis was wrong.
 
-**Before (lines 464-467):**
+The pitch consistency check only fires when `spec.pitch is not None`. When
+`spec.pitch is None` (common case for cameras without direct pitch measurement),
+the pitch was computed from area+mpix. When area is corrected by the size
+consistency fix, the old pitch based on wrong area is stale. The
+`new_spec.pitch = existing_spec.pitch` line is needed to correct it.
+
+Initial commit 07fbdda incorrectly removed the line; a follow-up commit
+3c55574 added it back with improved comments explaining WHY it is needed.
+
+### Implementation (COMPLETED — keep the write, add better comments)
+
+**Final code (lines 464-473):**
 ```python
 if new_spec.size is not None and new_spec.size != new_spec.spec.size:
     new_spec.size = existing_spec.size
     new_spec.area = existing_spec.area
+    # derived.pitch must also be overridden because pixel pitch
+    # is computed from area (pitch = f(area, mpix)). When area
+    # changes, the pitch based on the old area is wrong.
+    # The pitch consistency check below (lines 498-501) only
+    # handles the case where spec.pitch (direct measurement) is
+    # preserved. When spec.pitch is None, the pitch was computed
+    # from the old (wrong) area and must be corrected here.
     new_spec.pitch = existing_spec.pitch
-```
-
-**After:**
-```python
-if new_spec.size is not None and new_spec.size != new_spec.spec.size:
-    new_spec.size = existing_spec.size
-    new_spec.area = existing_spec.area
-    # Note: derived.pitch is NOT overridden here because the
-    # pitch consistency check at lines 498-501 already ensures
-    # derived.pitch tracks spec.pitch when the latter is preserved.
 ```
 
 ---
 
-## Task 4: Update test for GSMArena spec.size=None — C43-01 test
+## Task 4: Update test for GSMArena spec.size=None — C43-01 test [COMPLETED]
 
 **Finding:** TE43-01
 **Severity:** MEDIUM | **Confidence:** HIGH
@@ -201,7 +210,7 @@ def test_merge_gsmarena_measured_preserved():
 
 ---
 
-## Task 5: Update GSMArena module docstring and remove unused import/variable — C43-01 cleanup
+## Task 5: Update GSMArena module docstring and remove unused import/variable — C43-01 cleanup [COMPLETED]
 
 **Finding:** DOC43-01
 **Severity:** LOW | **Confidence:** HIGH
@@ -215,7 +224,7 @@ def test_merge_gsmarena_measured_preserved():
 
 ---
 
-## Task 6: Update CineD module docstring — C43-01 cleanup
+## Task 6: Update CineD module docstring — C43-01 cleanup [COMPLETED]
 
 **Finding:** DOC43-02
 **Severity:** LOW | **Confidence:** HIGH
