@@ -399,7 +399,13 @@ def merge_camera_data(
         if key in existing_by_key:
             existing_spec = existing_by_key[key]
             new_spec.id = existing_spec.id
-            # Preserve year from existing data if new data has none
+            # Preserve fields from existing data if new data has None
+            if new_spec.spec.type is None and existing_spec.spec.type is not None:
+                new_spec.spec.type = existing_spec.spec.type
+            if new_spec.spec.size is None and existing_spec.spec.size is not None:
+                new_spec.spec.size = existing_spec.spec.size
+            if new_spec.spec.pitch is None and existing_spec.spec.pitch is not None:
+                new_spec.spec.pitch = existing_spec.spec.pitch
             if new_spec.spec.year is None and existing_spec.spec.year is not None:
                 new_spec.spec.year = existing_spec.spec.year
             elif (

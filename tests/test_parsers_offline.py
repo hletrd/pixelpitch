@@ -673,6 +673,51 @@ def test_merge_camera_data():
            sum(1 for s in merged6 if s.spec.name == "Canon EOS 250D"), 1)
 
 
+def test_merge_field_preservation():
+    section("merge_camera_data field preservation")
+    import pixelpitch as pp
+    from models import Spec, SpecDerived
+
+    def derive(name, category, size, mpix, year, type_val=None, pitch_val=None):
+        spec = Spec(name=name, category=category, type=type_val,
+                    size=size, pitch=pitch_val, mpix=mpix, year=year)
+        return pp.derive_spec(spec)
+
+    # Type preservation: new has None, existing has '1/2.3'
+    existing_t = [derive("Cam T", "fixed", (5.0, 3.7), 10.0, 2020, type_val="1/2.3")]
+    new_t = [derive("Cam T", "fixed", (5.0, 3.7), 10.0, 2020, type_val=None)]
+    merged_t = pp.merge_camera_data(new_t, existing_t)
+    expect("merge: preserves type from existing",
+           merged_t[0].spec.type, "1/2.3")
+
+    # Size preservation: new has None, existing has size
+    existing_s = [derive("Cam S", "fixed", (5.0, 3.7), 10.0, 2020)]
+    new_s = [derive("Cam S", "fixed", None, 10.0, 2020)]
+    merged_s = pp.merge_camera_data(new_s, existing_s)
+    expect("merge: preserves size from existing",
+           merged_s[0].spec.size, (5.0, 3.7), tol=0.01)
+
+    # Pitch preservation: new has None, existing has pitch
+    existing_p = [derive("Cam P", "fixed", (5.0, 3.7), 10.0, 2020, pitch_val=2.0)]
+    new_p = [derive("Cam P", "fixed", (5.0, 3.7), 10.0, 2020, pitch_val=None)]
+    merged_p = pp.merge_camera_data(new_p, existing_p)
+    expect("merge: preserves pitch from existing",
+           merged_p[0].spec.pitch, 2.0, tol=0.01)
+
+    # New values still override existing values
+    existing_ov = [derive("Cam OV", "fixed", (5.0, 3.7), 10.0, 2020,
+                          type_val="1/2.3", pitch_val=2.0)]
+    new_ov = [derive("Cam OV", "fixed", (7.6, 5.7), 12.0, 2021,
+                     type_val="1/1.7", pitch_val=3.0)]
+    merged_ov = pp.merge_camera_data(new_ov, existing_ov)
+    expect("merge: new type overrides existing",
+           merged_ov[0].spec.type, "1/1.7")
+    expect("merge: new size overrides existing",
+           merged_ov[0].spec.size, (7.6, 5.7), tol=0.01)
+    expect("merge: new pitch overrides existing",
+           merged_ov[0].spec.pitch, 3.0, tol=0.01)
+
+
 # --------------------------------------------------------------------------
 # sensor_size_from_type
 
@@ -1026,6 +1071,7 @@ def main():
     test_gsmarena_select_main_lens()
     test_create_camera_key_year_mismatch()
     test_category_dedup()
+    test_merge_field_preservation()
 
     print("\n" + ("=" * 60))
     if _failures:
