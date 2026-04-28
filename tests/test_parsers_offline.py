@@ -89,6 +89,30 @@ def test_imaging_resource():
            imaging_resource._body_category("", "Full-Frame", ""),
            "mirrorless")
 
+    # _body_category name-based action cam detection
+    expect("IR body category GoPro name",
+           imaging_resource._body_category("", "", "GoPro Hero 12"), "actioncam")
+    expect("IR body category Insta360 name",
+           imaging_resource._body_category("", "", "Insta360 X4"), "actioncam")
+    expect("IR body category Osmo Action name",
+           imaging_resource._body_category("", "", "DJI Osmo Action 4"), "actioncam")
+
+    # _body_category name-based camcorder detection
+    expect("IR body category Handycam name",
+           imaging_resource._body_category("", "", "Sony Handycam FDR-AX43"), "camcorder")
+
+    # _body_category sensor format fallbacks
+    expect("IR body category APS-C sensor format",
+           imaging_resource._body_category("", "APS-C", ""), "mirrorless")
+    expect("IR body category Micro Four Thirds sensor format",
+           imaging_resource._body_category("", "Micro Four Thirds", ""), "mirrorless")
+    expect("IR body category Medium Format sensor format",
+           imaging_resource._body_category("", "Medium Format", ""), "mirrorless")
+
+    # _body_category final fallback to "fixed" for small sensor formats
+    expect("IR body category 1/2.3 sensor format",
+           imaging_resource._body_category("", "1/2.3", ""), "fixed")
+
     # _parse_camera_name with modern spec URL (review/specifications/)
     name_modern = imaging_resource._parse_camera_name(
         {"Model Name": "Sony Alpha ILCE-A7 IV"},
