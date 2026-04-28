@@ -1,28 +1,27 @@
-# Document Specialist — Cycle 50
+# document-specialist Review (Cycle 51)
 
 **Date:** 2026-04-29
-**HEAD:** `ed45eed`
+**HEAD:** 3b35dcc
 
-## Documentation review
+## Inventory
 
-- README.md — present at repo root.
-- LICENSE — present.
-- Module docstrings — present and accurate in every source module.
-- Function docstrings — comprehensive in `pixelpitch.py`.
-- Comments — load-bearing comments (e.g., merge_camera_data preservation rationale) are correct.
+- `README.md` — describes data sources and CLI.
+- `.context/plans/` — implementation plans, several cycles closed, several deferred.
+- Inline docstrings — present on most functions in `pixelpitch.py` and sources.
+- No external API doc; no Sphinx site.
 
 ## Findings
 
-No code-doc mismatches. Documentation is accurate.
+### F51-DS-01: `pixelpitch.py:920-924` comment documents the `;` invariant; matches code — OK
+- The cycle-50 fix added an inline comment explaining the round-trip contract. The comment
+  is accurate and aligned with `parse_existing_csv` (line 373). No mismatch.
 
-## Verified safe
+### F51-DS-02: `deferred.md` references finding IDs (e.g. F18, F23) without per-cycle anchors — LOW
+- **File:** `.context/plans/deferred.md`
+- **Detail:** Many finding IDs lack the `Fcycle-NN` form used in newer entries. Back-references
+  across cycles are harder.
+- **Fix:** Use `Fcycle-NN` form for new entries (already done for F49-02/F49-04). No retrofit.
+- **Confidence:** HIGH
+- **Severity:** LOW (process)
 
-- `derive_spec` docstring (`pixelpitch.py:765-790`) accurately describes the matched_sensors `None` vs `[]` semantics.
-- `merge_camera_data` docstring (`pixelpitch.py:402-425`) is current and reflects the C22-01 / C46-01 fixes.
-- `parse_existing_csv` docstring (`pixelpitch.py:285-292`) accurately describes RFC 4180 + has_id schema detection.
-- `pixel_pitch` docstring (`pixelpitch.py:179-186`) accurately documents the 0.0 sentinel.
-- `sensor_size_from_type` docstring (`pixelpitch.py:144-156`) documents the lookup-table-vs-computed fallback and the invalid-input None return.
-
-## Summary
-
-No new findings. Documentation-code parity is intact.
+## No external doc-vs-code mismatches identified this cycle.

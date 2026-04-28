@@ -1,31 +1,27 @@
-# Test Engineer — Cycle 50
+# test-engineer Review (Cycle 51)
 
 **Date:** 2026-04-29
-**HEAD:** `ed45eed`
+**HEAD:** 3b35dcc
 
 ## Inventory
 
-- `tests/test_parsers_offline.py` (2096 LOC) — single-file offline suite
-- `tests/test_sources.py` (111 LOC) — source-module sanity
-- `tests/fixtures/` — captured HTML samples
+- `tests/test_parsers_offline.py` (2155 LOC): comprehensive, runs as a script (no pytest).
+- `tests/test_sources.py` (111 LOC): live-fetch, optional.
+- `tests/fixtures/`: HTML fixtures.
+- Round-trip tests for matched_sensors verbatim and `;`-guard added cycle 50.
 
 ## Findings
 
-### F50-04 — No round-trip test for `write_csv` → `parse_existing_csv` matched_sensors (LOW / HIGH)
-- File: `tests/test_parsers_offline.py`
-- `write_csv` joins `matched_sensors` with `;` (`pixelpitch.py:920-922`). `parse_existing_csv` splits on `;` (`pixelpitch.py:373`). Each side is tested independently, but no test asserts the round-trip preserves the list verbatim, including ordering and multi-element cases.
-- Add a small round-trip test that:
-  1. Builds a `SpecDerived` with `matched_sensors=["IMX455", "IMX571", "IMX989"]`.
-  2. Calls `write_csv` to a `tempfile.NamedTemporaryFile`.
-  3. Reads the file back with `parse_existing_csv`.
-  4. Asserts `parsed[0].matched_sensors == ["IMX455", "IMX571", "IMX989"]`.
+### F51-T-01: No round-trip test for whitespace in `matched_sensors` tokens — LOW / MEDIUM
+- **File:** `tests/test_parsers_offline.py`
+- **Detail:** Pairs with code-reviewer F51-01. If `parse_existing_csv` is updated to strip
+  whitespace (recommended fragility-defense), an asymmetry test would catch regressions.
+  Currently no test asserts that hand-edited CSV with `IMX455; IMX571` yields exactly
+  `["IMX455", "IMX571"]` after parse.
+- **Fix:** Add a minimal test that parses a synthetic CSV row containing `IMX455; IMX571 ; IMX989`
+  in the matched_sensors column via `parse_existing_csv`, and asserts the parsed list is
+  `["IMX455", "IMX571", "IMX989"]`. Companion to the F51-01 strip fix.
+- **Confidence:** HIGH (test gap is real; prerequisite is the F51-01 strip fix)
+- **Severity:** LOW
 
-## Confirmations
-- write_csv non-finite float guards (cycle 40 fixes) covered by existing tests.
-- matched_sensors merge-preservation (cycle 46) covered by existing tests.
-- Sensor-size-from-type phone formats (cycle 8) covered.
-- CSV parser BOM handling (cycle 14-15) covered.
-
-## Summary
-
-Single new finding (F50-04): a small round-trip regression net for matched_sensors. Test surface otherwise solid; the 2096-line offline suite exercises every parser and the merge pipeline thoroughly.
+## No other test gaps identified this cycle.

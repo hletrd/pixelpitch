@@ -1,28 +1,27 @@
-# Security Reviewer — Cycle 50
+# security-reviewer Review (Cycle 51)
 
 **Date:** 2026-04-29
-**HEAD:** `ed45eed`
+**HEAD:** 3b35dcc
 
 ## Inventory
 
-- `sources/__init__.py:http_get` — only outbound HTTP path
-- `pixelpitch.py:_create_browser` — DrissionPage browser
-- `.github/workflows/github-pages.yml` — CI pipeline (write permissions)
-- `templates/*.html` — autoescape enabled (`select_autoescape(["html", "xml"])`)
+- HTTP fetch: `sources/__init__.py:http_get` (urllib, retries, no SSRF guard).
+- Browser: DrissionPage (DSLR/cined, macOS dev mode with port 9222 bound to 127.0.0.1).
+- Templates: Jinja2 (autoescape on for HTML files).
+- Output: static HTML + CSV in `dist/`.
+- Secrets: none in repo; CI uses GITHUB_TOKEN implicit.
 
 ## Findings
 
-No new security findings this cycle.
+### Carry-forward (deferred per repo policy)
 
-## Verified safe
+- C10-07: HTTP redirect chain not validated — SSRF theoretical, all source URLs are hardcoded
+  trusted domains; CI-only.
+- C10-08: Local 127.0.0.1:9222 remote-debug port; macOS dev only.
+- F34: `importlib.import_module` whitelisted by `SOURCE_REGISTRY`.
 
-- `select_autoescape(["html", "xml"])` covers all rendered output (`pixelpitch.py:889`).
-- `importlib.import_module` use is whitelisted via `SOURCE_REGISTRY`; deferred F34 still applies.
-- `--remote-debugging-port=9222` is bound to `127.0.0.1` and only enabled on macOS dev (deferred C10-08).
-- No secrets in repo; CI uses GitHub-issued `GITHUB_TOKEN` only.
-- SRI hashes still in place on jQuery + Bootstrap CDN refs (templates/index.html).
-- robots.txt blocks AI-named UAs at the source side; the fetcher uses a non-AI UA (`sources/__init__.py:39-44`).
+### No new security findings this cycle.
 
-## Summary
-
-Risk surface unchanged from cycle 49. No new attack surface introduced.
+The cycle-50 `;`-bomb defensive filter is a small data-integrity measure, not a security
+fix. No injection, no auth flow, no secrets, no shell exec on user-controlled input added
+this cycle.

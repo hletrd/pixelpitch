@@ -1,34 +1,44 @@
-# Code Reviewer — Cycle 50
+# code-reviewer Review (Cycle 51)
 
 **Date:** 2026-04-29
-**HEAD:** `ed45eed` · **Gates:** flake8 0 errors · `tests.test_parsers_offline` PASS
+**HEAD:** 3b35dcc (post-cycle-50 plan committed)
+**Gates:** flake8 0 errors; `python3 -m tests.test_parsers_offline` PASS
 
 ## Inventory
 
-- `pixelpitch.py` (1291 LOC) — main pipeline
-- `models.py` (27 LOC) — Spec / SpecDerived dataclasses
-- `sources/__init__.py` (110 LOC) — shared regex + http_get
-- `sources/{apotelyt,cined,digicamdb,gsmarena,imaging_resource,openmvg}.py`
-- `tests/test_parsers_offline.py` (2096 LOC), `tests/test_sources.py` (111 LOC)
-- `templates/{index,pixelpitch,about}.html`
-- `setup.cfg`, `.github/workflows/github-pages.yml`
+- Reviewed: `pixelpitch.py` (1306 LOC), `models.py`, `sources/*.py`, `tests/*.py`,
+  `templates/*.html`, `.github/workflows/github-pages.yml`, `setup.cfg`, `requirements.txt`,
+  `.context/reviews/_aggregate.md` (cycle 50 baseline), `.context/plans/deferred.md`.
 
-## Findings
+## New Findings
 
-### F50-01 — `git pull --rebase || true` masks rebase failures (LOW / HIGH)
-- File: `.github/workflows/github-pages.yml:108`
-- Carry-forward of F49-02; not yet implemented. The subsequent `git push` would fail noisily on non-fast-forward, but the rebase step shows green misleadingly. Recommend dropping `|| true` or replacing with explicit error reporting.
+### F51-01: `parse_existing_csv` does not strip whitespace around `matched_sensors` tokens — LOW / MEDIUM
+- **File:** `pixelpitch.py:373`
+- **Detail:** `matched_sensors = [s for s in sensors_str.split(";") if s] if sensors_str else []`.
+  The split does not call `.strip()` on each element. Today this is fine because `write_csv`
+  produces tokens with no surrounding whitespace, but the pairing is only verified by the
+  cycle-50 round-trip test on a single shape. If a hand-edited CSV (or future writer change)
+  introduces ` IMX455` with a leading space, it would parse as a distinct token from `IMX455`
+  and round-trip through the next CSV write, producing phantom tokens.
+- **Failure scenario:** A user with the dist artifact open in Excel inserts a row with
+  `IMX455; IMX571`. After save, `parse_existing_csv` produces `["IMX455", " IMX571"]`. The
+  merge logic preserves these verbatim and they round-trip through the next CSV write. No
+  crash, but the sensor list contains a whitespace-prefixed phantom.
+- **Fix:** Add `.strip()` in the comprehension:
+  `[s.strip() for s in sensors_str.split(";") if s.strip()]`.
+- **Confidence:** MEDIUM
+- **Severity:** LOW (no current trigger)
 
-### F50-03 — matched_sensors round-trip uses unescaped `;` delimiter (LOW / MEDIUM)
-- File: `pixelpitch.py:373` (split) and `pixelpitch.py:920-922` (join)
-- `write_csv` joins with `;`, `parse_existing_csv` splits on `;`. No escape. Currently safe because no sensor name in `sensors.json` contains `;`, but undocumented invariant. Either document the contract with an assertion in `write_csv`, or migrate to a safer delimiter.
+### F51-02: `write_csv` matched_sensors guard mutates the joined string but not the SpecDerived — LOW (informational)
+- **File:** `pixelpitch.py:925-937`
+- **Detail:** When an element of `derived.matched_sensors` contains `;`, the writer drops it
+  from the *output string* but the in-memory `derived.matched_sensors` retains the offending
+  element. This is the intended scope of the cycle-50 fix, but the comment at lines 920-924
+  could note explicitly that the in-memory list is unchanged.
+- **Fix:** Cosmetic comment addition only. Out of scope unless paired with another change.
+- **Confidence:** HIGH
+- **Severity:** LOW (informational; no behavior change requested)
 
-## Confirmations
-- F49-01 fully resolved (CI now runs flake8). Verified by reading `.github/workflows/github-pages.yml:46-50`.
-- All cycle 1-48 fixes still in place.
-- Field-preservation logic in `merge_camera_data` (lines 408-555) handles the C46-01 matched_sensors edge correctly.
-- write_csv non-finite float guards (lines 916-918) work as documented.
+## Repeated Findings (carry-forward)
 
-## Confidence Summary
-- HIGH: F50-01 logic; F49-01 resolved.
-- MEDIUM: F50-03 (no current trigger; defense-in-depth).
+None new. F50-01..04 are fully resolved at this cycle's HEAD (commits 5f2a3fd, 9dc88fa, 5b31802).

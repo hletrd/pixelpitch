@@ -1,32 +1,28 @@
-# Designer — Cycle 50
+# designer Review (Cycle 51)
 
 **Date:** 2026-04-29
-**HEAD:** `ed45eed`
+**HEAD:** 3b35dcc
 
-## UI/UX presence detection
+## UI/UX presence
 
-The repo contains:
-- `templates/index.html` — site root with Bootstrap 5 navbar layout
-- `templates/pixelpitch.html` — data table page (D3 box plot + scatter plot)
-- `templates/about.html` — about page
-- `dist/*.html` — rendered static outputs
+- `templates/index.html`, `templates/about.html`, `templates/pixelpitch.html` (Jinja2).
+- Bootstrap-based, D3-driven box plot and scatter plot.
+- This is a UI-bearing repo; the designer review is in scope.
 
-UI/UX is present. The build is the deliverable; no dev server needed.
+## Carry-forward (deferred)
 
-## Web review
+- F35: D3 box plot height hardcoded — defer.
+- F36: No skip-to-content link — defer (technical-user audience).
+- F37: Filter dropdown lacks current-state indicator — defer.
+- F38: No loading indicator for large datasets — defer.
+- F39: Navbar 9 items on mobile — Bootstrap collapse handles it.
+- C11-08: Scatter plot label overlap with 20+ years — defer.
 
-Static-template inspection only. No template edits in cycles 49 or 50, so no regressions are possible.
+## New findings this cycle
 
-## Findings
+None. Templates were not modified in cycles 49-50; UI surface unchanged.
 
-No new UI/UX findings. All previously identified UX nits (F35–F39, C11-08) remain validly deferred per documented exit criteria.
+## Methodology note
 
-## Confirmations
-
-- SRI hashes still present on CDN script tags (Bootstrap CSS+JS, jQuery).
-- LD+JSON `temporalCoverage` is current (cycle 8 fix held).
-- D3 box plot still renders client-side; no server-side regression.
-
-## Summary
-
-No regressions, no new UI/UX findings.
+Per the prompt's multimodal caveat, this review is text-extractable. No `agent-browser`
+session was launched because no UI-touching commits exist since the last designer review.

@@ -1,65 +1,78 @@
-# Aggregate Review (Cycle 50) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 51) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-29
-**Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
+**HEAD:** 3b35dcc
+**Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier,
+test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-49 Status
+## Cycle 1-50 Status
 
-All previous fixes confirmed still working. Both gates pass at HEAD = `ed45eed`:
-- `flake8` — 0 errors (now also enforced in CI by `.github/workflows/github-pages.yml`)
+All previous fixes confirmed still working. Both gates pass at HEAD = `3b35dcc`:
+- `flake8` — 0 errors (also enforced in CI by `.github/workflows/github-pages.yml`)
 - `python3 -m tests.test_parsers_offline` — PASS
 
-No regressions detected. Cycle 49's headline finding F49-01 (CI flake8 enforcement) is fully resolved (commit `4a10b4d`).
+No regressions detected. Cycle 50 findings F50-01..04 are fully resolved (commits `5f2a3fd`,
+`9dc88fa`, `5b31802`, `3b35dcc`).
 
-## Cycle 50 New Findings
+## Cycle 51 New Findings
 
-### F50-01 (consensus): `git pull --rebase || true` still swallows rebase failures — LOW / HIGH
+### F51-01 (consensus): `parse_existing_csv` does not strip whitespace around `matched_sensors` tokens — LOW / MEDIUM
 
-- **Flagged by:** code-reviewer (carry-forward of F49-02), critic, verifier
-- **File:** `.github/workflows/github-pages.yml`, line 108
-- **Detail:** The defensive `|| true` after `git pull --rebase` masks a true rebase conflict. Although the subsequent `git push` will fail noisily on a non-fast-forward, the audit trail in workflow logs is muddled: the rebase-failed step shows green, then the push step shows red, making it harder for an operator to identify the root cause.
-- **Failure scenario:** Two simultaneous workflow runs (e.g. manual dispatch coinciding with the monthly cron, or a manual master commit during the workflow window) produce non-fast-forward divergence. The rebase step appears to succeed, then push fails with a misleading error, costing operator-debug time.
-- **Fix:** Replace `git pull --rebase || true` with one of:
-  - `git pull --rebase` (let conflicts fail the step explicitly), or
-  - `git pull --rebase || { echo "::error::rebase failed"; exit 1; }`
-- **Confidence:** HIGH (logic is unambiguous)
-- **Severity:** LOW (idempotent monthly workflow, low frequency of concurrent commits)
+- **Flagged by:** code-reviewer, debugger, tracer, test-engineer
+- **File:** `pixelpitch.py:373`
+- **Detail:** `matched_sensors = [s for s in sensors_str.split(";") if s] if sensors_str else []`.
+  No `.strip()` per element. If a hand-edited CSV introduces `IMX455; IMX571` (space after
+  delimiter, common when editing in Excel/text-editor), the parser yields `["IMX455", " IMX571"]`,
+  which then round-trips through the next CSV write as a phantom token.
+- **Failure scenario:** External CSV edit → phantom whitespace-prefixed sensor name persists.
+  No crash, no security issue, but a data-quality regression that grows over cycles.
+- **Fix:** Replace the comprehension with
+  `[s.strip() for s in sensors_str.split(";") if s.strip()]`. Add a parse-side test for the
+  whitespace tolerance.
+- **Confidence:** MEDIUM
+- **Severity:** LOW (no current trigger; defense-in-depth alongside cycle-50 round-trip test)
 
-### F50-02: Per-agent review files were not refreshed in cycle 49 commit
+### F51-02: `parse_existing_csv` does not deduplicate `matched_sensors` — LOW
 
-- **Flagged by:** verifier
-- **File:** `.context/reviews/*.md` (all 11 per-agent files)
-- **Detail:** The cycle-49 aggregate references findings F49-01 through F49-11, but per-agent files were only lightly updated. This is a process-hygiene issue, not a bug. Re-running the full fan-out each cycle ensures the per-agent files stay in lockstep with the aggregate.
-- **Fix:** This cycle (50) refreshes all per-agent review files alongside the aggregate.
+- **Flagged by:** debugger
+- **File:** `pixelpitch.py:373`
+- **Detail:** A CSV row with `IMX455;IMX455` (e.g. from manual editing) parses as two
+  identical entries. `match_sensors` itself produces unique values (line 253), so the
+  trigger is external-edit only.
+- **Fix:** Either dedup-while-preserving-order in `parse_existing_csv`
+  (`list(dict.fromkeys(...))`), or accept current behavior. Since the F51-01 fix already
+  rewrites the comprehension, fold this into the same change.
+- **Confidence:** MEDIUM
+- **Severity:** LOW (no current trigger)
+
+### F51-03: deferred.md is growing without periodic re-validation — LOW (process)
+
+- **Flagged by:** critic, document-specialist
+- **File:** `.context/plans/deferred.md`
+- **Detail:** ~30 entries spanning cycles 8 → 49. No periodic audit. Some entries may have
+  become moot.
+- **Fix:** Process-only. No code change. Out of scope for cycle 51 implementation.
+- **Confidence:** MEDIUM
+- **Severity:** LOW (process)
+
+### F51-04: Cycle-50 plan bundles three orthogonal fixes — LOW (process)
+
+- **Flagged by:** critic
+- **File:** `.context/plans/C50-01-rebase-mask-and-matched-sensors-roundtrip.md`
+- **Detail:** One plan covers F50-01, F50-03, F50-04. Each was committed independently
+  (right shape) but the plan conflates them.
+- **Fix:** Process-only. Future cycles split plans per finding. No retroactive change.
 - **Confidence:** HIGH
-- **Severity:** N/A (process)
-
-### F50-03: `parse_existing_csv` matched_sensors splits on `";"` without escape — LOW / MEDIUM
-
-- **Flagged by:** code-reviewer, debugger
-- **File:** `pixelpitch.py:373` and `pixelpitch.py:920-922`
-- **Detail:** `write_csv` joins `matched_sensors` with `;` and `parse_existing_csv` splits on the same delimiter. There is no escaping rule — if a sensor name ever contains a literal `;` (e.g. a future "IMX455;v2" datapoint, or imported third-party data), the round-trip would silently corrupt the matched-sensors list. Currently all sensor names in `sensors.json` are alphanumeric so this is theoretical.
-- **Fix:** Either (a) document the contract (sensor names MUST NOT contain `;`) and add an assertion in `write_csv`, or (b) switch to a delimiter unlikely to appear in sensor names (e.g. `|`) with a one-shot migration.
-- **Confidence:** MEDIUM (no current trigger, but no defense)
-- **Severity:** LOW (cosmetic data-loss; matched_sensors is a hint, not authoritative)
-
-### F50-04: No automated test of write_csv → parse_existing_csv round-trip for matched_sensors — LOW / HIGH
-
-- **Flagged by:** test-engineer
-- **File:** `tests/test_parsers_offline.py`
-- **Detail:** Existing tests cover write_csv outputs and parse_existing_csv inputs separately, and there is a recent matched_sensors merge-preservation test. There is no single test that exercises a write_csv → parse_existing_csv → write_csv round-trip on a row carrying multiple matched_sensors entries to confirm the join/split symmetry.
-- **Fix:** Add a small round-trip test in `tests/test_parsers_offline.py` that constructs a `SpecDerived` with `matched_sensors=["IMX455", "IMX571"]`, writes it via `write_csv`, parses it back, and asserts the matched_sensors list is preserved verbatim (and ordered).
-- **Confidence:** HIGH
-- **Severity:** LOW (no current bug, but useful regression net for F50-03 and any future delimiter changes)
+- **Severity:** LOW (process; plan is already complete)
 
 ## Cross-Agent Agreement Matrix
 
-| Finding | Flagged By                       | Highest Severity |
-|---------|-----------------------------------|------------------|
-| F50-01  | code-reviewer, critic, verifier  | LOW              |
-| F50-02  | verifier                         | N/A (process)    |
-| F50-03  | code-reviewer, debugger          | LOW              |
-| F50-04  | test-engineer                    | LOW              |
+| Finding | Flagged By                                      | Highest Severity |
+|---------|-------------------------------------------------|------------------|
+| F51-01  | code-reviewer, debugger, tracer, test-engineer  | LOW              |
+| F51-02  | debugger                                        | LOW              |
+| F51-03  | critic, document-specialist                     | LOW (process)    |
+| F51-04  | critic                                          | LOW (process)    |
 
 ## AGENT FAILURES
 
@@ -67,7 +80,7 @@ No agents failed.
 
 ## Summary Statistics
 
-- Total distinct new findings: 4 (3 actionable, 1 process-hygiene)
-- Cross-agent consensus findings (3+ agents): 1 (F50-01)
+- Total distinct new findings: 4 (2 actionable code, 2 process-hygiene)
+- Cross-agent consensus findings (3+ agents): 1 (F51-01)
 - Highest severity: LOW
-- Actionable findings: 3
+- Actionable findings: 2 (F51-01, F51-02 — fold into one fix)
