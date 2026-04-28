@@ -1,37 +1,39 @@
-# Architect Review (Cycle 43) — Architectural/Design Risks
+# Architect Review (Cycle 44) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-ARCH42-01 (Spec/SpecDerived field duplication) addressed pragmatically with the C42-01 fix. ARCH42-02 (circular import gsmarena<->pixelpitch) deferred.
+ARCH43-01 (spec.size provenance ambiguity) — COMPLETED. GSMArena and CineD now leave spec.size=None for type-derived/format-derived dimensions.
+ARCH42-02 (circular import gsmarena<->pixelpitch) — deferred.
 
 ## New Findings
 
-### ARCH43-01: spec.size provenance ambiguity — GSMArena/CineD set spec.size from lookup tables, breaking merge's "None means unknown" contract
+### ARCH44-01: FORMAT_TO_MM dict in cined.py creates false coupling to removed behavior — dead code that suggests it's still used
 
-**File:** `sources/gsmarena.py`, line 146; `sources/cined.py`, lines 94-102; `pixelpitch.py`, line 456
-**Severity:** MEDIUM | **Confidence:** HIGH
+**File:** `sources/cined.py, lines 37-51`
+**Severity:** LOW | **Confidence:** HIGH
 
-The `merge_camera_data` function uses a simple contract: `None` means "unknown, preserve from existing if available". This works when sources correctly mark unknown fields as `None`. However, GSMArena and CineD set `spec.size` from lookup tables (TYPE_SIZE and FORMAT_TO_MM), treating approximate values as known.
+The FORMAT_TO_MM dict was the mechanism by which CineD set spec.size from format class names. After C43-01, this mechanism is no longer used. But the dict still exists, creating the appearance that format-derived sizes are still set. This is architectural dead weight that misleads about the data flow. A new developer reading the code would assume FORMAT_TO_MM is used somewhere because it's defined at module level.
 
-This violates the "None means unknown" contract. The merge sees `spec.size = (9.84, 7.40)` and treats it as a measured value, never preserving the Geizhals measured value from existing data.
-
-This is an architectural issue with the Spec data model: there is no distinction between "measured" and "approximated" values. The fix options are:
-
-1. **Simple: Sources should not set spec.size from lookup tables.** Use `spec.type` for type-derived sizes and `spec.size` only for measured dimensions. This preserves the "None means unknown" contract.
-2. **Moderate: Add a provenance field to Spec.** A `size_provenance: Optional[str]` field ("measured", "type_lookup", "format_lookup") that merge can use to make informed decisions.
-3. **Large: Refactor Spec to use a "Measurement" type with uncertainty.** Overkill for this codebase.
-
-Option 1 is the most pragmatic. It requires GSMArena to stop setting `spec.size` from `PHONE_TYPE_SIZE` and CineD to stop setting it from `FORMAT_TO_MM`. Both should set `spec.type` instead and let `derive_spec` compute `derived.size`.
-
-**Impact on existing data:**
-- The per-source CSVs (`camera-data-gsmarena.csv`, `camera-data-cined.csv`) currently store `spec.size` in the sensor_width_mm/sensor_height_mm columns. After the fix, GSMArena cameras will have empty width/height columns and a type column (e.g., "1/1.3"). The `derive_spec` pipeline will compute `derived.size` from the type, so the displayed values will be the same for GSMArena-only cameras.
-- For cameras that also exist in Geizhals data, the merge will now correctly preserve the measured Geizhals size instead of overriding it with the TYPE_SIZE approximation.
+**Fix:** Remove FORMAT_TO_MM. If format class detection is needed in the future, it can be re-added with proper provenance tracking.
 
 ---
 
+### ARCH44-02: CineD format extraction regex runs but result is unused — wasted computation and misleading data flow
+
+**File:** `sources/cined.py, _parse_camera_page, lines 92-119`
+**Severity:** LOW | **Confidence:** HIGH
+
+The format extraction regex (fmt_m) and fmt variable are computed in _parse_camera_page but never used after C43-01 removed the FORMAT_TO_MM.get call. This is wasted computation in a browser-dependent scraper (where every millisecond of page processing counts). More importantly, it suggests a data flow that doesn't exist.
+
+**Fix:** Remove the fmt_m regex, fmt variable, and the `if size is None and fmt:` block.
+
+---
+
+
 ## Summary
 
-- ARCH43-01 (MEDIUM): spec.size provenance ambiguity — GSMArena/CineD set spec.size from lookup tables, breaking merge's "None means unknown" contract
+- ARCH44-01 (LOW): FORMAT_TO_MM dict in cined.py creates false coupling to removed behavior — dead code that suggests it's still used
+- ARCH44-02 (LOW): CineD format extraction regex runs but result is unused — wasted computation and misleading data flow
