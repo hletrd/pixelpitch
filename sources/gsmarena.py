@@ -79,7 +79,12 @@ def _select_main_lens(camera_value: str) -> Optional[str]:
     # heuristics.
     raw = camera_value.replace("\n", " ")
     # Each lens entry tends to start with "<num> MP". Split on this token.
-    parts = re.split(r"(?=\b\d+(?:\.\d+)?\s*MP\b)", raw)
+    # NOTE: Must use (?<![\d.]) not \b before the number — \b (word boundary)
+    # fires between a digit and a decimal point, breaking "12.2 MP" into
+    # "12." and "2 MP".  (?<![\d.]) ensures we only split at the start of a
+    # number (not preceded by another digit or a decimal point), correctly
+    # handling decimal MP values like 12.2 MP, 10.7 MP, 0.3 MP.
+    parts = re.split(r"(?<![\d.])(?=\d+(?:\.\d+)?\s*MP\b)", raw)
     parts = [p.strip() for p in parts if p.strip()]
     if not parts:
         return None
