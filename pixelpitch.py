@@ -709,7 +709,9 @@ def derive_spec(
     """Derive computed fields from a Spec.
 
     Sensor size: if ``spec.size`` is None, attempt to derive it from
-    ``spec.type`` using the TYPE_SIZE lookup table.
+    ``spec.type`` using the TYPE_SIZE lookup table.  NaN or infinite
+    dimensions in ``spec.size`` are treated as unknown (size and area
+    set to None).
 
     Area: computed as width * height when both are known.
 
@@ -728,8 +730,11 @@ def derive_spec(
     else:
         size = spec.size
 
-    if size is not None and spec.mpix is not None:
+    if size is not None and isfinite(size[0]) and isfinite(size[1]) and size[0] > 0 and size[1] > 0:
         area = size[0] * size[1]
+    elif size is not None:
+        size = None
+        area = None
     else:
         area = None
 

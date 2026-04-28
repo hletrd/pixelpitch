@@ -1305,13 +1305,13 @@ def test_derive_spec_zero_pitch():
 
 
 def test_derive_spec_negative_size():
-    """Verify derive_spec handles negative sensor dimensions without crashing.
+    """Verify derive_spec handles invalid sensor dimensions gracefully.
 
-    Negative dimensions produce negative area, which would crash pixel_pitch
-    via sqrt() of a negative number. The guard in pixel_pitch returns 0.0
-    for area <= 0, so derive_spec should return pitch=0.0 instead of crashing.
+    Negative, zero, NaN, and inf dimensions are physically meaningless.
+    derive_spec should set size=None and area=None (not propagate NaN/inf
+    or produce a misleading 0.0 sentinel pitch).
     """
-    section("derive_spec negative size handling")
+    section("derive_spec invalid size handling")
     import pixelpitch as pp
     from models import Spec
 
@@ -1320,21 +1320,45 @@ def test_derive_spec_negative_size():
                      size=(-5.0, 3.7), pitch=None, mpix=10.0, year=2020)
     d_neg = pp.derive_spec(spec_neg)
     expect("derive_spec negative size: no crash", d_neg is not None, True)
-    expect("derive_spec negative size: pitch is 0.0", d_neg.pitch, 0.0)
+    expect("derive_spec negative size: size is None", d_neg.size, None)
+    expect("derive_spec negative size: area is None", d_neg.area, None)
+    expect("derive_spec negative size: pitch is None", d_neg.pitch, None)
 
     # Negative height: size=(5.0, -3.7), pitch=None, mpix=10.0
     spec_neg2 = Spec(name="Neg Height Cam", category="fixed", type=None,
                       size=(5.0, -3.7), pitch=None, mpix=10.0, year=2020)
     d_neg2 = pp.derive_spec(spec_neg2)
     expect("derive_spec negative height: no crash", d_neg2 is not None, True)
-    expect("derive_spec negative height: pitch is 0.0", d_neg2.pitch, 0.0)
+    expect("derive_spec negative height: size is None", d_neg2.size, None)
+    expect("derive_spec negative height: area is None", d_neg2.area, None)
+    expect("derive_spec negative height: pitch is None", d_neg2.pitch, None)
 
     # NaN width: size=(nan, 24.0), pitch=None, mpix=10.0
     spec_nan = Spec(name="NaN Size Cam", category="fixed", type=None,
                      size=(float('nan'), 24.0), pitch=None, mpix=10.0, year=2020)
     d_nan = pp.derive_spec(spec_nan)
     expect("derive_spec NaN size: no crash", d_nan is not None, True)
-    expect("derive_spec NaN size: pitch is 0.0", d_nan.pitch, 0.0)
+    expect("derive_spec NaN size: size is None", d_nan.size, None)
+    expect("derive_spec NaN size: area is None", d_nan.area, None)
+    expect("derive_spec NaN size: pitch is None", d_nan.pitch, None)
+
+    # inf width: size=(inf, 24.0), pitch=None, mpix=10.0
+    spec_inf = Spec(name="Inf Size Cam", category="fixed", type=None,
+                     size=(float('inf'), 24.0), pitch=None, mpix=10.0, year=2020)
+    d_inf = pp.derive_spec(spec_inf)
+    expect("derive_spec inf size: no crash", d_inf is not None, True)
+    expect("derive_spec inf size: size is None", d_inf.size, None)
+    expect("derive_spec inf size: area is None", d_inf.area, None)
+    expect("derive_spec inf size: pitch is None", d_inf.pitch, None)
+
+    # Zero width: size=(0.0, 24.0), pitch=None, mpix=10.0
+    spec_zero = Spec(name="Zero Size Cam", category="fixed", type=None,
+                      size=(0.0, 24.0), pitch=None, mpix=10.0, year=2020)
+    d_zero = pp.derive_spec(spec_zero)
+    expect("derive_spec zero size: no crash", d_zero is not None, True)
+    expect("derive_spec zero size: size is None", d_zero.size, None)
+    expect("derive_spec zero size: area is None", d_zero.area, None)
+    expect("derive_spec zero size: pitch is None", d_zero.pitch, None)
 
 
 # --------------------------------------------------------------------------
