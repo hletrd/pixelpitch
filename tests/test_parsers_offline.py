@@ -1659,36 +1659,6 @@ def test_load_csv():
 
 
 # --------------------------------------------------------------------------
-# CineD FORMAT_TO_MM completeness: every regex-capturable format must have
-# a corresponding lookup-table entry.
-
-def test_cined_format_coverage():
-    section("CineD FORMAT_TO_MM completeness")
-    from sources.cined import FORMAT_TO_MM
-    import re
-
-    # Regex alternation groups from _parse_camera_page
-    fmt_re = re.compile(
-        r"(Full Frame|Super[- ]?35(?:\s*mm)?|APS-C|Micro Four Thirds|Four Thirds|"
-        r'1\"|1[- ]inch|2/3\"|2/3[- ]inch|Medium Format)',
-        re.IGNORECASE,
-    )
-
-    # Extract all possible match groups by testing known strings
-    test_strings = [
-        "Full Frame", "Super 35", "Super 35 mm", "Super35", "APS-C",
-        "Micro Four Thirds", "Four Thirds", '1"', "1-inch", "1 inch",
-        '2/3"', "2/3-inch", "Medium Format",
-    ]
-    for fmt_str in test_strings:
-        m = fmt_re.search(fmt_str)
-        if m:
-            key = m.group(1).lower()
-            val = FORMAT_TO_MM.get(key)
-            expect(f"FORMAT_TO_MM[{key!r}]", val is not None, True)
-
-
-# --------------------------------------------------------------------------
 # about.html template rendering
 
 def test_about_html_rendering():
@@ -1992,7 +1962,7 @@ def main():
     test_match_sensors()
     test_load_sensors_database()
     test_load_csv()
-    test_cined_format_coverage()
+    # test_cined_format_coverage removed — FORMAT_TO_MM dict removed from cined.py
     test_about_html_rendering()
     test_gsmarena_select_main_lens()
     test_create_camera_key_year_mismatch()
