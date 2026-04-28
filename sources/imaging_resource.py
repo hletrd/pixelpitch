@@ -171,6 +171,10 @@ def _parse_camera_name(fields: dict[str, str], fallback_url: str) -> Optional[st
         cleaned = re.sub(r"\bTx(\d)", r"TX\1", cleaned)
         cleaned = re.sub(r"\bQx(\d)", r"QX\1", cleaned)
         cleaned = re.sub(r"\bDsc\b", r"DSC", cleaned)
+        # Normalise DSC-hyphen to DSC-space so names are consistent
+        # whether derived from Model Name ("DSC-HX400") or URL slug
+        # ("dsc-hx400" → "Dsc Hx400" after .replace("-"," ") + .title()).
+        cleaned = re.sub(r"\bDSC-", "DSC ", cleaned)
         return normalise_name(cleaned)
 
     if name:
@@ -198,6 +202,8 @@ def _parse_camera_name(fields: dict[str, str], fallback_url: str) -> Optional[st
         cleaned = re.sub(r"\bTx(\d)", r"TX\1", cleaned)
         cleaned = re.sub(r"\bQx(\d)", r"QX\1", cleaned)
         cleaned = re.sub(r"\bDsc\b", r"DSC", cleaned)
+        # Normalise DSC-hyphen to DSC-space for consistency
+        cleaned = re.sub(r"\bDSC-", "DSC ", cleaned)
     return normalise_name(cleaned)
 
 
