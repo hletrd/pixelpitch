@@ -2099,6 +2099,56 @@ def test_matched_sensors_roundtrip():
                parsed_bad[0].matched_sensors, ["IMX455", "IMX571"])
 
 
+def test_matched_sensors_parse_tolerance():
+    """Verify parse_existing_csv tolerates whitespace and duplicates in the
+    matched_sensors column.
+
+    Hand-edited CSVs may introduce leading/trailing whitespace around the
+    ';' delimiter (e.g. 'IMX455; IMX571 ') or accidental duplicates
+    ('IMX455;IMX455'). The parser must produce a clean, deduplicated list
+    while preserving first-seen order. Companion to F51-01 / F51-02.
+    """
+    section("matched_sensors parse tolerance (whitespace + dedup)")
+    import pixelpitch as pp
+
+    # has_id schema (matches what write_csv emits): 11 columns.
+    csv_text = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+        "sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Tolerance Cam,mirrorless,,35.90,23.90,857.81,61.2,5.94,2024,"
+        "IMX455; IMX571 ;IMX455 ;IMX989\n"
+    )
+    parsed = pp.parse_existing_csv(csv_text)
+    expect("parse-tolerance: 1 row parsed", len(parsed), 1)
+    if parsed:
+        expect("parse-tolerance: whitespace stripped, duplicate removed, order preserved",
+               parsed[0].matched_sensors, ["IMX455", "IMX571", "IMX989"])
+
+    # Empty matched_sensors column still yields an empty list.
+    csv_text_empty = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+        "sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Empty Cam,mirrorless,,35.90,23.90,857.81,61.2,5.94,2024,\n"
+    )
+    parsed_empty = pp.parse_existing_csv(csv_text_empty)
+    expect("parse-tolerance: empty column → empty list", len(parsed_empty), 1)
+    if parsed_empty:
+        expect("parse-tolerance: empty matched_sensors",
+               parsed_empty[0].matched_sensors, [])
+
+    # Whitespace-only tokens are dropped.
+    csv_text_ws = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+        "sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "0,Whitespace Cam,mirrorless,,35.90,23.90,857.81,61.2,5.94,2024, ; ;  \n"
+    )
+    parsed_ws = pp.parse_existing_csv(csv_text_ws)
+    expect("parse-tolerance: whitespace-only tokens dropped", len(parsed_ws), 1)
+    if parsed_ws:
+        expect("parse-tolerance: whitespace-only matched_sensors",
+               parsed_ws[0].matched_sensors, [])
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -2141,6 +2191,7 @@ def main():
     test_write_csv_nonfinite_guards()
     test_write_csv_zero_negative_guards()
     test_matched_sensors_roundtrip()
+    test_matched_sensors_parse_tolerance()
 
     print("\n" + ("=" * 60))
     if _failures:
