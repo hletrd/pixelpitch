@@ -214,7 +214,7 @@ def match_sensors(
     size_tolerance: float = 2,
     megapixel_tolerance: float = 5,
 ) -> List[str]:
-    if not sensors_db or not width or not height:
+    if not sensors_db or width is None or height is None:
         return []
 
     matches = []
@@ -224,7 +224,7 @@ def match_sensors(
         sensor_height = sensor_data.get("sensor_height_mm")
         sensor_megapixels = sensor_data.get("megapixels", [])
 
-        if not sensor_width or not sensor_height:
+        if sensor_width is None or sensor_height is None:
             continue
 
         width_match = abs(width - sensor_width) / width * 100 <= size_tolerance
