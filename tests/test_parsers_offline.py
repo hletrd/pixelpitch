@@ -449,6 +449,65 @@ def test_openmvg_negative_dimensions():
 
 
 # --------------------------------------------------------------------------
+# sorted_by: 0.0 values must sort at 0.0, not -1
+
+def test_sorted_by_zero_values():
+    """Verify sorted_by treats 0.0 as a valid sort value, not as None (-1)."""
+    section("sorted_by 0.0 value handling")
+    import pixelpitch as pp
+    from models import Spec
+
+    def derive(name, category, size, mpix, year, pitch_val=None):
+        spec = Spec(name=name, category=category, type=None,
+                    size=size, pitch=pitch_val, mpix=mpix, year=year)
+        return pp.derive_spec(spec)
+
+    # Camera with pitch=0.0 must sort at 0.0, not at -1
+    cam_zero = derive("Zero Pitch", "fixed", (5.0, 3.7), 0.0, 2020, pitch_val=0.0)
+    cam_normal = derive("Normal Pitch", "fixed", (35.9, 23.9), 33.0, 2021, pitch_val=5.12)
+    cam_none = derive("No Pitch", "fixed", None, None, 2019)
+
+    sorted_list = pp.sorted_by([cam_normal, cam_zero, cam_none], "pitch")
+    # Sorted descending by pitch: Normal (5.12) > Zero (0.0) > None (-1)
+    expect("sorted_by: zero-pitch camera at index 1",
+           sorted_list[1].spec.name, "Zero Pitch")
+    expect("sorted_by: none-pitch camera at index 2",
+           sorted_list[2].spec.name, "No Pitch")
+
+
+# --------------------------------------------------------------------------
+# Template rendering: 0.0 pitch/mpix must render as numbers, not "unknown"
+
+def test_template_zero_pitch_rendering():
+    """Verify pixelpitch.html template renders 0.0 pitch/mpix as numbers, not 'unknown'."""
+    section("template 0.0 value rendering")
+    import pixelpitch as pp
+    from models import Spec
+
+    spec = Spec(name="Zero Cam", category="fixed", type=None,
+                size=(5.0, 3.7), pitch=0.0, mpix=0.0, year=2020)
+    d = pp.derive_spec(spec)
+    d.id = 0
+
+    from datetime import datetime, timezone
+    date = datetime.now(timezone.utc)
+
+    html = pp._get_env().get_template("pixelpitch.html").render(
+        title="Test", specs=[d], page="fixed", date=date,
+    )
+
+    # 0.0 mpix must render as "0.0 MP", not "unknown"
+    expect("template: 0.0 mpix renders as number",
+           "0.0 MP" in html, True)
+    expect("template: 0.0 mpix not 'unknown'",
+           'unknown' not in html.split("0.0 MP")[0][-50:] if "0.0 MP" in html else True, True)
+
+    # 0.0 pitch must render as "0.0 µm", not "unknown"
+    expect("template: 0.0 pitch renders as number",
+           "0.0" in html and "µm" in html, True)
+
+
+# --------------------------------------------------------------------------
 # Merge logic: feeding multi-source CSV records through merge_camera_data
 
 def test_merge_multi_source():
@@ -1140,6 +1199,34 @@ def test_pixel_pitch():
     expect("negative mpix pitch", pitch5, 0.0)
 
 
+def test_derive_spec_zero_pitch():
+    """Verify derive_spec preserves spec.pitch=0.0 instead of computing from area+mpix.
+
+    The docstring says 'spec.pitch (direct measurement) always takes precedence'.
+    If spec.pitch is 0.0, it must be preserved — not overridden by a computed value.
+    """
+    section("derive_spec 0.0 pitch precedence")
+    import pixelpitch as pp
+    from models import Spec
+
+    # spec.pitch=0.0 with size and mpix — derive_spec must keep pitch=0.0
+    # (NOT compute pixel_pitch(area, mpix) ≈ 5.12)
+    spec_zero = Spec(name="Zero Pitch Cam", category="fixed", type=None,
+                     size=(35.9, 23.9), pitch=0.0, mpix=33.0, year=2021)
+    d_zero = pp.derive_spec(spec_zero)
+    expect("derive_spec: spec.pitch=0.0 preserved over computed",
+           d_zero.pitch, 0.0, tol=0.01)
+
+    # spec.pitch=None with size and mpix — derive_spec must compute
+    spec_none = Spec(name="None Pitch Cam", category="fixed", type=None,
+                     size=(35.9, 23.9), pitch=None, mpix=33.0, year=2021)
+    d_none = pp.derive_spec(spec_none)
+    expect("derive_spec: spec.pitch=None computes from area+mpix",
+           d_none.pitch is not None, True)
+    expect("derive_spec: computed pitch ≈ 5.12",
+           d_none.pitch, 5.12, tol=0.05)
+
+
 # --------------------------------------------------------------------------
 # match_sensors
 
@@ -1404,6 +1491,7 @@ def main():
     test_sensor_size_from_type()
     test_parse_sensor_field()
     test_pixel_pitch()
+    test_derive_spec_zero_pitch()
     test_match_sensors()
     test_load_sensors_database()
     test_load_csv()
@@ -1417,6 +1505,8 @@ def main():
     test_sony_dsc_hyphen_normalisation()
     test_mpix_re_format_handling()
     test_openmvg_negative_dimensions()
+    test_sorted_by_zero_values()
+    test_template_zero_pitch_rendering()
 
     print("\n" + ("=" * 60))
     if _failures:
