@@ -1,38 +1,42 @@
-# Architect Review (Cycle 30) — Architectural/Design Risks
+# Architect Review (Cycle 31) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-29 fixes
+**Scope:** Full repository re-review after cycles 1-30 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-ARCH29-01 and ARCH29-02 both fixed in C29. All previous architectural concerns remain deferred.
+ARCH30-01 and ARCH30-02 both fixed in C30. All previous architectural concerns remain deferred.
 
 ## New Findings
 
-### ARCH30-01: GSMArena fetch() lacks per-phone error handling — inconsistent with other sources
+### ARCH31-01: Spec vs SpecDerived pitch duplication creates consistency risk
 
-**File:** `sources/gsmarena.py`, lines 246-252
+**File:** `pixelpitch.py`, `models.py`
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-After the C29-02 fix, IR and Apotelyt have per-camera try/except. CineD already had it. But GSMArena was missed, creating an inconsistency in the error-resilience pattern across the four browser/HTTP fetch loops.
+The `Spec` dataclass has a `pitch` field (direct measurement), and `SpecDerived` has a separate `pitch` field (used for display). When `spec.pitch` is set, `derive_spec()` at line 693-694 copies it to `derived.pitch`. When `spec.pitch` is None but area+mpix are known, `derived.pitch` is computed from those.
 
-**Fix:** Add per-phone try/except to `gsmarena.fetch()`.
+The fundamental issue is that these two fields can diverge after merge_camera_data. The merge function preserves `spec.pitch` from existing (when new has None) but does not guarantee `derived.pitch` tracks this change. The template and write_csv both read `derived.pitch`, making it the single source of truth for display — but `spec.pitch` is the authoritative measurement.
+
+This is an architectural coupling issue: `derived.pitch` should always be consistent with `spec.pitch` when the latter is set, but the merge logic treats them as independent fields.
+
+**Fix:** After all Spec field preservation in merge_camera_data, recalculate `derived.pitch` to be consistent with the final `spec.pitch`. Specifically: if `spec.pitch` is not None after merge, set `derived.pitch = spec.pitch` regardless of what derived.pitch was computed to be.
 
 ---
 
-### ARCH30-02: deduplicate_specs() manual Spec reconstruction violates DRY
+### ARCH31-02: BOM check duplication across two modules
 
-**File:** `pixelpitch.py`, lines 655-665 and 669-675
+**File:** `pixelpitch.py` line 276; `sources/openmvg.py` line 67
 **Severity:** LOW | **Confidence:** HIGH
 
-The C29-04 fix simplified `digicamdb.py` to a true alias, but `deduplicate_specs()` in `pixelpitch.py` still manually reconstructs Spec objects field-by-field. This is the same DRY violation. If Spec gains a field, this code silently drops it.
+The same BOM-stripping logic is duplicated in two files. This is a DRY violation. The BOM handling should be centralized, either in `sources/__init__.py` (as a utility function) or as a shared helper.
 
-**Fix:** Use `dataclasses.replace()`.
+**Fix:** Extract `strip_bom(text: str) -> str` into `sources/__init__.py` and call it from both files.
 
 ---
 
 ## Summary
 
-- ARCH30-01 (MEDIUM): GSMArena fetch() lacks per-phone error handling
-- ARCH30-02 (LOW): deduplicate_specs() manual Spec reconstruction violates DRY
+- ARCH31-01 (MEDIUM): Spec/SpecDerived pitch field duplication creates consistency risk in merge
+- ARCH31-02 (LOW): BOM check logic duplicated across pixelpitch.py and openmvg.py

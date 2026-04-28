@@ -1,38 +1,47 @@
-# Critic Review (Cycle 30) — Multi-Perspective Critique
+# Critic Review (Cycle 31) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-29 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-30 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-C29-01 through C29-04 all implemented. All previous fixes stable.
+C30-01 and C30-02 both implemented. All previous fixes stable.
 
 ## New Findings
 
-### CRIT30-01: GSMArena fetch() — no per-phone error resilience
+### CRIT31-01: merge_camera_data spec/derived pitch inconsistency after field preservation
 
-**File:** `sources/gsmarena.py`, lines 246-252
+**File:** `pixelpitch.py`, lines 413-432
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-After the C29-02 fix, `imaging_resource.fetch()` and `apotelyt.fetch()` are safer against per-camera exceptions. However, `gsmarena.fetch()` was missed. Any unhandled exception in `fetch_phone()` (e.g., from unexpected HTML structure) aborts the entire GSMArena scrape. The CineD, IR, and Apotelyt fetch loops already have this pattern.
+The merge function preserves `spec.pitch` from existing data when new has None (line 417-418), and separately preserves `derived.pitch` from existing when new has None (line 431-432). However, these two checks are independent. The scenario that falls through the cracks:
 
-**Fix:** Add per-phone try/except in `gsmarena.fetch()`, consistent with the other sources.
+1. New data: `spec.pitch=None`, `spec.size=(5.0, 3.7)`, `spec.mpix=10.0`
+2. After `derive_spec()`: `derived.pitch = pixel_pitch(18.5, 10.0)` ~= 1.36 (computed from area+mpix)
+3. Existing data: `spec.pitch=2.0`, `derived.pitch=2.0` (direct measurement from Geizhals)
+4. Merge: `spec.pitch` preserved from existing (2.0) because new has None -- CORRECT
+5. Merge: `derived.pitch` NOT preserved because new has 1.36 (not None) -- WRONG
+6. Template displays `derived.pitch=1.36`, losing the authoritative 2.0
+
+This is a data integrity issue: the template reads `derived.pitch`, so the Geizhals-measured 2.0um pitch is silently replaced by the computed 1.36um pitch, and this incorrect value gets persisted to the CSV on next write.
+
+**Fix:** After all Spec field preservation, check whether `spec.pitch` was updated from existing. If so, and if `derived.pitch` differs from `spec.pitch`, set `derived.pitch = spec.pitch`.
 
 ---
 
-### CRIT30-02: deduplicate_specs() manually reconstructs Spec objects — violates DRY
+### CRIT31-02: BOM character literal fragility in two files
 
-**File:** `pixelpitch.py`, lines 655-665 and 669-675
-**Severity:** LOW | **Confidence:** HIGH
+**File:** `pixelpitch.py` line 276; `sources/openmvg.py` line 67
+**Severity:** LOW-MEDIUM | **Confidence:** HIGH
 
-The `deduplicate_specs()` function creates new Spec objects field-by-field instead of using `dataclasses.replace()`. The C29-04 fix simplified `digicamdb.py` to a true alias, but the same DRY violation exists in `pixelpitch.py` itself. If Spec gains a new field, these reconstructions would silently drop it.
+Both files use `csv_content[0] == "﻿"` with the literal BOM character. If the source file is re-saved without BOM awareness (common in some editors/CI pipelines), the literal character disappears and the check silently breaks. Using `csv_content.startswith('﻿')` is robust against this.
 
-**Fix:** Use `dataclasses.replace(ref, name=unified_name, year=year)` and `dataclasses.replace(spec, name=name)`.
+**Fix:** Replace literal BOM with `'﻿'` escape sequence.
 
 ---
 
 ## Summary
 
-- CRIT30-01 (MEDIUM): GSMArena fetch() — no per-phone error resilience
-- CRIT30-02 (LOW): deduplicate_specs() manual Spec reconstruction — violates DRY
+- CRIT31-01 (MEDIUM): merge_camera_data spec/derived pitch inconsistency — computed value overwrites preserved measurement
+- CRIT31-02 (LOW-MEDIUM): BOM literal character fragility

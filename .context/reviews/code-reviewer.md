@@ -1,64 +1,60 @@
-# Code Review (Cycle 30) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 31) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-29 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-30 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-All previous fixes confirmed still working. C29-01 through C29-04 all implemented. Gate tests pass.
+C30-01 (GSMArena per-phone try/except) and C30-02 (deduplicate_specs DRY) both implemented and verified. All previous fixes stable.
 
 ## New Findings
 
-### CR30-01: GSMArena fetch() loop lacks per-phone try/except
+### CR31-01: merge_camera_data can leave spec.pitch and derived.pitch inconsistent
 
-**File:** `sources/gsmarena.py`, lines 246-252
+**File:** `pixelpitch.py`, lines 413-432
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C29-02 fix added per-camera try/except to `imaging_resource.fetch()` and `apotelyt.fetch()`, but `gsmarena.fetch()` was missed. The same failure mode applies: if `fetch_phone()` raises an unhandled exception (e.g., from unexpected HTML structure or a future code change), the exception propagates through `fetch()`, aborting the entire GSMArena scrape. All phones processed so far are lost.
+When `merge_camera_data` preserves `spec.pitch` from existing data (because new has None), it does NOT update `derived.pitch` if `derived.pitch` was already computed from area+mpix in the new data. This leaves `spec.pitch` and `derived.pitch` pointing at different values.
 
-```python
-# gsmarena.fetch() — lines 246-252:
-for i, s in enumerate(slugs):
-    spec = fetch_phone(s)  # <-- no try/except
-    if spec:
-        specs.append(spec)
-```
+**Concrete scenario:**
+1. openMVG provides camera "X" with `spec.pitch=None`, `spec.size=(5.0, 3.7)`, `spec.mpix=10.0`
+2. `derive_spec()` computes `derived.pitch = pixel_pitch(18.5, 10.0)` = ~1.36um
+3. Existing CSV has same camera with `spec.pitch=2.0`, `derived.pitch=2.0` (direct measurement from Geizhals)
+4. Merge preserves `spec.pitch=2.0` from existing (new has None)
+5. Merge does NOT preserve `derived.pitch` because new's `derived.pitch=1.36` is not None
+6. Result: `spec.pitch=2.0`, `derived.pitch=1.36` — inconsistent
+7. Template displays `derived.pitch=1.36`, ignoring the more authoritative `spec.pitch=2.0`
+8. On next CSV write, `derived.pitch=1.36` is persisted, permanently losing the 2.0 measurement
 
-For comparison, the CineD `fetch()` already has per-camera try/except (line 151-156), and the IR/Apotelyt `fetch()` functions were fixed in C29.
-
-**Fix:** Add per-phone try/except to `gsmarena.fetch()`, logging the error and continuing.
+**Fix:** After all Spec field preservation, if `spec.pitch` was changed (preserved from existing) and `derived.pitch` was computed (not directly from `spec.pitch`), update `derived.pitch` to match `spec.pitch`. Alternatively, re-derive `derived.pitch` from the updated spec fields.
 
 ---
 
-### CR30-02: deduplicate_specs() manually reconstructs Spec objects — violates DRY
+### CR31-02: BOM check uses literal character instead of escape sequence
 
-**File:** `pixelpitch.py`, lines 655-665 and 669-675
-**Severity:** LOW | **Confidence:** HIGH
+**File:** `pixelpitch.py`, line 276; `sources/openmvg.py`, line 67
+**Severity:** LOW-MEDIUM | **Confidence:** HIGH
 
-The `deduplicate_specs()` function creates new Spec objects field-by-field in two places:
+Both files compare `csv_content[0] == "﻿"` using the literal BOM character (U+FEFF) inside the string literal. If the source file is re-encoded by an editor or tool that strips or mangles the BOM character, the comparison silently fails and BOM-prefixed CSVs produce mangled headers (e.g., `"﻿id"` instead of `"id"`), causing 0-row parses.
 
-1. Color-variant unification (lines 655-665):
-```python
-rest.append(
-    Spec(unified_name, ref.category, ref.type, ref.size, ref.pitch, ref.mpix, year)
-)
-```
+**Fix:** Replace `csv_content[0] == "﻿"` with `csv_content.startswith('﻿')` using the explicit escape sequence `﻿`. Same for openmvg.py line 67.
 
-2. `remove_parens()` (lines 669-675):
-```python
-return Spec(name, spec.category, spec.type, spec.size, spec.pitch, spec.mpix, spec.year)
-```
+---
 
-The C29-04 fix simplified `digicamdb.py` to a true alias, but the same DRY violation exists in `pixelpitch.py` itself. If Spec gains a new field (e.g., `sensor_brand`), these reconstructions would silently drop it.
+### CR31-03: Spec and SpecDerived constructed with positional args in parse_existing_csv and extract_specs
 
-**Fix:** Use `dataclasses.replace()` instead of manual field enumeration:
-- Color-variant: `dataclasses.replace(ref, name=unified_name, year=year)`
-- remove_parens: `dataclasses.replace(spec, name=name)`
+**File:** `pixelpitch.py`, lines 346-347 and 625
+**Severity:** LOW | **Confidence:** MEDIUM
+
+`parse_existing_csv` creates `Spec(name, category, type_str, size, pitch, mpix, year)` and `SpecDerived(spec, size, area, pitch, matched_sensors, record_id)` using positional arguments. Similarly, `extract_specs` at line 625 creates `Spec(name, category, typ, size, pitch, mpix, year=None)`. If the dataclass field order changes, these would silently produce wrong objects. The C30-02 fix addressed `deduplicate_specs()` with `dataclasses.replace()`, but these parser code paths still use positional args.
+
+**Fix:** Use keyword arguments: `Spec(name=name, category=category, type=type_str, size=size, pitch=pitch, mpix=mpix, year=year)` and similarly for SpecDerived.
 
 ---
 
 ## Summary
 
-- CR30-01 (MEDIUM): GSMArena fetch() loop lacks per-phone try/except
-- CR30-02 (LOW): deduplicate_specs() manually reconstructs Spec objects — violates DRY
+- CR31-01 (MEDIUM): merge_camera_data spec.pitch/derived.pitch inconsistency after field preservation
+- CR31-02 (LOW-MEDIUM): BOM check uses literal U+FEFF instead of '﻿' escape
+- CR31-03 (LOW): Spec/SpecDerived positional args in parsers — fragile if field order changes
