@@ -1,42 +1,44 @@
-# Debugger Review (Cycle 26) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 27) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-25 fixes
+**Scope:** Full repository re-review after cycles 1-26 fixes
 
 ## Previous Findings Status
 
-DBG25-01 (ValueError guard) and DBG25-02 (SIZE_RE Unicode) both fixed in C25-01/C25-02. DBG24-03 (rstrip) remains deferred.
+DBG26-01 (MPIX_RE only matches "Megapixel") and DBG26-02 (ValueError in source modules) both fixed in C26. DBG24-03 (rstrip) remains deferred.
 
 ## New Findings
 
-### DBG26-01: MPIX_RE only matches "Megapixel" — will silently lose data if Geizhals uses "MP"
+### DBG27-01: PITCH_UM_RE does not match "um" — latent failure if Geizhals uses ASCII-only pitch
 
-**File:** `pixelpitch.py`, line 42
-**Severity:** MEDIUM | **Confidence:** HIGH
+**File:** `sources/__init__.py`, line 66
+**Severity:** LOW | **Confidence:** HIGH
 
-**Failure mode:** If Geizhals changes their "Megapixel effektiv" field to show "33.0 MP" (a common abbreviation), `MPIX_RE.search("33.0 MP")` returns None. The megapixel value is silently lost.
+**Failure mode:** If Geizhals (or any future source parsed via `parse_sensor_field()`) uses "5.12 um" (ASCII-only, no micro sign), `PITCH_UM_RE.search("5.12 um")` returns None. The pitch value is silently lost. If size and mpix are available, `derive_spec()` will compute a pitch from area/mpix, so the camera may still show a pitch value — but it would be computed rather than the authoritative value from the source.
 
-**Root cause:** `MPIX_RE = re.compile(r"([\d\.]+)\s*Megapixel")` only matches the literal string "Megapixel" (case-sensitive). The shared `MPIX_RE` in `sources/__init__.py` handles "MP", "Mega pixels", "Megapixel" etc.
+**Root cause:** The shared `PITCH_UM_RE` alternation includes `µm`, `μm`, `microns`, `&micro;m`, `&#956;m` but not plain `um`. The GSMArena local `PITCH_RE` includes `um` but uses its own pattern.
 
-**Impact:** Camera shows "unknown" resolution and computed pixel pitch is lost.
+**Impact:** Currently no data path triggers this — Geizhals uses µm/μm. This is a latent bug that would surface only if a data source starts using ASCII "um".
 
-**Verified:** `MPIX_RE.search("33.0 MP")` returns None with the local pattern.
+**Verified:** `PITCH_UM_RE.search("5.12 um")` returns None.
 
-### DBG26-02: ValueError in source module float() calls — individual camera crash
+### DBG27-02: parse_existing_csv accepts year=0 — displays "0" on website
 
-**File:** `sources/apotelyt.py` lines 119-129, `sources/cined.py` line 98, `sources/gsmarena.py` lines 130/133, `sources/imaging_resource.py` line 228
-**Severity:** LOW | **Confidence:** MEDIUM
+**File:** `pixelpitch.py`, line 336
+**Severity:** LOW | **Confidence:** HIGH
 
-**Failure mode:** A malformed value in any source module's HTML (e.g., "35.9.1x23.9 mm") causes `float()` to raise ValueError. The exception is caught by the outer loop in each source's `fetch()`, so only that camera is lost. Other cameras continue processing.
+**Failure mode:** A corrupted or manually edited CSV with year=0 passes through validation. The template's Jinja2 `{% if spec.spec.year %}` treats int(0) as truthy (Jinja2 follows Python truthiness for integers), so "0" is displayed on the website.
 
-**Root cause:** The C25-02 fix only addressed ValueError guards in `parse_sensor_field()`. Source modules that parse the same data types still lack the same guards.
+**Root cause:** `year = int(year_str) if year_str else None` has no range check. An empty string is falsy (correctly produces None), but "0" is truthy and produces year=0.
 
-**Impact:** Individual camera record lost. Not category-wide like the Geizhals path.
+**Impact:** No current source produces year=0. Requires corrupted CSV input.
+
+**Verified:** CSV with year=0 produces `spec.year == 0`, which displays as "0" in the template.
 
 ---
 
 ## Summary
 
-- DBG26-01 (MEDIUM): MPIX_RE only matches "Megapixel" — silent data loss on format change
-- DBG26-02 (LOW): ValueError in source module float() calls — individual camera crash
+- DBG27-01 (LOW): PITCH_UM_RE missing "um" — latent failure if source uses ASCII "um"
+- DBG27-02 (LOW): parse_existing_csv year=0 — displays "0" on website

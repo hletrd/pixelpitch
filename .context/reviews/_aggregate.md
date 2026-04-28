@@ -1,60 +1,62 @@
-# Aggregate Review (Cycle 26) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 27) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-25 Status
+## Cycle 1-26 Status
 
-All previous fixes confirmed still working. No regressions. Gate tests pass (all checks). C25-01 (SIZE_RE/PITCH_RE centralization) and C25-02 (ValueError guard) implemented and verified.
+All previous fixes confirmed still working. No regressions. Gate tests pass (all checks). C26-01 (MPIX_RE centralization) and C26-02 (ValueError guards in source modules) implemented and verified.
 
-## Cross-Agent Agreement Matrix (Cycle 26 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 27 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| MPIX_RE not centralized — incomplete C25-01 DRY fix | code-reviewer, critic, verifier, tracer, architect, debugger, test-engineer, document-specialist | MEDIUM |
-| ValueError guard missing in source modules | code-reviewer, critic, verifier, tracer, debugger, test-engineer | LOW |
+| PITCH_UM_RE missing "um" — doc says it matches but regex doesn't | code-reviewer, critic, verifier, tracer, architect, debugger, document-specialist, test-engineer | LOW |
+| parse_existing_csv accepts year=0 and negative years without validation | code-reviewer, critic, verifier, tracer, debugger, test-engineer | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C26-01: MPIX_RE not centralized — incomplete DRY resolution from C25-01
+### C27-01: PITCH_UM_RE missing "um" — doc/code mismatch (comment claims support but regex does not match)
 
-**Sources:** CR26-01, CRIT26-01, V26-02, TR26-01, ARCH26-01, DBG26-01, TE26-01, DOC26-01
-**Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
+**Sources:** CR27-01, CRIT27-01, V27-02, TR27-01, ARCH27-01, DBG27-01, DOC27-01, TE27-01
+**Severity:** LOW | **Confidence:** HIGH (8-agent consensus)
 
-The C25-01 aggregate review explicitly mentioned MPIX_RE: "Update the MPIX_RE in pixelpitch.py similarly (it only matches 'Megapixel', not 'MP' or 'Mega pixels')." However, the implementation plan incorrectly stated "MPIX_RE.search() stays (no shared equivalent for 'Megapixel')" — but `sources/__init__.py` line 67 DOES export a shared `MPIX_RE` that is a superset of the local pattern.
+The comment in `pixelpitch.py` line 44 explicitly states:
+```
+# PITCH_UM_RE matches µm, μm (Greek mu), "microns", "um", and HTML entities.
+```
 
-Current centralization status after C25-01:
-- `TYPE_FRACTIONAL_RE` — centralized (imported from sources) ✓
-- `SIZE_MM_RE` — centralized (imported from sources) ✓
-- `PITCH_UM_RE` — centralized (imported from sources) ✓
-- `MPIX_RE` — NOT centralized (local definition in pixelpitch.py line 42) ✗
+However, the actual regex in `sources/__init__.py` line 66 does NOT include `um`:
+```python
+PITCH_UM_RE = re.compile(r"([\d.]+)\s*(?:µm|microns?|μm|&micro;m|&#0?956;m)", re.IGNORECASE)
+```
 
-The local `MPIX_RE` in pixelpitch.py only matches "Megapixel" (case-sensitive). The shared `MPIX_RE` in sources/__init__.py matches "MP", "Mega pixels", "Megapixel", "Megapixels" etc. (case-insensitive).
+The GSMArena source has its own local `PITCH_RE` (line 50) that includes `um`:
+```python
+PITCH_RE = re.compile(r"([\d.]+)\s*(?:µm|μm|um)", re.IGNORECASE)
+```
 
-**Impact:** If Geizhals changes "Megapixel" to "MP" or "Mega pixels" in their HTML, megapixel values are silently lost. Camera shows "unknown" resolution and computed pixel pitch is lost.
+**Impact:** The comment is misleading — it claims "um" is supported but the code does not match it. Currently no data path triggers this (Geizhals uses µm/μm, GSMArena has its own pattern), so this is not a runtime bug. However, it is:
+1. A doc/code mismatch (the comment lies about what the code does)
+2. A DRY incompleteness (the shared pattern should be a superset of all local patterns)
+3. A latent bug (if a source parsed via `parse_sensor_field()` ever uses "um", pitch is silently lost)
 
-**Fix:** Import `MPIX_RE` from `sources` in `pixelpitch.py`, replacing the local definition on line 42. Update `extract_specs()` line 596 to use the imported pattern. Add test cases for "MP" and "Mega pixels" formats. Update docstring if applicable.
+**Fix:** Add `um` to the shared `PITCH_UM_RE` alternation: `(?:µm|um|microns?|μm|&micro;m|&#0?956;m)`. This makes the regex match the existing documentation comment and makes the shared pattern a true superset of GSMArena's local PITCH_RE. Add a test for "um" matching.
 
 ---
 
-### C26-02: ValueError guard missing in source module float() calls
+### C27-02: parse_existing_csv accepts year=0 and negative years without validation
 
-**Sources:** CR26-02, CRIT26-02, V26-03, TR26-02, DBG26-02, TE26-02
+**Sources:** CR27-02, CRIT27-02, V27-03, TR27-02, DBG27-02, TE27-02
 **Severity:** LOW | **Confidence:** MEDIUM (6-agent consensus)
 
-The C25-02 fix added ValueError guards only in `pixelpitch.py`'s `parse_sensor_field()`. Source modules that parse the same data types from HTML still call `float()` on regex matches without any guard:
+The CSV parser converts the year column with `int(year_str) if year_str else None` (line 336), accepting any integer value including 0 and negative numbers. The template's Jinja2 `{% if spec.spec.year %}` treats int(0) as truthy, so year=0 displays as "0" on the website.
 
-1. `sources/cined.py` line 98: `size = (float(s.group(1)), float(s.group(2)))`
-2. `sources/apotelyt.py` lines 119-120: `size = (float(m.group(1)), float(m.group(2)))`
-3. `sources/apotelyt.py` line 123: `pitch = float(m.group(1))`
-4. `sources/apotelyt.py` line 129: `mpix = float(m.group(1))`
-5. `sources/gsmarena.py` line 130: `mpix = float(mp_match.group(1))`
-6. `sources/gsmarena.py` line 133: `pitch = float(pitch_match.group(1))`
-7. `sources/imaging_resource.py` line 228: `size = (float(m.group(1)), float(m.group(2)))`
+No current source produces year=0 or negative years — `parse_year()` only matches `\b(19\d{2}|20\d{2})\b`. This requires corrupted CSV input to trigger.
 
-**Impact:** A malformed value from any source (e.g., "36.0.1" in a size field) raises ValueError and the individual camera record is lost. The blast radius is smaller than C25-02 (only one camera, not an entire category) because source modules process one camera at a time in loops with outer exception handlers.
+**Impact:** A corrupted or manually edited CSV with year=0 would display "0" on the website. Very low probability.
 
-**Fix:** Wrap float() calls in try/except ValueError, setting the affected field to None. This is consistent with the `parse_sensor_field()` pattern and allows remaining fields to still be extracted.
+**Fix:** Add a range check: `year = int(year_str) if year_str and 1900 <= int(year_str) <= 2100 else None`. This requires a try/except for non-integer strings. Add test cases for year=0, year=-1, and year=99999.
 
 ---
 
@@ -64,7 +66,6 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 2 (1 MEDIUM, 1 LOW)
-- Cross-agent consensus findings (3+ agents): 2 (C26-01: 8-agent, C26-02: 6-agent)
-- 1 MEDIUM finding: MPIX_RE not centralized — incomplete C25-01 DRY resolution
-- 1 LOW finding: ValueError guard missing in source modules
+- Total distinct new findings: 2 (both LOW)
+- Cross-agent consensus findings (3+ agents): 2 (C27-01: 8-agent, C27-02: 6-agent)
+- 2 LOW findings: PITCH_UM_RE doc/code mismatch, parse_existing_csv year validation gap

@@ -1,68 +1,64 @@
-# Verifier Review (Cycle 26) — Evidence-Based Correctness Check
+# Verifier Review (Cycle 27) — Evidence-Based Correctness Check
 
 **Reviewer:** verifier
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-25 fixes
+**Scope:** Full repository re-review after cycles 1-26 fixes
 
-## V26-01: Gate tests pass — all checks verified
+## V27-01: Gate tests pass — all checks verified
 
-**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed.
+**Evidence:** Ran `python3 -m tests.test_parsers_offline` — all checks passed. C26-01 and C26-02 fixes verified working.
 
-## V26-02: MPIX_RE not centralized — verified discrepancy
+## V27-02: PITCH_UM_RE missing "um" — verified discrepancy
 
-**File:** `pixelpitch.py`, line 42 vs `sources/__init__.py`, line 67
-**Severity:** MEDIUM | **Confidence:** HIGH
+**File:** `sources/__init__.py`, line 66 vs `sources/gsmarena.py`, line 50
+**Severity:** LOW | **Confidence:** HIGH
 
 **Evidence:**
 ```python
-# pixelpitch.py line 42:
-MPIX_RE = re.compile(r"([\d\.]+)\s*Megapixel")
-
-# sources/__init__.py line 67:
-MPIX_RE = re.compile(r"([\d.]+)\s*(?:effective\s+)?(?:Mega ?pixels?|MP)", re.IGNORECASE)
-```
-
-The local pattern in pixelpitch.py only matches "Megapixel" (case-sensitive). The shared pattern handles "MP", "Mega pixels", "Megapixels" etc.
-
-```python
+from sources import PITCH_UM_RE as shared
 import re
-MPIX_LOCAL = re.compile(r"([\d\.]+)\s*Megapixel")
-MPIX_SHARED = re.compile(r"([\d.]+)\s*(?:effective\s+)?(?:Mega ?pixels?|MP)", re.IGNORECASE)
 
-MPIX_LOCAL.search("33.0 MP")         # Returns None
-MPIX_SHARED.search("33.0 MP")        # Returns ("33.0",)
-MPIX_LOCAL.search("33.0 Mega pixels")  # Returns None
-MPIX_SHARED.search("33.0 Mega pixels")  # Returns ("33.0",)
-MPIX_LOCAL.search("33.0 Megapixel")  # Returns ("33.0",) ✓
-MPIX_SHARED.search("33.0 Megapixel") # Returns ("33.0",) ✓
+gsmarena_pattern = re.compile(r'([\d.]+)\s*(?:µm|μm|um)', re.IGNORECASE)
+
+# Shared pattern does NOT match "um":
+shared.search('1.09um')   # Returns None
+
+# GSMArena local pattern DOES match "um":
+gsmarena_pattern.search('1.09um')  # Returns match
+
+# Both match "µm" and "μm":
+shared.search('5.12µm')          # Returns match
+gsmarena_pattern.search('5.12µm')  # Returns match
 ```
 
-The shared pattern is a strict superset of the local pattern. It is exported in `__all__` (line 89) and can be imported.
+The shared PITCH_UM_RE is missing "um" which the GSMArena local pattern handles. No current data path uses the shared pattern against "um" text (Geizhals uses µm/μm), so no data is lost at runtime.
 
-## V26-03: ValueError guard missing in source modules — verified
+## V27-03: parse_existing_csv accepts year=0 — verified
 
-**File:** `sources/cined.py` line 98, `sources/apotelyt.py` lines 119-129, `sources/gsmarena.py` lines 130/133, `sources/imaging_resource.py` line 228
-**Severity:** LOW | **Confidence:** MEDIUM
+**File:** `pixelpitch.py`, line 336
+**Severity:** LOW | **Confidence:** HIGH
 
-**Evidence:** Confirmed by code inspection that all four source modules call `float()` on regex match groups without try/except ValueError guards. The regex pattern `[\d.]+` allows multi-dot values like "36.0.1" which `float()` rejects.
-
+**Evidence:**
 ```python
-# sources/cined.py line 98:
-size = (float(s.group(1)), float(s.group(2)))  # no try/except
+import pixelpitch as pp
 
-# sources/apotelyt.py line 119-120:
-size = (float(m.group(1)), float(m.group(2)))  # no try/except
+# Year=0 is accepted and displayed
+csv_test = 'id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n0,Test,mirrorless,,36.00,24.00,864.00,45.0,5.00,0,\n'
+parsed = pp.parse_existing_csv(csv_test)
+# parsed[0].spec.year == 0 (displays as "0" on website)
 
-# sources/gsmarena.py line 130:
-mpix = float(mp_match.group(1)) if mp_match else None  # no try/except
+# Year=-1 is also accepted
+csv_test2 = 'id,name,category,type,sensor_width_mm,sensor_height_mm,sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n0,Test,mirrorless,,36.00,24.00,864.00,45.0,5.00,-1,\n'
+parsed2 = pp.parse_existing_csv(csv_test2)
+# parsed2[0].spec.year == -1 (displays as "-1" on website)
 ```
 
-However, these modules are called from `fetch_one()` / `_phone_to_spec()` which are called in loops within `fetch()`. If a ValueError propagates from one camera, it would be caught by the module-level exception handler (e.g., `except Exception as ex` in cined.py line 149), losing only that camera.
+No current source produces year=0 or negative years (`parse_year()` only matches 19xx/20xx), but the CSV parser has no guard.
 
 ---
 
 ## Summary
 
-- V26-01: All gate tests pass
-- V26-02 (MEDIUM): MPIX_RE not centralized — verified
-- V26-03 (LOW): ValueError guard missing in source modules — verified
+- V27-01: All gate tests pass
+- V27-02 (LOW): PITCH_UM_RE missing "um" — verified
+- V27-03 (LOW): parse_existing_csv accepts year=0 — verified

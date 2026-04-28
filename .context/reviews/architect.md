@@ -1,34 +1,34 @@
-# Architect Review (Cycle 26) — Architectural/Design Risks
+# Architect Review (Cycle 27) — Architectural/Design Risks
 
 **Reviewer:** architect
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-25 fixes
+**Scope:** Full repository re-review after cycles 1-26 fixes
 
 ## Previous Findings Status
 
-ARCH25-01 (DRY violation for SIZE_RE/PITCH_RE) addressed in C25-01. All previously identified architectural concerns remain deferred (LOW severity).
+ARCH26-01 (MPIX_RE centralization) addressed in C26. All previously identified architectural concerns remain deferred (LOW severity).
 
 ## New Findings
 
-### ARCH26-01: MPIX_RE not centralized — incomplete DRY resolution from C25-01
+### ARCH27-01: PITCH_UM_RE incomplete as single source of truth — missing "um" variant
 
-**File:** `pixelpitch.py` line 42 vs `sources/__init__.py` line 67
-**Severity:** MEDIUM | **Confidence:** HIGH
+**File:** `sources/__init__.py`, line 66
+**Severity:** LOW | **Confidence:** HIGH
 
-The C25-01 fix centralized SIZE_RE and PITCH_RE (imported from `sources/__init__.py`), following the pattern already used for TYPE_FRACTIONAL_RE. However, MPIX_RE was not similarly centralized, despite the C25-01 aggregate review explicitly flagging it.
+The C25-01 centralization established `sources/__init__.py` as the single source of truth for shared regex patterns. The C26-01 fix completed MPIX_RE centralization. However, PITCH_UM_RE is still incomplete as a single source of truth — it does not match "um" (lowercase ASCII), which is handled by `sources/gsmarena.py`'s local `PITCH_RE`.
 
-Current state after C25-01 fix:
-- `TYPE_FRACTIONAL_RE` — centralized (imported from sources) ✓
-- `SIZE_MM_RE` — centralized (imported from sources) ✓
-- `PITCH_UM_RE` — centralized (imported from sources) ✓
-- `MPIX_RE` — NOT centralized (local definition in pixelpitch.py) ✗
+Current centralization status:
+- `TYPE_FRACTIONAL_RE` — fully centralized (all local variants replaced) ✓
+- `SIZE_MM_RE` — fully centralized ✓
+- `PITCH_UM_RE` — NOT fully centralized (GSMArena still uses local PITCH_RE with "um") ✗
+- `MPIX_RE` — fully centralized (C26-01 fix) ✓
 
-The `sources/__init__.py` exports `MPIX_RE` in `__all__` (line 89) and it is a superset of the local pattern. This is the same class of DRY violation that was fixed for SIZE_RE and PITCH_RE.
+For true DRY completeness, PITCH_UM_RE should include all variants that local patterns handle, and GSMArena should import the shared pattern instead of maintaining its own.
 
-**Fix:** Import `MPIX_RE` from `sources` in `pixelpitch.py`, replacing the local definition on line 42. Update `extract_specs()` to use the imported pattern. This completes the DRY centralization that C25-01 started.
+**Fix:** Add "um" to the shared PITCH_UM_RE alternation. Optionally, update GSMArena to import the shared pattern.
 
 ---
 
 ## Summary
 
-- ARCH26-01 (MEDIUM): MPIX_RE not centralized — incomplete DRY resolution from C25-01
+- ARCH27-01 (LOW): PITCH_UM_RE incomplete as single source of truth — missing "um"
