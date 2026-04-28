@@ -272,6 +272,12 @@
         return true;
       }
 
+      // Zero pixel pitch is physically impossible — likely a sentinel from
+      // pixel_pitch returning 0.0 for invalid inputs.
+      if (pitch === 0) {
+        return true;
+      }
+
       // There is no consumer camera with a pixel pitch over 10 µm.
       // Even Kodak/onsemi's KAF-16803 and GSENSE4040 has a pixel pitch of 9 µm.
       if (pitch > 10) {
