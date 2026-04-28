@@ -2276,6 +2276,124 @@ def test_load_per_source_csvs_refresh():
                    len(ms) > 0, True)
 
 
+def test_load_per_source_csvs_cache_fallback():
+    """`_load_per_source_csvs` must preserve the parsed matched_sensors
+    cache when sensors.json fails to load (F55-01).
+
+    Pre-C55-01 behavior: when load_sensors_database returns {} (file
+    missing or invalid JSON), every parsed row's matched_sensors was
+    reset to None, dropping the cache. This contradicted the docstring's
+    cache-fallback role and the merge_camera_data existing-only branch
+    (which preserves matched_sensors when sensors_db is empty).
+
+    Post-C55-01: when sensors_db is empty, the parsed cache is
+    preserved as a softer-fail fallback. When the row has no size,
+    matched_sensors is still set to None (size-unknown sentinel).
+
+    Regression-guards F55-01.
+    """
+    section("_load_per_source_csvs cache fallback when sensors.json missing")
+    import tempfile
+    from pathlib import Path
+    import pixelpitch as pp
+
+    # Monkeypatch load_sensors_database to simulate a missing/broken
+    # sensors.json. Restore on exit.
+    original = pp.load_sensors_database
+    pp.load_sensors_database = lambda: {}
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+
+            # Row 1: has size, has cached matched_sensors. Cache must
+            # be preserved when sensors_db is empty.
+            # Row 2: has size, empty matched_sensors (parsed as []).
+            #   With empty sensors_db we keep the parsed [] verbatim.
+            # Row 3: no size, has cached matched_sensors. Per the
+            #   size-unknown sentinel rule, matched_sensors is reset
+            #   to None even when sensors_db is empty.
+            csv = (
+                "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+                "sensor_area_mm2,megapixels,pixel_pitch_um,year,"
+                "matched_sensors\n"
+                "0,Cached Camera,dslr,,36.00,24.00,864.00,24.0,6.00,"
+                "2020,CACHED_SENSOR_NAME\n"
+                "1,Empty MS Camera,dslr,,36.00,24.00,864.00,24.0,6.00,"
+                "2020,\n"
+                "2,No Size Cached Camera,dslr,,,,,,,,STALE_NO_SIZE\n"
+            )
+            (out / "camera-data-openmvg.csv").write_text(csv, encoding="utf-8")
+
+            loaded = pp._load_per_source_csvs(out)
+            expect("cache-fallback: rows loaded", len(loaded), 3)
+
+            by_name = {d.spec.name: d for d in loaded}
+            cached = by_name.get("Cached Camera")
+            empty_ms = by_name.get("Empty MS Camera")
+            no_size = by_name.get("No Size Cached Camera")
+
+            if cached is not None:
+                expect("cache-fallback: cached id cleared", cached.id, None)
+                expect(
+                    "cache-fallback: cached matched_sensors preserved",
+                    cached.matched_sensors,
+                    ["CACHED_SENSOR_NAME"],
+                )
+            if empty_ms is not None:
+                # parse_existing_csv yields [] for empty sensors_str.
+                expect(
+                    "cache-fallback: empty matched_sensors preserved as []",
+                    empty_ms.matched_sensors,
+                    [],
+                )
+            if no_size is not None:
+                # No size means matched_sensors is meaningless; drop to
+                # None even with empty sensors_db.
+                expect(
+                    "cache-fallback: no-size matched_sensors reset to None",
+                    no_size.matched_sensors,
+                    None,
+                )
+    finally:
+        pp.load_sensors_database = original
+
+
+def test_parse_existing_csv_bom_has_id_detection():
+    """`parse_existing_csv` must detect the `id` schema even when the
+    input begins with a UTF-8 BOM (F55-03).
+
+    Excel's "CSV UTF-8" save adds U+FEFF at the start of the file. If
+    `parse_existing_csv` did not strip the BOM before checking
+    `header[0] == "id"`, the detection would fall through to the no-id
+    schema and silently mis-align every column on every row. The fix
+    (already in place) calls `strip_bom` before reading the header.
+
+    Regression-guards F55-03.
+    """
+    section("parse_existing_csv BOM has_id detection")
+    import pixelpitch as pp
+
+    # Construct a minimal id-schema CSV with a leading UTF-8 BOM.
+    bom = "﻿"
+    csv = (
+        bom
+        + "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+        "sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "5,BOMmed Camera,dslr,,36.00,24.00,864.00,24.0,6.00,2020,\n"
+    )
+
+    parsed = pp.parse_existing_csv(csv)
+    expect("bom-has-id: 1 row parsed", len(parsed), 1)
+    if parsed:
+        # If has_id detection had failed, name would have been "5"
+        # (the id cell would have been read as the name column).
+        expect("bom-has-id: name correctly placed", parsed[0].spec.name,
+               "BOMmed Camera")
+        expect("bom-has-id: id correctly parsed", parsed[0].id, 5)
+        expect("bom-has-id: category correctly placed",
+               parsed[0].spec.category, "dslr")
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -2322,6 +2440,8 @@ def main():
     test_year_parse_tolerance()
     test_record_id_parse_tolerance()
     test_load_per_source_csvs_refresh()
+    test_load_per_source_csvs_cache_fallback()
+    test_parse_existing_csv_bom_has_id_detection()
 
     print("\n" + ("=" * 60))
     if _failures:
