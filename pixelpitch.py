@@ -265,6 +265,17 @@ def load_csv(output_dir: Path) -> Optional[str]:
     return None
 
 
+def _safe_float(s: str) -> Optional[float]:
+    """Parse a float string, returning None for NaN/inf/empty."""
+    if not s:
+        return None
+    try:
+        val = float(s)
+        return val if isfinite(val) else None
+    except (ValueError, TypeError):
+        return None
+
+
 def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
     """Parse a CSV string produced by write_csv back into SpecDerived objects.
 
@@ -327,17 +338,14 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
                 sensors_str = values[9] if len(values) > 9 else ""
 
             size = None
-            if width_str and height_str:
-                try:
-                    width = float(width_str)
-                    height = float(height_str)
-                    size = (width, height)
-                except ValueError:
-                    pass
+            width = _safe_float(width_str)
+            height = _safe_float(height_str)
+            if width is not None and height is not None:
+                size = (width, height)
 
-            area = float(area_str) if area_str else None
-            mpix = float(mpix_str) if mpix_str else None
-            pitch = float(pitch_str) if pitch_str else None
+            area = _safe_float(area_str)
+            mpix = _safe_float(mpix_str)
+            pitch = _safe_float(pitch_str)
             year = None
             if year_str:
                 try:
