@@ -1,114 +1,112 @@
-# Aggregate Review (Cycle 39) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 40) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-28
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic, verifier, test-engineer, tracer, architect, debugger, designer, document-specialist
 
-## Cycle 1-38 Status
+## Cycle 1-39 Status
 
-All previous fixes confirmed still working. No regressions in core logic. Gate tests pass. C38-01 implemented and verified — template renders "unknown" for 0.0 pitch/mpix.
+All previous fixes confirmed still working. No regressions in core logic. Gate tests pass. C39-01 implemented and verified — template renders "unknown" for negative/NaN/inf pitch/mpix using `> 0` guard.
 
-## Cross-Agent Agreement Matrix (Cycle 39 New Findings)
+## Cross-Agent Agreement Matrix (Cycle 40 New Findings)
 
 | Finding | Flagged By | Highest Severity |
 |---------|-----------|-----------------|
-| Template `!= 0.0` guard incomplete — negative/NaN/inf pitch/mpix render as numeric | CR39-01, CRIT39-01, V39-02, TR39-01, ARCH39-01, DBG39-01, DES39-01, TE39-01 | MEDIUM |
-| `_safe_float` allows negative values through CSV pipeline | CR39-02, TR39-01 | LOW |
-| `data-pitch` attribute leaks invalid values in HTML source | CR39-03 | LOW |
-| `_safe_float` docstring doesn't mention negative value handling | DOC39-01 | LOW |
+| `derive_spec` propagates `pixel_pitch` 0.0 sentinel — selectattr misclassification, CSV round-trip data loss | CR40-01, CRIT40-01, V40-02, TR40-01, ARCH40-01, DBG40-01, DES40-01 | MEDIUM |
+| `write_csv` outputs inf/nan without validation | CR40-02, V40-03 | LOW |
+| No test for `derive_spec` computed pitch=0.0 path | TE40-01 | LOW |
+| No test for `write_csv` non-finite float output | TE40-02 | LOW |
+| `derive_spec` docstring doesn't document 0.0 sentinel handling | DOC40-01 | LOW |
 
 ## Deduplicated New Findings (Ordered by Severity)
 
-### C39-01: Template `!= 0.0` guard incomplete — negative/NaN/inf pitch/mpix render as numeric
+### C40-01: `derive_spec` propagates `pixel_pitch` 0.0 sentinel as valid pitch — selectattr misclassification and CSV round-trip data loss
 
-**Sources:** CR39-01, CRIT39-01, V39-02, TR39-01, ARCH39-01, DBG39-01, DES39-01, TE39-01
-**Severity:** MEDIUM | **Confidence:** HIGH (8-agent consensus)
+**Sources:** CR40-01, CRIT40-01, V40-02, TR40-01, ARCH40-01, DBG40-01, DES40-01
+**Severity:** MEDIUM | **Confidence:** HIGH (7-agent consensus)
 
-The C38-01 fix changed the template guard from `is not none` to `is not none and != 0.0`. This correctly handles the 0.0-sentinel case but misses negative, NaN, and inf values:
+`pixel_pitch()` returns 0.0 as a sentinel for invalid inputs (negative, zero, NaN, inf). `derive_spec` propagates this 0.0 without converting to None. This causes three downstream issues:
 
-- `pitch = -1.0`: renders "-1.0 µm" — physically impossible
-- `pitch = NaN`: renders "nan µm" — malformed
-- `mpix = -10.0`: renders "-10.0 MP" — physically impossible
-- `mpix = NaN`: renders "nan MP" — malformed
-- `mpix = inf`: renders "inf MP" — malformed
+1. **Template misclassification:** `selectattr('pitch', 'ne', None)` includes 0.0 (because 0.0 != None), so cameras with invalid computed pitch appear in the "with pitch" table showing "unknown" — they should be in the "without pitch" section.
 
-The `> 0` guard handles all these cases in a single condition:
-- `0.0 > 0` → False → "unknown" (handles C38-01 case too)
-- `-1.0 > 0` → False → "unknown"
-- `NaN > 0` → False → "unknown"
-- `5.12 > 0` → True → "5.12 µm" (correct)
+2. **CSV round-trip data loss:** `write_csv` writes "0.00" for pitch. `parse_existing_csv` reads it back and rejects it (0.0 <= 0 positivity check), setting pitch=None. The value is silently lost on round-trip.
 
-**Fix:** In `templates/pixelpitch.html`:
+3. **Contract mismatch:** `pixel_pitch`'s output domain includes 0.0 as a special value, but `derive_spec`'s consumer contract expects `derived.pitch` to be either None or a positive finite value.
 
-For pitch (line 84):
-```jinja2
-{% if spec.pitch is not none and spec.pitch > 0 %}
-  {{ spec.pitch|round(1) }} µm
-{% else %}
-  <span class="text-muted">unknown</span>
-{% endif %}
+**Concrete scenario:**
+```
+Spec(name="Cam", size=(5.0, 3.7), pitch=None, mpix=0.0)
+→ derive_spec computes: pixel_pitch(18.5, 0.0) = 0.0
+→ derived.pitch = 0.0
+→ Template: selectattr includes 0.0 → camera in wrong table section
+→ write_csv: "0.00" for pitch
+→ parse_existing_csv: rejects 0.0 → pitch=None (data loss on round-trip)
 ```
 
-For mpix (line 76):
-```jinja2
-{% if spec.spec.mpix is not none and spec.spec.mpix > 0 %}
-  {{ spec.spec.mpix|round(1) }} MP
-{% else %}
-  <span class="text-muted">unknown</span>
-{% endif %}
-```
+**Fix:** In `derive_spec`, after computing pitch from `pixel_pitch()`, convert 0.0 to None:
 
-For `data-pitch` attribute (line 50):
-```jinja2
-data-pitch="{{ spec.pitch if spec.pitch is not none and spec.pitch > 0 else 0 }}"
-```
-
-Also update `test_template_zero_pitch_rendering` to add negative pitch/mpix test cases.
-
----
-
-### C39-02: `_safe_float` allows negative values through CSV pipeline
-
-**Sources:** CR39-02, TR39-01
-**Severity:** LOW | **Confidence:** HIGH
-
-`_safe_float` only rejects NaN and inf (via `isfinite`), but allows negative values through. For physical-quantity fields (pitch, mpix, area, size dimensions), negative values are meaningless. A corrupted CSV with negative values would pass through `parse_existing_csv` unfiltered.
-
-**Fix:** Add positivity validation in `parse_existing_csv` after `_safe_float` calls for fields that must be positive:
 ```python
-# In parse_existing_csv, after getting width, height, area, mpix, pitch:
-if width is not None and width <= 0:
-    width = None
-if height is not None and height <= 0:
-    height = None
-if area is not None and area <= 0:
-    area = None
-if mpix is not None and mpix <= 0:
-    mpix = None
-if pitch is not None and pitch <= 0:
+if spec.pitch is not None:
+    pitch = spec.pitch
+elif spec.mpix is not None and area is not None:
+    pitch = pixel_pitch(area, spec.mpix)
+    if pitch == 0.0:  # 0.0 is a sentinel for invalid inputs
+        pitch = None
+else:
     pitch = None
 ```
 
----
-
-### C39-03: `data-pitch` attribute leaks invalid values in HTML source
-
-**Sources:** CR39-03
-**Severity:** LOW | **Confidence:** MEDIUM
-
-When `spec.pitch` is negative, the `{{ spec.pitch or 0 }}` coercion doesn't trigger because negative values are truthy. The HTML source contains `data-pitch="-1.0"` or `data-pitch="nan"`. JS correctly hides these rows, but the HTML source still contains invalid values.
-
-**Fix:** Change to: `data-pitch="{{ spec.pitch if spec.pitch is not none and spec.pitch > 0 else 0 }}"`
+Also update the `derive_spec` docstring to document this behavior.
 
 ---
 
-### C39-04: `_safe_float` docstring doesn't mention negative value handling
+### C40-02: `write_csv` outputs inf/nan strings for non-finite float values
 
-**Sources:** DOC39-01
+**Sources:** CR40-02, V40-03
 **Severity:** LOW | **Confidence:** HIGH
 
-The docstring says "returning None for NaN/inf/empty" but does not mention that negative values are allowed through.
+`write_csv` uses Python's default float formatting which produces "inf" and "nan" strings for non-finite values. While `parse_existing_csv` correctly rejects these on re-read (via `_safe_float`), other CSV consumers may not handle them. This is a defensive improvement, not a bug in current data flows (source parsers cannot produce inf/nan).
 
-**Fix:** Update docstring to document current behavior.
+**Fix:** Add `isfinite` checks before formatting float fields in `write_csv`:
+```python
+mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None and isfinite(spec.mpix) else ""
+pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None and isfinite(derived.pitch) else ""
+area_str = f"{derived.area:.2f}" if derived.area is not None and isfinite(derived.area) else ""
+```
+
+---
+
+### C40-03: No test for `derive_spec` computed pitch=0.0 path (mpix=0.0)
+
+**Sources:** TE40-01
+**Severity:** LOW | **Confidence:** HIGH
+
+No test verifies that `derive_spec` with `spec.pitch=None` and `spec.mpix=0.0` correctly produces `derived.pitch=None` after the C40-01 fix.
+
+**Fix:** Add test cases:
+- `derive_spec` with `pitch=None, mpix=0.0` → `derived.pitch is None`
+- `derive_spec` with `pitch=None, mpix=-1.0` → `derived.pitch is None`
+
+---
+
+### C40-04: No test for `write_csv` non-finite float output
+
+**Sources:** TE40-02
+**Severity:** LOW | **Confidence:** MEDIUM
+
+No test verifies that `write_csv` does not write inf/nan strings to the CSV file.
+
+**Fix:** Add test that write_csv with inf/nan mpix/pitch/area produces empty strings in the CSV.
+
+---
+
+### C40-05: `derive_spec` docstring doesn't document 0.0 sentinel handling
+
+**Sources:** DOC40-01
+**Severity:** LOW | **Confidence:** HIGH
+
+The `derive_spec` docstring says pitch is computed from `pixel_pitch(area, mpix)` but doesn't mention that 0.0 sentinel returns are converted to None.
+
+**Fix:** Update docstring to note: "When pixel_pitch returns 0.0 (invalid input sentinel), the computed pitch is set to None."
 
 ---
 
@@ -118,8 +116,8 @@ No agents failed. All reviews completed successfully.
 
 ## Summary Statistics
 
-- Total distinct new findings: 4 (C39-01, C39-02, C39-03, C39-04)
-- Cross-agent consensus findings (3+ agents): 1 (C39-01 with 8 agents)
-- Highest severity: MEDIUM (C39-01)
-- Actionable findings: 4
+- Total distinct new findings: 5 (C40-01 through C40-05)
+- Cross-agent consensus findings (3+ agents): 1 (C40-01 with 7 agents)
+- Highest severity: MEDIUM (C40-01)
+- Actionable findings: 5
 - Verified safe / deferred: 0

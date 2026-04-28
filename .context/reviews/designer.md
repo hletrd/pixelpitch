@@ -1,31 +1,27 @@
-# Designer Review (Cycle 39) — UI/UX Review
+# Designer Review (Cycle 40) — UI/UX Review
 
 **Reviewer:** designer
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-DES38-01 fixed. Template renders "unknown" for 0.0 pitch/mpix. DES38-02 verified — scatter plot still correct.
+DES39-01 fixed. Template uses `> 0` guard for pitch/mpix.
 
 ## New Findings
 
-### DES39-01: `!= 0.0` guard incomplete — negative/NaN pitch renders as numeric, confusing UX
+### DES40-01: pitch=0.0 cameras appear in "with pitch" table showing "unknown" — wrong section
 
-**File:** `templates/pixelpitch.html`, lines 84-88
+**File:** `templates/pixelpitch.html`, line 183
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C38-01 fix changed the template guard to `!= 0.0`. This correctly handles zero values but leaves a UX inconsistency for negative and NaN values:
+When `derive_spec` computes `pitch=0.0` (from `pixel_pitch`'s sentinel), the template's `selectattr('pitch', 'ne', None)` includes it in the "with pitch" table. The pitch cell shows "unknown" (due to the `> 0` guard), but the camera is in the wrong section. Users scanning the "with pitch" table expect all cameras to have a valid pixel pitch value.
 
-- A camera with `pitch=-1.0` renders "-1.0 µm" in the table — a physically impossible value displayed as if legitimate
-- A camera with `pitch=NaN` renders "nan µm" — a malformed display string
-- The JS filter correctly hides these rows by default, but unchecking "Hide possibly invalid data" reveals the confusing values
+This is confusing UX — a camera with "unknown" pitch appears in a table labeled as having pitch data, while the "Cameras with Unknown Pixel Pitch" section at the bottom would be the correct place.
 
-The `> 0` guard would solve both: negative values and NaN both fail the `> 0` check, rendering "unknown" instead.
-
-**Fix:** Change `!= 0.0` to `> 0` in template pitch and mpix guards.
+**Fix:** Fix `derive_spec` to produce None instead of 0.0 for computed pitch (upstream fix). This ensures `selectattr/rejectattr` correctly routes cameras to the right section.
 
 ---
 
 ## Summary
 
-- DES39-01 (MEDIUM): `!= 0.0` guard incomplete — negative/NaN pitch renders as numeric, inconsistent UX
+- DES40-01 (MEDIUM): pitch=0.0 cameras appear in wrong table section — "unknown" in "with pitch" table

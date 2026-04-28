@@ -1,117 +1,68 @@
-# Code Review (Cycle 39) — Code Quality, Logic, SOLID, Maintainability
+# Code Review (Cycle 40) — Code Quality, Logic, SOLID, Maintainability
 
 **Reviewer:** code-reviewer
 **Date:** 2026-04-28
-**Scope:** Full repository re-review after cycles 1-38 fixes, focusing on NEW issues
+**Scope:** Full repository re-review after cycles 1-39 fixes, focusing on NEW issues
 
 ## Previous Findings Status
 
-All C38 findings confirmed fixed. Template renders "unknown" for 0.0 pitch/mpix. Gate tests pass.
+All C39 findings confirmed fixed. Template uses `> 0` guard. `_safe_float` docstring updated. `parse_existing_csv` has positivity checks. Negative/NaN/inf pitch/mpix tests pass. Gate tests pass.
 
 ## New Findings
 
-### CR39-01: Template `!= 0.0` guard incomplete — negative/NaN/inf values render as numeric
+### CR40-01: `derive_spec` propagates `pixel_pitch()` 0.0 sentinel as valid pitch — selectattr misclassification
 
-**File:** `templates/pixelpitch.html`, lines 84-88 (pitch) and 76-80 (mpix)
+**File:** `pixelpitch.py`, lines 757-762
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C38-01 fix changed the template guard from `is not none` to `is not none and != 0.0`. This correctly handles the zero-sentinel case but misses negative, NaN, and inf values:
+When `spec.pitch` is None but both `area` and `spec.mpix` are known, `derive_spec` calls `pixel_pitch(area, spec.mpix)`. The `pixel_pitch` function returns 0.0 as a sentinel for invalid inputs (negative, zero, NaN, inf). `derive_spec` then sets `derived.pitch = 0.0` without checking if the computed value is valid.
 
-- `pitch = -1.0`: `-1.0 != 0.0` is True, so it renders as "-1.0 µm" — physically impossible
-- `pitch = float('nan')`: `nan != 0.0` is True, renders as "nan µm" — malformed
-- `mpix = -10.0`: `-10.0 != 0.0` is True, renders as "-10.0 MP" — physically impossible
-- `mpix = float('nan')`: `nan != 0.0` is True, renders as "nan MP" — malformed
-- `mpix = float('inf')`: `inf != 0.0` is True, renders as "inf MP" — malformed
+This 0.0 sentinel passes through the template's `selectattr('pitch', 'ne', None)` filter (0.0 != None is True), so the camera appears in the "with pitch" table. The template's `> 0` guard correctly shows "unknown" in the pitch cell, but the camera is in the wrong section — it should be in the "without pitch" section.
 
-Verified by rendering tests:
+**Concrete scenario:**
+1. `Spec(name="Cam", size=(5.0, 3.7), pitch=None, mpix=0.0)`
+2. `derive_spec` computes: `area=18.5`, `pixel_pitch(18.5, 0.0) = 0.0`
+3. `derived.pitch = 0.0`
+4. Template: `selectattr('pitch', 'ne', None)` includes it (0.0 != None)
+5. Camera appears in "with pitch" table showing "unknown" — wrong section
+
+**Fix:** In `derive_spec`, after computing pitch from `pixel_pitch()`, convert 0.0 to None:
+```python
+if spec.pitch is not None:
+    pitch = spec.pitch
+elif spec.mpix is not None and area is not None:
+    pitch = pixel_pitch(area, spec.mpix)
+    if pitch == 0.0:  # 0.0 is a sentinel for invalid inputs
+        pitch = None
+else:
+    pitch = None
 ```
-spec.pitch = -1.0 → template renders "-1.0 µm" (BUG)
-spec.pitch = NaN  → template renders "nan µm" (BUG)
-spec.mpix = -10.0 → template renders "-10.0 MP" (BUG)
-spec.mpix = NaN   → template renders "nan MP" (BUG)
-```
-
-**Fix:** Change template guards to use positivity + finiteness checks:
-
-For pitch (line 84):
-```jinja2
-{% if spec.pitch is not none and spec.pitch > 0 and spec.pitch is finite %}
-```
-
-Wait — Jinja2 doesn't have `is finite`. Instead, use the same pattern as Python's `isfinite` by adding a Jinja2 filter, or simply check `> 0` which covers both negative and zero (0.0 is not > 0, NaN comparisons return False, inf > 0 is True but inf pitch shouldn't occur through normal pipeline):
-
-```jinja2
-{% if spec.pitch is not none and spec.pitch > 0 %}
-  {{ spec.pitch|round(1) }} µm
-{% else %}
-  <span class="text-muted">unknown</span>
-{% endif %}
-```
-
-For mpix (line 76):
-```jinja2
-{% if spec.spec.mpix is not none and spec.spec.mpix > 0 %}
-  {{ spec.spec.mpix|round(1) }} MP
-{% else %}
-  <span class="text-muted">unknown</span>
-{% endif %}
-```
-
-The `> 0` check handles: None (skipped by `is not none`), 0.0 (not > 0), negative (not > 0), NaN (NaN > 0 is False). For inf, `inf > 0` is True, but inf mpix/pitch cannot enter the pipeline through normal code paths (source regexes only match digits, `pixel_pitch` returns 0.0 for inf inputs, `derive_spec` nullifies inf sizes). If defense-in-depth against inf is desired, add a Jinja2 custom filter for `isfinite`.
 
 ---
 
-### CR39-02: `_safe_float` allows negative values through CSV pipeline
+### CR40-02: `write_csv` writes inf/nan values to CSV without validation
 
-**File:** `pixelpitch.py`, lines 268-276
+**File:** `pixelpitch.py`, lines 839-872
 **Severity:** LOW | **Confidence:** HIGH
 
+`write_csv` uses Python's default float formatting, which produces "inf" and "nan" strings for non-finite values. While `parse_existing_csv` correctly rejects these on re-read (via `_safe_float`), the CSV file contains non-standard values. Other CSV consumers may not handle them correctly.
+
+**Concrete scenario:**
+```
+0,Inf Cam,fixed,,35.90,23.90,858.01,inf,5.12,2021,
+0,NaN Cam,fixed,,35.90,23.90,858.01,nan,5.12,2021,
+```
+
+**Fix:** In `write_csv`, check for non-finite values before writing:
 ```python
-def _safe_float(s: str) -> Optional[float]:
-    """Parse a float string, returning None for NaN/inf/empty."""
-    if not s:
-        return None
-    try:
-        val = float(s)
-        return val if isfinite(val) else None
-    except (ValueError, TypeError):
-        return None
-```
-
-The function correctly rejects NaN and inf (via `isfinite`), but allows negative values through. For fields like pitch, mpix, and area, negative values are physically meaningless. A CSV file containing negative values would pass through `parse_existing_csv` unfiltered, creating the entry vector for CR39-01.
-
-Verified:
-```
-_safe_float("-1.0") → -1.0  (passes through)
-_safe_float("-10.0") → -10.0 (passes through)
-_safe_float("nan")   → None  (blocked)
-_safe_float("inf")   → None  (blocked)
-```
-
-**Fix:** Option A — Add positivity check to `_safe_float` (but this would change its semantics as a general float parser). Option B (preferred) — Add validation in `parse_existing_csv` after `_safe_float` calls for fields that must be positive (width, height, area, mpix, pitch). Option C — Fix at template level only (CR39-01 fix) since source parsers can't produce negative values anyway.
-
----
-
-### CR39-03: `data-pitch` attribute leaks invalid values in HTML source
-
-**File:** `templates/pixelpitch.html`, line 50
-**Severity:** LOW | **Confidence:** MEDIUM
-
-```jinja2
-<tr data-pitch="{{ spec.pitch or 0 }}"
-```
-
-When `spec.pitch` is negative (e.g., -1.0), the `or 0` coercion doesn't trigger because -1.0 is truthy. The resulting HTML contains `data-pitch="-1.0"`. Similarly, NaN produces `data-pitch="nan"`. The JS `isInvalidData` function correctly hides these rows, but the HTML source still contains invalid values.
-
-**Fix:** Low priority since JS filters work correctly. If desired, change to:
-```jinja2
-<tr data-pitch="{{ spec.pitch if spec.pitch is not none and spec.pitch > 0 else 0 }}"
+mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None and isfinite(spec.mpix) else ""
+pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None and isfinite(derived.pitch) else ""
+area_str = f"{derived.area:.2f}" if derived.area is not None and isfinite(derived.area) else ""
 ```
 
 ---
 
 ## Summary
 
-- CR39-01 (MEDIUM): Template `!= 0.0` guard is incomplete — negative/NaN pitch and mpix render as numeric values
-- CR39-02 (LOW): `_safe_float` allows negative values through CSV pipeline
-- CR39-03 (LOW): `data-pitch` attribute leaks invalid values in HTML source
+- CR40-01 (MEDIUM): `derive_spec` propagates 0.0 sentinel from `pixel_pitch` — causes misclassification in template's selectattr
+- CR40-02 (LOW): `write_csv` writes inf/nan to CSV without validation

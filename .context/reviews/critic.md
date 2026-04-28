@@ -1,33 +1,39 @@
-# Critic Review (Cycle 39) — Multi-Perspective Critique
+# Critic Review (Cycle 40) — Multi-Perspective Critique
 
 **Reviewer:** critic
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-CRIT38-01 fixed. Template now renders "unknown" for 0.0 pitch/mpix. But the fix was narrow — only 0.0 was addressed, not the broader class of invalid values.
+CRIT39-01 fixed. Template uses `> 0` guard. But the fix was narrow — it only addressed the template rendering, not the upstream data flow.
 
 ## New Findings
 
-### CRIT39-01: C38-01 fix was incomplete — same class of bug exists for negative/NaN/inf values
+### CRIT40-01: C39 fix addressed rendering but not the upstream data flow — `derive_spec` still produces 0.0 sentinel pitch
 
-**File:** `templates/pixelpitch.html`, lines 76-80, 84-88
+**File:** `pixelpitch.py`, lines 757-762; `templates/pixelpitch.html`, line 183
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-The C38-01 fix changed the template guard from `is not none` to `is not none and != 0.0`. This addressed the specific 0.0-sentinel case but missed the broader principle: **physically impossible values should not render as numbers**. The `!= 0.0` check is an allowlist of valid values by exclusion, when it should be a positivity check.
+The C39 fix changed the template guard from `!= 0.0` to `> 0`. This correctly renders "unknown" for 0.0 pitch/mpix values. However, the root cause was never addressed: `derive_spec` still produces `derived.pitch = 0.0` when `pixel_pitch()` returns its 0.0 sentinel. This 0.0 value then:
 
-The same class of bug now exists for negative, NaN, and inf values:
-- Negative pitch (`-1.0`) renders as "-1.0 µm" — physically impossible
-- NaN pitch renders as "nan µm" — malformed
-- NaN mpix renders as "nan MP" — malformed
-- inf mpix renders as "inf MP" — malformed
+1. Passes through `selectattr('pitch', 'ne', None)` — the camera appears in the "with pitch" table instead of "without pitch"
+2. Flows through `write_csv` — the CSV contains "0.00" for pitch
+3. Gets picked up by `parse_existing_csv` — which correctly rejects 0.0 pitch (positivity check)
+4. This creates a data loss on CSV round-trip: pitch=0.0 becomes pitch=None
 
-This is a direct consequence of fixing C38-01 with a narrow `!= 0.0` guard instead of the more robust `> 0` check. The `> 0` guard would have handled 0.0, negative, and NaN in a single condition (since NaN > 0 evaluates to False in Python/Jinja2).
+The correct fix is to stop the 0.0 sentinel at its source. `derive_spec` should convert `pixel_pitch()`'s 0.0 return to None. The `pixel_pitch` function's 0.0 sentinel is an internal implementation detail that should not leak past `derive_spec`.
 
-**Fix:** Replace `!= 0.0` with `> 0` in both the pitch and mpix template guards. This is the correct generalization of the C38-01 fix.
+**Fix:** In `derive_spec`, after computing pitch from `pixel_pitch()`, convert 0.0 to None:
+```python
+pitch = pixel_pitch(area, spec.mpix)
+if pitch == 0.0:
+    pitch = None
+```
+
+This is the correct architectural fix — it eliminates the 0.0 sentinel at the boundary between the computation layer and the data model, rather than patching each downstream consumer.
 
 ---
 
 ## Summary
 
-- CRIT39-01 (MEDIUM): C38-01 fix was narrow — `!= 0.0` should be `> 0` to cover negative/NaN/inf
+- CRIT40-01 (MEDIUM): C39 fix was narrow — `derive_spec` still produces 0.0 sentinel pitch that leaks through selectattr and write_csv

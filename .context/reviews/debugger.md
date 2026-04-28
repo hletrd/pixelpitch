@@ -1,36 +1,32 @@
-# Debugger Review (Cycle 39) — Latent Bugs, Failure Modes, Regressions
+# Debugger Review (Cycle 40) — Latent Bugs, Failure Modes, Regressions
 
 **Reviewer:** debugger
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-DBG38-01 fixed. Template renders "unknown" for 0.0 pitch/mpix.
+DBG39-01 fixed. Template renders "unknown" for negative/NaN pitch/mpix.
 
 ## New Findings
 
-### DBG39-01: C38-01 fix incomplete — negative/NaN pitch still renders as numeric
+### DBG40-01: `derive_spec` produces pitch=0.0 from computed path — CSV round-trip data loss
 
-**File:** `templates/pixelpitch.html`, lines 84-88
+**File:** `pixelpitch.py`, lines 757-762; lines 839-872 (write_csv)
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Failure mode:** When a camera has `pitch=-1.0` (from corrupted CSV data through `_safe_float`):
-1. Template renders "-1.0 µm" in the table cell (guard: `!= 0.0` → True)
-2. JS `isInvalidData` returns true for `pitch < 0`
-3. Row is hidden by default
-4. User unchecks "Hide possibly invalid data" → sees "-1.0 µm" as if legitimate
+**Failure mode:**
+1. Camera has `spec.pitch=None, spec.mpix=0.0, spec.size=(5.0, 3.7)`
+2. `derive_spec` computes: `pixel_pitch(18.5, 0.0) = 0.0`, stores as `derived.pitch=0.0`
+3. `write_csv` writes "0.00" for pitch column
+4. `parse_existing_csv` reads "0.00", `_safe_float` returns 0.0, positivity check rejects it (0.0 <= 0), sets pitch=None
+5. Data loss: camera that had `derived.pitch=0.0` now has `derived.pitch=None`
 
-**Failure mode for NaN pitch:**
-1. Template renders "nan µm" (guard: `!= 0.0` → True, since NaN != 0.0)
-2. JS `isInvalidData` catches `isNaN(parseFloat(...))` → hidden
-3. But HTML source contains "nan µm" — malformed
+This is a silent data corruption on CSV round-trip. The `pitch=0.0` value is lost and becomes `pitch=None`. While the 0.0 value itself is meaningless (it's a sentinel), the data model inconsistency could cause issues if the round-trip is used for incremental updates — `merge_camera_data` would treat the None pitch differently from 0.0 pitch.
 
-This is the same class of bug as DBG38-01, but the C38-01 fix only addressed 0.0, not the broader set of invalid values.
-
-**Fix:** Change `!= 0.0` to `> 0` in template guards.
+**Fix:** In `derive_spec`, convert `pixel_pitch()`'s 0.0 return to None. This ensures `write_csv` writes an empty string for pitch, and `parse_existing_csv` reads it back as None — consistent round-trip.
 
 ---
 
 ## Summary
 
-- DBG39-01 (MEDIUM): C38-01 fix incomplete — negative/NaN pitch still renders as numeric in template
+- DBG40-01 (MEDIUM): `derive_spec` pitch=0.0 causes CSV round-trip data loss (0.0 -> None)

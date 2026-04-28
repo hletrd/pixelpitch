@@ -1,43 +1,39 @@
-# Tracer Review (Cycle 39) — Causal Tracing of Suspicious Flows
+# Tracer Review (Cycle 40) — Causal Tracing of Suspicious Flows
 
 **Reviewer:** tracer
 **Date:** 2026-04-28
 
 ## Previous Findings Status
 
-TR38-01 fixed. Template now renders "unknown" for 0.0 pitch/mpix.
+TR39-01 fixed. Template renders "unknown" for negative/NaN pitch/mpix.
 
 ## New Findings
 
-### TR39-01: Negative value data flow — `_safe_float` → `parse_existing_csv` → template renders as numeric
+### TR40-01: pitch=0.0 sentinel data flow — `pixel_pitch` -> `derive_spec` -> `selectattr` -> wrong table section
 
-**Files:** `pixelpitch.py` (_safe_float, parse_existing_csv), `templates/pixelpitch.html`
+**Files:** `pixelpitch.py` (pixel_pitch, derive_spec), `templates/pixelpitch.html` (selectattr)
 **Severity:** MEDIUM | **Confidence:** HIGH
 
-**Causal trace for negative pitch entering the system:**
+**Causal trace for pitch=0.0 misclassification:**
 
-1. CSV file contains `pixel_pitch_um` = `-1.00` (corrupted or manually edited)
-2. `parse_existing_csv` reads the CSV, calls `_safe_float("-1.00")`
-3. `_safe_float` returns `-1.0` (passes `isfinite` check — -1.0 IS finite)
-4. `spec.pitch = -1.0` is stored in the `Spec` object
-5. `derive_spec` with `spec.pitch=-1.0` → `derived.pitch = -1.0` (preserved as-is, precedence rule)
-6. `write_csv` writes `-1.00` for pitch (round-trip preserved)
-7. Template: `spec.pitch is not none and spec.pitch != 0.0` → both True → renders "-1.0 µm"
-8. JS `isInvalidData`: `pitch < 0` → returns true → row hidden by default
+1. `Spec(name="Cam", size=(5.0, 3.7), pitch=None, mpix=0.0)` — mpix=0.0 is invalid
+2. `derive_spec`: `spec.pitch is None`, so compute from area+mpix
+3. `pixel_pitch(18.5, 0.0)` → returns 0.0 (sentinel for invalid inputs)
+4. `derive_spec` sets `pitch = 0.0` without checking if 0.0 is a valid result
+5. Template: `selectattr('pitch', 'ne', None)` — `0.0 != None` is True → camera in "with pitch" table
+6. Template cell: `spec.pitch > 0` → `0.0 > 0` is False → shows "unknown"
+7. Result: Camera with "unknown" pitch appears in the "with pitch" table
 
-**Comparison with C38-01 trace (zero pitch):**
+**Comparison with pitch=None:**
+- `pitch=None` → `selectattr('pitch', 'ne', None)` → False → goes to "without pitch" section (correct)
+- `pitch=0.0` → `selectattr('pitch', 'ne', None)` → True → goes to "with pitch" section (incorrect)
 
-The same three-layer disagreement exists for negative values that existed for zero values before C38-01 was fixed:
-- **Python logic**: `_safe_float` allows -1.0 through (only rejects NaN/inf)
-- **Template**: treats -1.0 as a valid number, renders "-1.0 µm"
-- **JS**: treats -1.0 as invalid, hides the row
+**Root cause:** `pixel_pitch()` uses 0.0 as a sentinel for "invalid", but `derive_spec` treats 0.0 as a valid computed result. This is a contract mismatch between the two functions.
 
-The C38-01 fix addressed `0.0` specifically but did not generalize to all invalid numeric values.
-
-**Fix:** Change template guards from `!= 0.0` to `> 0`, which covers zero, negative, and NaN in a single condition.
+**Fix:** In `derive_spec`, convert `pixel_pitch()`'s 0.0 return to None.
 
 ---
 
 ## Summary
 
-- TR39-01 (MEDIUM): Negative value data flow — `_safe_float` allows negatives through CSV pipeline, template renders them as numeric
+- TR40-01 (MEDIUM): pitch=0.0 sentinel flows through derive_spec -> selectattr -> camera in wrong table section

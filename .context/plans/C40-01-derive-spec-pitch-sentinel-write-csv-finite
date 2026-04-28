@@ -1,0 +1,76 @@
+# Plan C40-01: derive_spec Pitch 0.0 Sentinel Fix & write_csv Non-Finite Guards
+
+**Status:** completed
+**Priority:** P1 (data integrity, UX correctness)
+**Findings addressed:** C40-01, C40-02, C40-03, C40-04, C40-05
+
+## Problem
+
+`pixel_pitch()` returns 0.0 as a sentinel for invalid inputs (negative, zero, NaN, inf). `derive_spec` propagates this 0.0 without converting to None, causing:
+
+1. **Template misclassification:** `selectattr('pitch', 'ne', None)` includes 0.0 (0.0 != None), so cameras with invalid computed pitch appear in the "with pitch" table showing "unknown" instead of being in the "without pitch" section.
+
+2. **CSV round-trip data loss:** `write_csv` writes "0.00" for pitch. `parse_existing_csv` rejects it (0.0 <= 0 positivity check), setting pitch=None. Value silently lost on round-trip.
+
+3. **write_csv inf/nan output:** `write_csv` uses Python's default float formatting which produces "inf" and "nan" strings for non-finite values. While `parse_existing_csv` rejects these on re-read, other CSV consumers may not.
+
+## Implementation Steps
+
+### Step 1: Fix `derive_spec` to convert 0.0 sentinel to None (C40-01)
+
+**File:** `pixelpitch.py`, lines 757-762
+
+- [x] After computing pitch from `pixel_pitch()`, convert 0.0 to None:
+```python
+elif spec.mpix is not None and area is not None:
+    pitch = pixel_pitch(area, spec.mpix)
+    if pitch == 0.0:  # 0.0 is a sentinel for invalid inputs
+        pitch = None
+```
+
+### Step 2: Update `derive_spec` docstring (C40-05)
+
+**File:** `pixelpitch.py`, lines 722-743
+
+- [x] Add note: "When pixel_pitch returns 0.0 (invalid input sentinel), the computed pitch is set to None."
+
+### Step 3: Add `isfinite` guards in `write_csv` (C40-02)
+
+**File:** `pixelpitch.py`, lines 839-872
+
+- [x] Add `isfinite` checks for mpix, pitch, and area formatting:
+```python
+area_str = f"{derived.area:.2f}" if derived.area is not None and isfinite(derived.area) else ""
+mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None and isfinite(spec.mpix) else ""
+pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None and isfinite(derived.pitch) else ""
+```
+
+### Step 4: Add test for `derive_spec` computed pitch=0.0 path (C40-03)
+
+**File:** `tests/test_parsers_offline.py`
+
+- [x] Add test cases verifying:
+  - `derive_spec` with `pitch=None, mpix=0.0` → `derived.pitch is None`
+  - `derive_spec` with `pitch=None, mpix=-1.0` → `derived.pitch is None`
+  - CSV round-trip with mpix=0.0 preserves pitch=None
+
+### Step 5: Add test for `write_csv` non-finite float output (C40-04)
+
+**File:** `tests/test_parsers_offline.py`
+
+- [x] Add test verifying write_csv with inf/nan mpix produces empty strings in the CSV
+
+### Step 6: Update existing tests for changed behavior
+
+**File:** `tests/test_parsers_offline.py`
+
+- [x] `test_derive_spec_zero_pitch`: spec.pitch=0.0 direct is still preserved (unchanged)
+- [x] `test_csv_round_trip`: mpix=0.0 round-trip now consistently produces pitch=None (no data loss)
+
+## Exit Criteria
+
+- [x] `derive_spec` with `pitch=None, mpix=0.0` produces `derived.pitch=None` (not 0.0)
+- [x] `write_csv` does not output inf/nan strings for any float field
+- [x] CSV round-trip for mpix=0.0 preserves pitch=None consistently
+- [x] Template correctly routes pitch=None cameras to "without pitch" section
+- [x] All gate tests pass
