@@ -291,9 +291,19 @@ def test_gsmarena():
     expect("type (1/x.y)",   spec.type,     "1/1.3")
     expect("megapixels",     spec.mpix,     200.0, tol=0.1)
     expect("pixel pitch µm", spec.pitch,    0.6,   tol=0.01)
-    expect("size width mm",  spec.size[0] if spec.size else None, 9.84, tol=0.1)
-    expect("size height mm", spec.size[1] if spec.size else None, 7.40, tol=0.1)
+    # spec.size is None because GSMArena only provides the fractional-inch
+    # type, not measured dimensions. The type-derived dimensions are in
+    # derived.size (computed by derive_spec from spec.type).
+    expect("spec.size is None (type-derived, not measured)", spec.size, None)
     expect("year",           spec.year,     2025)
+
+    # Verify derive_spec computes derived.size from spec.type
+    import pixelpitch as pp
+    derived = pp.derive_spec(spec)
+    expect("derived.size from type 1/1.3 width",
+           derived.size[0] if derived.size else None, 9.84, tol=0.1)
+    expect("derived.size from type 1/1.3 height",
+           derived.size[1] if derived.size else None, 7.40, tol=0.1)
 
 
 def test_gsmarena_unicode_quotes():
@@ -1150,6 +1160,47 @@ def test_merge_size_consistency():
            m2.size, m2.spec.size, tol=0.01)
 
 
+def test_merge_gsmarena_measured_preserved():
+    """Verify merge_camera_data preserves measured Geizhals spec.size
+    when GSMArena provides only spec.type (spec.size=None)."""
+    section("merge GSMArena measured preservation")
+    import pixelpitch as pp
+    from models import Spec
+
+    # Existing: measured size from Geizhals (slightly different from TYPE_SIZE)
+    existing_spec = Spec(name='Phone X', category='smartphone', type='1/1.3',
+                         size=(9.76, 7.30), pitch=None, mpix=200.0, year=2025)
+    existing = pp.derive_spec(existing_spec)
+    existing.id = 0
+
+    # New: spec.size=None, spec.type='1/1.3' (GSMArena after provenance fix)
+    new_spec = Spec(name='Phone X', category='smartphone', type='1/1.3',
+                    size=None, pitch=None, mpix=200.0, year=2025)
+    new = pp.derive_spec(new_spec)
+
+    merged = pp.merge_camera_data([new], [existing])
+    m = merged[0]
+
+    # spec.size should be preserved from existing (measured Geizhals value)
+    expect("merge GSMArena: spec.size preserved from measured",
+           m.spec.size, (9.76, 7.30), tol=0.01)
+    # derived.size must match spec.size (not TYPE_SIZE)
+    expect("merge GSMArena: derived.size matches spec.size",
+           m.size, m.spec.size, tol=0.01)
+    # derived.area must be consistent with derived.size
+    expect("merge GSMArena: area consistent",
+           abs(m.area - m.size[0] * m.size[1]) < 0.01, True)
+
+    # Also test case where GSMArena provides spec.size=None but there is no
+    # existing data — derived.size should come from type lookup
+    new_only_spec = Spec(name='New Phone', category='smartphone', type='1/1.3',
+                          size=None, pitch=None, mpix=200.0, year=2025)
+    new_only = pp.derive_spec(new_only_spec)
+    merged_new = pp.merge_camera_data([new_only], [])
+    expect("merge GSMArena no existing: derived.size from type",
+           merged_new[0].size, (9.84, 7.40), tol=0.01)
+
+
 def test_merge_year_change_log():
     section("merge_camera_data year-change log")
     import io
@@ -1948,6 +1999,7 @@ def main():
     test_category_dedup()
     test_merge_field_preservation()
     test_merge_size_consistency()
+    test_merge_gsmarena_measured_preserved()
     test_merge_year_change_log()
     test_sony_dsc_hyphen_normalisation()
     test_mpix_re_format_handling()
