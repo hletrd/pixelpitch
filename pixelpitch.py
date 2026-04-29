@@ -998,7 +998,34 @@ def _get_env():
 
 
 def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
-    """Write camera specs to a CSV file using the csv module for proper escaping."""
+    """Write camera specs to a CSV file using the csv module for proper escaping.
+
+    Float-cell contract (F40, F59-01): the numeric columns
+    ``sensor_width_mm``, ``sensor_height_mm``, ``sensor_area_mm2``,
+    ``megapixels``, and ``pixel_pitch_um`` are guarded against
+    non-finite (``inf``/``nan``) and non-positive (``<= 0``) values
+    at the write boundary - those rows write an empty cell instead
+    of ``"inf"``/``"nan"``/``"0.00"``/``"-1.00"``. Width and height
+    use atomic-pair semantics: if either dimension is invalid, both
+    cells are empty (this matches ``parse_existing_csv`` which
+    requires both width>0 and height>0 for ``size`` to round-trip
+    as a tuple).
+
+    ``parse_existing_csv`` relies on this contract for round-trip
+    safety: ``_safe_float`` rejects non-finite floats and the
+    width/height filters reject non-positive values, so a CSV
+    artifact emitted by this function and re-read by
+    ``parse_existing_csv`` is guaranteed to round-trip the size
+    columns without coercion. Today upstream guards (``derive_spec``
+    and ``parse_existing_csv``) already filter these pathologies
+    before they reach ``write_csv``; the write-boundary guard is
+    defensive parity that survives upstream regressions and new
+    direct-SpecDerived construction sites.
+
+    The ``matched_sensors`` column uses ``;`` as the round-trip
+    delimiter (joined here, split in ``parse_existing_csv``); names
+    containing ``;`` are dropped with a warning.
+    """
     print(f"Writing CSV to {output_file}")
 
     with open(output_file, "w", encoding="utf-8", newline="") as f:
