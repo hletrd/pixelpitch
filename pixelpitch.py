@@ -1397,6 +1397,16 @@ def main():
                     except ValueError:
                         print(f"Error: --limit requires an integer, got '{args[i + 1]}'")
                         sys.exit(1)
+                    # F58-01: reject non-positive --limit. Slicing-based
+                    # consumers (apotelyt/cined/gsmarena: urls[:limit];
+                    # openmvg: i >= limit) silently truncate or empty
+                    # for limit <= 0, producing a confusing zero-row
+                    # CSV with no error signal.
+                    if limit <= 0:
+                        print(
+                            f"Error: --limit must be a positive integer, got {limit}"
+                        )
+                        sys.exit(1)
                 elif a == "--out" and i + 1 < len(args):
                     out_dir = Path(args[i + 1])
             fetch_source(src, limit, out_dir)
