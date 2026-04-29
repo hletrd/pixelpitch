@@ -1432,6 +1432,7 @@ def main():
             print(
                 "  source <name> [--limit N] [--out DIR]\n"
                 "                Fetch from an alternative source.\n"
+                "                --limit N must be a positive integer.\n"
                 f"                Available: {', '.join(sorted(SOURCE_REGISTRY))}"
             )
             print("  --help, -h    Show this help message")
