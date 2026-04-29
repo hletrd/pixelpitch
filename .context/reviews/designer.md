@@ -1,28 +1,37 @@
-# Designer Review (Cycle 56)
+# Designer (UI/UX) Review (Cycle 57)
 
 **Reviewer:** designer
 **Date:** 2026-04-29
-**HEAD:** `e8d5414`
+**HEAD:** `01c31d8`
 
-## Inventory (UI present)
+## UI/UX presence detection
 
-- `templates/index.html` (370 lines) — landing/navbar.
-- `templates/pixelpitch.html` (478 lines) — table + plots.
-- `templates/about.html` (107 lines).
+- `templates/about.html`, `templates/index.html`,
+  `templates/pixelpitch.html` — Jinja2 HTML templates rendered to
+  static site.
+- No live dev server in CI; static site rendered to `dist/`.
 
 ## Findings
 
-No new UI/UX issues this cycle. C55-01 was server-side only
-(per-source CSV loader behavior + README + tests). Previously
-deferred items (F35 box-plot dimensions, F36 skip-to-content,
-F37 filter state, F38 pagination, F39 navbar count) remain
-deferred per their original rationale.
+### F57-DES-01: no new UI changes this cycle — INFO
 
-## Cross-checks
+- **Detail:** Cycles 50–56 focused on CSV parser hardening.
+  Templates have not changed. UI carry-overs (F35–F40) remain
+  deferred per the deferred.md repo policy.
 
-- SRI hashes still pinned for all CDN resources.
-- LD+JSON `temporalCoverage` still updated.
-- Bootstrap mobile collapse still functional.
-- README enumeration of generated pages (smartphone.html,
-  cinema.html) gives users a clearer expectation of the navbar
-  contents.
+### Carry-over UI deferred (F35–F40)
+
+- All re-deferred. No new UI/UX findings.
+
+## Accessibility / WCAG 2.2 sweep
+
+- Templates use semantic `<table>`, `<th>`, headings, and ARIA
+  roles where appropriate (verified in cycle 35 review).
+- Dark/light mode toggle remains in place (cycle 30+).
+- No new contrast or focus issues detected in static render
+  inspection.
+
+## Confidence summary
+
+- 0 new findings.
+- All UI carry-overs remain deferred.

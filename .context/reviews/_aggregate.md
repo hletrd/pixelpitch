@@ -1,100 +1,105 @@
-# Aggregate Review (Cycle 56) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 57) — Deduplicated, Merged Findings
 
 **Date:** 2026-04-29
-**HEAD:** `e8d5414` (after C55-01)
+**HEAD:** `01c31d8` (after C56-01)
 **Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic,
 verifier, test-engineer, tracer, architect, debugger,
 document-specialist, designer.
 
-## Cycle 1–55 Status
+## Cycle 1–56 Status
 
-All previous fixes confirmed still working at HEAD `e8d5414`. Both
+All previous fixes confirmed still working at HEAD `01c31d8`. Both
 gates pass:
 
 - `flake8 .` → 0 errors (also enforced in CI).
 - `python3 -m tests.test_parsers_offline` → all sections green
   (including the C54-01 `_load_per_source_csvs refresh against
-  sensors.json` and C55-01 `_load_per_source_csvs cache fallback
-  when sensors.json missing` and `parse_existing_csv BOM has_id
-  detection` sections).
+  sensors.json`, C55-01 `_load_per_source_csvs cache fallback when
+  sensors.json missing` and `parse_existing_csv BOM has_id
+  detection`, and C56-01 `_load_per_source_csvs size-less row drops
+  cache (sensors_db non-empty)` sections).
 
-No regressions. Cycle 55's primary finding (F55-01: cache discard
-on sensors.json empty) is fixed and verified.
+No regressions. Cycle 56's three findings (F56-01, F56-02, F56-03)
+are fixed and verified.
 
-## Cycle 56 New Findings
+## Cycle 57 New Findings
 
-### F56-01 (gap): no test for `_load_per_source_csvs` size-less branch — LOW
+### F57-01 (BUG): `parse_existing_csv` accepts `area` column inconsistent with `width*height` — LOW
 
-- **Flagged by:** test-engineer (F56-TE-01), debugger (F56-D-04),
-  tracer (F56-T-02), architect (F56-A-01).
-- **File:** `tests/test_parsers_offline.py` (gap),
-  `pixelpitch.py:1084-1087`
-- **Detail:** When a per-source CSV row has no size (empty
-  width/height cells), `_load_per_source_csvs` forces
-  `matched_sensors = None` to honor `derive_spec`'s "size unknown
-  means not checked" sentinel. No test pins this branch.
-- **Fix:** Add a test that loads a per-source CSV with a row
-  whose width/height are empty, mocks `load_sensors_database` to
-  return a non-empty dict, and asserts the parsed row's
-  `matched_sensors` is `None` (not the cached value).
+- **Flagged by:** code-reviewer (F57-CR-01), critic (F57-CRIT-02),
+  verifier (F57-V-02 — reproduced), tracer (F57-T-01),
+  architect (F57-A-01), debugger (F57-D-01), test-engineer
+  (F57-TE-01), document-specialist (F57-DOC-01).
+- **File:** `pixelpitch.py:413-426`
+- **Detail:** When `parse_existing_csv` reads a CSV row that has
+  both width and height present, it uses the `area` column verbatim
+  rather than recomputing `area = width * height`. A hand-edited CSV
+  whose width/height were corrected but whose area column was left
+  stale will round-trip the wrong area through to the next CSV /
+  HTML emit. `derive_spec` enforces `area = width * height` for
+  fresh Specs, so `parse_existing_csv` is the only inconsistent
+  path.
+- **Repro:** Confirmed by verifier — input
+  `1,Foo,dslr,,23.6,15.6,999.0,24.0,3.85,2020,` parses as
+  `area=999.0` while `width*height=368.16`.
+- **Fix:** In `parse_existing_csv`, when `width` and `height` are
+  both present and finite-positive, recompute
+  `area = width * height` (matching `derive_spec`); fall back to
+  the `area_str` column only when `size` is missing. Update the
+  docstring to document the area trust contract. Add a test
+  asserting the parse-time recomputation.
 - **Severity:** LOW. **Confidence:** HIGH.
+- **Cross-agent agreement:** 8 reviewers (CRITICAL high signal).
 
-### F56-02 (gap): no test for empty-cache-string + empty-sensors-db preservation — LOW
+### F57-02 (DOC): `match_sensors` megapixel-disagree branch undocumented — LOW
 
-- **Flagged by:** test-engineer (F56-TE-03).
-- **File:** `tests/test_parsers_offline.py` (gap)
-- **Detail:** A row with `matched_sensors = []` parsed from `""`
-  should be preserved when sensors_db is empty. Untested.
+- **Flagged by:** code-reviewer (F57-CR-02), critic (F57-CRIT-03).
+- **File:** `pixelpitch.py:242-251`
+- **Detail:** When megapixels and sensor_megapixels are both
+  present but disagree, the sensor is silently rejected. Behaviour
+  is intentional (rejection > size-only match when both are known)
+  but no comment explains it. Future refactors could accidentally
+  add an `else: matches.append(...)` and break sensor matching.
+- **Severity:** LOW. **Confidence:** HIGH.
+- **Fix:** One-line comment.
+
+### F57-03 (gap, deferred): direct unit tests for `match_sensors` — LOW
+
+- **Flagged by:** test-engineer (F57-TE-02).
 - **Severity:** LOW. **Confidence:** MEDIUM.
-- **Fix:** Add an assertion in the existing C55-01 test section.
+- **Disposition:** Defer; indirect coverage via the round-trip
+  and refresh tests is sufficient.
 
-### F56-03 (cosmetic): docstring should call out size-less drop — LOW
+### F57-04 (theoretical, deferred): semicolon inside sensor name fragments parse-back — LOW
 
-- **Flagged by:** code-reviewer (F56-CR-01).
-- **File:** `pixelpitch.py:1041-1057`
-- **Detail:** Docstring says "When the row has no sensor size,
-  matched_sensors is set to `None`". This is accurate, but does
-  not state that it overrides any *cached* value. Tighten wording.
+- **Flagged by:** debugger (F57-D-06).
+- **File:** `pixelpitch.py:441-443`, `pixelpitch.py:1003-1010`
 - **Severity:** LOW. **Confidence:** HIGH.
-- **Fix:** Add "(overriding any cached value)" to the docstring.
-
-### F56-04 (cleanup, gated): refresh-helper extraction across merge & per-source-load
-
-- **Flagged by:** critic (F56-CRIT-01), architect (F56-A-01).
-- **Files:** `pixelpitch.py:613-628`, `pixelpitch.py:1071-1087`
-- **Disposition:** Carry-over of F55-06 deferral. Two branches
-  agree on empty-db fallback (preserve cache) but disagree on
-  size-less rows (merge keeps; per-source-load forces None per
-  derive_spec contract). Refactor is small and risky.
-- **Severity:** LOW. **Confidence:** HIGH.
-- **Disposition:** Re-defer.
-
-### F56-DOC-03: deferred.md is growing, no periodic sweep
-
-- **Flagged by:** document-specialist.
-- **File:** `.context/plans/deferred.md`
-- **Severity:** LOW. **Confidence:** MEDIUM.
-- **Disposition:** Defer; periodic sweep is fine.
+- **Disposition:** Defer until sensors.json actually contains a
+  `;` in a name; pre-emptive code adds complexity for a
+  hypothetical case.
 
 ## Carry-over deferred (no action this cycle)
 
-- F32 monolith, F55-CRIT-03 / F56-CRIT-02 test monolith.
-- F49-04 perf, F55-PR-01..03 perf, F56-PR-04 informational.
-- C10-07 redirects, C10-08 debug port.
-- F35..F40 UI carry-overs.
-- F55-A-02 / F56-A-02 category list duplication.
+- F32 monolith, F55-CRIT-03 / F56-CRIT-02 / F57-CRIT-01 test monolith.
+- F49-04 perf, F55-PR-01..03 perf, F56-PR-04 / F57-PR-01..03 informational.
+- C10-07 redirects, C10-08 debug port (F57-SR-old).
+- F35..F40 UI carry-overs (re-confirmed by designer).
+- F55-A-02 / F56-A-02 / F57-A-02 category list duplication.
 - F55-04 (existing_specs in-place mutation), F55-05 (hand-edited
   blank-leading-cell defeats has_id).
+- F56-DOC-03 / F57-DOC-03 (`deferred.md` size).
+- F57-CR-03 (cosmetic comment redundancy in
+  `_load_per_source_csvs`).
 
 ## Cross-Agent Agreement Matrix
 
-| Finding   | Flagged By                                                    | Severity |
-|-----------|---------------------------------------------------------------|----------|
-| F56-01    | test-engineer, debugger, tracer, architect                    | LOW |
-| F56-02    | test-engineer                                                 | LOW |
-| F56-03    | code-reviewer                                                 | LOW |
-| F56-04    | critic, architect                                             | LOW (defer) |
-| F56-DOC-03 | document-specialist                                          | LOW (defer) |
+| Finding   | Flagged By                                                                    | Severity |
+|-----------|-------------------------------------------------------------------------------|----------|
+| F57-01    | code-reviewer, critic, verifier, tracer, architect, debugger, test-engineer, document-specialist | LOW (high signal — 8 agents) |
+| F57-02    | code-reviewer, critic                                                         | LOW |
+| F57-03    | test-engineer                                                                 | LOW (defer) |
+| F57-04    | debugger                                                                      | LOW (defer) |
 
 ## AGENT FAILURES
 
@@ -103,7 +108,10 @@ No agents failed.
 ## Summary statistics
 
 - 11 reviewer perspectives executed.
-- 5 findings produced this cycle (1 actionable docstring tighten,
-  2 actionable test gaps, 2 cleanup carry-overs deferred).
+- 4 findings produced this cycle:
+  - 1 actionable bug (F57-01) flagged by 8/11 reviewers.
+  - 1 actionable doc/comment (F57-02).
+  - 2 deferred per repo policy (F57-03 indirect coverage, F57-04
+    theoretical).
 - 0 new HIGH/CRITICAL findings.
-- 0 regressions vs cycle 55.
+- 0 regressions vs cycle 56.

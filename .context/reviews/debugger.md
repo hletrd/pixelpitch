@@ -1,33 +1,55 @@
-# Debugger Review (Cycle 56)
+# Debugger Review (Cycle 57)
 
 **Reviewer:** debugger
 **Date:** 2026-04-29
-**HEAD:** `e8d5414`
+**HEAD:** `01c31d8`
 
-## Latent bug surface
+## Latent failure mode sweep
 
-### F56-D-01 (resolved): C55-01 cache-fallback discrepancy — RESOLVED
+### F57-D-01: `parse_existing_csv` accepts hand-edited area inconsistent with width*height — LOW
 
-- The cycle 55 finding (sensors_db-empty path drops matched_sensors
-  cache) is fixed at `pixelpitch.py:1073-1087`. Verified with the
-  new `_load_per_source_csvs cache fallback` test section.
+- **File:** `pixelpitch.py:413-426`
+- **Failure mode:** Stale area persists across deploys when a user
+  edits width/height but leaves area; emits an inconsistent CSV row
+  next round-trip.
+- **Severity:** LOW. **Confidence:** HIGH.
+- **Same as:** F57-CR-01.
 
-### F56-D-02 (false alarm): `pitch != spec.pitch` float compare
+### F57-D-02: `_safe_float("inf")` rejected, `_safe_float("Infinity")` rejected — VERIFIED
 
-- Same as F55-D-02. Intentional re-derive from canonical pitch.
+- Tested by the existing C40 finite test. OK.
 
-### F56-D-03 (false alarm): `values[10]` bounds on padded row
+### F57-D-03: BOM detection on first column with `id` header — VERIFIED
 
-- Same as F55-D-03. `if has_id` row is padded to 10; conditional
-  indexing for column 10. Confirmed safe.
+- C55-01 test pins it. OK.
 
-### F56-D-04 (informational): `_load_per_source_csvs` size-less branch is reachable when source CSV row has empty width/height cells
+### F57-D-04: `_load_per_source_csvs` size-less branch drops cache — VERIFIED
 
-- **File:** `pixelpitch.py:1084-1087`
-- **Detail:** A per-source CSV row with empty width/height parses
-  to `size = None`. Branch fires `matched_sensors = None`. This
-  drops a parsed cache value. Intentional per the docstring's
-  "size unknown means not checked" contract, matching `derive_spec`.
-- **Severity:** N/A (intentional). **Confidence:** HIGH.
+- C56-01 test pins it. OK.
 
-## No new latent bugs this cycle.
+### F57-D-05: empty CSV / single-line CSV → no rows + no exception
+
+- Tested via `parse_existing_csv` empty/header-only sections. OK.
+
+### F57-D-06: matched_sensors with semicolons inside sensor name — LOW (theoretical)
+
+- **File:** `pixelpitch.py:441-443`, `pixelpitch.py:1003-1010`
+- **Detail:** Parse uses `;` as delimiter. write_csv comments warn
+  "if a future entry violates this, drop the offending element and
+  warn rather than silently fragmenting on parse-back" but does
+  not implement the drop+warn — currently emits the name with
+  semicolons, which fragments on parse-back.
+- **Severity:** LOW. **Confidence:** HIGH (the comment exists but
+  the behaviour does not).
+- **Disposition:** Defer until sensors.json actually has a `;` in
+  a name. Currently no such entry exists; pre-emptive code adds
+  complexity for a hypothetical case.
+
+## Carry-over
+
+- F49-04 perf, F55-PR-01..03, etc. — re-defer.
+
+## Confidence summary
+
+- 1 LOW actionable (F57-D-01 = F57-CR-01).
+- 1 LOW deferred (F57-D-06 semicolon-in-sensor-name).

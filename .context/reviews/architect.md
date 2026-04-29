@@ -1,33 +1,48 @@
-# Architect Review (Cycle 56)
+# Architect Review (Cycle 57)
 
 **Reviewer:** architect
 **Date:** 2026-04-29
-**HEAD:** `e8d5414`
+**HEAD:** `01c31d8`
 
-## Findings
+## System-level inventory
 
-### F56-A-01: two refresh paths still divergent on size-less rows — LOW (gated)
+- Single 1416-line orchestrator (`pixelpitch.py`) calls
+  scraper plugins (`sources/*.py`).
+- Models in `models.py` (Spec, SpecDerived).
+- Tests in `tests/`.
+- Templates in `templates/`.
 
-- **Files:** `pixelpitch.py:613-628` (merge existing-only branch),
-  `pixelpitch.py:1071-1087` (`_load_per_source_csvs`).
-- **Detail:** Post-C55-01, both branches preserve cache when
-  sensors_db is empty. They still disagree on size-less rows:
-  - merge existing-only: leaves matched_sensors untouched
-  - _load_per_source_csvs: forces matched_sensors = None
-  Both are correct under their own contracts (merge preserves
-  whatever existed; per-source-load honors `derive_spec`'s
-  "not-checked when size unknown" sentinel). Folding into a shared
-  helper requires a `force_none_if_no_size: bool` parameter.
+## Architectural risks
+
+### F57-A-01: `area` is a derived-but-stored field, with two sources of truth — LOW (carry of F57-CR-01)
+
+- **File:** `pixelpitch.py` (parse_existing_csv, derive_spec, write_csv).
+- **Detail:** `area` is conceptually `width * height`, but stored
+  independently in CSV. parse-time treats them as independent;
+  derive-time treats `area` as derived. Adding a `derive_area()`
+  helper used by both paths would dedup the contract.
 - **Severity:** LOW. **Confidence:** HIGH.
-- **Disposition:** Defer per F55-06 rationale (refactor risk in a
-  monolith file outweighs marginal cleanup).
+- **Disposition:** Schedule the parse-time fix only; a refactor
+  of derive_spec is not justified by this single bug.
 
-### F56-A-02: render_html category lists still duplicated — LOW (carry-over)
+### F57-A-02: `SpecDerived` constructor accepts `size=None` and `area>0` — partial defensive gap
 
-- **File:** `pixelpitch.py:1148-1164`
-- Carry-over from F55-A-02. Adding a new category requires edits
-  in several places. Not worse this cycle.
-- **Severity:** LOW. **Confidence:** HIGH.
-- **Disposition:** Defer.
+- **Files:** `models.py`, `pixelpitch.py:447-451`.
+- **Detail:** No invariant prevents constructing a SpecDerived where
+  size is None but area is not None. `derive_spec` enforces this
+  invariant; `parse_existing_csv` does not. The current path does
+  set both to None when the column is missing, so the invariant
+  holds in practice — but adding a `__post_init__` validator would
+  prevent future breakage.
+- **Severity:** LOW. **Confidence:** MEDIUM.
+- **Disposition:** Defer; over-engineering for a stable
+  data class.
 
-## No high-severity architectural risks.
+### Carry-over
+- F32 monolith → re-defer.
+- F55-A-02 / F56-A-02 category list duplication → re-defer.
+
+## Confidence summary
+
+- 1 LOW actionable (F57-A-01, overlaps F57-CR-01).
+- 1 LOW deferred (F57-A-02 invariant validation).

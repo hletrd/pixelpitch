@@ -1,57 +1,64 @@
-# Tracer Review (Cycle 56)
+# Tracer Review (Cycle 57)
 
 **Reviewer:** tracer
 **Date:** 2026-04-29
-**HEAD:** `e8d5414`
+**HEAD:** `01c31d8`
 
-## Causal traces
+## Causal flow inventory
 
-### Flow 1: per-source CSV → merge → render → write-back (post-C55-01)
+### Flow 1: CSV → SpecDerived (parse path)
 
-1. `fetch_source` writes per-source CSV with current matched_sensors.
-2. `_load_per_source_csvs` parses; if sensors_db loads, refresh;
-   if sensors_db is empty, **preserve the parsed cache**; if size
-   is None, force matched_sensors = None.
-3. `merge_camera_data` honors tri-valued sentinel.
-4. `write_csv` joins with `;` and guards `;`-in-name.
-5. Next cycle: `parse_existing_csv` splits on `;` (strip+dedup).
+1. `load_csv` reads `dist/camera-data.csv`.
+2. `parse_existing_csv` constructs `SpecDerived` directly:
+   - `width, height` from cols 4,5 (or 3,4 if no id)
+   - `area` from col 6 (or 5)
+   - `mpix` from col 7 (or 6)
+   - `pitch` from col 8 (or 7)
+   - `year` from col 9 (or 8)
+   - `matched_sensors` from col 10 (or 9)
+3. SpecDerived is returned to `merge_camera_data`.
 
-End-to-end the contract holds. Cache fallback is now consistent
-with merge existing-only branch on the empty-db case.
+### F57-T-01: `area` is set independently of `width*height` — LOW
 
-### Flow 2: BOM → parse_existing_csv → write_csv (verified at C55-01)
+- **Files:** `pixelpitch.py:413-426`
+- **Detail:** Same as F57-CR-01 from the trace angle. The parse path
+  encodes `(width, height) → size, area_col → area` as two
+  independent reads, but `derive_spec` enforces
+  `area = width * height`. The two paths agree on freshly-derived
+  Specs but disagree on hand-edited CSVs.
+- **Suggested:** Recompute `area = width * height` in
+  `parse_existing_csv` when both are present.
 
-1. Excel saves CSV with leading `﻿`.
-2. `parse_existing_csv` `strip_bom` runs first.
-3. `header[0] == "id"` resolves correctly post-strip.
-4. Re-write produces no BOM.
+### Flow 2: per-source CSV → SpecDerived (cache fallback)
 
-Confirmed correct via new BOM regression test.
+1. `_load_per_source_csvs` iterates SOURCE_REGISTRY.
+2. For each, parse_existing_csv → list[SpecDerived].
+3. For each row:
+   - if size present + sensors_db ok → re-match
+   - if size present + sensors_db empty → preserve cache
+   - if size None → matched_sensors = None
+4. Returned to `merge_camera_data`.
 
-### Flow 3: sensors.json missing during render_html (post-C55-01)
+All branches pinned by tests after C54/C55/C56.
 
-1. `merge_camera_data` lazy-loads only for existing-only cameras.
-   When file missing, returns `{}`. Existing-only cameras get
-   matched_sensors UNCHANGED in this branch.
-2. `_load_per_source_csvs` lazy-loads when row has size; on `{}`
-   PRESERVES the parsed cache (was: dropped to None).
+### Flow 3: Spec → SpecDerived → CSV (derive path)
 
-Inconsistency from cycle 55 is now resolved on the empty-db path.
+1. Source scrapers produce `Spec`.
+2. `derive_spec` computes size, area, pitch, matched_sensors.
+3. write_csv emits all 11 columns.
 
-## Findings
+Verified: derive_spec sets area = w*h consistently. No bug here.
 
-### F56-T-01 (resolved): empty-db cache-discard inconsistency — RESOLVED at e8d5414.
+## Competing hypotheses for F57-T-01
 
-### F56-T-02 (informational): size-less branch in _load_per_source_csvs still drops cache, by design
+- H1 (preferred): `parse_existing_csv` should recompute area from
+  width/height to match `derive_spec`.
+- H2: Trust the column for human override scenarios. **Rejected:**
+  `derive_spec` is the canonical source of truth, and a human
+  override of area without updating width/height is more likely a
+  bug than intent.
 
-- See F56-D-04 / F56-A-01. Intentional; documented; tests pin
-  refresh and empty-db paths but not the size-less path.
+## Confidence summary
 
-## Competing hypotheses
-
-- H1 (chosen): C55-01 fix is correct and complete for the empty-db
-  case. Remaining size-less-drop behavior is intentional.
-- H2 (rejected): force size-less branch to also preserve cache.
-  Rejected because `derive_spec` documents matched_sensors = None
-  when size is unknown ("not checked"); preserving stale cache
-  would lie about staleness.
+- 1 LOW actionable (F57-T-01 = F57-CR-01).
+- All other flows trace cleanly.
