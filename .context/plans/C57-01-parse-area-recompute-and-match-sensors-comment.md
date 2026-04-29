@@ -1,9 +1,31 @@
 # C57-01: recompute `area` in `parse_existing_csv` from width*height; comment `match_sensors` mpix-disagree branch
 
 **Cycle:** 57 (orchestrator cycle 10)
-**Status:** PLANNED
+**Status:** COMPLETED
 **Findings addressed:** F57-01 (bug), F57-02 (comment),
 F57-DOC-01 (docstring), F57-TE-01 (test).
+
+## Implementation summary
+
+- `fix(csv)` (commit `89d7053`): `parse_existing_csv` now
+  recomputes `area = width * height` when both dimensions are
+  present; falls back to the `area_str` column only when size
+  is unavailable. Also adds a one-line comment to
+  `match_sensors` clarifying the mpix-disagree rejection branch
+  (F57-02). Docstring updated to document the area trust
+  contract (F57-DOC-01).
+- `test(csv)` (commit `1eb4700`): adds a new test section
+  `parse_existing_csv area recomputed from width*height` pinning
+  three branches (recompute, size-missing fallback, zero-area
+  rejection) (F57-TE-01). Updates the pre-existing fixture
+  assertion that trusted bogus area data.
+- `docs(reviews)` (commit `56272ee`): cycle 57 reviews and plan.
+
+Both gates pass post-fix:
+- `flake8 .` → 0 errors.
+- `python3 -m tests.test_parsers_offline` → all sections green
+  including the new `parse_existing_csv area recomputed from
+  width*height` section (9 new assertions).
 
 ## Background
 
