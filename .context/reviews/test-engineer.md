@@ -1,7 +1,7 @@
-# Test Engineer — Cycle 60 (Orchestrator Cycle 13)
+# Test Engineer — Cycle 61 (Orchestrator Cycle 14)
 
 **Date:** 2026-04-29
-**HEAD:** `a0cd982`
+**HEAD:** `a781933`
 
 ## Inventory
 
@@ -11,7 +11,7 @@
 
 ## Status
 
-All test sections green. Cycle 1-59 regression coverage:
+All test sections green. Cycle 1-60 regression coverage:
 
 - F40 / F59-01 write_csv non-finite/non-positive guards (all 5 cells).
 - F57-01 area-recompute on parse.
@@ -20,24 +20,23 @@ All test sections green. Cycle 1-59 regression coverage:
 - C46 matched_sensors tri-valued preservation.
 - F50-04 round-trip preservation.
 
-## Cycle 60 New Findings
+## Cycle 61 New Findings
 
-### F60-TE-01 (deferred, informational): no test pins
-`_load_per_source_csvs` behavior when `parse_existing_csv` raises
+### F61-TE-01 (LOW, paired with F61-CR-01): no test pins
+matched_sensors None-vs-[] CSV round-trip behavior
 
 - **File:** `tests/test_parsers_offline.py` (gap).
-- **Detail:** Pairs with F60-CR-01. The docstring of
-  `_load_per_source_csvs` promises "Missing files are silently
-  skipped — failure of one source must not block the build", but no
-  test verifies behavior when a per-source CSV is malformed in a way
-  that `parse_existing_csv` itself raises before its inner per-row
-  try/except. Adding a regression test would require constructing
-  pathological CSV input (e.g. binary garbage) — limited value
-  since `csv.reader` is permissive enough that
-  `parse_existing_csv` is unlikely to raise at the top level.
-- **Severity:** LOW. **Confidence:** LOW.
-- **Disposition:** Defer (paired with F60-CR-01).
+- **Detail:** Pairs with F61-CR-01. Tests today (line 691, 701)
+  pin `[]` as the canonical post-parse value for empty-cell or
+  no-sensors-column rows, but no test pins the asymmetry: a
+  `derive_spec`-produced `matched_sensors=None` round-trips through
+  `write_csv` -> `parse_existing_csv` to `[]`. The contract is by
+  design; documenting it as a test would help future maintainers
+  understand the lossy-round-trip property is intentional rather
+  than a regression.
+- **Severity:** LOW. **Confidence:** LOW (no observable bug).
+- **Disposition:** Defer (paired with F61-CR-01, both by-design).
 
 ## Summary
 
-No actionable test-coverage gaps for cycle 60.
+No actionable test-coverage gaps for cycle 61.

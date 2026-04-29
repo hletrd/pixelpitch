@@ -1,7 +1,7 @@
-# Code Reviewer — Cycle 60 (Orchestrator Cycle 13)
+# Code Reviewer — Cycle 61 (Orchestrator Cycle 14)
 
 **Date:** 2026-04-29
-**HEAD:** `a0cd982`
+**HEAD:** `a781933`
 **Scope:** Full repository review for code quality, logic, SOLID,
 maintainability.
 
@@ -17,7 +17,7 @@ maintainability.
 
 ## Status at HEAD
 
-All cycle 1-59 fixes confirmed in place. Both gates pass:
+All cycle 1-60 fixes confirmed in place. Both gates pass:
 
 - `flake8 .` -> 0 errors.
 - `python3 -m tests.test_parsers_offline` -> all sections green.
@@ -32,44 +32,42 @@ Re-verified key invariants:
   (line 616-617).
 - `_safe_year`, `_safe_int_id` reject out-of-range values.
 
-## Cycle 60 New Findings
+## Cycle 61 New Findings
 
-### F60-CR-01 (LOW, defensive parity gap): `_load_per_source_csvs`
-has no per-source try/except wrapping `parse_existing_csv`
+### F61-CR-01 (LOW, by-design): CSV `matched_sensors` column cannot
+distinguish None vs [] — round-trip lossy
 
-- **File:** `pixelpitch.py:1132`
-- **Detail:** `parse_existing_csv(content)` is wrapped only by a
-  per-row `try/except Exception` *inside* itself. If
-  `csv.reader(io.StringIO(...))` ever raises a top-level exception
-  (e.g. on a corrupt cache file), the surrounding
-  `_load_per_source_csvs` has no per-source try/except wrapping the
-  call. The exception propagates up through `render_html`, killing
-  the build. Today `csv.reader` is permissive enough that this is
-  largely theoretical, but the docstring promises "Missing files are
-  silently skipped — failure of one source must not block the
-  build" — which is broken if `parse_existing_csv` itself raises.
-- **Severity:** LOW. **Confidence:** LOW (theoretical at present).
-- **Disposition:** Defer (no observed failure mode; defensive parity
-  with the docstring contract).
+- **File:** `pixelpitch.py:462-466` (parse_existing_csv) and
+  `pixelpitch.py:1069-1081` (write_csv).
+- **Detail:** `derive_spec` documents a tri-valued sentinel for
+  `matched_sensors` (None = "not checked", [] = "checked, found
+  nothing", non-empty = matches). However the CSV format conflates
+  the first two: write_csv emits `""` for both None and [], and
+  parse_existing_csv reads `""` back as `[]`. After round-trip,
+  the "not checked" sentinel is lost. Practical impact is nil:
+  downstream consumers (template, write_csv) treat None and [] the
+  same when displaying or writing back, and the test pins `[]` as
+  the canonical post-parse value (see test_parsers_offline.py:691,
+  701). Same class as F60-D-01 (Spec/SpecDerived size asymmetry).
+- **Severity:** LOW. **Confidence:** HIGH (round-trip behavior
+  is deterministic and tested).
+- **Disposition:** Defer (no observable bug; documented behavior
+  pinned by existing tests). Re-open if a future consumer needs to
+  distinguish "never checked" from "checked, empty" after CSV
+  round-trip.
 
-### F60-CR-02 (informational): `cined.fetch` ImportError handling
-correctly returns []
-
-- **File:** `sources/cined.py:114-121`
-- **Detail:** Confirmed working. Non-finding.
-
-## Carry-over from cycles 1-59
+## Carry-over from cycles 1-60
 
 All previously-actionable findings either fixed or deferred per
 `deferred.md`. No regressions observed at HEAD.
 
 ## Confidence
 
-- HIGH: cycles 48-59 fixes still in place.
+- HIGH: cycles 48-60 fixes still in place.
 - HIGH: gates green.
 - LOW: any new actionable defect this cycle.
 
 ## Summary
 
-No new actionable findings for cycle 60. Repository at steady-state
+No new actionable findings for cycle 61. Repository at steady-state
 post-C59-01.

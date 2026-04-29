@@ -1,7 +1,7 @@
-# Debugger — Cycle 60 (Orchestrator Cycle 13)
+# Debugger — Cycle 61 (Orchestrator Cycle 14)
 
 **Date:** 2026-04-29
-**HEAD:** `a0cd982`
+**HEAD:** `a781933`
 
 ## Latent Bug Surface Scan
 
@@ -21,29 +21,15 @@ Replayed the following hypothetical failure modes against the code:
    boundaries (derive_spec, parse_existing_csv, write_csv).
 7. **Sensor names containing ';' delimiter** — handled (line
    1072-1077, drop with warning).
+8. **CSV-row index out of range when has_id=False, 10-col schema**
+   — guarded by `len(values) > 9` check (line 424). Verified safe.
 
-## Cycle 60 New Findings
+## Cycle 61 New Findings
 
-### F60-D-01 (informational): `derive_spec` returns `size=None,
-area=None` when input size is non-finite, but the original `spec.size`
-is unchanged
-
-- **File:** `pixelpitch.py:902-904`
-- **Detail:** When the input `spec.size` has `(inf, 24)`, `derive_spec`
-  sets `size = None` and `area = None`, but `spec.size` (the underlying
-  Spec field) is not modified. This is correct — Spec is the raw input,
-  SpecDerived is the cleaned output. But it means a downstream caller
-  that reads `spec.size` directly (rather than `derived.size`) would
-  still see the `(inf, 24)` value. No such caller exists in the
-  codebase today; the template, write_csv, and JSON-LD all read
-  `derived.size`. Documenting this contract more clearly in
-  `derive_spec`'s docstring would aid future maintainers.
-- **Severity:** LOW. **Confidence:** MEDIUM (DOC-only).
-- **Disposition:** Defer (no live bug; `derive_spec` docstring already
-  states "NaN or infinite dimensions in `spec.size` are treated as
-  unknown (size and area set to None)" — the contract is documented,
-  just not the asymmetry between Spec and SpecDerived).
+None this cycle. F60-D-01 (Spec/SpecDerived size asymmetry doc)
+re-confirmed deferred. F61-CR-01 (matched_sensors round-trip
+lossiness) is a related doc-only asymmetry tracked separately.
 
 ## Summary
 
-No actionable debugger findings for cycle 60.
+No actionable debugger findings for cycle 61.

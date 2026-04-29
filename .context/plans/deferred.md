@@ -399,3 +399,35 @@ These findings from the review are explicitly deferred. Each entry records:
 - **Re-open if:** Same as F59-04.
 
 ---
+
+## F61-CR-01: CSV `matched_sensors` column cannot distinguish None vs [] — round-trip lossy
+- **File:** `pixelpitch.py`, lines 462-466 (parse_existing_csv) and 1069-1081 (write_csv)
+- **Severity:** LOW | **Confidence:** HIGH
+- **Reason:** `derive_spec` documents a tri-valued sentinel for `matched_sensors` (None = "not checked", [] = "checked, found nothing", non-empty list = matches). The CSV format conflates the first two: `write_csv` emits `""` for both None and [], and `parse_existing_csv` reads `""` back as `[]`. After round-trip, the "not checked" sentinel is lost. Practical impact is nil — downstream consumers (template, write_csv) treat None and [] identically, and existing tests pin `[]` as the canonical post-parse value (test_parsers_offline.py:691, 701). Adding a third in-band token (e.g. `"-"` for None) would change a stable on-disk format and require a parallel migration; not justified for a doc-only asymmetry. Same class as F60-D-01.
+- **Re-open if:** A future consumer needs to distinguish "never checked" from "checked, empty" after CSV round-trip, or the on-disk format is being revised for another reason.
+
+---
+
+## F61-TE-01: no test pins matched_sensors None-vs-[] CSV round-trip asymmetry
+- **File:** `tests/test_parsers_offline.py` (gap)
+- **Severity:** LOW | **Confidence:** LOW
+- **Reason:** Pairs with F61-CR-01. Tests today (line 691, 701) pin `[]` as the canonical post-parse value for empty-cell or no-sensors-column rows, but no test explicitly pins the `derive_spec`-produced `None` -> `write_csv` -> `parse_existing_csv` -> `[]` asymmetry. The asymmetry is by design; documenting it as a regression test would help future maintainers but is not a behavior-change requirement.
+- **Re-open if:** F61-CR-01 is re-opened (paired finding).
+
+---
+
+## F61-CRIT-01: `pixelpitch.py` line count is 1488 — close to F32 re-open threshold of 1500 (cycle 61)
+- **File:** `pixelpitch.py` (1488 lines)
+- **Severity:** LOW | **Confidence:** HIGH
+- **Reason:** Same finding as F60-CRIT-01 — no change since cycle 60. Currently 12 lines below the F32 re-open threshold. Pre-emptive flag so the orchestrator can plan a refactor track ahead of time.
+- **Re-open if:** `pixelpitch.py` exceeds 1500 lines (the F32 re-open trigger).
+
+---
+
+## F61-DOC-01: repeats deferred F59-04 / F60-DOC-01 "missing" log wording
+- **File:** `pixelpitch.py`, line 1125
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Reason:** Identical to deferred F59-04 / F60-DOC-01. No change in disposition.
+- **Re-open if:** Same as F59-04.
+
+---

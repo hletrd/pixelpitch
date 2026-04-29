@@ -1,7 +1,7 @@
-# Security Reviewer — Cycle 60 (Orchestrator Cycle 13)
+# Security Reviewer — Cycle 61 (Orchestrator Cycle 14)
 
 **Date:** 2026-04-29
-**HEAD:** `a0cd982`
+**HEAD:** `a781933`
 
 ## Inventory
 
@@ -22,32 +22,17 @@
 - C10-07 (HTTP redirect SSRF) and C10-08 (remote-debugging port)
   deferred per repo policy.
 
-## Cycle 60 New Findings
+## Cycle 61 New Findings
 
-### F60-SEC-01 (deferred, informational): `module.fetch(**kwargs)`
-uses dynamic kwargs without per-source schema validation
-
-- **File:** `pixelpitch.py:1395`
-- **Detail:** `kwargs` is constructed from `--limit` and an
-  env-var (`GSMARENA_MAX_PAGES_PER_BRAND`). The kwargs dict is
-  passed to `module.fetch(**kwargs)` — a future source whose
-  `fetch()` signature lacks one of these kwargs would raise
-  `TypeError`. `gsmarena` accepts `max_pages_per_brand`; other
-  sources do not. The current code only sends `max_pages_per_brand`
-  when `name == "gsmarena"` (line 1388), so the safety check is
-  manual but correct. A typed-dispatch (e.g. per-source kwargs
-  whitelist) would be more robust but is over-engineering for the
-  current 5-source registry.
-- **Severity:** LOW. **Confidence:** HIGH.
-- **Disposition:** Defer (architectural; not a security bug — a
-  TypeError at startup is a fail-loud signal, not a silent
-  vulnerability).
+None. Code surface unchanged since cycle 60. F60-SEC-01 deferral
+re-confirmed.
 
 ## Carry-over deferred
 
-C10-07, C10-08, F34 — all per repo policy in `deferred.md`.
+C10-07, C10-08, F34, F60-SEC-01 — all per repo policy in
+`deferred.md`.
 
 ## Summary
 
-No new security findings for cycle 60. Whitelist-based importlib
+No new security findings for cycle 61. Whitelist-based importlib
 usage and autoescape Jinja remain correct.

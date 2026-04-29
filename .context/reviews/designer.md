@@ -1,7 +1,7 @@
-# Designer — Cycle 60 (Orchestrator Cycle 13)
+# Designer — Cycle 61 (Orchestrator Cycle 14)
 
 **Date:** 2026-04-29
-**HEAD:** `a0cd982`
+**HEAD:** `a781933`
 
 ## UI/UX Posture
 
@@ -13,11 +13,11 @@ F37, F38, F39, C9-07, C11-08) remain deferred per repo policy.
 
 No new template edits this cycle. No new UI/UX findings.
 
-## Cycle 60 New Findings
+## Cycle 61 New Findings
 
 None.
 
 ## Summary
 
-No new designer findings for cycle 60. Existing deferred items
+No new designer findings for cycle 61. Existing deferred items
 (F35..F40, C9-07, C11-08) remain valid as deferred.

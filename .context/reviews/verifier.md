@@ -1,7 +1,7 @@
-# Verifier — Cycle 60 (Orchestrator Cycle 13)
+# Verifier — Cycle 61 (Orchestrator Cycle 14)
 
 **Date:** 2026-04-29
-**HEAD:** `a0cd982`
+**HEAD:** `a781933`
 
 ## Evidence
 
@@ -15,7 +15,7 @@
 - Round-trip preserved: `(35.9, 23.9)` writes "35.90,23.90" and
   reads back as `(35.9, 23.9)` correctly.
 
-## Cycle 60 New Findings
+## Cycle 61 New Findings
 
 No new verifier-level correctness gaps found at HEAD.
 
@@ -29,10 +29,10 @@ No new verifier-level correctness gaps found at HEAD.
 | `write_csv` width/height fail-empty | YES (line 1052-1062) |
 | `write_csv` area/mpix/pitch fail-empty | YES (line 1060-1062) |
 | `match_sensors` returns [] for invalid size | YES (line 223-224) |
-| matched_sensors None vs [] sentinel preserved | YES (merge_camera_data line 616) |
+| matched_sensors None vs [] sentinel preserved (in-memory) | YES (merge_camera_data line 616) |
 | `_safe_year` clamps to [1900, 2100] | YES (line 317) |
 | `_safe_int_id` clamps to [0, 1_000_000] | YES (line 347) |
 
 ## Summary
 
-No new findings. All cycle 1-59 invariants verified at HEAD.
+No new findings. All cycle 1-60 invariants verified at HEAD.

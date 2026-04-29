@@ -1,7 +1,7 @@
-# Document Specialist — Cycle 60 (Orchestrator Cycle 13)
+# Document Specialist — Cycle 61 (Orchestrator Cycle 14)
 
 **Date:** 2026-04-29
-**HEAD:** `a0cd982`
+**HEAD:** `a781933`
 
 ## Doc-Code Mismatch Scan
 
@@ -26,10 +26,10 @@ Checked all docstrings against current behavior:
 `smartphone.html`, `cinema.html`, `about.html`, `camera-data.csv`.
 All match `render_html` output. Accurate.
 
-## Cycle 60 New Findings
+## Cycle 61 New Findings
 
-### F60-DOC-01 (informational): `_load_per_source_csvs` "missing"
-log wording — repeat of deferred F59-04
+### F61-DOC-01 (LOW, repeat): `_load_per_source_csvs` "missing"
+log wording — repeat of deferred F59-04 / F60-DOC-01
 
 - **File:** `pixelpitch.py:1125`
 - **Detail:** Same finding as deferred F59-04. No change in
@@ -38,4 +38,4 @@ log wording — repeat of deferred F59-04
 
 ## Summary
 
-No new documentation findings for cycle 60.
+No new documentation findings for cycle 61.
