@@ -2531,6 +2531,69 @@ def test_parse_existing_csv_area_recomputed():
                parsed3[0].area, None)
 
 
+def test_source_cli_rejects_non_positive_limit():
+    """F58-01: `python pixelpitch.py source <name> --limit <n>` must
+    reject n <= 0 with a non-zero exit status.
+
+    Slicing-based source consumers (apotelyt/cined/gsmarena: urls[:limit];
+    openmvg: i >= limit) silently truncate or empty the result list when
+    limit is non-positive, producing a confusing zero-row CSV with no
+    error signal. The CLI must validate the integer range before invoking
+    fetch_source.
+    """
+    section("source CLI rejects non-positive --limit")
+    import pixelpitch as pp
+    from unittest import mock
+
+    # --limit -1 must SystemExit(1).
+    with mock.patch.object(pp, "fetch_source") as mock_fetch, \
+            mock.patch.object(sys, "argv",
+                              ["pixelpitch.py", "source", "openmvg",
+                               "--limit", "-1"]):
+        try:
+            pp.main()
+            exit_code = None
+        except SystemExit as e:
+            exit_code = e.code
+    expect("limit-neg: SystemExit raised", exit_code is not None, True)
+    expect("limit-neg: SystemExit code=1", exit_code, 1)
+    expect("limit-neg: fetch_source NOT called",
+           mock_fetch.called, False)
+
+    # --limit 0 must also SystemExit(1).
+    with mock.patch.object(pp, "fetch_source") as mock_fetch, \
+            mock.patch.object(sys, "argv",
+                              ["pixelpitch.py", "source", "openmvg",
+                               "--limit", "0"]):
+        try:
+            pp.main()
+            exit_code = None
+        except SystemExit as e:
+            exit_code = e.code
+    expect("limit-zero: SystemExit raised", exit_code is not None, True)
+    expect("limit-zero: SystemExit code=1", exit_code, 1)
+    expect("limit-zero: fetch_source NOT called",
+           mock_fetch.called, False)
+
+    # --limit 5 must NOT SystemExit and must call fetch_source(limit=5).
+    with mock.patch.object(pp, "fetch_source") as mock_fetch, \
+            mock.patch.object(sys, "argv",
+                              ["pixelpitch.py", "source", "openmvg",
+                               "--limit", "5"]):
+        try:
+            pp.main()
+            exit_code = None
+        except SystemExit as e:
+            exit_code = e.code
+    expect("limit-pos: no SystemExit", exit_code, None)
+    expect("limit-pos: fetch_source called once",
+           mock_fetch.call_count, 1)
+    if mock_fetch.called:
+        # fetch_source(name, limit, output_dir)
+        args, _kwargs = mock_fetch.call_args
+        expect("limit-pos: fetch_source limit=5", args[1], 5)
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -2581,6 +2644,7 @@ def main():
     test_load_per_source_csvs_size_less_drops_cache()
     test_parse_existing_csv_bom_has_id_detection()
     test_parse_existing_csv_area_recomputed()
+    test_source_cli_rejects_non_positive_limit()
 
     print("\n" + ("=" * 60))
     if _failures:
