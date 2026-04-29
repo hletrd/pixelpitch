@@ -1,11 +1,11 @@
-# Debugger — Cycle 64 (Orchestrator Cycle 17)
+# Debugger — Cycle 65 (Orchestrator Cycle 18)
 
 **Date:** 2026-04-29
-**HEAD:** `482d816`
+**HEAD:** `5b1724e`
 
 ## Latent Bug Surface Scan
 
-Re-replayed the failure modes from cycle 63 against HEAD; all still
+Re-replayed the failure modes from cycle 64 against HEAD; all still
 handled:
 
 1. Empty/corrupt sensors.json — handled (F55-01: cache fallback).
@@ -18,10 +18,10 @@ handled:
 7. Sensor names containing ';' delimiter — handled (drop with warning).
 8. CSV-row index out of range when has_id=False, 10-col schema — guarded.
 
-## Cycle 64 New Findings
+## Cycle 65 New Findings
 
 None.
 
 ## Summary
 
-No actionable debugger findings for cycle 64.
+No actionable debugger findings for cycle 65.

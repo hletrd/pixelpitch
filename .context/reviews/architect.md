@@ -1,7 +1,7 @@
-# Architect — Cycle 64 (Orchestrator Cycle 17)
+# Architect — Cycle 65 (Orchestrator Cycle 18)
 
 **Date:** 2026-04-29
-**HEAD:** `482d816`
+**HEAD:** `5b1724e`
 
 ## Architectural Posture
 
@@ -12,7 +12,7 @@
   the implicit contract. Deferred F31 / F60-A-01.
 - Templates are Jinja2; SOURCE_REGISTRY drives nav/sitemap.
 
-## Cycle 64 New Findings
+## Cycle 65 New Findings
 
 None.
 
@@ -22,4 +22,4 @@ F31, F32, F55-A-02, F56-A-02, F57-A-02, F58-A-02, F60-A-01.
 
 ## Summary
 
-No new architectural findings for cycle 64.
+No new architectural findings for cycle 65.

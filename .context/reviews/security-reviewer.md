@@ -1,7 +1,7 @@
-# Security Reviewer — Cycle 64 (Orchestrator Cycle 17)
+# Security Reviewer — Cycle 65 (Orchestrator Cycle 18)
 
 **Date:** 2026-04-29
-**HEAD:** `482d816`
+**HEAD:** `5b1724e`
 
 ## Inventory
 
@@ -21,7 +21,7 @@
 - C10-07, C10-08, F60-SEC-01 deferred per repo policy.
 - `--limit` validation hardened in C58-01.
 
-## Cycle 64 New Findings
+## Cycle 65 New Findings
 
 None. Code surface unchanged since cycle 63.
 
@@ -31,4 +31,4 @@ C10-07, C10-08, F34, F60-SEC-01.
 
 ## Summary
 
-No new security findings for cycle 64.
+No new security findings for cycle 65.

@@ -1,7 +1,7 @@
-# Document Specialist — Cycle 64 (Orchestrator Cycle 17)
+# Document Specialist — Cycle 65 (Orchestrator Cycle 18)
 
 **Date:** 2026-04-29
-**HEAD:** `482d816`
+**HEAD:** `5b1724e`
 
 ## Doc-Code Mismatch Scan
 
@@ -21,15 +21,15 @@ All docstrings re-checked against current behavior; no drift:
 `README.md` enumerates generated HTML pages per cycle 55; output of
 `render_html` matches.
 
-## Cycle 64 New Findings
+## Cycle 65 New Findings
 
-### F64-DOC-01 (LOW, repeat of F62-DOC-01 / F63-DOC-01): `_load_per_source_csvs` "missing" log wording
+### F65-DOC-01 (LOW, repeat of F62-DOC-01 / F63-DOC-01 / F64-DOC-01): `_load_per_source_csvs` "missing" log wording
 
 - **File:** `pixelpitch.py:1125`.
 - **Detail:** Identical to deferred F59-04 / F60-DOC-01 / F61-DOC-01 /
-  F62-DOC-01 / F63-DOC-01.
+  F62-DOC-01 / F63-DOC-01 / F64-DOC-01.
 - **Disposition:** Stays deferred.
 
 ## Summary
 
-No new actionable documentation findings for cycle 64.
+No new actionable documentation findings for cycle 65.

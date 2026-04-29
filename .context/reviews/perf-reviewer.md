@@ -1,7 +1,7 @@
-# Perf Reviewer — Cycle 64 (Orchestrator Cycle 17)
+# Perf Reviewer — Cycle 65 (Orchestrator Cycle 18)
 
 **Date:** 2026-04-29
-**HEAD:** `482d816`
+**HEAD:** `5b1724e`
 
 ## Inventory
 
@@ -19,7 +19,7 @@ re-open thresholds. Code unchanged since cycle 63.
 row loop performs O(rows * sensors_db) work as expected. Merge dedup
 is O(N) on hashable keys. CSV I/O streams through `csv.reader/writer`.
 
-## Cycle 64 New Findings
+## Cycle 65 New Findings
 
 None.
 
@@ -30,4 +30,4 @@ all informational, no thresholds crossed.
 
 ## Summary
 
-No actionable perf findings for cycle 64.
+No actionable perf findings for cycle 65.
