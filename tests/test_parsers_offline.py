@@ -676,7 +676,12 @@ def test_parse_existing_csv():
     expect("name with comma", parsed[0].spec.name, "Test, Cam")
     expect("category", parsed[0].spec.category, "mirrorless")
     expect("size", parsed[0].size, (35.9, 23.9), tol=0.01)
-    expect("area", parsed[0].area, 858.61, tol=0.01)
+    # F57-01: area is now recomputed from width*height when both are
+    # present (35.90 * 23.90 = 858.01), rather than trusting the bogus
+    # ``858.61`` value embedded in the test fixture. The fixture
+    # intentionally encodes an inconsistent area to verify that the
+    # parser overrides it.
+    expect("area (recomputed from width*height)", parsed[0].area, 858.01, tol=0.01)
     expect("mpix", parsed[0].spec.mpix, 33.0, tol=0.1)
     expect("pitch", parsed[0].pitch, 5.12, tol=0.01)
     expect("year", parsed[0].spec.year, 2021)
@@ -2473,6 +2478,59 @@ def test_parse_existing_csv_bom_has_id_detection():
                parsed[0].spec.category, "dslr")
 
 
+def test_parse_existing_csv_area_recomputed():
+    """F57-01: parse_existing_csv must recompute area = width*height when
+    both dimensions are present, rather than trusting the area column.
+
+    Hand-edited CSVs may have width/height corrected but the area column
+    left stale; round-tripping the stale area would defeat the visual
+    consistency check that pitch ≈ 1000 * sqrt(area / mpix * 1e6).
+    """
+    section("parse_existing_csv area recomputed from width*height")
+    import pixelpitch as pp
+
+    # Width and height present, area column intentionally bogus (999.0).
+    # 23.6 * 15.6 = 368.16; the parser must override the column.
+    csv_bogus_area = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+        "sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "1,Foo,dslr,,23.6,15.6,999.0,24.0,3.85,2020,\n"
+    )
+    parsed = pp.parse_existing_csv(csv_bogus_area)
+    expect("area-recompute: 1 row parsed", len(parsed), 1)
+    if parsed:
+        expect("area-recompute: size preserved",
+               parsed[0].size, (23.6, 15.6), tol=0.01)
+        expect("area-recompute: area = width*height (overrides column)",
+               parsed[0].area, 23.6 * 15.6, tol=1e-6)
+
+    # Size missing, area column present — fallback path.
+    csv_size_missing = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+        "sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "2,Bar,dslr,,,,50.0,24.0,3.85,2020,\n"
+    )
+    parsed2 = pp.parse_existing_csv(csv_size_missing)
+    expect("area-fallback: 1 row parsed", len(parsed2), 1)
+    if parsed2:
+        expect("area-fallback: size is None", parsed2[0].size, None)
+        expect("area-fallback: area from column",
+               parsed2[0].area, 50.0, tol=1e-6)
+
+    # Size missing AND area is non-positive — area must be None.
+    csv_bad_area = (
+        "id,name,category,type,sensor_width_mm,sensor_height_mm,"
+        "sensor_area_mm2,megapixels,pixel_pitch_um,year,matched_sensors\n"
+        "3,Baz,dslr,,,,0,24.0,3.85,2020,\n"
+    )
+    parsed3 = pp.parse_existing_csv(csv_bad_area)
+    expect("area-fallback: 1 row parsed", len(parsed3), 1)
+    if parsed3:
+        expect("area-fallback: size is None", parsed3[0].size, None)
+        expect("area-fallback: zero area rejected",
+               parsed3[0].area, None)
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -2522,6 +2580,7 @@ def main():
     test_load_per_source_csvs_cache_fallback()
     test_load_per_source_csvs_size_less_drops_cache()
     test_parse_existing_csv_bom_has_id_detection()
+    test_parse_existing_csv_area_recomputed()
 
     print("\n" + ("=" * 60))
     if _failures:
