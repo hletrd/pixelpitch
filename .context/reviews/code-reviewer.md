@@ -1,21 +1,22 @@
-# Code Reviewer — Cycle 63 (Orchestrator Cycle 16)
+# Code Reviewer — Cycle 64 (Orchestrator Cycle 17)
 
 **Date:** 2026-04-29
-**HEAD:** `f129a72`
+**HEAD:** `482d816` (docs cycle-63 reviews)
 **Scope:** Full repository review for code quality, logic, SOLID, maintainability.
 
 ## Inventory
 
 - `pixelpitch.py` (1488 lines)
 - `models.py` (27 lines)
-- `sources/__init__.py`, `openmvg.py`, `apotelyt.py`, `imaging_resource.py`, `gsmarena.py`, `cined.py`, `digicamdb.py`
+- `sources/__init__.py`, `openmvg.py`, `apotelyt.py`, `imaging_resource.py`,
+  `gsmarena.py`, `cined.py`, `digicamdb.py`
 - `tests/test_parsers_offline.py` (2748 lines)
 - `tests/test_sources.py` (111 lines)
 - `templates/*.html`
 
 ## Status at HEAD
 
-All cycle 1-62 fixes confirmed in place. Both gates pass:
+All cycle 1-63 fixes confirmed in place. Both gates pass:
 - `flake8 .` -> 0 errors
 - `python3 -m tests.test_parsers_offline` -> all sections green
 
@@ -28,21 +29,25 @@ Re-verified key invariants:
 - `--limit` validation rejects non-positive integers.
 - `_load_per_source_csvs` lazy-loads sensors_db; F55-01 fallback intact.
 
-## Cycle 63 Findings
+## Cycle 64 Findings
 
-No new actionable findings. Code unchanged since cycle 62 except for
+No new actionable findings. Code unchanged since cycle 63 except for
 `.context/reviews/*` and `deferred.md` updates. All deferred items
 remain valid:
-- F61-CR-01 / F61-TE-01 (matched_sensors None-vs-[] CSV round-trip asymmetry, by-design).
-- F62-CRIT-01 (line-count threshold pre-flag at 1488 lines).
-- F62-DOC-01 (`_load_per_source_csvs` "missing" log wording, repeat).
+- F61-CR-01 / F61-TE-01 (matched_sensors None-vs-[] CSV round-trip
+  asymmetry, by-design).
+- F62-CRIT-01 .. F64-CRIT-01 (line-count threshold pre-flag at 1488
+  lines; threshold 1500 not crossed).
+- F62-DOC-01 / F63-DOC-01 (`_load_per_source_csvs` "missing" log
+  wording, repeat).
 
 ## Confidence
 
-- HIGH: cycles 48-62 fixes still in place.
+- HIGH: cycles 48-63 fixes still in place.
 - HIGH: gates green at HEAD.
 - LOW: any new actionable defect this cycle.
 
 ## Summary
 
-No new actionable findings for cycle 63. Repository at steady-state post-`f129a72`.
+No new actionable findings for cycle 64. Repository at steady-state
+post-`482d816`.

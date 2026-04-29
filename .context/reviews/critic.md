@@ -1,13 +1,13 @@
-# Critic — Cycle 63 (Orchestrator Cycle 16)
+# Critic — Cycle 64 (Orchestrator Cycle 17)
 
 **Date:** 2026-04-29
-**HEAD:** `f129a72`
+**HEAD:** `482d816`
 
 ## Multi-Perspective Critique
 
 ### What's working
 
-- Cycles 40-62 incrementally hardened the numeric-cell contract end-to-end.
+- Cycles 40-63 incrementally hardened the numeric-cell contract end-to-end.
   Defensive parity is full.
 - The matched_sensors tri-valued sentinel is consistently honored in-memory.
 - Test coverage for size/area/pitch/mpix round-trip is comprehensive.
@@ -23,17 +23,18 @@
 
 ### Risks introduced this cycle
 
-- None. No code changes since cycle 62.
+- None. No code changes since cycle 63.
 
-## Cycle 63 New Findings
+## Cycle 64 New Findings
 
-### F63-CRIT-01 (LOW, carry-over): line-count threshold
+### F64-CRIT-01 (LOW, carry-over): line-count threshold
 
 - **File:** `pixelpitch.py` — 1488 lines (unchanged).
 - **Severity:** LOW. **Confidence:** HIGH.
-- **Disposition:** Defer (no policy crossed; advance warning still in effect).
+- **Disposition:** Defer (no policy crossed; advance warning still in
+  effect). Identical to F60..F63-CRIT-01.
 
 ## Summary
 
-Code quality remains high. Repo at incremental-hardening steady state. One
-file-size threshold to keep watching.
+Code quality remains high. Repo at incremental-hardening steady state.
+One file-size threshold to keep watching.
