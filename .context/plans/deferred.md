@@ -303,3 +303,27 @@ These findings from the review are explicitly deferred. Each entry records:
 - **Re-open if:** A reviewer finds a deferred item that should now be actionable based on changed circumstances, or the file grows past ~50 entries.
 
 ---
+
+## F58-04: `--out`/`--limit` consume value-arg without skipping loop counter (typo tolerance)
+- **File:** `pixelpitch.py`, lines 1393-1401
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Reason:** The `for i, a in enumerate(args)` loop in `main()`'s `source` branch consumes `args[i+1]` for `--limit` and `--out`, but does not advance `i`. If the user typos `--out --limit 5`, the code sets `out_dir = Path("--limit")` without complaint. The happy path (`--limit 5 --out dist2`) works correctly. Repo policy defers this typo-tolerance because it is covered by F58-05 (argparse migration). Same root cause as the manual argparse drift.
+- **Re-open if:** F58-05 argparse migration is accepted (this finding folds into that plan).
+
+---
+
+## F58-05: hand-coded argv parser drift between `html` and `source` branches
+- **File:** `pixelpitch.py`, lines 1368-1431
+- **Severity:** LOW | **Confidence:** HIGH (architectural, not a bug)
+- **Reason:** `main()` rolls a hand-coded argv parser. The `html` branch uses while+counter; the `source` branch uses for+enumerate without counter advance. The two patterns drift, opening the door to F58-01 (silent `--limit -1`) and F58-04 (`--out --limit` typo). Migrating to `argparse` (stdlib, no new dependency) would consolidate the patterns, but the file is already flagged monolithic (F32 deferred). Same class as F32; refactor risk in a stable code path outweighs benefit for the current CLI surface (3 commands, 4 options).
+- **Re-open if:** A new top-level CLI command is added (the third drift opportunity), or F32 monolith refactor is accepted (would naturally include the argparse migration).
+
+---
+
+## F58-06: no boundary tests for `_safe_year` at 1900/2100 and `_safe_int_id` at 0/1_000_000
+- **File:** `tests/test_parsers_offline.py` (gap)
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Reason:** Existing parse-tolerance tests cover well below / above the bounds (`"2099"`, `"2200"`, `"-1"`, `"1e308"`), but no test pins the exact boundary inclusively (`1900`, `2100`, `0`, `1_000_000`; `<=` operator). A future refactor to `<` would silently flip semantics. Indirect coverage via the existing parse-tolerance tests suffices for current scope. Same class as F55-02 (boundary tolerance defer).
+- **Re-open if:** Bounds become configurable, or a future refactor switches `<=` to `<`.
+
+---

@@ -1,55 +1,44 @@
-# Test Engineer Review (Cycle 57)
+# Test-Engineer Review (Cycle 58, orchestrator cycle 11)
 
-**Reviewer:** test-engineer
 **Date:** 2026-04-29
-**HEAD:** `01c31d8`
+**HEAD:** `aef726b`
 
-## Coverage map
+## Coverage check
 
-- `parse_existing_csv`: many sections cover BOM, header detection,
-  matched_sensors round-trip, year/id parse tolerance.
-- `merge_camera_data`: matched_sensors preservation (C46), tri-valued
-  sentinel (F50-04).
-- `_load_per_source_csvs`: refresh (C54), cache fallback (C55),
-  size-less drop (C56). All branches now pinned.
-- `derive_spec`: pixel_pitch sentinel (C40), TYPE_SIZE phone formats
-  (C8).
-- `match_sensors`: indirectly tested via the round-trip and refresh
-  tests.
+- `parse_existing_csv` — 25+ assertions; F57-01 area
+  recomputation now pinned.
+- `merge_camera_data` — 12+ assertions; matched_sensors
+  preservation pinned.
+- `_safe_year`, `_safe_int_id` — boundary parsing pinned for
+  garbage / inf / nan / range overflow.
+- `match_sensors` — indirectly covered via round-trip and
+  refresh tests; **direct unit test still missing** (F57-03
+  deferred).
+- `_load_per_source_csvs` — cache-fallback and refresh paths
+  pinned.
 
-## New findings (cycle 57)
+## New findings
 
-### F57-TE-01: no test pins `parse_existing_csv` `area` column round-trip with width/height — LOW
+### F58-TE-01: no test for `--limit` validation in `source` command — LOW
 
-- **File:** `tests/test_parsers_offline.py`
-- **Detail:** No section asserts that, when width and height are
-  both present, the parsed `area` matches `width * height`. Adding
-  this test will pin F57-CR-01's fix and prevent future regressions.
+- **File:** `tests/test_parsers_offline.py` (gap)
+- **Detail:** F58-CR-01 (negative `--limit` accepted silently)
+  has no test pinning the new validation behavior. After the
+  fix, a test should assert that `--limit -1` and `--limit 0`
+  exit with a non-zero status and a clear error message.
 - **Severity:** LOW. **Confidence:** HIGH.
+- **Fix:** call `main()` with a patched `sys.argv` that
+  includes `--limit -1`, capture the `SystemExit`, assert
+  non-zero exit code. Subprocess-style would be too heavy
+  for the offline test gate.
 
-### F57-TE-02: `match_sensors` direct unit tests absent — LOW (gap)
+### F58-TE-02 (deferred): direct unit tests for `match_sensors` — LOW
 
-- **File:** `tests/test_parsers_offline.py`
-- **Detail:** The function is exercised indirectly through
-  `_load_per_source_csvs` and `merge_camera_data` tests, but no
-  direct unit test pins:
-  - megapixel disagreement → empty match
-  - megapixel agreement → match
-  - tolerance edges (2% size, 5% mpix)
-- **Severity:** LOW. **Confidence:** MEDIUM.
-- **Disposition:** Defer — indirect coverage suffices. Schedule
-  only if a new tolerance is added.
+- Carry-over of F57-03. Indirect coverage via round-trip
+  tests is sufficient for current scope.
+- **Disposition:** keep deferred.
 
-### F57-TE-03: F57-TE-01 fix can co-locate with the CSV round-trip section — INFO
+## Summary
 
-- A 5-line addition to the existing `parse_existing_csv` round-trip
-  test section is sufficient.
-
-## Carry-over
-
-- F32 monolith (test file size) — re-defer.
-
-## Confidence summary
-
-- 1 actionable LOW (F57-TE-01 area consistency test).
-- 1 LOW deferred (F57-TE-02 direct match_sensors unit tests).
+One new actionable test gap (F58-TE-01), conditional on the
+F58-CR-01 fix. Deferred carry-over preserved.

@@ -1,55 +1,47 @@
-# Debugger Review (Cycle 57)
+# Debugger Review (Cycle 58, orchestrator cycle 11)
 
-**Reviewer:** debugger
 **Date:** 2026-04-29
-**HEAD:** `01c31d8`
+**HEAD:** `aef726b`
 
-## Latent failure mode sweep
+## Latent bug surface
 
-### F57-D-01: `parse_existing_csv` accepts hand-edited area inconsistent with width*height — LOW
+### F58-D-01: `--limit -1` silent no-op (HIGH-confidence latent bug)
 
-- **File:** `pixelpitch.py:413-426`
-- **Failure mode:** Stale area persists across deploys when a user
-  edits width/height but leaves area; emits an inconsistent CSV row
-  next round-trip.
-- **Severity:** LOW. **Confidence:** HIGH.
-- **Same as:** F57-CR-01.
+- Same as F58-CR-01 / F58-CRIT-01 / F58-T-01.
+- Failure mode: the user runs the CLI, sees a zero-exit
+  status, finds an empty CSV in `dist/`, and assumes the
+  scrape failed silently. Wastes investigation time.
+- Fix: input validation. One-line guard.
 
-### F57-D-02: `_safe_float("inf")` rejected, `_safe_float("Infinity")` rejected — VERIFIED
+### F58-D-02: `--limit` value not enforced as positive integer
 
-- Tested by the existing C40 finite test. OK.
+- `int("0")` → `0`, returns empty list (silent no-op).
+- `int("-100")` → `-100`, slices `urls[:-100]` (drops last
+  100 items).
+- Fix: `if limit <= 0: print(...); sys.exit(1)`.
 
-### F57-D-03: BOM detection on first column with `id` header — VERIFIED
+### F58-D-03 (theoretical, deferred): `--out` path validation
 
-- C55-01 test pins it. OK.
+- **File:** `pixelpitch.py:1400-1401`
+- **Detail:** `--out --limit` (typo) sets `out_dir =
+  Path("--limit")`. The script will then try to create a
+  directory named `--limit/`, which works on POSIX but is
+  user-hostile. Same root cause as F58-A-02 (manual argparse
+  drift).
+- **Severity:** LOW. **Confidence:** MEDIUM.
+- **Disposition:** defer (covered by F58-A-02 architectural
+  refactor when accepted).
 
-### F57-D-04: `_load_per_source_csvs` size-less branch drops cache — VERIFIED
+### F58-D-04: F57-D-06 semicolon-in-sensor-name still deferred
 
-- C56-01 test pins it. OK.
+- Carry-over. No action.
 
-### F57-D-05: empty CSV / single-line CSV → no rows + no exception
+## No other regressions
 
-- Tested via `parse_existing_csv` empty/header-only sections. OK.
+All 25+ test sections pass. The C57-01 fix has not introduced
+any new latent failure mode.
 
-### F57-D-06: matched_sensors with semicolons inside sensor name — LOW (theoretical)
+## Summary
 
-- **File:** `pixelpitch.py:441-443`, `pixelpitch.py:1003-1010`
-- **Detail:** Parse uses `;` as delimiter. write_csv comments warn
-  "if a future entry violates this, drop the offending element and
-  warn rather than silently fragmenting on parse-back" but does
-  not implement the drop+warn — currently emits the name with
-  semicolons, which fragments on parse-back.
-- **Severity:** LOW. **Confidence:** HIGH (the comment exists but
-  the behaviour does not).
-- **Disposition:** Defer until sensors.json actually has a `;` in
-  a name. Currently no such entry exists; pre-emptive code adds
-  complexity for a hypothetical case.
-
-## Carry-over
-
-- F49-04 perf, F55-PR-01..03, etc. — re-defer.
-
-## Confidence summary
-
-- 1 LOW actionable (F57-D-01 = F57-CR-01).
-- 1 LOW deferred (F57-D-06 semicolon-in-sensor-name).
+Two actionable latent findings (F58-D-01, F58-D-02 — both
+collapsed into the F58-CR-01 fix). One deferred (F58-D-03).

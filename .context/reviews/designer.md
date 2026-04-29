@@ -1,37 +1,25 @@
-# Designer (UI/UX) Review (Cycle 57)
+# Designer Review (Cycle 58, orchestrator cycle 11)
 
-**Reviewer:** designer
 **Date:** 2026-04-29
-**HEAD:** `01c31d8`
+**HEAD:** `aef726b`
 
-## UI/UX presence detection
+## UI surface
 
-- `templates/about.html`, `templates/index.html`,
-  `templates/pixelpitch.html` — Jinja2 HTML templates rendered to
-  static site.
-- No live dev server in CI; static site rendered to `dist/`.
+The repo contains UI/UX in `templates/*.html` (Jinja-rendered
+static pages with Bootstrap, jQuery, and D3). No JS framework,
+no SPA. UI surface unchanged this cycle (no template edits).
 
-## Findings
+## Carry-over deferred (no action this cycle)
 
-### F57-DES-01: no new UI changes this cycle — INFO
+- F35: box plot hardcoded dimensions.
+- F36: no skip-to-content link.
+- F37: filter dropdown doesn't show current state.
+- F38: no loading indicator for large datasets.
+- F39: navbar 9 items, may be unwieldy on mobile.
+- C11-08: scatter plot year-axis label overlap.
 
-- **Detail:** Cycles 50–56 focused on CSV parser hardening.
-  Templates have not changed. UI carry-overs (F35–F40) remain
-  deferred per the deferred.md repo policy.
+All re-confirmed. No new UI/UX findings this cycle.
 
-### Carry-over UI deferred (F35–F40)
+## Summary
 
-- All re-deferred. No new UI/UX findings.
-
-## Accessibility / WCAG 2.2 sweep
-
-- Templates use semantic `<table>`, `<th>`, headings, and ARIA
-  roles where appropriate (verified in cycle 35 review).
-- Dark/light mode toggle remains in place (cycle 30+).
-- No new contrast or focus issues detected in static render
-  inspection.
-
-## Confidence summary
-
-- 0 new findings.
-- All UI carry-overs remain deferred.
+Zero new UI/UX findings. UI surface unchanged.

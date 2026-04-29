@@ -1,55 +1,55 @@
-# Critic Review (Cycle 57)
+# Critic Review (Cycle 58, orchestrator cycle 11)
 
-**Reviewer:** critic
 **Date:** 2026-04-29
-**HEAD:** `01c31d8`
+**HEAD:** `aef726b`
 
-## Multi-perspective critique
+## Critique angles
 
-After 56 cycles of fan-out review and incremental hardening, the
-codebase has converged. Recent cycles added micro-tests for
-edge cases (size-less branch, BOM has_id detection, year/id
-parse tolerance). The marginal value of additional micro-fixes
-is decreasing.
+1. **Correctness:** the C57-01 fix recomputes `area` from
+   `width*height`. Verified by running the gate. No new
+   correctness regression.
+2. **CLI surface:** `python pixelpitch.py source <name>
+   --limit <n>` accepts any integer including negatives /
+   zero. Slicing-based consumers silently truncate or empty.
+   No error is raised, which is user-hostile.
+3. **Architecture:** F32 monolith carry-over still applies.
+4. **Testing:** test file growing past 2595 LOC. Same class
+   as F32; deferred.
 
-### F57-CRIT-01: parser-tests file is 2536 lines, monolith carried over from F55-CRIT-03 — LOW (deferred)
+## New findings
 
-- **File:** `tests/test_parsers_offline.py`
-- **Detail:** Test file continues to grow. Each cycle adds 10–30
-  lines. At ~2536 lines a developer onboarding to the project must
-  scroll-search to find the relevant section. Splitting by feature
-  area (CSV parse, merge, _load_per_source_csvs, sensors) would
-  improve maintainability.
-- **Severity:** LOW. **Confidence:** MEDIUM.
-- **Disposition:** Re-defer; mechanical refactor with test-rerun
-  risk.
+### F58-CRIT-01: `source` CLI silently accepts `--limit` <= 0 — LOW
 
-### F57-CRIT-02: `area` round-trip via CSV is independent of `width*height` round-trip — LOW
-
-- **Files:** `pixelpitch.py:413-426`, `pixelpitch.py:996`
-- **Detail:** Same finding as F57-CR-01 from a different angle:
-  the CSV format encodes redundant information (width, height,
-  area). The redundancy is useful for human eyeballing but creates
-  a consistency hazard. Deserves a small fix in `parse_existing_csv`
-  to recompute area when width and height are present.
+- Same issue as `code-reviewer.F58-CR-01`. Cross-agent
+  agreement.
+- Multi-perspective angle: from the CLI-user perspective,
+  the command appears to succeed (exit 0, file written) but
+  the output is empty / wrong. A failing exit code with a
+  clear message is the standard CLI contract.
 - **Severity:** LOW. **Confidence:** HIGH.
-- **Disposition:** Schedule as actionable plan in cycle 57.
 
-### F57-CRIT-03: `match_sensors` partial-match disagreement is implicit — LOW
+### F58-CRIT-02: `--out`/`--limit` consume their value-arg without skipping the loop counter — LOW (deferred)
 
-- Same as F57-CR-02. Comment-only fix worth one line.
+- **File:** `pixelpitch.py:1393-1401`
+- **Detail:** The `for i, a in enumerate(args)` loop checks
+  `a == "--limit"` and `a == "--out"`, consuming `args[i+1]`,
+  but does not skip ahead. A subsequent iteration sees
+  `a = "5"` (the value of `--limit`); since `"5"` does not
+  match either flag string, no harm. But if a user typos
+  `--out --limit` (a flag-string in the value position), the
+  code would set `out_dir = Path("--limit")` without
+  complaint.
+- **Severity:** LOW. **Confidence:** MEDIUM.
+- **Disposition:** defer (typo tolerance is nice-to-have but
+  the happy path works).
 
-### F57-CRIT-04: scope drift toward over-testing — INFO
+## Carry-over critiques (deferred)
 
-- **Detail:** Recent cycles added increasingly narrow tests
-  (size-less + sensors_db non-empty, BOM has_id, year tolerance,
-  id tolerance, range guard). This is rigorous but each new
-  test is now a 5-line micro-check. Consider declaring
-  diminishing returns on parse-tolerance tests after cycle 56.
-- **Disposition:** Note but no action required.
+- F32 monolith: still 1437-line `pixelpitch.py`.
+- F55-CRIT-03 / F56-CRIT-02 / F57-CRIT-01: test monolith.
+- F35..F40: UI carry-overs.
 
 ## Confidence summary
 
-- 1 actionable LOW (F57-CRIT-02 area consistency, overlaps F57-CR-01).
-- 2 LOW deferred (F57-CRIT-01 monolith, F57-CRIT-03 comment).
-- 1 INFO (F57-CRIT-04 over-testing scope).
+- 1 LOW actionable (F58-CRIT-01, overlaps F58-CR-01).
+- 1 LOW deferred (F58-CRIT-02, typo tolerance).

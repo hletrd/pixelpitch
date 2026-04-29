@@ -1,91 +1,79 @@
-# Code Review (Cycle 57)
+# Code-Reviewer Review (Cycle 58, orchestrator cycle 11)
 
-**Reviewer:** code-reviewer
 **Date:** 2026-04-29
-**HEAD:** `01c31d8` (after C56-01 completion, gates green at HEAD)
-**Gates:** `flake8 .` = 0; `python3 -m tests.test_parsers_offline` = green
-(all sections including the new C56-01 size-less branch test).
+**HEAD:** `aef726b` (after C57-01 plan-completed marker)
 
-## Inventory of code-relevant files (re-verified)
+## Inventory
 
-- `pixelpitch.py` (1416 lines), `models.py` (27 lines).
-- `sources/__init__.py`, `apotelyt.py`, `cined.py`, `digicamdb.py`,
-  `gsmarena.py`, `imaging_resource.py`, `openmvg.py`.
-- `tests/test_parsers_offline.py` (2536 lines), `tests/test_sources.py`.
-- `templates/*.html`.
+- `pixelpitch.py` (1437 LOC) — primary module, all data-flow / merge / CLI / render.
+- `models.py` — `Spec` and `SpecDerived` dataclasses.
+- `sources/__init__.py`, `sources/apotelyt.py`, `sources/cined.py`,
+  `sources/digicamdb.py`, `sources/gsmarena.py`,
+  `sources/imaging_resource.py`, `sources/openmvg.py`.
+- `tests/test_parsers_offline.py` (2595 LOC) — gate test file.
+- `tests/test_sources.py`.
+- Templates: `templates/index.html`, `templates/pixelpitch.html`,
+  `templates/about.html`.
+- CI / deploy: `.github/workflows/github-pages.yml`.
 
-All examined.
+## Cycle 1–57 Status
 
-## New findings (cycle 57)
+All previously fixed findings remain fixed. Both gates pass at HEAD
+`aef726b`:
+- `flake8 .` → 0 errors.
+- `python3 -m tests.test_parsers_offline` → all sections green
+  (including the C57-01 `parse_existing_csv area recomputed from
+  width*height` section).
 
-### F57-CR-01: `parse_existing_csv` size column and `area` column allowed to be inconsistent — LOW
+## Cycle 58 New Findings
 
-- **File:** `pixelpitch.py:413-432`
-- **Detail:** `parse_existing_csv` reads `width`, `height`, and `area`
-  as three independent columns, then constructs both `Spec.size` and
-  `derived.area` directly from each column, with no consistency check.
-  A hand-edited CSV that has `width=23.6, height=15.6, area=999.0`
-  will round-trip with the bogus area, and downstream consumers
-  (template, write_csv) will emit it. `derive_spec` recomputes
-  `area = width * height` when given a fresh Spec, but
-  `parse_existing_csv` bypasses `derive_spec`.
-- **Failure scenario:** A user hand-edits the CSV, intending to fix
-  width/height, but forgets to clear `area`. The next deploy emits
-  the stale area in the rendered HTML and CSV, defeating the visual
-  sanity check that pitch ≈ 1000 * sqrt(area / mpix * 1e6).
-- **Suggested fix:** When width and height are both present in
-  `parse_existing_csv`, recompute `area = width * height` rather than
-  trusting the column. Keep the parsed area only as a fallback when
-  width or height is missing.
+### F58-CR-01 (BUG): `source` CLI accepts negative or zero `--limit` silently — LOW
+
+- **File:** `pixelpitch.py:1393-1399`
+- **Detail:** `int(args[i + 1])` accepts `-1`, `0`, and any
+  negative integer without validation. The parsed `limit` is
+  passed through `kwargs["limit"]` to source modules where every
+  consumer uses Python list slicing `urls[:limit]`
+  (`apotelyt.py:162`, `cined.py:127`, `gsmarena.py:243`). With
+  `limit=-1` slicing silently drops the last item; with
+  `limit=0` slicing returns an empty list and the CSV is
+  written empty. `openmvg.py:73` uses `i >= limit` which
+  short-circuits at the first iteration when `limit <= 0`.
+  Either way, the user gets confusing behavior with no error
+  message.
+- **Repro:** `python pixelpitch.py source openmvg --limit -1`
+  exits silently with an empty `dist/camera-data-openmvg.csv`.
+- **Fix:** Add `if limit <= 0: print(...); sys.exit(1)` to the
+  `--limit` branch in `main()`. Match the existing
+  `int(args[i + 1])` ValueError handler style.
 - **Severity:** LOW. **Confidence:** HIGH.
 
-### F57-CR-02: `match_sensors` silently rejects sensor when megapixels and sensor_megapixels both present but disagree — LOW (intentional but undocumented)
+### F58-CR-02 (cleanup, deferred): no test for `_safe_year` / `_safe_int_id` boundary at exactly 1900, 2100, 0, 1_000_000 — LOW
 
-- **File:** `pixelpitch.py:242-251`
-- **Detail:** When both `megapixels` and `sensor_data["megapixels"]`
-  are positive non-empty, `match_sensors` only appends if
-  `megapixel_match` is True. On disagreement the sensor is silently
-  rejected. This is intentional (rejection is more conservative than
-  a size-only match) but the behaviour is not commented.
-- **Suggested fix:** Add a single-line comment that states "when both
-  megapixel sets are present and disagree, the sensor is rejected"
-  to prevent future refactors from accidentally adding an
-  `else: matches.append(...)` branch.
-- **Severity:** LOW. **Confidence:** HIGH.
+- **File:** `tests/test_parsers_offline.py` (gap)
+- **Detail:** Existing parse-tolerance tests cover well below /
+  above the bounds, but no test pins the exact boundary
+  (`1900`, `2100`, `0`, `1_000_000` — `<=` operator, all
+  inclusive). A future refactor to `<` would silently flip
+  semantics.
+- **Severity:** LOW. **Confidence:** MEDIUM.
+- **Disposition:** Defer per repo policy on indirect coverage
+  (analogous to F55-02).
 
-### F57-CR-03: `_load_per_source_csvs` size-less drop comment redundant with docstring — INFO
+### F58-CR-03 (style, no action): `_load_per_source_csvs` ignores `record_id` field after parse — INFO
 
-- **File:** `pixelpitch.py:1086-1088`
-- **Detail:** Inline comment "Size unknown — matched_sensors is
-  meaningless; honor derive_spec's 'not checked' sentinel" partly
-  duplicates the C56-01 docstring update. Cosmetic only.
-- **Severity:** INFO. **Confidence:** LOW.
-- **Disposition:** No action; redundancy aids reader of the inner
-  loop without forcing them to scroll up.
-
-## Confirmed-still-good
-
-- `_safe_int_id`, `_safe_year`, `_safe_float`: all hardened by
-  C50-C53 plans. Tests pin Excel-coerced floats, NaN, inf, range
-  guards.
-- `merge_camera_data` matched_sensors preservation contract (C46):
-  test pins both branches.
-- `parse_existing_csv` BOM detection: pinned by C55-01 test.
-- `_load_per_source_csvs` size-less branch: pinned by new C56-01
-  test.
-
-## Sweep for commonly missed issues
-
-- Race conditions: single-threaded; N/A.
-- Resource leaks: `read_text`, `write_text` use context managers
-  via Path; OK.
-- Error handling: try/except blocks all preserve the row or skip
-  cleanly; no silent swallow detected.
-- Comment/code drift: F57-CR-03 only.
+- **File:** `pixelpitch.py:1093-1094`
+- **Detail:** `parse_existing_csv` parses `id` from per-source
+  CSVs, then `_load_per_source_csvs` immediately sets
+  `d.id = None` to defer to `merge_camera_data`'s global id
+  assignment. This is intentional and documented in the
+  docstring, but the parse work for the id column is wasted.
+- **Severity:** INFO. **Confidence:** HIGH.
+- **Disposition:** No fix — wasted work is microscopic,
+  documented intent is clear.
 
 ## Confidence summary
 
-- 1 LOW actionable (F57-CR-01: area consistency on parse-back).
-- 1 LOW doc/comment (F57-CR-02: match_sensors disagreement
-  comment).
-- 1 INFO no-action (F57-CR-03).
+- 1 LOW actionable (F58-CR-01, reproducible silent no-op).
+- 1 LOW deferred (F58-CR-02, indirect coverage suffices).
+- 1 INFO (F58-CR-03, no fix).

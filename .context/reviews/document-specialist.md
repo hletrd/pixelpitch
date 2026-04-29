@@ -1,55 +1,36 @@
-# Document Specialist Review (Cycle 57)
+# Document-Specialist Review (Cycle 58, orchestrator cycle 11)
 
-**Reviewer:** document-specialist
 **Date:** 2026-04-29
-**HEAD:** `01c31d8`
+**HEAD:** `aef726b`
 
-## Inventory of doc-relevant files
+## Doc/code consistency
 
-- `README.md`, `LICENSE`, `requirements.txt`, `setup.cfg`,
-  `sitemap.xml`, `robots.txt`.
-- Docstrings in `pixelpitch.py` and source plugins.
-- `.context/reviews/*`, `.context/plans/*`.
+- `README.md`: enumerates generated HTML pages — matches
+  `render_html` output (8 categories + index + about + CSV).
+- `pixelpitch.py --help`: matches CLI parsing for `html`,
+  `source`, `list`.
+- `parse_existing_csv` docstring (cycle 57): accurately
+  describes the F57-01 area trust contract.
 
-All examined.
+## New findings
 
-## New findings (cycle 57)
+### F58-DOC-01: `--help` does not document `--limit` constraints — LOW
 
-### F57-DOC-01: `parse_existing_csv` docstring does not mention `area` column trust contract — LOW
-
-- **File:** `pixelpitch.py:348-350`
-- **Detail:** Docstring says "Parse a CSV string produced by
-  write_csv back into SpecDerived objects." It does not state
-  whether the `area` column is trusted as-is or recomputed. After
-  F57-CR-01 fix, this contract should be made explicit in the
-  docstring.
+- **File:** `pixelpitch.py:1422-1426`
+- **Detail:** The `--help` text says
+  `source <name> [--limit N] [--out DIR]` without stating
+  that N must be a positive integer. After the F58-CR-01 fix
+  the help text should reflect the validated input range.
 - **Severity:** LOW. **Confidence:** HIGH.
-- **Disposition:** Pair with F57-CR-01 fix.
+- **Fix:** one-line update to the help string.
 
-### F57-DOC-02: README does not mention the new C56-01 test name — INFO
+### F58-DOC-02 (deferred carry-over): `.context/plans/deferred.md` is growing past 25 entries
 
-- **File:** `README.md`
-- **Detail:** README has a "Testing" section that lists test
-  modules but not individual sections. C56-01 added a section
-  named `_load_per_source_csvs size-less row drops cache (sensors_db
-  non-empty)` — INFO, no action.
-- **Severity:** INFO. **Confidence:** LOW.
-- **Disposition:** No action.
+- Same as F56-DOC-03 / F57-DOC-03. Periodic sweep is hygiene,
+  not a correctness concern.
+- **Disposition:** keep deferred.
 
-### F57-DOC-03: `deferred.md` continues to grow — LOW (carry of F56-DOC-03)
+## Summary
 
-- **File:** `.context/plans/deferred.md`
-- **Severity:** LOW. **Confidence:** MEDIUM.
-- **Disposition:** Re-defer; periodic sweep is fine.
-
-## Confirmed-still-good
-
-- `_load_per_source_csvs` docstring tightened in C56-01.
-- `merge_camera_data` matched_sensors contract documented (F50-04).
-- `derive_spec` pitch sentinel contract documented (C40).
-
-## Confidence summary
-
-- 1 LOW actionable (F57-DOC-01: parse_existing_csv area trust
-  docstring).
-- 1 LOW deferred (F57-DOC-03: deferred.md size).
+One new documentation finding (F58-DOC-01). One carry-over
+deferred.

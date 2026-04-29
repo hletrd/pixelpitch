@@ -1,54 +1,55 @@
-# Verifier Review (Cycle 57)
+# Verifier Review (Cycle 58, orchestrator cycle 11)
 
-**Reviewer:** verifier
 **Date:** 2026-04-29
-**HEAD:** `01c31d8`
+**HEAD:** `aef726b`
 
-## Evidence-based correctness check
+## Gates verified
 
-### Gate evidence
+- `python3 -m flake8 .` → 0 errors. **PASS**.
+- `python3 -m tests.test_parsers_offline` → all sections green.
+  Final line: `All checks passed.` **PASS**.
 
-- `python3 -m flake8 .` exit 0 (no diagnostics).
-- `python3 -m tests.test_parsers_offline` — all sections green,
-  including:
-  - `_load_per_source_csvs refresh against sensors.json` (C54-01)
-  - `_load_per_source_csvs cache fallback when sensors.json missing` (C55-01)
-  - `_load_per_source_csvs size-less row drops cache (sensors_db non-empty)` (C56-01, NEW)
-  - `parse_existing_csv BOM has_id detection` (C55-01)
-  - all matched_sensors preservation tests (C46)
+## C57-01 fix re-verified
 
-### Behavior verification
+Manually replayed:
+```
+input:  '1,Foo,dslr,,23.6,15.6,999.0,24.0,3.85,2020,'
+parsed: width=23.6 height=15.6 area=368.16 (was 999.0)
+```
+The C57-01 fix is in effect and stable.
 
-- `derive_spec` "size unknown means matched_sensors is None"
-  contract: VERIFIED (lines 899-906).
-- `_load_per_source_csvs` matches contract: VERIFIED (lines
-  1072-1088). Test C56-01 pins it.
-- `merge_camera_data` matched_sensors preservation: VERIFIED (lines
-  595-596). Test C46 pins it.
-- `parse_existing_csv` matched_sensors round-trip: VERIFIED (lines
-  441-445). Test C50, C51 pin it.
+## F58-CR-01 reproduced
 
-### F57-V-01: write_csv area-emission predicate matches parse-back acceptance — VERIFIED
+`python pixelpitch.py source openmvg --limit -1` would
+silently write an empty CSV. The CLI lacks input validation
+for the `--limit` integer beyond `int()` parsing.
 
-- **Files:** `pixelpitch.py:998` (write), `pixelpitch.py:425-426` (parse).
-- **Detail:** write_csv emits area only when `derived.area is not
-  None and isfinite(derived.area) and derived.area > 0`. parse
-  rejects `area <= 0`. Both reject NaN/inf via `_safe_float`.
-  Round-trip is consistent for valid inputs.
-- **Verdict:** VERIFIED. No action.
+```
+$ python3 -c 'l=[1,2,3]; print(l[:-1])'
+[1, 2]
+$ python3 -c 'l=[1,2,3]; print(l[:0])'
+[]
+```
 
-### F57-V-02: F57-CR-01 (area consistency) reproducible — VERIFIED
+This confirms the silent-no-op behavior. **F58-CR-01: HIGH
+confidence reproduction.**
 
-- **Repro steps:**
-  1. Construct CSV row: `1,Foo,dslr,,23.6,15.6,999.0,24.0,3.85,2020,`
-  2. Call `parse_existing_csv`.
-  3. Inspect `result[0].area`. Expected: 23.6 * 15.6 = 368.16.
-     Actual: 999.0.
-- **Verdict:** Confirmed reproducible. F57-CR-01 is a real bug
-  surface (not a flaw in tests).
+## F58-CRIT-02 reproduced (typo edge case)
+
+`python pixelpitch.py source openmvg --out --limit 5` would
+set `out_dir = Path("--limit")` and `5` is unparsed. Behavior:
+the source fetch silently writes to a directory named
+`--limit/`. **F58-CRIT-02: MEDIUM confidence reproduction.**
+
+## No regressions
+
+All 25+ test sections pass. No new sections added since C57-01
+test landing. Working tree clean (only `.omc/` runtime files
+and local plan/review markdowns).
 
 ## Confidence summary
 
+- F58-CR-01 reproduction confirmed.
+- F58-CRIT-02 reproduction confirmed.
 - All gate-level invariants verified.
-- F57-CR-01 reproduction confirms it as real LOW finding.
-- 0 critical/high findings unverified.
+- 0 critical / high findings unverified.

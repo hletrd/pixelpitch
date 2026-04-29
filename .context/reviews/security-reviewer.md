@@ -1,70 +1,41 @@
-# Security Review (Cycle 57)
+# Security-Reviewer Review (Cycle 58, orchestrator cycle 11)
 
-**Reviewer:** security-reviewer
 **Date:** 2026-04-29
-**HEAD:** `01c31d8`
+**HEAD:** `aef726b`
 
-## Inventory
+## Threat model
 
-- `pixelpitch.py`, `sources/*`, `templates/*`, `.github/workflows/*`.
-- Secrets exposure: scanned `*.py`, `*.html`, `*.json`, `.github/`.
-
-All examined.
+- CI-only static-site generator. No user input in production.
+- All scraped content is HTML-escaped through Jinja2
+  `select_autoescape(["html", "xml"])`.
+- No secrets, no auth, no DB writes, no network listening.
 
 ## OWASP-style sweep
 
-### A01 Broken Access Control — N/A (static site)
-### A02 Cryptographic Failures — N/A (no crypto)
-### A03 Injection
-- Templates use Jinja2 with autoescape=True
-  (`pixelpitch.py:_get_jinja_env`). Verified — no `|safe` on user
-  data found.
-- CSV emission uses the stdlib `csv.writer` — proper quoting.
-- No subprocess shell=True usages.
+- A01 / A02 / A04 / A07 / A09 / A10: N/A or unchanged.
+- A03 Injection: Templates use Jinja2 with autoescape=True.
+  CSV uses stdlib `csv.writer`. No subprocess shell=True.
+- A05 Misconfig: F58-SR-old (carry of C10-08 macOS debug
+  port). Re-defer.
+- A06: requirements.txt unchanged.
+- A08 SSRF: HTTP fetcher uses hardcoded URLs.
 
-### A04 Insecure Design — no notable change
-### A05 Security Misconfiguration
-- F57-SR-old (carry-over of C10-08): debug Chrome opens
-  port 9222 on macOS host; development-only. Re-defer.
+## No new security findings this cycle
 
-### A06 Vulnerable Components
-- requirements.txt: `jinja2`, `requests`, `DrissionPage`,
-  `beautifulsoup4`. All commonly used; no pin specified —
-  resolved at install time.
+- F58-CR-01 (negative `--limit`) is a UX bug, not a security
+  issue. The arg still goes through `int()` parsing, so no
+  injection / overflow concern.
+- F58-CRIT-02 (`--out --limit` typo) lets the user point
+  `out_dir` at a relative path containing `--limit`. The
+  output dir is created by the user's own command line; this
+  is a normal CLI behavior, not a path-traversal vector.
 
-### A07 ID & Auth — N/A
-### A08 SSRF / Software Integrity
-- HTTP client (`sources/__init__.py:http_get`) follows redirects
-  by default. URLs are hardcoded. No user-controlled URL fetch.
-  OK.
+## Carry-over deferred (no action this cycle)
 
-### A09 Logging Failures — using `print()`; F21 deferred.
-### A10 SSRF — covered by A08.
+- C10-07 redirect chain (HTTP fetch).
+- C10-08 macOS debug port.
+- F34: `importlib.import_module` whitelisted.
 
-## New findings (cycle 57)
+## Summary
 
-### F57-SR-01: `Path.read_text` on per-source CSVs accepts any UTF-8 — LOW (informational)
-
-- **File:** `pixelpitch.py:1067`
-- **Detail:** A maliciously crafted source CSV could embed control
-  characters or extremely long lines that pass `parse_existing_csv`
-  but produce surprising HTML. Mitigated because:
-  - Jinja2 autoescape=True stops HTML injection.
-  - The CSV files are produced by our own scrapers, committed to
-    the repo, and reviewed before deployment.
-  - `csv.reader` handles malformed input gracefully.
-- **Severity:** LOW. **Confidence:** LOW (theoretical).
-- **Disposition:** No action; trust boundary is the repo itself.
-
-## Confirmed-still-good
-
-- No hardcoded secrets in source.
-- `.github/workflows/github-pages.yml` uses GITHUB_TOKEN via
-  contexts only.
-- robots.txt and sitemap.xml hand-curated; no template injection.
-
-## Confidence summary
-
-- 0 actionable findings.
-- 1 informational (F57-SR-01: trust boundary already enforced
-  by repo review).
+Zero new security findings. No regressions.
