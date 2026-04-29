@@ -244,6 +244,10 @@ def match_sensors(
                 abs(megapixels - mp) / megapixels * 100 <= megapixel_tolerance
                 for mp in sensor_megapixels
             )
+            # F57-02: when both megapixel sets are present and disagree, the
+            # sensor is rejected (no `else: matches.append(sensor_name)`).
+            # Rejection is intentional: a known-mpix mismatch is stronger
+            # evidence than a size-tolerance match.
             if megapixel_match:
                 matches.append(sensor_name)
         elif megapixels is None or not sensor_megapixels or megapixels <= 0:
@@ -352,6 +356,15 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
     quotes, commas inside values).  The header row determines whether an ``id``
     column is present; all subsequent rows are mapped by column index relative
     to the detected schema.
+
+    Area trust contract (F57-01): when both ``sensor_width_mm`` and
+    ``sensor_height_mm`` columns are present and finite-positive, the
+    ``sensor_area_mm2`` column is *recomputed* as ``width * height`` rather
+    than trusted verbatim. This matches ``derive_spec``'s contract that
+    area is a derived field of size, and prevents stale-area drift on
+    hand-edited CSVs (e.g. width/height corrected but area left stale).
+    The ``sensor_area_mm2`` column is consulted only as a fallback when
+    size is unavailable.
     """
     if not csv_content:
         return []
@@ -421,9 +434,17 @@ def parse_existing_csv(csv_content: str) -> List[SpecDerived]:
             if width is not None and height is not None:
                 size = (width, height)
 
-            area = _safe_float(area_str)
-            if area is not None and area <= 0:
-                area = None
+            # F57-01: when size is known, recompute area = width * height
+            # to match derive_spec. This prevents stale area on hand-edited
+            # CSVs where width/height were corrected but the area column
+            # was left at the old value. Fall back to the area_str column
+            # only when size is unavailable.
+            if size is not None:
+                area = size[0] * size[1]
+            else:
+                area = _safe_float(area_str)
+                if area is not None and area <= 0:
+                    area = None
             mpix = _safe_float(mpix_str)
             if mpix is not None and mpix <= 0:
                 mpix = None
