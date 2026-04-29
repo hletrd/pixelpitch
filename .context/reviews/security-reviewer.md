@@ -1,29 +1,53 @@
-# Security-Reviewer Review (Cycle 59, orchestrator cycle 12)
+# Security Reviewer — Cycle 60 (Orchestrator Cycle 13)
 
 **Date:** 2026-04-29
-**HEAD:** `fa0ae66`
+**HEAD:** `a0cd982`
 
-## Status
+## Inventory
 
-No new security findings.
+- `pixelpitch.py` (importlib usage, http_get callers, browser
+  remote-debugging port).
+- `sources/*.py` (URL handling, HTTP fetches, BeautifulSoup parsing).
+- `templates/*.html` (Jinja2 autoescape, SRI hashes, CSP).
 
-Carry-overs (deferred per repo policy):
+## Status at HEAD
 
-- C10-07 redirect SSRF risk - `urllib.request.urlopen` follows
-  redirects without same-origin validation. Hardcoded trusted
-  source URLs.
-- C10-08 remote debugging port (macOS, 127.0.0.1, dev only).
+- `Environment(autoescape=select_autoescape(["html", "xml"]))` (line
+  993) — autoescape correctly enabled.
+- `importlib.import_module(SOURCE_REGISTRY[name])` (line 1379) —
+  whitelisted via SOURCE_REGISTRY (deferred F34, mitigated).
+- Jinja templates use `|urlencode` filter for query strings.
+- SRI hashes present on all CDN resources (sha384, jQuery sha256
+  per deferred C9-07).
+- C10-07 (HTTP redirect SSRF) and C10-08 (remote-debugging port)
+  deferred per repo policy.
 
-## F59-SR-01 (informational, LOW)
+## Cycle 60 New Findings
 
-The F59-CR-01 hardening is defense-in-depth. No security
-implication: the failure mode is "writes a malformed numeric
-string into the CSV", not "executes arbitrary code". CSV
-consumers (parse_existing_csv) already reject non-finite floats
-via `_safe_float`, so the round-trip is safe even without the
-fix. The fix improves contract clarity.
+### F60-SEC-01 (deferred, informational): `module.fetch(**kwargs)`
+uses dynamic kwargs without per-source schema validation
 
-## Cycle 1-58 confirmation
+- **File:** `pixelpitch.py:1395`
+- **Detail:** `kwargs` is constructed from `--limit` and an
+  env-var (`GSMARENA_MAX_PAGES_PER_BRAND`). The kwargs dict is
+  passed to `module.fetch(**kwargs)` — a future source whose
+  `fetch()` signature lacks one of these kwargs would raise
+  `TypeError`. `gsmarena` accepts `max_pages_per_brand`; other
+  sources do not. The current code only sends `max_pages_per_brand`
+  when `name == "gsmarena"` (line 1388), so the safety check is
+  manual but correct. A typed-dispatch (e.g. per-source kwargs
+  whitelist) would be more robust but is over-engineering for the
+  current 5-source registry.
+- **Severity:** LOW. **Confidence:** HIGH.
+- **Disposition:** Defer (architectural; not a security bug — a
+  TypeError at startup is a fail-loud signal, not a silent
+  vulnerability).
 
-No new attack surface introduced. UA, robots.txt compliance,
-and CDN SRI hashes all still valid.
+## Carry-over deferred
+
+C10-07, C10-08, F34 — all per repo policy in `deferred.md`.
+
+## Summary
+
+No new security findings for cycle 60. Whitelist-based importlib
+usage and autoescape Jinja remain correct.

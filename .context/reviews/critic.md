@@ -1,53 +1,53 @@
-# Critic Review (Cycle 59, orchestrator cycle 12)
+# Critic — Cycle 60 (Orchestrator Cycle 13)
 
 **Date:** 2026-04-29
-**HEAD:** `fa0ae66`
+**HEAD:** `a0cd982`
 
-## Posture
+## Multi-Perspective Critique
 
-After 58 cycles of focused hardening, the repo is in a mature
-state. Both gates pass; the architecture is intentional and
-stable. This cycle's critic surface is narrow.
+### What's working
 
-## New findings
+- The cycle 40-59 sequence has incrementally hardened the
+  numeric-cell contract end-to-end: `derive_spec` filters at
+  source, `parse_existing_csv` filters on read, `write_csv`
+  filters on write. Defensive parity is now full.
+- The matched_sensors tri-valued sentinel (None / [] / non-empty
+  list) is consistently honored across `derive_spec`,
+  `merge_camera_data`, `parse_existing_csv`, `_load_per_source_csvs`.
+- Test coverage for the size/area/pitch/mpix round-trip is now
+  comprehensive (cycle 56-59 added boundary tests).
 
-### F59-CRIT-01 (defensive-parity gap, LOW): width/height write asymmetric vs. area/mpix/pitch
+### What's still off
 
-- **File:** `pixelpitch.py:1018-1019`
-- **Cross-references:** F59-CR-01 (code-reviewer flagged the same
-  defensive-parity concern from a SOLID/maintenance angle;
-  critic flags it from the "what does the artifact contract
-  say?" angle).
-- **Detail:** The CSV artifact is the durable interface between
-  consecutive builds. Every other numeric float field
-  (`area`, `mpix`, `pitch`) explicitly hardens against
-  `inf`/`nan`/`<= 0` writes. The width/height columns rely on
-  upstream guards (in `derive_spec` and `parse_existing_csv`).
-  The contract is "the CSV will never contain non-finite or
-  non-positive numeric values for sensor dimensions" - but the
-  enforcement of that contract lives in two places that can
-  drift, instead of being co-located at the write boundary.
-  Hardening at the write boundary makes the contract local
-  and self-evident.
-- **Severity:** LOW. **Confidence:** HIGH.
+- F32 (1488-line monolith) — file has grown from ~990 lines (cycle
+  ~40) to 1488 today. Still deferred but trajectory is concerning.
+  No re-open trigger crossed (1500-line threshold).
+- `tests/test_parsers_offline.py` is now 2748 lines (was 2456 at
+  cycle 56). Same monolith pattern. Deferred F56-CRIT-02.
+- `main()` argparse drift between `html` and `source` branches
+  remains. F58-04, F58-05 deferred.
 
-### F59-CRIT-02 (carry-over): per-build noise from missing per-source CSVs
+### Risks introduced this cycle
 
-- **File:** `pixelpitch.py:1085`
-- **Detail:** Echoes F59-CR-02. Same disposition: defer
-  (informational).
+- None. C59-01 was a defensive-parity hardening; no behavior change
+  for valid data, only fail-empty for pathological inputs.
 
-## Carry-over (still applicable)
+## Cycle 60 New Findings
 
-- F32 monolith, F58-A-02 argparse drift, F56-A-02 / F57-A-02 /
-  F58-A-02 category list duplication - repo policy.
-- F55-04, F55-05, F56-DOC-03, F57-DOC-03, F58-DOC-02 - repo
-  policy.
-- C10-07 redirect SSRF, C10-08 debug port - repo policy.
-- F35..F40 UI carry-overs - re-confirmed by designer this cycle.
+### F60-CRIT-01 (informational): `pixelpitch.py` line count is at 1488
+— close to the F32 re-open threshold of 1500
 
-## Bottom line
+- **File:** `pixelpitch.py` — current 1488 lines.
+- **Detail:** F32 deferred at "1500-line threshold" re-open trigger.
+  Currently 12 lines below the threshold. Next defensive-parity
+  hardening cycle will likely cross it. Worth pre-emptively
+  flagging so the orchestrator can plan a refactor track.
+- **Severity:** LOW. **Confidence:** HIGH (line count factual).
+- **Disposition:** Defer (no policy crossed yet; same class as F32).
+  Re-open as the trigger for F32 re-evaluation when threshold is
+  crossed.
 
-One actionable defensive-parity finding (F59-01 = F59-CR-01 =
-F59-CRIT-01). All other surface area is already either fixed or
-explicitly deferred per repo policy.
+## Summary
+
+Code quality remains high. Repo at incremental-hardening steady
+state. One file-size threshold to watch.

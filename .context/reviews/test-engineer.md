@@ -1,50 +1,43 @@
-# Test-Engineer Review (Cycle 59, orchestrator cycle 12)
+# Test Engineer — Cycle 60 (Orchestrator Cycle 13)
 
 **Date:** 2026-04-29
-**HEAD:** `fa0ae66`
+**HEAD:** `a0cd982`
 
-## Coverage assessment
+## Inventory
 
-`tests/test_parsers_offline.py` is now 2659 lines (up from 2456
-in cycle 56). Section count is high; gate runtime remains under
-10s.
+- `tests/test_parsers_offline.py` — 2748 lines, gate test.
+- `tests/test_sources.py` — 111 lines, smoke tests for sources.
+- `tests/fixtures/` — HTML fixtures for sources offline parsing.
 
-Existing write_csv guard tests:
+## Status
 
-- `test_write_csv_nonfinite_guards` (line 1952): pins
-  `inf`/`nan` in mpix and pitch.
-- `test_write_csv_zero_negative_guards` (line 1992): pins zero
-  and negative mpix and pitch (and computed-pitch with both
-  zero inputs).
+All test sections green. Cycle 1-59 regression coverage:
 
-Both tests focus on `mpix` and `pitch` columns. **Width/height
-columns are not pinned for non-finite or non-positive values.**
-This is the test-side mirror of the F59-CR-01 defensive-parity
-gap.
+- F40 / F59-01 write_csv non-finite/non-positive guards (all 5 cells).
+- F57-01 area-recompute on parse.
+- F58-01 --limit validation.
+- F55-01 per-source CSV cache fallback.
+- C46 matched_sensors tri-valued preservation.
+- F50-04 round-trip preservation.
 
-## New findings
+## Cycle 60 New Findings
 
-### F59-TE-01 (test gap, LOW): no test pins write_csv width/height non-finite/non-positive guards
+### F60-TE-01 (deferred, informational): no test pins
+`_load_per_source_csvs` behavior when `parse_existing_csv` raises
 
-- **File:** `tests/test_parsers_offline.py` (gap, paired with
-  F59-CR-01 fix in `pixelpitch.py:1018-1019`)
-- **Severity:** LOW. **Confidence:** HIGH.
-- **Detail:** When the F59-CR-01 fix lands, a regression test
-  must pin the new behavior. Recommended sub-tests in a new
-  section `write_csv width/height non-finite/non-positive
-  guards`:
-  - `derived.size = (inf, 24.0)` -> CSV row's width and height
-    cells empty.
-  - `derived.size = (35.9, nan)` -> both empty.
-  - `derived.size = (0.0, 0.0)` -> both empty.
-  - `derived.size = (-1.0, -1.0)` -> both empty.
-  - Sanity: `derived.size = (35.9, 23.9)` -> both populated as
-    `"35.90"` and `"23.90"`.
-  - Sanity: `derived.size = None` -> both empty.
-- **Disposition:** Schedule alongside F59-CR-01.
+- **File:** `tests/test_parsers_offline.py` (gap).
+- **Detail:** Pairs with F60-CR-01. The docstring of
+  `_load_per_source_csvs` promises "Missing files are silently
+  skipped — failure of one source must not block the build", but no
+  test verifies behavior when a per-source CSV is malformed in a way
+  that `parse_existing_csv` itself raises before its inner per-row
+  try/except. Adding a regression test would require constructing
+  pathological CSV input (e.g. binary garbage) — limited value
+  since `csv.reader` is permissive enough that
+  `parse_existing_csv` is unlikely to raise at the top level.
+- **Severity:** LOW. **Confidence:** LOW.
+- **Disposition:** Defer (paired with F60-CR-01).
 
-## Carry-over
+## Summary
 
-- F58-06 (boundary tests at exact range edges) - still deferred
-  per F55-02 pattern.
-- F56-CRIT-02 (test monolith) - still deferred (architectural).
+No actionable test-coverage gaps for cycle 60.

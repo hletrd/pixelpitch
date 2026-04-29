@@ -335,3 +335,67 @@ These findings from the review are explicitly deferred. Each entry records:
 - **Re-open if:** A user/operator reports confusion about the warning-style log line, or the wording is touched as part of a broader logging refactor.
 
 ---
+
+## F60-CR-01: `_load_per_source_csvs` lacks per-source try/except wrapping `parse_existing_csv`
+- **File:** `pixelpitch.py`, line 1132
+- **Severity:** LOW | **Confidence:** LOW (theoretical at present)
+- **Reason:** `parse_existing_csv(content)` is wrapped only by a per-row `try/except Exception` inside itself. If `csv.reader(io.StringIO(...))` ever raised a top-level exception on a corrupt cache file, `_load_per_source_csvs` would propagate it up, killing the build despite the docstring promise of "failure of one source must not block the build". `csv.reader` is permissive enough that no real failure mode is observed today — the contract is honored by happenstance, not structure. Defensive parity gap, not a live bug.
+- **Re-open if:** A real per-source CSV load failure is observed in CI, or hand-edited cache files are accepted as a supported workflow.
+
+---
+
+## F60-PR-01: `match_sensors` recomputed twice for source-CSV cameras during full render
+- **File:** `pixelpitch.py`, line 1139 (`_load_per_source_csvs`) and line 644 (`merge_camera_data` existing-only branch)
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Reason:** Camera that exists only in a per-source CSV (not in fresh Geizhals data) gets `match_sensors` computed twice during one `render_html`: first in `_load_per_source_csvs` to refresh the cache, then in `merge_camera_data` existing-only branch. The computation is idempotent and cheap (~200 sensor comparisons), so this is wasteful-but-correct, not a bug. Same class as deferred F49-04.
+- **Re-open if:** Render time exceeds 30s on the merge step, or sensor DB grows past 5000 entries.
+
+---
+
+## F60-SEC-01: `module.fetch(**kwargs)` uses dynamic kwargs without per-source schema validation
+- **File:** `pixelpitch.py`, line 1395
+- **Severity:** LOW | **Confidence:** HIGH
+- **Reason:** `kwargs` is constructed from `--limit` and `GSMARENA_MAX_PAGES_PER_BRAND` env-var, then passed to `module.fetch(**kwargs)`. A future source whose `fetch()` signature lacks one of these kwargs would raise TypeError. Currently only `gsmarena` accepts `max_pages_per_brand`, and the code only sends it when `name == "gsmarena"` (line 1388) — so the safety check is manual but correct. A typed-dispatch (per-source kwargs whitelist) would be more robust but is over-engineering for the current 5-source registry. Not a security bug; a TypeError at startup is a fail-loud signal.
+- **Re-open if:** Source registry expands to >10 sources, or per-source kwargs proliferate.
+
+---
+
+## F60-CRIT-01: `pixelpitch.py` line count is 1488 — close to F32 re-open threshold of 1500
+- **File:** `pixelpitch.py` (1488 lines today, was ~990 at cycle 40)
+- **Severity:** LOW | **Confidence:** HIGH (line count factual)
+- **Reason:** F32 (monolith) deferred at "1500-line threshold" re-open trigger. Currently 12 lines below the threshold. Next defensive-parity hardening cycle will likely cross it. Pre-emptive flag so the orchestrator can plan a refactor track ahead of time.
+- **Re-open if:** `pixelpitch.py` exceeds 1500 lines (the F32 re-open trigger).
+
+---
+
+## F60-A-01: no formal `fetch()` Protocol across sources
+- **File:** `sources/*.py`
+- **Severity:** LOW | **Confidence:** HIGH
+- **Reason:** Same as deferred F31. No new evidence to re-open. SOURCE_REGISTRY provides the implicit contract; adding a typing.Protocol would improve type safety but is not needed for the 5 current sources.
+- **Re-open if:** New sources are frequently added and need standardized interface (same trigger as F31).
+
+---
+
+## F60-TE-01: no test pins `_load_per_source_csvs` behavior when `parse_existing_csv` raises
+- **File:** `tests/test_parsers_offline.py` (gap)
+- **Severity:** LOW | **Confidence:** LOW
+- **Reason:** Pairs with F60-CR-01. Adding a regression test would require constructing pathological CSV input (e.g. binary garbage). Limited value since `csv.reader` is permissive enough that `parse_existing_csv` is unlikely to raise at the top level.
+- **Re-open if:** F60-CR-01 is re-opened (paired finding).
+
+---
+
+## F60-D-01: `derive_spec` cleans size/area to None but leaves `spec.size` unchanged — Spec/SpecDerived asymmetry not explicit in docstring
+- **File:** `pixelpitch.py`, line 902-904
+- **Severity:** LOW | **Confidence:** MEDIUM (DOC-only)
+- **Reason:** When input `spec.size` has `(inf, 24)`, `derive_spec` sets `derived.size = None` and `derived.area = None`, but `spec.size` (the underlying Spec field) is not modified. Spec is the raw input, SpecDerived is the cleaned output. A downstream caller that reads `spec.size` directly (rather than `derived.size`) would still see `(inf, 24)`. No such caller exists today — template, write_csv, and JSON-LD all read `derived.size`. Documenting the asymmetry more clearly in `derive_spec`'s docstring would aid future maintainers but is not a live bug.
+- **Re-open if:** A new caller reads `spec.size` directly and surfaces the inf/nan values, or a docstring overhaul is scheduled.
+
+---
+
+## F60-DOC-01: repeats deferred F59-04 "missing" log wording
+- **File:** `pixelpitch.py`, line 1125
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Reason:** Identical to deferred F59-04. No change in disposition.
+- **Re-open if:** Same as F59-04.
+
+---

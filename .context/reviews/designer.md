@@ -1,30 +1,23 @@
-# Designer Review (Cycle 59, orchestrator cycle 12)
+# Designer — Cycle 60 (Orchestrator Cycle 13)
 
 **Date:** 2026-04-29
-**HEAD:** `fa0ae66`
+**HEAD:** `a0cd982`
 
-## UI/UX surface
+## UI/UX Posture
 
-The repo has UI/UX surface (Jinja2 HTML templates rendered to
-`dist/*.html`, D3 charts, Bootstrap navbar, sortable
-DataTables). No new UI changes this cycle (cycle 58 was a
-CLI-only fix; cycle 59's F59-CR-01 fix is also CSV-write-only).
+The repo serves a static HTML site rendered from Jinja templates.
+The template surface (`templates/pixelpitch.html`,
+`templates/index.html`, `templates/about.html`) has not changed
+since cycle ~40. All previously-flagged UI/UX issues (F35..F40,
+F37, F38, F39, C9-07, C11-08) remain deferred per repo policy.
 
-## Status
+No new template edits this cycle. No new UI/UX findings.
 
-All cycle 35-40 UI carry-overs (skip-link, filter dropdown
-state, loading indicator, navbar mobile, etc.) remain deferred
-per repo policy. Re-confirmed:
+## Cycle 60 New Findings
 
-- F36 skip-to-content link - still deferred.
-- F37 filter dropdown state - still deferred.
-- F38 loading indicator / pagination - still deferred.
-- F39 navbar 9 items on mobile - still deferred.
+None.
 
-## No new UI findings.
+## Summary
 
-The CSV artifact (the F59 finding surface) has no UI
-implication - it's a build-time artifact consumed by the
-template, and the template already handles "missing" cells via
-`{% if spec.size %}` checks. F59-CR-01 (CSV write hardening)
-is a backend-only defensive-parity fix.
+No new designer findings for cycle 60. Existing deferred items
+(F35..F40, C9-07, C11-08) remain valid as deferred.

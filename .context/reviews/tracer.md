@@ -1,64 +1,38 @@
-# Tracer Review (Cycle 59, orchestrator cycle 12)
+# Tracer — Cycle 60 (Orchestrator Cycle 13)
 
 **Date:** 2026-04-29
-**HEAD:** `fa0ae66`
+**HEAD:** `a0cd982`
 
-## Causal trace: where can a non-finite/non-positive size reach `write_csv`?
+## Suspicious flow inventory
 
-Producers of `SpecDerived.size`:
+Traced the following flows for any latent issue:
 
-1. `derive_spec` (line 900-906): explicitly guards
-   `isfinite(size[0]) and isfinite(size[1]) and size[0] > 0 and
-   size[1] > 0`. Sets size = None if not.
-2. `parse_existing_csv` (line 430-435): rejects width/height
-   <= 0 by setting them to None. Note: also calls `_safe_float`
-   which already rejects non-finite. So `size` after parse is
-   either None or `(positive finite, positive finite)`.
-3. `merge_camera_data` (line 569): `new_spec.size =
-   existing_spec.size`. Inherits whatever invariants the input
-   already satisfies.
+1. **CSV round-trip path:** `derive_spec` -> `write_csv` ->
+   `parse_existing_csv` -> `merge_camera_data` -> `write_csv` again.
+   All boundaries enforce the no-inf / no-nan / no-zero / no-negative
+   contract. Round-trip stable.
+2. **matched_sensors lifecycle:** `derive_spec` (None or list) ->
+   `write_csv` (joined with ';') -> `parse_existing_csv` (split,
+   dedup, strip) -> `merge_camera_data` (preserve when new is None)
+   -> `_load_per_source_csvs` (refresh against current sensors_db
+   when size known, fallback when sensors_db empty). Sentinel
+   contract holds.
+3. **--limit validation path:** `main` parses `--limit N` ->
+   validates positive integer -> passes to `module.fetch(**kwargs)`
+   -> source uses `urls[:limit]` or `i >= limit`. Validated.
+4. **id assignment:** `merge_camera_data` reassigns ids 0..N-1
+   after sort. `_load_per_source_csvs` drops per-row id to None
+   so merge can reassign. `fetch_source` reassigns ids 0..N-1 in
+   the per-source CSV. Consistent.
 
-Consumers:
+## Competing hypotheses
 
-- `write_csv` (line 1018-1019): `if derived.size: ...`. Only
-  truthy-check; no element-level isfinite/positive guard.
+None this cycle. No anomalies observed.
 
-## Hypothesis 1: are there any code paths that construct SpecDerived directly?
+## Cycle 60 New Findings
 
-Searched the codebase for `SpecDerived(...)` construction sites:
+No tracer-level findings for cycle 60.
 
-- `derive_spec` (line 929-930): the canonical path; guarded.
-- `parse_existing_csv` (line 470-472): guarded by upstream
-  width/height guards.
-- Tests: a few synthetic SpecDerived constructions (e.g.,
-  test_write_csv_*).
+## Summary
 
-No production code path constructs SpecDerived(size=non-finite).
-**Conclusion:** F59-CR-01 is a defensive-parity gap, not a
-live bug. Hardening it is a hygiene improvement.
-
-## Hypothesis 2: does the upstream guard cover all cases?
-
-`derive_spec` line 900 uses `isfinite(size[0]) and isfinite(size[1])
-and size[0] > 0 and size[1] > 0`. This covers:
-- inf, -inf -> rejected
-- nan -> rejected
-- 0.0 -> rejected
-- negative -> rejected
-
-Comprehensive. The single-point-of-enforcement is fine *for
-the current code*. F59-CR-01 hardens the symmetry at the write
-boundary, so a future regression (or a new direct-construction
-caller) is also caught.
-
-## Cross-agent agreement
-
-F59-01 is flagged by code-reviewer (CR-01), critic (CRIT-01),
-verifier (reproduced), test-engineer (TE-01 paired test gap),
-and debugger (D-01). Five-reviewer agreement - high signal for
-a LOW-severity finding.
-
-## Carry-over
-
-No new findings; all previous tracer findings still resolved
-or deferred per repo policy.
+All causal flows hold their stated contracts at HEAD.

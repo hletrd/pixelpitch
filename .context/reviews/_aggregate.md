@@ -1,119 +1,132 @@
-# Aggregate Review (Cycle 59, orchestrator cycle 12) — Deduplicated, Merged Findings
+# Aggregate Review (Cycle 60, Orchestrator Cycle 13)
 
 **Date:** 2026-04-29
-**HEAD:** `fa0ae66` (after C58-01 plan-completed marker)
-**Reviewers:** code-reviewer, perf-reviewer, security-reviewer, critic,
-verifier, test-engineer, tracer, architect, debugger,
+**HEAD:** `a0cd982` (after C59-01 plan-completed marker)
+**Reviewers:** code-reviewer, perf-reviewer, security-reviewer,
+critic, verifier, test-engineer, tracer, architect, debugger,
 document-specialist, designer.
 
-## Cycle 1-58 Status
+## Cycle 1-59 Status
 
-All previous fixes confirmed still working at HEAD `fa0ae66`.
+All previous fixes confirmed still working at HEAD `a0cd982`.
 Both gates pass:
 
 - `flake8 .` -> 0 errors (also enforced in CI).
 - `python3 -m tests.test_parsers_offline` -> all sections green.
 
-No regressions. Cycle 58's findings (F58-01 `--limit` validation
-+ F58-02 help-text doc + F58-03 test) are fixed and verified.
+No regressions. Cycle 59's fixes (F59-01 write_csv width/height
+guards, F59-02 paired tests, F59-03 docstring) are confirmed in
+place.
 
-## Cycle 59 New Findings
+## Cycle 60 Findings (all LOW, deferred)
 
-### F59-01 (defensive-parity, LOW): `write_csv` width/height columns lack the isfinite/positive guards used for area/mpix/pitch
+### F60-CR-01 (LOW, defensive): `_load_per_source_csvs` has no
+per-source try/except wrapping `parse_existing_csv`
 
-- **Flagged by:** code-reviewer (F59-CR-01), critic
-  (F59-CRIT-01), verifier (reproduced), test-engineer
-  (F59-TE-01 paired test gap), debugger (F59-D-01),
-  architect (F59-A-01), document-specialist (F59-DOC-01).
-- **File:** `pixelpitch.py:1018-1019`
-- **Detail:** Lines 1020-1022 already guard `area_str`,
-  `mpix_str`, and `pitch_str` against non-finite (`inf`/`nan`)
-  and non-positive (<=0) values. Lines 1018-1019 only check
-  truthiness of `derived.size`, so a hypothetical
-  `(0.0, 0.0)`, `(-1.0, -1.0)`, `(inf, inf)`, or
-  `(nan, nan)` SpecDerived.size tuple would write "0.00,0.00",
-  "-1.00,-1.00", "inf,inf", or "nan,nan" to the CSV. Today
-  upstream guards (`derive_spec` line 900, `parse_existing_csv`
-  line 430-433) prevent the pathological tuple from reaching
-  `write_csv`, so this is a defensive-parity gap rather than
-  a live bug. Hardening at the write boundary co-locates the
-  contract enforcement and survives future regressions in
-  derive_spec or new direct-SpecDerived construction sites.
-- **Repro (verifier):** synthetic
-  `SpecDerived(size=(0.0, 0.0), area=0.0, ...)` written via
-  `write_csv` produces a CSV row containing `0.00,0.00` for
-  the width/height cells (area cell correctly empty).
-- **Fix:** mirror the area/mpix/pitch guard:
+- **Flagged by:** code-reviewer (F60-CR-01),
+  test-engineer (F60-TE-01 pair).
+- **File:** `pixelpitch.py:1132`
+- **Detail:** Per-source CSV read loop catches OSError /
+  UnicodeDecodeError on `path.read_text()` (lines 1129-1131) but
+  not exceptions from `parse_existing_csv(content)` itself. The
+  docstring promises "failure of one source must not block the
+  build"; that contract is currently honored by happenstance
+  (csv.reader is permissive) rather than by code structure.
+- **Severity:** LOW. **Confidence:** LOW (theoretical at present).
+- **Disposition:** Defer (no observed failure mode).
 
-  ```python
-  if (derived.size
-      and isfinite(derived.size[0]) and derived.size[0] > 0
-      and isfinite(derived.size[1]) and derived.size[1] > 0):
-      width_str = f"{derived.size[0]:.2f}"
-      height_str = f"{derived.size[1]:.2f}"
-  else:
-      width_str = ""
-      height_str = ""
-  ```
+### F60-PR-01 (LOW, informational): `match_sensors` recomputed twice
+for source-CSV cameras during full render
+
+- **Flagged by:** perf-reviewer.
+- **File:** `pixelpitch.py:1139` and `pixelpitch.py:644`.
+- **Severity:** LOW. **Confidence:** MEDIUM.
+- **Disposition:** Defer (≤2x of an already-cheap operation;
+  same class as F49-04).
+
+### F60-SEC-01 (LOW, informational): `module.fetch(**kwargs)` uses
+dynamic kwargs without per-source schema validation
+
+- **Flagged by:** security-reviewer.
+- **File:** `pixelpitch.py:1395`.
 - **Severity:** LOW. **Confidence:** HIGH.
-- **Cross-agent agreement:** 7 reviewers (HIGH signal).
+- **Disposition:** Defer (architectural; manual per-source kwargs
+  whitelist already in place).
 
-### F59-02 (test gap, LOW): no test pins write_csv width/height non-finite/non-positive guards
+### F60-CRIT-01 (LOW, informational): `pixelpitch.py` line count is
+1488 — close to F32 re-open threshold of 1500
 
-- **Flagged by:** test-engineer (F59-TE-01).
-- **File:** `tests/test_parsers_offline.py` (gap)
-- **Detail:** F59-01 fix needs a regression test pinning the
-  validation behavior. Add a test section
-  `write_csv width/height non-finite/non-positive guards`
-  with sub-tests for `inf`, `nan`, `0.0`, negative, and
-  sanity cases.
+- **Flagged by:** critic.
+- **File:** `pixelpitch.py` (1488 lines).
+- **Severity:** LOW. **Confidence:** HIGH (factual).
+- **Disposition:** Defer (no policy crossed yet; advance warning
+  for F32 re-open).
+
+### F60-A-01 (LOW, informational): no formal `fetch()` Protocol
+across sources
+
+- **Flagged by:** architect.
+- **File:** `sources/*.py`.
 - **Severity:** LOW. **Confidence:** HIGH.
-- **Disposition:** Schedule alongside F59-01.
+- **Disposition:** Defer (same as F31).
 
-### F59-03 (DOC, LOW): write_csv docstring does not document float-cell contract
+### F60-TE-01 (LOW, informational): no test pins
+`_load_per_source_csvs` behavior when `parse_existing_csv` raises
 
-- **Flagged by:** document-specialist (F59-DOC-01).
-- **File:** `pixelpitch.py:1000-1001`
-- **Detail:** Expand the write_csv docstring to document the
-  no-inf/no-nan/no-zero/no-negative float-cell contract for
-  all five numeric columns (width, height, area, mpix,
-  pitch). Pair with F59-01 fix.
-- **Severity:** LOW. **Confidence:** HIGH.
+- **Flagged by:** test-engineer.
+- **File:** `tests/test_parsers_offline.py` (gap).
+- **Severity:** LOW. **Confidence:** LOW.
+- **Disposition:** Defer (paired with F60-CR-01).
 
-### F59-04 (deferred, informational): per-source CSV "missing" log line wording
+### F60-D-01 (LOW, informational): `derive_spec` cleans size/area
+to None but leaves `spec.size` unchanged — Spec/SpecDerived asymmetry
+not explicit in docstring
 
-- **Flagged by:** code-reviewer (F59-CR-02), critic
-  (F59-CRIT-02), debugger (F59-D-02).
-- **File:** `pixelpitch.py:1085`
-- **Detail:** "missing" wording could be softer ("no cached
-  CSV at ..."). Informational, no behavior change.
-- **Disposition:** Defer (informational).
+- **Flagged by:** debugger.
+- **File:** `pixelpitch.py:902-904`.
+- **Severity:** LOW. **Confidence:** MEDIUM (DOC-only).
+- **Disposition:** Defer (no live bug; downstream consumers all
+  use derived fields).
+
+### F60-DOC-01 (LOW, informational): repeats deferred F59-04
+"missing" log wording
+
+- **Flagged by:** document-specialist.
+- **File:** `pixelpitch.py:1125`.
+- **Disposition:** Stays deferred.
 
 ## Carry-over deferred (no action this cycle)
 
 - F32 monolith, F55-CRIT-03 / F56-CRIT-02 / F57-CRIT-01 /
   F58-CRIT-02 test monolith.
 - F49-04 perf, F55-PR-01..03 perf, F56-PR-04 / F57-PR-01..03
-  / F59-PR-01 informational.
-- C10-07 redirects, C10-08 debug port.
+  / F59-PR-01 / F60-PR-01 informational.
+- C10-07 redirects, C10-08 debug port, F60-SEC-01 dynamic kwargs.
 - F35..F40 UI carry-overs (re-confirmed by designer).
-- F55-A-02 / F56-A-02 / F57-A-02 / F58-A-02 category list
-  duplication / argparse drift.
+- F55-A-02 / F56-A-02 / F57-A-02 / F58-A-02 / F60-A-01 category
+  list duplication / argparse drift / fetch Protocol.
 - F55-04 (existing_specs in-place mutation), F55-05
   (hand-edited blank-leading-cell defeats has_id).
-- F56-DOC-03 / F57-DOC-03 / F58-DOC-02 (`deferred.md` size).
+- F56-DOC-03 / F57-DOC-03 / F58-DOC-02 / F59-04 / F60-DOC-01
+  (`deferred.md` size, log wording).
 - F57-CR-03, F57-D-06, F58-CR-03 (informational).
-- F58-04 (`--out --limit` typo tolerance), F58-05 (argparse
-  refactor), F58-06 (boundary tests).
+- F58-04, F58-05, F58-06.
+- F60-CR-01 / F60-TE-01 (defensive parity gap and paired test).
+- F60-D-01 (Spec/SpecDerived size asymmetry doc).
+- F60-CRIT-01 (line-count threshold advance warning).
 
 ## Cross-Agent Agreement Matrix
 
-| Finding | Flagged By | Severity |
-|---------|------------|----------|
-| F59-01  | code-reviewer, critic, verifier, test-engineer, debugger, architect, document-specialist | LOW (high signal — 7 agents) |
-| F59-02  | test-engineer | LOW |
-| F59-03  | document-specialist | LOW |
-| F59-04  | code-reviewer, critic, debugger | LOW (defer) |
+| Finding   | Flagged By                              | Severity            |
+|-----------|-----------------------------------------|---------------------|
+| F60-CR-01 | code-reviewer, test-engineer            | LOW (defer)         |
+| F60-PR-01 | perf-reviewer                           | LOW (defer)         |
+| F60-SEC-01| security-reviewer                       | LOW (defer)         |
+| F60-CRIT-01| critic                                 | LOW (defer)         |
+| F60-A-01  | architect                               | LOW (defer)         |
+| F60-TE-01 | test-engineer                           | LOW (defer)         |
+| F60-D-01  | debugger                                | LOW (defer)         |
+| F60-DOC-01| document-specialist                     | LOW (defer, dup)    |
 
 ## AGENT FAILURES
 
@@ -122,11 +135,8 @@ No agents failed.
 ## Summary statistics
 
 - 11 reviewer perspectives executed.
-- 4 findings produced this cycle:
-  - 1 actionable defensive-parity bug (F59-01) flagged by
-    7/11 reviewers.
-  - 1 actionable test gap (F59-02), pairs with F59-01.
-  - 1 actionable doc fix (F59-03), pairs with F59-01.
-  - 1 deferred informational (F59-04 log wording).
+- 8 findings produced this cycle, all LOW severity, all deferred.
+- 0 actionable findings (no plan needed for cycle 60 beyond
+  recording deferrals).
 - 0 new HIGH/CRITICAL findings.
-- 0 regressions vs cycle 58.
+- 0 regressions vs cycle 59.

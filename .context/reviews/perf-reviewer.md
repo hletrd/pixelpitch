@@ -1,27 +1,44 @@
-# Perf-Reviewer Review (Cycle 59, orchestrator cycle 12)
+# Perf Reviewer — Cycle 60 (Orchestrator Cycle 13)
 
 **Date:** 2026-04-29
-**HEAD:** `fa0ae66`
+**HEAD:** `a0cd982`
+
+## Inventory
+
+`pixelpitch.py` (render_html, merge_camera_data, match_sensors,
+_load_per_source_csvs); `sources/*.py` (fetch loops, http_get).
 
 ## Status
 
-No new performance findings.
+No new perf regressions observed. All previously-deferred perf items
+(F49-04 sensor-DB linear scan, F55-PR-01..03, F56-PR-04, F57-PR-01..03,
+F59-PR-01) remain valid as deferred — none have crossed re-open
+thresholds.
 
-Carry-overs (still informational, deferred per repo policy):
+## Cycle 60 New Findings
 
-- F49-04 (`merge_camera_data` re-runs `match_sensors` per
-  existing-only camera - O(N*M) where N~1000, M~200).
-- F55-PR-01..03 (sorted_by allocations, derive_specs full
-  re-derive, dict-based existing_by_key).
-- F56-PR-04 (per-source CSV reads not parallelized).
-- F57-PR-01..03 (informational).
+### F60-PR-01 (deferred, informational): `match_sensors` recomputed
+twice for source-CSV cameras during full render
 
-## F59-PR-01 (informational, LOW)
+- **File:** `pixelpitch.py:1139` (`_load_per_source_csvs`) and
+  `pixelpitch.py:644` (`merge_camera_data` existing-only branch).
+- **Detail:** A camera that exists only in a per-source CSV but not
+  in the merged Geizhals+source set may have `match_sensors`
+  computed twice during one `render_html` invocation: once in
+  `_load_per_source_csvs` (refresh against current sensors_db) and
+  again in `merge_camera_data` (existing-only re-match). The
+  computation is idempotent and cheap (~200 sensor comparisons), so
+  this is a wasteful-but-correct double-call, not a bug.
+- **Severity:** LOW. **Confidence:** MEDIUM.
+- **Disposition:** Defer (informational, ≤2x of an already-cheap
+  operation; same class as F49-04). Re-open if render time
+  exceeds 30s.
 
-The F59-CR-01 fix adds two `isfinite` calls and two `>0` checks
-per row in `write_csv`. For ~1000 rows, this is negligible
-(microseconds). No measurable perf impact.
+## Carry-over deferred
 
-## Cycle 1-58 confirmation
+F49-04, F55-PR-01..03, F56-PR-04, F57-PR-01..03, F59-PR-01 — all
+informational, no thresholds crossed.
 
-No regressions in build runtime vs cycle 58.
+## Summary
+
+No actionable perf findings for cycle 60.

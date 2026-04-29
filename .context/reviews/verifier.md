@@ -1,80 +1,38 @@
-# Verifier Review (Cycle 59, orchestrator cycle 12)
+# Verifier — Cycle 60 (Orchestrator Cycle 13)
 
 **Date:** 2026-04-29
-**HEAD:** `fa0ae66`
+**HEAD:** `a0cd982`
 
-## Gate verification
+## Evidence
 
-- `python3 -m flake8 .` -> 0 errors. PASS.
-- `python3 -m tests.test_parsers_offline` -> all sections green.
-  PASS.
+- `flake8 .` -> 0 errors. Confirmed.
+- `python3 -m tests.test_parsers_offline` -> "All checks passed."
+  Confirmed (last visible section: "write_csv width/height
+  non-finite/non-positive guards" all OK).
+- C59-01 fix verified working: synthetic SpecDerived with
+  `size=(0.0, 0.0)`, `(-1, -1)`, `(inf, 24)`, `(35.9, nan)` etc.
+  all produce empty width/height cells in the CSV output.
+- Round-trip preserved: `(35.9, 23.9)` writes "35.90,23.90" and
+  reads back as `(35.9, 23.9)` correctly.
 
-No regression vs cycle 58 (HEAD `aef726b` -> `fa0ae66` is
-docs-only).
+## Cycle 60 New Findings
 
-## F59-CR-01 reproduction (defensive-parity gap)
+No new verifier-level correctness gaps found at HEAD.
 
-Constructed a SpecDerived bypassing `derive_spec`:
+## Re-verified Invariants
 
-```python
-from models import Spec, SpecDerived
-from pixelpitch import write_csv
-from pathlib import Path
-import tempfile
+| Invariant | Confirmed? |
+|-----------|------------|
+| `derive_spec` filters non-finite/non-positive size | YES (line 900) |
+| `parse_existing_csv` width/height >0 guard | YES (line 430-433) |
+| `parse_existing_csv` area recomputed when size known | YES (line 442-443) |
+| `write_csv` width/height fail-empty | YES (line 1052-1062) |
+| `write_csv` area/mpix/pitch fail-empty | YES (line 1060-1062) |
+| `match_sensors` returns [] for invalid size | YES (line 223-224) |
+| matched_sensors None vs [] sentinel preserved | YES (merge_camera_data line 616) |
+| `_safe_year` clamps to [1900, 2100] | YES (line 317) |
+| `_safe_int_id` clamps to [0, 1_000_000] | YES (line 347) |
 
-spec = Spec(name="Bypass Cam", category="fixed", type=None,
-            size=(0.0, 0.0), pitch=None, mpix=10.0, year=2020)
-d = SpecDerived(spec=spec, size=(0.0, 0.0), area=0.0,
-                pitch=None, matched_sensors=[], id=0)
+## Summary
 
-with tempfile.NamedTemporaryFile("w+", suffix=".csv",
-                                 delete=False) as f:
-    p = Path(f.name)
-write_csv([d], p)
-print(p.read_text())
-```
-
-Output (relevant row):
-
-```
-0,Bypass Cam,fixed,,0.00,0.00,,,,2020,
-```
-
-The `0.00,0.00` columns demonstrate the gap: `derived.size =
-(0.0, 0.0)` is truthy (non-empty tuple), so `if derived.size`
-in `write_csv` writes `"0.00"` for both width and height even
-though the values are non-positive. The `area_str` column
-correctly remains empty (caught by the `derived.area > 0`
-guard). The `mpix_str` correctly writes `"10.0"`. So the
-asymmetry is real: width/height accept invalid values that
-area/mpix/pitch reject.
-
-In normal operation the bypass is not reachable (derive_spec
-filters non-positive size, parse_existing_csv too). But the
-defensive parity matters for:
-
-1. Future regressions in derive_spec (the guard at line 900
-   could be inadvertently removed by a refactor).
-2. New code paths constructing SpecDerived directly (e.g., a
-   future source module that calls write_csv on its own
-   derived list without going through derive_spec).
-3. Test fixtures and synthetic SpecDerived inputs.
-
-Fix: harden the width/height write at the boundary, mirroring
-the area/mpix/pitch guards.
-
-## Confirmation matrix
-
-- F59-01: confirmed reproducible with the synthetic
-  SpecDerived above. Behavior is "writes 0.00,0.00 to CSV";
-  desired behavior is "writes empty cells".
-
-## Cycle 1-58 fix verification
-
-All previous cycle fixes verified at HEAD via the gate:
-
-- C58-01 (`--limit -1` rejection): `--limit -1` -> SystemExit
-  with non-zero status, error to stdout. PASS.
-- C57-01 (area recompute from width*height in
-  parse_existing_csv): test section green. PASS.
-- All earlier cycles: gate green.
+No new findings. All cycle 1-59 invariants verified at HEAD.
