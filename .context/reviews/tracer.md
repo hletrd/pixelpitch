@@ -1,11 +1,11 @@
-# Tracer — Cycle 66 (Orchestrator Cycle 19)
+# Tracer — Cycle 67 (Orchestrator Cycle 20)
 
 **Date:** 2026-04-29
-**HEAD:** `466839a`
+**HEAD:** `e53e9c4`
 
 ## Suspicious flow inventory
 
-Re-traced all flows from cycle 65 against HEAD; no behavior change:
+Re-traced all flows from cycle 66 against HEAD; no behavior change:
 
 1. **CSV round-trip path:** `derive_spec` -> `write_csv` ->
    `parse_existing_csv` -> `merge_camera_data` -> `write_csv`. All
@@ -24,7 +24,7 @@ Re-traced all flows from cycle 65 against HEAD; no behavior change:
 
 None this cycle. No anomalies observed.
 
-## Cycle 66 New Findings
+## Cycle 67 New Findings
 
 None.
 

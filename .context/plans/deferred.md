@@ -511,3 +511,19 @@ These findings from the review are explicitly deferred. Each entry records:
 - **Re-open if:** Same as F59-04.
 
 ---
+
+## F67-CRIT-01: `pixelpitch.py` line count is 1488 — close to F32 re-open threshold of 1500 (cycle 67)
+- **File:** `pixelpitch.py` (1488 lines, unchanged from cycle 60-66)
+- **Severity:** LOW | **Confidence:** HIGH
+- **Reason:** Same finding as F60-CRIT-01 / F61-CRIT-01 / F62-CRIT-01 / F63-CRIT-01 / F64-CRIT-01 / F65-CRIT-01 / F66-CRIT-01 — no change. Currently 12 lines below the F32 re-open threshold. Pre-emptive flag so the orchestrator can plan a refactor track ahead of time.
+- **Re-open if:** `pixelpitch.py` exceeds 1500 lines (the F32 re-open trigger).
+
+---
+
+## F67-DOC-01: repeats deferred F59-04 / F60-DOC-01 / F61-DOC-01 / F62-DOC-01 / F63-DOC-01 / F64-DOC-01 / F65-DOC-01 / F66-DOC-01 "missing" log wording
+- **File:** `pixelpitch.py`, line 1125
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Reason:** Identical to deferred F59-04 / F60-DOC-01 / F61-DOC-01 / F62-DOC-01 / F63-DOC-01 / F64-DOC-01 / F65-DOC-01 / F66-DOC-01. No change in disposition.
+- **Re-open if:** Same as F59-04.
+
+---

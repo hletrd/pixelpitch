@@ -1,7 +1,7 @@
-# Verifier — Cycle 66 (Orchestrator Cycle 19)
+# Verifier — Cycle 67 (Orchestrator Cycle 20)
 
 **Date:** 2026-04-29
-**HEAD:** `466839a`
+**HEAD:** `e53e9c4`
 
 ## Evidence
 
@@ -15,7 +15,7 @@
 - Round-trip preserved: `(35.9, 23.9)` writes "35.90,23.90" and reads back
   correctly.
 
-## Cycle 66 New Findings
+## Cycle 67 New Findings
 
 No new verifier-level correctness gaps found at HEAD.
 
@@ -36,4 +36,4 @@ No new verifier-level correctness gaps found at HEAD.
 
 ## Summary
 
-No new findings. All cycle 1-65 invariants verified at HEAD.
+No new findings. All cycle 1-66 invariants verified at HEAD.
