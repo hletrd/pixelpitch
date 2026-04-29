@@ -1015,8 +1015,21 @@ def write_csv(specs: list[SpecDerived], output_file: Path) -> None:
             id_str = str(derived.id) if derived.id is not None else ""
             category_str = spec.category or ""
             type_str = spec.type or ""
-            width_str = f"{derived.size[0]:.2f}" if derived.size else ""
-            height_str = f"{derived.size[1]:.2f}" if derived.size else ""
+            # F59-01: harden width/height with the same isfinite/positive guard
+            # as area/mpix/pitch below. Today derive_spec (line 900) and
+            # parse_existing_csv (line 430-433) filter non-finite/non-positive
+            # size before it reaches write_csv, so this is defensive parity
+            # rather than a live bug. Atomic-pair semantics: if either
+            # dimension is invalid, both cells are empty (matches
+            # parse_existing_csv which requires both >0 for size to be set).
+            if (derived.size
+                    and isfinite(derived.size[0]) and derived.size[0] > 0
+                    and isfinite(derived.size[1]) and derived.size[1] > 0):
+                width_str = f"{derived.size[0]:.2f}"
+                height_str = f"{derived.size[1]:.2f}"
+            else:
+                width_str = ""
+                height_str = ""
             area_str = f"{derived.area:.2f}" if derived.area is not None and isfinite(derived.area) and derived.area > 0 else ""
             mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None and isfinite(spec.mpix) and spec.mpix > 0 else ""
             pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None and isfinite(derived.pitch) and derived.pitch > 0 else ""
