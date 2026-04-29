@@ -1,47 +1,45 @@
-# Debugger Review (Cycle 58, orchestrator cycle 11)
+# Debugger Review (Cycle 59, orchestrator cycle 12)
 
 **Date:** 2026-04-29
-**HEAD:** `aef726b`
+**HEAD:** `fa0ae66`
 
-## Latent bug surface
+## Latent failure-mode sweep
 
-### F58-D-01: `--limit -1` silent no-op (HIGH-confidence latent bug)
+Walked the call graph for all SpecDerived -> CSV producers. Two
+failure modes possible at `write_csv`:
 
-- Same as F58-CR-01 / F58-CRIT-01 / F58-T-01.
-- Failure mode: the user runs the CLI, sees a zero-exit
-  status, finds an empty CSV in `dist/`, and assumes the
-  scrape failed silently. Wastes investigation time.
-- Fix: input validation. One-line guard.
+1. **Upstream guard removal.** If a future commit removes the
+   `isfinite` check at `derive_spec` line 900, a Spec with
+   `size = (inf, 24.0)` would propagate to `derived.size` and
+   into `write_csv`. The width column would write `"inf"`. The
+   next build's `parse_existing_csv` would reject the value via
+   `_safe_float` (which already rejects non-finite floats), so
+   the size column would round-trip to None - but the artifact
+   CSV-on-disk would visibly contain the `"inf"` string.
 
-### F58-D-02: `--limit` value not enforced as positive integer
+2. **Direct SpecDerived construction.** Any caller that builds
+   SpecDerived without going through `derive_spec` (e.g., a
+   future source module, a test fixture, or a refactor split
+   that introduces a new build path) bypasses the guard. The
+   write_csv-side defensive guard would be the last line of
+   defense.
 
-- `int("0")` → `0`, returns empty list (silent no-op).
-- `int("-100")` → `-100`, slices `urls[:-100]` (drops last
-  100 items).
-- Fix: `if limit <= 0: print(...); sys.exit(1)`.
+## New findings
 
-### F58-D-03 (theoretical, deferred): `--out` path validation
+### F59-D-01 (latent, LOW): width/height write non-finite-guard gap
 
-- **File:** `pixelpitch.py:1400-1401`
-- **Detail:** `--out --limit` (typo) sets `out_dir =
-  Path("--limit")`. The script will then try to create a
-  directory named `--limit/`, which works on POSIX but is
-  user-hostile. Same root cause as F58-A-02 (manual argparse
-  drift).
-- **Severity:** LOW. **Confidence:** MEDIUM.
-- **Disposition:** defer (covered by F58-A-02 architectural
-  refactor when accepted).
+- **File:** `pixelpitch.py:1018-1019`
+- **Cross-reference:** F59-CR-01.
+- **Same root as:** F40-01-derive-spec-pitch-sentinel-write-csv-finite
+  (cycle 40 hardened mpix and pitch; this is the symmetric
+  fix for size).
+- **Severity:** LOW. **Confidence:** HIGH.
+- **Disposition:** Schedule alongside F59-CR-01.
 
-### F58-D-04: F57-D-06 semicolon-in-sensor-name still deferred
+### F59-D-02 (informational): per-source CSV missing-on-first-build is noisy
 
-- Carry-over. No action.
+- See F59-CR-02. Defer (informational).
 
-## No other regressions
+## No HIGH/CRITICAL latent bugs found this cycle.
 
-All 25+ test sections pass. The C57-01 fix has not introduced
-any new latent failure mode.
-
-## Summary
-
-Two actionable latent findings (F58-D-01, F58-D-02 — both
-collapsed into the F58-CR-01 fix). One deferred (F58-D-03).
+Repo continues to be in a hardened state.

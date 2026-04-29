@@ -1,41 +1,29 @@
-# Security-Reviewer Review (Cycle 58, orchestrator cycle 11)
+# Security-Reviewer Review (Cycle 59, orchestrator cycle 12)
 
 **Date:** 2026-04-29
-**HEAD:** `aef726b`
+**HEAD:** `fa0ae66`
 
-## Threat model
+## Status
 
-- CI-only static-site generator. No user input in production.
-- All scraped content is HTML-escaped through Jinja2
-  `select_autoescape(["html", "xml"])`.
-- No secrets, no auth, no DB writes, no network listening.
+No new security findings.
 
-## OWASP-style sweep
+Carry-overs (deferred per repo policy):
 
-- A01 / A02 / A04 / A07 / A09 / A10: N/A or unchanged.
-- A03 Injection: Templates use Jinja2 with autoescape=True.
-  CSV uses stdlib `csv.writer`. No subprocess shell=True.
-- A05 Misconfig: F58-SR-old (carry of C10-08 macOS debug
-  port). Re-defer.
-- A06: requirements.txt unchanged.
-- A08 SSRF: HTTP fetcher uses hardcoded URLs.
+- C10-07 redirect SSRF risk - `urllib.request.urlopen` follows
+  redirects without same-origin validation. Hardcoded trusted
+  source URLs.
+- C10-08 remote debugging port (macOS, 127.0.0.1, dev only).
 
-## No new security findings this cycle
+## F59-SR-01 (informational, LOW)
 
-- F58-CR-01 (negative `--limit`) is a UX bug, not a security
-  issue. The arg still goes through `int()` parsing, so no
-  injection / overflow concern.
-- F58-CRIT-02 (`--out --limit` typo) lets the user point
-  `out_dir` at a relative path containing `--limit`. The
-  output dir is created by the user's own command line; this
-  is a normal CLI behavior, not a path-traversal vector.
+The F59-CR-01 hardening is defense-in-depth. No security
+implication: the failure mode is "writes a malformed numeric
+string into the CSV", not "executes arbitrary code". CSV
+consumers (parse_existing_csv) already reject non-finite floats
+via `_safe_float`, so the round-trip is safe even without the
+fix. The fix improves contract clarity.
 
-## Carry-over deferred (no action this cycle)
+## Cycle 1-58 confirmation
 
-- C10-07 redirect chain (HTTP fetch).
-- C10-08 macOS debug port.
-- F34: `importlib.import_module` whitelisted.
-
-## Summary
-
-Zero new security findings. No regressions.
+No new attack surface introduced. UA, robots.txt compliance,
+and CDN SRI hashes all still valid.

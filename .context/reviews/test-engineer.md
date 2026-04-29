@@ -1,44 +1,50 @@
-# Test-Engineer Review (Cycle 58, orchestrator cycle 11)
+# Test-Engineer Review (Cycle 59, orchestrator cycle 12)
 
 **Date:** 2026-04-29
-**HEAD:** `aef726b`
+**HEAD:** `fa0ae66`
 
-## Coverage check
+## Coverage assessment
 
-- `parse_existing_csv` — 25+ assertions; F57-01 area
-  recomputation now pinned.
-- `merge_camera_data` — 12+ assertions; matched_sensors
-  preservation pinned.
-- `_safe_year`, `_safe_int_id` — boundary parsing pinned for
-  garbage / inf / nan / range overflow.
-- `match_sensors` — indirectly covered via round-trip and
-  refresh tests; **direct unit test still missing** (F57-03
-  deferred).
-- `_load_per_source_csvs` — cache-fallback and refresh paths
-  pinned.
+`tests/test_parsers_offline.py` is now 2659 lines (up from 2456
+in cycle 56). Section count is high; gate runtime remains under
+10s.
+
+Existing write_csv guard tests:
+
+- `test_write_csv_nonfinite_guards` (line 1952): pins
+  `inf`/`nan` in mpix and pitch.
+- `test_write_csv_zero_negative_guards` (line 1992): pins zero
+  and negative mpix and pitch (and computed-pitch with both
+  zero inputs).
+
+Both tests focus on `mpix` and `pitch` columns. **Width/height
+columns are not pinned for non-finite or non-positive values.**
+This is the test-side mirror of the F59-CR-01 defensive-parity
+gap.
 
 ## New findings
 
-### F58-TE-01: no test for `--limit` validation in `source` command — LOW
+### F59-TE-01 (test gap, LOW): no test pins write_csv width/height non-finite/non-positive guards
 
-- **File:** `tests/test_parsers_offline.py` (gap)
-- **Detail:** F58-CR-01 (negative `--limit` accepted silently)
-  has no test pinning the new validation behavior. After the
-  fix, a test should assert that `--limit -1` and `--limit 0`
-  exit with a non-zero status and a clear error message.
+- **File:** `tests/test_parsers_offline.py` (gap, paired with
+  F59-CR-01 fix in `pixelpitch.py:1018-1019`)
 - **Severity:** LOW. **Confidence:** HIGH.
-- **Fix:** call `main()` with a patched `sys.argv` that
-  includes `--limit -1`, capture the `SystemExit`, assert
-  non-zero exit code. Subprocess-style would be too heavy
-  for the offline test gate.
+- **Detail:** When the F59-CR-01 fix lands, a regression test
+  must pin the new behavior. Recommended sub-tests in a new
+  section `write_csv width/height non-finite/non-positive
+  guards`:
+  - `derived.size = (inf, 24.0)` -> CSV row's width and height
+    cells empty.
+  - `derived.size = (35.9, nan)` -> both empty.
+  - `derived.size = (0.0, 0.0)` -> both empty.
+  - `derived.size = (-1.0, -1.0)` -> both empty.
+  - Sanity: `derived.size = (35.9, 23.9)` -> both populated as
+    `"35.90"` and `"23.90"`.
+  - Sanity: `derived.size = None` -> both empty.
+- **Disposition:** Schedule alongside F59-CR-01.
 
-### F58-TE-02 (deferred): direct unit tests for `match_sensors` — LOW
+## Carry-over
 
-- Carry-over of F57-03. Indirect coverage via round-trip
-  tests is sufficient for current scope.
-- **Disposition:** keep deferred.
-
-## Summary
-
-One new actionable test gap (F58-TE-01), conditional on the
-F58-CR-01 fix. Deferred carry-over preserved.
+- F58-06 (boundary tests at exact range edges) - still deferred
+  per F55-02 pattern.
+- F56-CRIT-02 (test monolith) - still deferred (architectural).

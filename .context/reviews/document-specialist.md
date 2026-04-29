@@ -1,36 +1,41 @@
-# Document-Specialist Review (Cycle 58, orchestrator cycle 11)
+# Document-Specialist Review (Cycle 59, orchestrator cycle 12)
 
 **Date:** 2026-04-29
-**HEAD:** `aef726b`
+**HEAD:** `fa0ae66`
 
 ## Doc/code consistency
 
-- `README.md`: enumerates generated HTML pages — matches
-  `render_html` output (8 categories + index + about + CSV).
-- `pixelpitch.py --help`: matches CLI parsing for `html`,
-  `source`, `list`.
-- `parse_existing_csv` docstring (cycle 57): accurately
-  describes the F57-01 area trust contract.
+Reviewed README.md, pixelpitch.py module docstrings, source
+module docstrings, and the .context/plans/ + .context/reviews/
+trees.
+
+All docstrings continue to match the implementation after the
+C58-01 (`--limit` validation) cycle.
 
 ## New findings
 
-### F58-DOC-01: `--help` does not document `--limit` constraints — LOW
+### F59-DOC-01 (LOW, paired with F59-CR-01)
 
-- **File:** `pixelpitch.py:1422-1426`
-- **Detail:** The `--help` text says
-  `source <name> [--limit N] [--out DIR]` without stating
-  that N must be a positive integer. After the F58-CR-01 fix
-  the help text should reflect the validated input range.
-- **Severity:** LOW. **Confidence:** HIGH.
-- **Fix:** one-line update to the help string.
+- **File:** `pixelpitch.py:1000-1010` (write_csv docstring)
+- **Detail:** The write_csv docstring (line 1001) says "Write
+  camera specs to a CSV file using the csv module for proper
+  escaping." It does not document the float-cell contract
+  (no-inf/no-nan/no-zero/no-negative). After the F59-CR-01
+  fix, the docstring should be expanded to say:
 
-### F58-DOC-02 (deferred carry-over): `.context/plans/deferred.md` is growing past 25 entries
+  ```
+  Float cells (sensor_width_mm, sensor_height_mm,
+  sensor_area_mm2, megapixels, pixel_pitch_um) are guarded
+  against non-finite (inf/nan) and non-positive (<= 0) values
+  - those rows write an empty cell instead of "inf"/"nan"/"0.0"/
+  "-1.0". The guard is the canonical location for the
+  CSV-artifact float-value contract.
+  ```
 
-- Same as F56-DOC-03 / F57-DOC-03. Periodic sweep is hygiene,
-  not a correctness concern.
-- **Disposition:** keep deferred.
+- **Disposition:** Schedule alongside F59-CR-01.
 
-## Summary
+## Carry-over
 
-One new documentation finding (F58-DOC-01). One carry-over
-deferred.
+- F56-DOC-03 / F57-DOC-03 / F58-DOC-02 (`deferred.md` size) -
+  still deferred. Cycle-59 doesn't push the count over 50;
+  current count is ~32 entries.

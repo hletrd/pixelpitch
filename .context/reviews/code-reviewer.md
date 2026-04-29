@@ -1,79 +1,91 @@
-# Code-Reviewer Review (Cycle 58, orchestrator cycle 11)
+# Code-Reviewer Review (Cycle 59, orchestrator cycle 12)
 
 **Date:** 2026-04-29
-**HEAD:** `aef726b` (after C57-01 plan-completed marker)
+**HEAD:** `fa0ae66` (after C58-01 plan-completed marker)
 
-## Inventory
+## Status
 
-- `pixelpitch.py` (1437 LOC) — primary module, all data-flow / merge / CLI / render.
-- `models.py` — `Spec` and `SpecDerived` dataclasses.
-- `sources/__init__.py`, `sources/apotelyt.py`, `sources/cined.py`,
-  `sources/digicamdb.py`, `sources/gsmarena.py`,
-  `sources/imaging_resource.py`, `sources/openmvg.py`.
-- `tests/test_parsers_offline.py` (2595 LOC) — gate test file.
-- `tests/test_sources.py`.
-- Templates: `templates/index.html`, `templates/pixelpitch.html`,
-  `templates/about.html`.
-- CI / deploy: `.github/workflows/github-pages.yml`.
+Re-ran a full pass over `pixelpitch.py`, `sources/*.py`, `models.py`,
+and `tests/test_parsers_offline.py`.
 
-## Cycle 1–57 Status
+Both gates pass at HEAD:
 
-All previously fixed findings remain fixed. Both gates pass at HEAD
-`aef726b`:
-- `flake8 .` → 0 errors.
-- `python3 -m tests.test_parsers_offline` → all sections green
-  (including the C57-01 `parse_existing_csv area recomputed from
-  width*height` section).
+- `python3 -m flake8 .` -> 0 errors.
+- `python3 -m tests.test_parsers_offline` -> all sections green.
 
-## Cycle 58 New Findings
+## New findings
 
-### F58-CR-01 (BUG): `source` CLI accepts negative or zero `--limit` silently — LOW
+### F59-CR-01 (defensive-parity, LOW): `write_csv` width/height columns lack the isfinite/positive guards used for area/mpix/pitch
 
-- **File:** `pixelpitch.py:1393-1399`
-- **Detail:** `int(args[i + 1])` accepts `-1`, `0`, and any
-  negative integer without validation. The parsed `limit` is
-  passed through `kwargs["limit"]` to source modules where every
-  consumer uses Python list slicing `urls[:limit]`
-  (`apotelyt.py:162`, `cined.py:127`, `gsmarena.py:243`). With
-  `limit=-1` slicing silently drops the last item; with
-  `limit=0` slicing returns an empty list and the CSV is
-  written empty. `openmvg.py:73` uses `i >= limit` which
-  short-circuits at the first iteration when `limit <= 0`.
-  Either way, the user gets confusing behavior with no error
-  message.
-- **Repro:** `python pixelpitch.py source openmvg --limit -1`
-  exits silently with an empty `dist/camera-data-openmvg.csv`.
-- **Fix:** Add `if limit <= 0: print(...); sys.exit(1)` to the
-  `--limit` branch in `main()`. Match the existing
-  `int(args[i + 1])` ValueError handler style.
+- **File:** `pixelpitch.py:1018-1019`
 - **Severity:** LOW. **Confidence:** HIGH.
+- **Detail:** Lines 1020-1022 already guard
+  `area_str`/`mpix_str`/`pitch_str` against non-finite or
+  non-positive values:
 
-### F58-CR-02 (cleanup, deferred): no test for `_safe_year` / `_safe_int_id` boundary at exactly 1900, 2100, 0, 1_000_000 — LOW
+  ```python
+  area_str = f"{derived.area:.2f}" if derived.area is not None and isfinite(derived.area) and derived.area > 0 else ""
+  mpix_str = f"{spec.mpix:.1f}" if spec.mpix is not None and isfinite(spec.mpix) and spec.mpix > 0 else ""
+  pitch_str = f"{derived.pitch:.2f}" if derived.pitch is not None and isfinite(derived.pitch) and derived.pitch > 0 else ""
+  ```
 
-- **File:** `tests/test_parsers_offline.py` (gap)
-- **Detail:** Existing parse-tolerance tests cover well below /
-  above the bounds, but no test pins the exact boundary
-  (`1900`, `2100`, `0`, `1_000_000` — `<=` operator, all
-  inclusive). A future refactor to `<` would silently flip
-  semantics.
+  But lines 1018-1019 only check truthiness:
+
+  ```python
+  width_str = f"{derived.size[0]:.2f}" if derived.size else ""
+  height_str = f"{derived.size[1]:.2f}" if derived.size else ""
+  ```
+
+  `derived.size` is `Optional[Tuple[float, float]]`. A non-empty
+  tuple is truthy regardless of element values, so a hypothetical
+  `(0.0, 0.0)`, `(-1.0, -1.0)`, `(inf, inf)`, or `(nan, nan)`
+  tuple would write `"0.00,0.00"` / `"-1.00,-1.00"` / `"inf,inf"`
+  / `"nan,nan"` to the CSV. Today `derive_spec` (lines 900-906)
+  filters non-finite/non-positive size and `parse_existing_csv`
+  rejects non-positive dimensions (lines 430-433), so the
+  pathological tuple cannot reach `write_csv` via the normal
+  path. The fix hardens the contract symmetrically with the
+  area/mpix/pitch guards, so a future `derive_spec` regression
+  does not leak `inf`/`nan`/`0.00`/`-1.00` strings into the
+  artifact CSV (which would then be parsed back on the next
+  build via `parse_existing_csv` and either rejected as a row
+  parse error or coerced to None - but the artifact-on-disk
+  state would be visibly broken in the meantime).
+- **Failure scenario:** A future derive_spec refactor (e.g.,
+  removing the line-900 `isfinite` guard, or adding a new
+  size-derivation path that bypasses the guard) silently leaks
+  `inf` or `0.0` size into `dist/camera-data.csv`. The next
+  build's `parse_existing_csv` rejects the row (width<=0 -> None,
+  height<=0 -> None, so size becomes None and the row's
+  `derived.size` is lost). Downstream consumers see "unknown
+  sensor size" for an entry that previously had measured data.
+- **Fix:** mirror the area/mpix/pitch guard:
+
+  ```python
+  if (derived.size
+      and isfinite(derived.size[0]) and derived.size[0] > 0
+      and isfinite(derived.size[1]) and derived.size[1] > 0):
+      width_str = f"{derived.size[0]:.2f}"
+      height_str = f"{derived.size[1]:.2f}"
+  else:
+      width_str = ""
+      height_str = ""
+  ```
+
+  Add a regression test pinning the new behavior alongside
+  `test_write_csv_nonfinite_guards`.
+
+### F59-CR-02 (informational, LOW): `_load_per_source_csvs` "missing" log line is noisy on first build
+
+- **File:** `pixelpitch.py:1085`
 - **Severity:** LOW. **Confidence:** MEDIUM.
-- **Disposition:** Defer per repo policy on indirect coverage
-  (analogous to F55-02).
+- **Detail:** On a fresh `dist` directory, every registered
+  source CSV prints "missing ... (skipped)". Wording could be
+  softer ("no cached CSV at ...") to avoid misreading as a
+  warning. Same severity class as F58-DOC-* informational fixes.
+- **Disposition:** Defer (informational, no behavior change).
 
-### F58-CR-03 (style, no action): `_load_per_source_csvs` ignores `record_id` field after parse — INFO
+## Cycle 1-58 carry-over
 
-- **File:** `pixelpitch.py:1093-1094`
-- **Detail:** `parse_existing_csv` parses `id` from per-source
-  CSVs, then `_load_per_source_csvs` immediately sets
-  `d.id = None` to defer to `merge_camera_data`'s global id
-  assignment. This is intentional and documented in the
-  docstring, but the parse work for the id column is wasted.
-- **Severity:** INFO. **Confidence:** HIGH.
-- **Disposition:** No fix — wasted work is microscopic,
-  documented intent is clear.
-
-## Confidence summary
-
-- 1 LOW actionable (F58-CR-01, reproducible silent no-op).
-- 1 LOW deferred (F58-CR-02, indirect coverage suffices).
-- 1 INFO (F58-CR-03, no fix).
+All previous fixes confirmed still working at HEAD `fa0ae66`.
+No regressions vs cycle 58.

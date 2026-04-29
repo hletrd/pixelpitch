@@ -327,3 +327,11 @@ These findings from the review are explicitly deferred. Each entry records:
 - **Re-open if:** Bounds become configurable, or a future refactor switches `<=` to `<`.
 
 ---
+
+## F59-04: `_load_per_source_csvs` "missing" log line wording is alarmingly worded on first build
+- **File:** `pixelpitch.py`, line 1085
+- **Severity:** LOW | **Confidence:** MEDIUM
+- **Reason:** On a fresh `dist` directory (e.g., first CI run, after `rm -rf dist`), `_load_per_source_csvs` prints `"  source CSV missing: <name> (skipped)"` for every registered source. The message correctly signals "expected absence" but the word "missing" reads like a warning. Softer wording (e.g., "no cached CSV at <path> (skipped)") would convey the same diagnostic without the alarming framing. No behavior change; informational only. Same severity class as F58-DOC-* informational fixes deferred per repo policy.
+- **Re-open if:** A user/operator reports confusion about the warning-style log line, or the wording is touched as part of a broader logging refactor.
+
+---
