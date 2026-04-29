@@ -1,7 +1,7 @@
-# Verifier — Cycle 62 (Orchestrator Cycle 15)
+# Verifier — Cycle 63 (Orchestrator Cycle 16)
 
 **Date:** 2026-04-29
-**HEAD:** `faac04b`
+**HEAD:** `f129a72`
 
 ## Evidence
 
@@ -15,7 +15,7 @@
 - Round-trip preserved: `(35.9, 23.9)` writes "35.90,23.90" and reads back
   correctly.
 
-## Cycle 62 New Findings
+## Cycle 63 New Findings
 
 No new verifier-level correctness gaps found at HEAD.
 
@@ -32,7 +32,8 @@ No new verifier-level correctness gaps found at HEAD.
 | matched_sensors None vs [] sentinel preserved (memory) | YES (line 616)        |
 | `_safe_year` clamps to [1900, 2100]                    | YES                   |
 | `_safe_int_id` clamps to [0, 1_000_000]                | YES                   |
+| `_load_per_source_csvs` lazy sensors_db + F55-01 fall  | YES (line 1119-1152)  |
 
 ## Summary
 
-No new findings. All cycle 1-61 invariants verified at HEAD.
+No new findings. All cycle 1-62 invariants verified at HEAD.

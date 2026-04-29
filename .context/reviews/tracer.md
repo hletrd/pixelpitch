@@ -1,11 +1,11 @@
-# Tracer — Cycle 62 (Orchestrator Cycle 15)
+# Tracer — Cycle 63 (Orchestrator Cycle 16)
 
 **Date:** 2026-04-29
-**HEAD:** `faac04b`
+**HEAD:** `f129a72`
 
 ## Suspicious flow inventory
 
-Re-traced all flows from cycle 61 against HEAD; no behavior change:
+Re-traced all flows from cycle 62 against HEAD; no behavior change:
 
 1. **CSV round-trip path:** `derive_spec` -> `write_csv` -> `parse_existing_csv`
    -> `merge_camera_data` -> `write_csv`. All boundaries enforce the no-inf /
@@ -15,12 +15,15 @@ Re-traced all flows from cycle 61 against HEAD; no behavior change:
 3. **--limit validation path:** parse → validate positive integer → fetch.
 4. **id assignment:** merge_camera_data reassigns ids 0..N-1 after sort.
    Consistent.
+5. **Cache-merge path:** `_load_per_source_csvs` -> `merge_camera_data` ->
+   rendered HTML. F55-01 fallback (preserve cache when sensors_db
+   unavailable) intact.
 
 ## Competing hypotheses
 
 None this cycle. No anomalies observed.
 
-## Cycle 62 New Findings
+## Cycle 63 New Findings
 
 None.
 

@@ -1,7 +1,7 @@
-# Architect — Cycle 62 (Orchestrator Cycle 15)
+# Architect — Cycle 63 (Orchestrator Cycle 16)
 
 **Date:** 2026-04-29
-**HEAD:** `faac04b`
+**HEAD:** `f129a72`
 
 ## Architectural Posture
 
@@ -12,7 +12,7 @@
   Deferred F31 / F60-A-01.
 - Templates are Jinja2; SOURCE_REGISTRY drives nav/sitemap.
 
-## Cycle 62 New Findings
+## Cycle 63 New Findings
 
 None.
 
@@ -22,4 +22,4 @@ F31, F32, F55-A-02, F56-A-02, F57-A-02, F58-A-02, F60-A-01.
 
 ## Summary
 
-No new architectural findings for cycle 62.
+No new architectural findings for cycle 63.

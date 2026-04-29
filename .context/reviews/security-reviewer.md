@@ -1,7 +1,7 @@
-# Security Reviewer — Cycle 62 (Orchestrator Cycle 15)
+# Security Reviewer — Cycle 63 (Orchestrator Cycle 16)
 
 **Date:** 2026-04-29
-**HEAD:** `faac04b`
+**HEAD:** `f129a72`
 
 ## Inventory
 
@@ -19,10 +19,11 @@
 - Jinja templates use `|urlencode` for query strings.
 - SRI hashes present on all CDN resources.
 - C10-07, C10-08, F60-SEC-01 deferred per repo policy.
+- `--limit` validation hardened in C58-01.
 
-## Cycle 62 New Findings
+## Cycle 63 New Findings
 
-None. Code surface unchanged since cycle 61.
+None. Code surface unchanged since cycle 62.
 
 ## Carry-over deferred
 
@@ -30,4 +31,4 @@ C10-07, C10-08, F34, F60-SEC-01.
 
 ## Summary
 
-No new security findings for cycle 62.
+No new security findings for cycle 63.

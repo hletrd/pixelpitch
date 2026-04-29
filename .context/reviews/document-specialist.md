@@ -1,7 +1,7 @@
-# Document Specialist — Cycle 62 (Orchestrator Cycle 15)
+# Document Specialist — Cycle 63 (Orchestrator Cycle 16)
 
 **Date:** 2026-04-29
-**HEAD:** `faac04b`
+**HEAD:** `f129a72`
 
 ## Doc-Code Mismatch Scan
 
@@ -13,21 +13,23 @@ All docstrings re-checked against current behavior; no drift:
 - `match_sensors` rejection comment intact (F57-02).
 - `_safe_year`, `_safe_int_id` Excel-coercion docstrings accurate.
 - `derive_spec` pixel_pitch sentinel handling documented.
+- `merge_camera_data` matched_sensors tri-valued sentinel contract documented.
 
 ## README
 
 `README.md` enumerates generated HTML pages per cycle 55; output of
 `render_html` matches.
 
-## Cycle 62 New Findings
+## Cycle 63 New Findings
 
-### F62-DOC-01 (LOW, repeat of F61-DOC-01): `_load_per_source_csvs`
+### F63-DOC-01 (LOW, repeat of F62-DOC-01): `_load_per_source_csvs`
 "missing" log wording
 
 - **File:** `pixelpitch.py:1125`.
-- **Detail:** Identical to deferred F59-04 / F60-DOC-01 / F61-DOC-01.
+- **Detail:** Identical to deferred F59-04 / F60-DOC-01 / F61-DOC-01 /
+  F62-DOC-01.
 - **Disposition:** Stays deferred.
 
 ## Summary
 
-No new documentation findings for cycle 62.
+No new actionable documentation findings for cycle 63.
