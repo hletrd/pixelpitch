@@ -14,6 +14,7 @@ serve as a CI gate.
 
 from __future__ import annotations
 
+import csv
 import io
 import sys
 import unittest.mock
@@ -2594,6 +2595,93 @@ def test_source_cli_rejects_non_positive_limit():
         expect("limit-pos: fetch_source limit=5", args[1], 5)
 
 
+def test_write_csv_size_finite_positive_guards():
+    """Verify write_csv does not output inf/nan/0.0/-x for width/height columns.
+
+    F59-01: mirror of test_write_csv_nonfinite_guards and
+    test_write_csv_zero_negative_guards for the size columns.
+    Today derive_spec and parse_existing_csv filter
+    non-finite/non-positive size before it reaches write_csv,
+    so this test pins the defensive-parity guard at the write
+    boundary rather than reproducing a live bug. Atomic-pair
+    semantic: if either dimension is invalid, both cells are
+    empty.
+    """
+    section("write_csv width/height non-finite/non-positive guards")
+    import tempfile
+    import pixelpitch as pp
+    from models import Spec, SpecDerived
+
+    def write_one(size_tuple, label):
+        spec = Spec(name=f"{label} Cam", category="fixed", type=None,
+                    size=size_tuple, pitch=None, mpix=10.0, year=2020)
+        # Construct SpecDerived directly to bypass derive_spec's filter.
+        # area mirrors size pathology so the area guard does not mask the
+        # size guard's behaviour.
+        if size_tuple is None:
+            area = None
+        else:
+            try:
+                area_val = size_tuple[0] * size_tuple[1]
+            except (TypeError, OverflowError):
+                area_val = None
+            area = area_val
+        d = SpecDerived(spec=spec, size=size_tuple, area=area,
+                        pitch=None, matched_sensors=[], id=0)
+        with tempfile.NamedTemporaryFile("w+", suffix=".csv",
+                                         delete=False) as f:
+            out_path = Path(f.name)
+        try:
+            pp.write_csv([d], out_path)
+            csv_text = out_path.read_text(encoding="utf-8")
+        finally:
+            out_path.unlink(missing_ok=True)
+        # Header is row 0; data is row 1.
+        rows = list(csv.reader(io.StringIO(csv_text)))
+        return rows[1]
+
+    # Schema: id, name, category, type, sensor_width_mm,
+    # sensor_height_mm, sensor_area_mm2, megapixels,
+    # pixel_pitch_um, year, matched_sensors
+    inf = float("inf")
+    nan = float("nan")
+
+    row = write_one((inf, 24.0), "inf-w")
+    expect("size (inf, 24): width cell empty", row[4], "")
+    expect("size (inf, 24): height cell empty", row[5], "")
+    expect("size (inf, 24): area cell empty", row[6], "")
+
+    row = write_one((35.9, nan), "nan-h")
+    expect("size (35.9, nan): width cell empty", row[4], "")
+    expect("size (35.9, nan): height cell empty", row[5], "")
+
+    row = write_one((-inf, 24.0), "ninf-w")
+    expect("size (-inf, 24): width cell empty", row[4], "")
+    expect("size (-inf, 24): height cell empty", row[5], "")
+
+    row = write_one((0.0, 0.0), "zero")
+    expect("size (0, 0): width cell empty", row[4], "")
+    expect("size (0, 0): height cell empty", row[5], "")
+
+    row = write_one((-1.0, -1.0), "neg")
+    expect("size (-1, -1): width cell empty", row[4], "")
+    expect("size (-1, -1): height cell empty", row[5], "")
+
+    row = write_one((35.9, -2.0), "mixed-neg")
+    expect("size (35.9, -2): width cell empty", row[4], "")
+    expect("size (35.9, -2): height cell empty", row[5], "")
+
+    # Sanity: positive finite size populates both cells.
+    row = write_one((35.9, 23.9), "ok")
+    expect("size (35.9, 23.9): width cell '35.90'", row[4], "35.90")
+    expect("size (35.9, 23.9): height cell '23.90'", row[5], "23.90")
+
+    # Sanity: None size leaves both empty.
+    row = write_one(None, "none")
+    expect("size None: width cell empty", row[4], "")
+    expect("size None: height cell empty", row[5], "")
+
+
 def main():
     test_imaging_resource()
     test_apotelyt()
@@ -2645,6 +2733,7 @@ def main():
     test_parse_existing_csv_bom_has_id_detection()
     test_parse_existing_csv_area_recomputed()
     test_source_cli_rejects_non_positive_limit()
+    test_write_csv_size_finite_positive_guards()
 
     print("\n" + ("=" * 60))
     if _failures:
