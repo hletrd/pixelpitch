@@ -1,41 +1,33 @@
-# Document Specialist — Cycle 61 (Orchestrator Cycle 14)
+# Document Specialist — Cycle 62 (Orchestrator Cycle 15)
 
 **Date:** 2026-04-29
-**HEAD:** `a781933`
+**HEAD:** `faac04b`
 
 ## Doc-Code Mismatch Scan
 
-Checked all docstrings against current behavior:
+All docstrings re-checked against current behavior; no drift:
 
-- `write_csv` (line 1000-1028) — float-cell contract documented per
-  F59-03 (cycle 59). Confirmed accurate.
-- `parse_existing_csv` (line 352-368) — area trust contract
-  documented per F57. Confirmed accurate.
-- `_load_per_source_csvs` (line 1100-1119) — cache fallback
-  documented per F55-01. Confirmed accurate.
-- `match_sensors` — F57-02 rejection comment intact (line 247-250).
-- `_safe_year`, `_safe_int_id` — Excel-coercion docstrings accurate.
-- `derive_spec` — pixel_pitch sentinel handling documented (line
-  912-916).
+- `write_csv` float-cell contract documented (F59-03, cycle 59).
+- `parse_existing_csv` area trust contract documented (F57).
+- `_load_per_source_csvs` cache fallback documented (F55-01).
+- `match_sensors` rejection comment intact (F57-02).
+- `_safe_year`, `_safe_int_id` Excel-coercion docstrings accurate.
+- `derive_spec` pixel_pitch sentinel handling documented.
 
 ## README
 
-`README.md` enumerates generated HTML pages per cycle 55. Confirmed:
-`index.html`, `dslr.html`, `mirrorless.html`, `rangefinder.html`,
-`fixedlens.html`, `camcorder.html`, `actioncam.html`,
-`smartphone.html`, `cinema.html`, `about.html`, `camera-data.csv`.
-All match `render_html` output. Accurate.
+`README.md` enumerates generated HTML pages per cycle 55; output of
+`render_html` matches.
 
-## Cycle 61 New Findings
+## Cycle 62 New Findings
 
-### F61-DOC-01 (LOW, repeat): `_load_per_source_csvs` "missing"
-log wording — repeat of deferred F59-04 / F60-DOC-01
+### F62-DOC-01 (LOW, repeat of F61-DOC-01): `_load_per_source_csvs`
+"missing" log wording
 
-- **File:** `pixelpitch.py:1125`
-- **Detail:** Same finding as deferred F59-04. No change in
-  disposition.
+- **File:** `pixelpitch.py:1125`.
+- **Detail:** Identical to deferred F59-04 / F60-DOC-01 / F61-DOC-01.
 - **Disposition:** Stays deferred.
 
 ## Summary
 
-No new documentation findings for cycle 61.
+No new documentation findings for cycle 62.
