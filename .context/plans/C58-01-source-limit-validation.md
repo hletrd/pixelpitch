@@ -1,9 +1,29 @@
 # C58-01: validate `--limit` is a positive integer in `source` CLI
 
 **Cycle:** 58 (orchestrator cycle 11)
-**Status:** PENDING
+**Status:** COMPLETED
 **Findings addressed:** F58-01 (bug), F58-02 (help-text doc),
 F58-03 (test).
+
+## Implementation summary
+
+- `fix(cli)` (commit `b012ae9`): `main()` now rejects
+  `--limit <= 0` with a clear error message and SystemExit(1),
+  preventing silent slicing-based truncation/empty-output by
+  source consumers.
+- `docs(cli)` (commit `ef7177f`): `--help` now documents the
+  positive-integer constraint for `--limit`.
+- `test(cli)` (commit `f44c17e`): adds a new test section
+  `source CLI rejects non-positive --limit` pinning all three
+  branches (negative, zero, positive). Uses
+  `unittest.mock.patch` to short-circuit `fetch_source` so the
+  test stays offline.
+
+Both gates pass post-fix:
+- `flake8 .` → 0 errors.
+- `python3 -m tests.test_parsers_offline` → all sections green
+  including the new `source CLI rejects non-positive --limit`
+  section (9 new assertions).
 
 ## Background
 
